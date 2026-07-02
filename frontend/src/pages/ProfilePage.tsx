@@ -3,13 +3,17 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Layout } from '../components/Layout';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { useProfile } from '../hooks/useProfile';
-import { useAuthStore } from '../stores/authStore';
-import { apiFetch } from '../lib/api';
-import type { Profile, UpdateProfileInput } from '../types/profile';
+import { Layout } from '@/components/Layout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { FormField } from '@/components/ui/form-field';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useProfile } from '@/hooks/useProfile';
+import { useAuthStore } from '@/stores/authStore';
+import { apiFetch } from '@/lib/api';
+import type { Profile, UpdateProfileInput } from '@/types/profile';
 
 const profileSchema = z.object({
   display_name: z.string().min(2, 'Mínimo 2 caracteres'),
@@ -49,16 +53,6 @@ export function ProfilePage() {
     },
   });
 
-  if (isLoading) {
-    return (
-      <Layout>
-        <div className="flex justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-        </div>
-      </Layout>
-    );
-  }
-
   useEffect(() => {
     if (profile) {
       reset({
@@ -83,55 +77,58 @@ export function ProfilePage() {
     });
   };
 
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center py-20">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
-      <div className="mx-auto max-w-lg space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Tu perfil</h1>
-          <p className="mt-1 text-sm text-muted">Configura tu identidad como aficionado</p>
-        </div>
+      <Card className="mx-auto max-w-lg border-border">
+        <CardHeader>
+          <CardTitle>Tu perfil</CardTitle>
+          <CardDescription>Configura tu identidad como aficionado</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <FormField label="Nombre" error={errors.display_name?.message}>
+              <Input {...register('display_name')} />
+            </FormField>
+            <FormField label="Username" error={errors.username?.message}>
+              <Input placeholder="tu_username" {...register('username')} />
+            </FormField>
+            <FormField label="Equipo favorito">
+              <Input placeholder="Ej: Real Madrid" {...register('favorite_team')} />
+            </FormField>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField label="País">
+                <Input placeholder="España" {...register('country')} />
+              </FormField>
+              <FormField label="Ciudad">
+                <Input placeholder="Madrid" {...register('city')} />
+              </FormField>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea id="bio" rows={3} placeholder="Cuéntanos sobre ti como aficionado..." {...register('bio')} />
+            </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <Input
-            label="Nombre"
-            error={errors.display_name?.message}
-            {...register('display_name')}
-          />
-          <Input
-            label="Username"
-            placeholder="tu_username"
-            error={errors.username?.message}
-            {...register('username')}
-          />
-          <Input
-            label="Equipo favorito"
-            placeholder="Ej: Real Madrid"
-            {...register('favorite_team')}
-          />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="País" placeholder="España" {...register('country')} />
-            <Input label="Ciudad" placeholder="Madrid" {...register('city')} />
-          </div>
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-zinc-300">Bio</label>
-            <textarea
-              className="w-full rounded-lg border border-border bg-surface-overlay px-3 py-2.5 text-sm text-white placeholder:text-muted outline-none transition-colors focus:border-accent"
-              rows={3}
-              placeholder="Cuéntanos sobre ti como aficionado..."
-              {...register('bio')}
-            />
-          </div>
+            {mutation.error && (
+              <p className="text-sm text-destructive">{(mutation.error as Error).message}</p>
+            )}
+            {success && <p className="text-sm text-primary">Perfil actualizado correctamente</p>}
 
-          {mutation.error && (
-            <p className="text-sm text-red-400">{(mutation.error as Error).message}</p>
-          )}
-          {success && <p className="text-sm text-accent">Perfil actualizado correctamente</p>}
-
-          <Button type="submit" loading={mutation.isPending} className="w-full">
-            Guardar perfil
-          </Button>
-        </form>
-      </div>
+            <Button type="submit" loading={mutation.isPending} className="w-full">
+              Guardar perfil
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </Layout>
   );
 }

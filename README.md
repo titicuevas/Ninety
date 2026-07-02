@@ -50,20 +50,20 @@ El proyecto está separado en dos carpetas independientes que conviven en el mis
 
 ### Frontend
 - React 19 + TypeScript + Vite
-- TailwindCSS 4
+- TailwindCSS 4 + shadcn/ui + Radix UI
 - React Router 7
 - TanStack Query
 - Zustand
 - React Hook Form + Zod
-- Framer Motion
+- Framer Motion + Lucide React
 
 ### Backend
-- Node.js + Express
-- TypeScript
-- Zod (validación)
+- Node.js + Express 5
+- TypeScript + Zod
+- Supabase JS (publishable + Admin/service role)
 
 ### Infraestructura
-- **Supabase** — PostgreSQL, Auth, Storage, RLS
+- **Supabase** — PostgreSQL, Auth, Storage, Realtime, RLS
 - **football-data.org** — Datos de partidos, equipos y competiciones
 
 ## 🚀 Inicio rápido
@@ -116,6 +116,41 @@ npm run dev
 - Backend API: http://localhost:3001
 - Health check: http://localhost:3001/api/health
 
+## 🌍 Producción (Railway)
+
+| Servicio | URL |
+|----------|-----|
+| **Frontend** | https://ninety.up.railway.app |
+| **API** | https://ninety-api.up.railway.app |
+| **Health** | https://ninety-api.up.railway.app/api/health |
+
+### Variables en Railway
+
+**Frontend** (`ninety`):
+```env
+VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+VITE_API_URL=https://ninety-api.up.railway.app
+```
+
+**Backend** (`ninety-api`):
+```env
+NODE_ENV=production
+CLIENT_URL=https://ninety.up.railway.app
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+SUPABASE_SECRET_KEY=sb_secret_...
+FOOTBALL_DATA_API_KEY=tu-api-key
+```
+
+En **Supabase → Authentication → URL Configuration** añade:
+```
+https://ninety.up.railway.app/auth/callback
+https://ninety.up.railway.app/**
+```
+
+Guía completa de auth: [`docs/auth-setup.md`](docs/auth-setup.md)
+
 ## 📂 Estructura del proyecto
 
 ```
@@ -142,7 +177,7 @@ Ninety/
 └── README.md
 ```
 
-## 🔐 API Endpoints (v0.1)
+## 🔐 API Endpoints (v0.2)
 
 | Método | Ruta                        | Descripción              |
 |--------|-----------------------------|--------------------------|
@@ -156,12 +191,16 @@ Ninety/
 
 ## 📅 Roadmap
 
-### ✅ v0.1 — Fundación (actual)
+### ✅ v0.2 — Fundación (actual)
 - [x] Estructura frontend/backend separada
-- [x] Autenticación (email + Google)
-- [x] Perfil de usuario
-- [x] Integración football-data.org (proxy)
-- [x] Diseño dark minimalista
+- [x] Autenticación (email + Google OAuth)
+- [x] Landing pública (`/`) + dashboard (`/home`)
+- [x] Perfil de usuario editable
+- [x] shadcn/ui + Radix UI + Express 5
+- [x] Integración football-data.org (proxy API)
+- [x] Storage + Realtime preparados (migración SQL)
+- [x] Tests + seguridad (`check:secrets`)
+- [x] Deploy en Railway
 
 ### 🔜 v1 — MVP
 - [ ] Buscar partidos

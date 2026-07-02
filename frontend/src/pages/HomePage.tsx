@@ -1,6 +1,7 @@
-import { Layout } from '../components/Layout';
-import { useProfile } from '../hooks/useProfile';
-import { useAuth } from '../hooks/useAuthInit';
+import { Layout } from '@/components/Layout';
+import { Card, CardContent } from '@/components/ui/card';
+import { useProfile } from '@/hooks/useProfile';
+import { useAuth } from '@/hooks/useAuthInit';
 
 export function HomePage() {
   const { user } = useAuth();
@@ -12,10 +13,8 @@ export function HomePage() {
     <Layout>
       <div className="space-y-8">
         <section>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            Hola, {name} 👋
-          </h1>
-          <p className="mt-2 text-sm text-muted sm:text-base">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Hola, {name} 👋</h1>
+          <p className="mt-2 text-sm text-muted-foreground sm:text-base">
             Tu diario futbolero está listo. Próximamente podrás buscar partidos y crear Capsules.
           </p>
         </section>
@@ -26,22 +25,23 @@ export function HomePage() {
             { label: 'Capsules', value: '0' },
             { label: 'Valoración media', value: '—' },
           ].map((stat) => (
-            <div
-              key={stat.label}
-              className="rounded-xl border border-border bg-surface-raised p-5"
-            >
-              <p className="text-2xl font-bold">{stat.value}</p>
-              <p className="mt-1 text-sm text-muted">{stat.label}</p>
-            </div>
+            <Card key={stat.label}>
+              <CardContent className="p-5">
+                <p className="text-2xl font-bold">{stat.value}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{stat.label}</p>
+              </CardContent>
+            </Card>
           ))}
         </section>
 
-        <section className="rounded-xl border border-dashed border-border bg-surface-raised/50 p-6 text-center sm:p-8">
-          <p className="text-lg font-medium">Aún no tienes Capsules</p>
-          <p className="mt-2 text-sm text-muted">
-            Busca un partido y guarda tu primer recuerdo futbolero.
-          </p>
-        </section>
+        <Card className="border-dashed">
+          <CardContent className="p-6 text-center sm:p-8">
+            <p className="text-lg font-medium">Aún no tienes Capsules</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Busca un partido y guarda tu primer recuerdo futbolero.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );

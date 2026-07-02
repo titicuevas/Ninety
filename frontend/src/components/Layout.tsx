@@ -1,26 +1,27 @@
 import { Link, NavLink } from 'react-router-dom';
 import { LogOut, User } from 'lucide-react';
-import { useAuth } from '../hooks/useAuthInit';
+import { useAuth } from '@/hooks/useAuthInit';
+import { cn } from '@/lib/utils';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  `text-sm font-medium transition-colors ${isActive ? 'text-accent' : 'text-muted hover:text-white'}`;
+  cn('text-sm font-medium transition-colors', isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground');
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { signOut } = useAuth();
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-50 border-b border-border bg-surface/80 backdrop-blur-md">
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
-          <Link to="/" className="flex min-w-0 items-center gap-2">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-sm font-bold text-white">
+          <Link to="/home" className="flex min-w-0 items-center gap-2">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
               90
             </span>
             <span className="truncate text-base font-semibold tracking-tight sm:text-lg">Ninety</span>
           </Link>
 
           <nav className="flex items-center gap-4 sm:gap-6">
-            <NavLink to="/" className={navLinkClass} end>
+            <NavLink to="/home" className={navLinkClass} end>
               <span className="hidden sm:inline">Inicio</span>
               <span className="sm:hidden">Home</span>
             </NavLink>
@@ -29,7 +30,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </NavLink>
             <button
               onClick={() => signOut()}
-              className="text-muted transition-colors hover:text-white"
+              className="text-muted-foreground transition-colors hover:text-foreground"
               aria-label="Cerrar sesión"
             >
               <LogOut className="h-4 w-4" />
