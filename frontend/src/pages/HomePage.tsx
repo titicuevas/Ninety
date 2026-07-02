@@ -1,0 +1,48 @@
+import { Layout } from '../components/Layout';
+import { useProfile } from '../hooks/useProfile';
+import { useAuth } from '../hooks/useAuthInit';
+
+export function HomePage() {
+  const { user } = useAuth();
+  const { data: profile } = useProfile();
+
+  const name = profile?.display_name ?? user?.user_metadata?.display_name ?? 'Aficionado';
+
+  return (
+    <Layout>
+      <div className="space-y-8">
+        <section>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Hola, {name} 👋
+          </h1>
+          <p className="mt-2 text-sm text-muted sm:text-base">
+            Tu diario futbolero está listo. Próximamente podrás buscar partidos y crear Capsules.
+          </p>
+        </section>
+
+        <section className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+          {[
+            { label: 'Partidos vistos', value: '0' },
+            { label: 'Capsules', value: '0' },
+            { label: 'Valoración media', value: '—' },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-xl border border-border bg-surface-raised p-5"
+            >
+              <p className="text-2xl font-bold">{stat.value}</p>
+              <p className="mt-1 text-sm text-muted">{stat.label}</p>
+            </div>
+          ))}
+        </section>
+
+        <section className="rounded-xl border border-dashed border-border bg-surface-raised/50 p-6 text-center sm:p-8">
+          <p className="text-lg font-medium">Aún no tienes Capsules</p>
+          <p className="mt-2 text-sm text-muted">
+            Busca un partido y guarda tu primer recuerdo futbolero.
+          </p>
+        </section>
+      </div>
+    </Layout>
+  );
+}
