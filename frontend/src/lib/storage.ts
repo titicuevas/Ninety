@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 
+/** Bucket de Supabase Storage para fotos de Capsules (v1). */
 export const CAPSULE_PHOTOS_BUCKET = 'capsule-photos';
 
 export async function uploadCapsulePhoto(userId: string, file: File, capsuleId: string) {

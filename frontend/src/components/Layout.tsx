@@ -29,6 +29,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <User className="h-4 w-4" />
             </NavLink>
             <button
+              type="button"
               onClick={() => signOut()}
               className="text-muted-foreground transition-colors hover:text-foreground"
               aria-label="Cerrar sesión"

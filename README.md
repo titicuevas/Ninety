@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="frontend/public/favicon.svg" alt="Ninety" width="64" height="64" />
+  <img src="https://raw.githubusercontent.com/titicuevas/Ninety/main/frontend/public/favicon.svg" alt="Ninety" width="64" height="64" />
 </p>
 
 <h1 align="center">Ninety</h1>
@@ -10,14 +10,17 @@
 </p>
 
 <p align="center">
-  <a href="#-concepto">Concepto</a> •
-  <a href="#-stack">Stack</a> •
-  <a href="#-inicio-rápido">Inicio rápido</a> •
-  <a href="#-roadmap">Roadmap</a>
+  <a href="https://ninety.up.railway.app" target="_blank">🌐 Demo</a> •
+  <a href="https://ninety-api.up.railway.app/api/health" target="_blank">API</a> •
+  <a href="#concepto">Concepto</a> •
+  <a href="#stack">Stack</a> •
+  <a href="#inicio-rapido">Inicio rápido</a> •
+  <a href="#roadmap">Roadmap</a>
 </p>
 
 ---
 
+<a id="concepto"></a>
 ## ⚽ Concepto
 
 **Ninety** no es otra app de resultados como Sofascore o Flashscore. Es el lugar donde cada aficionado construye su propia historia futbolera.
@@ -46,6 +49,7 @@ El proyecto está separado en dos carpetas independientes que conviven en el mis
 | `frontend/` | React + TypeScript + Vite + Tailwind | 5173   |
 | `backend/`  | Node.js + Express + TypeScript       | 3001   |
 
+<a id="stack"></a>
 ## 🛠 Stack
 
 ### Frontend
@@ -66,6 +70,7 @@ El proyecto está separado en dos carpetas independientes que conviven en el mis
 - **Supabase** — PostgreSQL, Auth, Storage, Realtime, RLS
 - **football-data.org** — Datos de partidos, equipos y competiciones
 
+<a id="inicio-rapido"></a>
 ## 🚀 Inicio rápido
 
 ### Requisitos
@@ -118,11 +123,13 @@ npm run dev
 
 ## 🌍 Producción (Railway)
 
-| Servicio | URL |
-|----------|-----|
-| **Frontend** | https://ninety.up.railway.app |
-| **API** | https://ninety-api.up.railway.app |
-| **Health** | https://ninety-api.up.railway.app/api/health |
+| Servicio | URL | Estado |
+|----------|-----|--------|
+| **Frontend** | [ninety.up.railway.app](https://ninety.up.railway.app) | App React |
+| **API** | [ninety-api.up.railway.app](https://ninety-api.up.railway.app) | Express |
+| **Health** | [/api/health](https://ninety-api.up.railway.app/api/health) | ✅ Online |
+
+> Si el frontend muestra error 403, redeploy tras actualizar `frontend/vite.config.ts` (`preview.allowedHosts`).
 
 ### Variables en Railway
 
@@ -149,7 +156,29 @@ https://ninety.up.railway.app/auth/callback
 https://ninety.up.railway.app/**
 ```
 
-Guía completa de auth: [`docs/auth-setup.md`](docs/auth-setup.md)
+Guía completa de auth: [docs/auth-setup.md](docs/auth-setup.md)
+
+## 🩺 React Doctor
+
+Auditoría automática de calidad React (performance, accesibilidad, seguridad, mantenibilidad).
+
+```bash
+# Requiere Node >= 20.19
+nvm use
+npm run doctor              # escanear frontend
+npm run doctor:install      # instalar skill para Cursor + CI
+```
+
+| Comando | Descripción |
+|---------|-------------|
+| `npm run doctor` | Escaneo completo con detalle |
+| `npm run doctor:install` | Skill para Cursor + workflow GitHub Actions |
+
+- Skill del agente: `.agents/skills/react-doctor/`
+- CI en PRs: `.github/workflows/react-doctor.yml`
+- Documentación: [react.doctor](https://react.doctor)
+
+**Reglas que seguimos:** LazyMotion + `useReducedMotion`, botones con `type` explícito, componentes React 19 sin `forwardRef`, Storage preparado vía `useCapsuleStorage`.
 
 ## 📂 Estructura del proyecto
 
@@ -189,6 +218,7 @@ Ninety/
 | GET    | `/api/football/competitions`| Listar competiciones     |
 | GET    | `/api/football/teams?q=`    | Buscar equipos           |
 
+<a id="roadmap"></a>
 ## 📅 Roadmap
 
 ### ✅ v0.2 — Fundación (actual)

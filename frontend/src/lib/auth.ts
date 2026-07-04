@@ -1,8 +1,8 @@
 import { supabase } from '@/lib/supabase';
 
-export const AUTH_CALLBACK_PATH = '/auth/callback';
+const AUTH_CALLBACK_PATH = '/auth/callback';
 
-export function getAuthRedirectUrl(): string {
+function getAuthRedirectUrl(): string {
   return `${window.location.origin}${AUTH_CALLBACK_PATH}`;
 }
 

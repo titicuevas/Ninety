@@ -1,11 +1,13 @@
 import { Layout } from '@/components/Layout';
 import { Card, CardContent } from '@/components/ui/card';
+import { useCapsuleStorage } from '@/hooks/useCapsuleStorage';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuthInit';
 
 export function HomePage() {
   const { user } = useAuth();
   const { data: profile } = useProfile();
+  useCapsuleStorage();
 
   const name = profile?.display_name ?? user?.user_metadata?.display_name ?? 'Aficionado';
 

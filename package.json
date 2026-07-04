@@ -11,9 +11,21 @@
     "typecheck": "npm run typecheck --prefix backend && npm run typecheck --prefix frontend",
     "test": "npm run test --prefix backend",
     "check:secrets": "node scripts/check-secrets.mjs",
-    "seed:test-user": "node scripts/seed-test-user.mjs"
+    "seed:test-user": "node scripts/seed-test-user.mjs",
+    "doctor": "react-doctor frontend --verbose",
+    "doctor:install": "react-doctor install -y"
+  },
+  "engines": {
+    "node": ">=20.19.0"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "react-doctor": "^0.7.1"
+  },
+  "overrides": {
+    "@oxc-parser/binding-linux-x64-gnu": "0.135.0"
+  },
+  "optionalDependencies": {
+    "@oxc-parser/binding-linux-x64-gnu": "0.135.0"
   }
 }
