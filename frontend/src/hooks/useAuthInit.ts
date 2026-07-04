@@ -1,22 +1,37 @@
 import { useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { useAuthStore } from '../stores/authStore';
+import { validateSession } from '@/lib/auth';
+import { clearSession, loadSession } from '@/lib/session';
+import { useAuthStore } from '@/stores/authStore';
 
 export function useAuthInit() {
   const { setSession, setLoading } = useAuthStore();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
+    let active = true;
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setLoading(false);
-    });
+    async function bootstrap() {
+      const stored = loadSession();
+      if (!stored) {
+        if (active) setLoading(false);
+        return;
+      }
 
-    return () => listener.subscription.unsubscribe();
+      try {
+        await validateSession(stored.access_token);
+        if (active) setSession(stored);
+      } catch {
+        clearSession();
+        if (active) setSession(null);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void bootstrap();
+
+    return () => {
+      active = false;
+    };
   }, [setSession, setLoading]);
 }
 

@@ -135,10 +135,10 @@ npm run dev
 
 **Frontend** (`ninety`):
 ```env
-VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 VITE_API_URL=https://ninety-api.up.railway.app
 ```
+
+> El frontend ya no incluye el SDK de Supabase: la auth va por `/api/auth/*` en el backend.
 
 **Backend** (`ninety-api`):
 ```env

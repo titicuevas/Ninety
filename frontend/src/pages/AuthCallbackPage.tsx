@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { completeOAuthCallback } from '@/lib/auth';
+import { useAuthStore } from '@/stores/authStore';
 
 export function AuthCallbackPage() {
   const navigate = useNavigate();
+  const setSession = useAuthStore((s) => s.setSession);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -18,16 +20,21 @@ export function AuthCallbackPage() {
         return;
       }
 
-      const { data, error: sessionError } = await supabase.auth.getSession();
-
-      if (!active) return;
-
-      if (sessionError || !data.session) {
-        setError('No se pudo completar el inicio de sesión. Inténtalo de nuevo.');
+      const code = params.get('code');
+      if (!code) {
+        if (active) setError('No se pudo completar el inicio de sesión. Inténtalo de nuevo.');
         return;
       }
 
-      navigate('/home', { replace: true });
+      try {
+        const session = await completeOAuthCallback(code);
+        if (!active) return;
+        setSession(session);
+        navigate('/home', { replace: true });
+      } catch (err) {
+        if (!active) return;
+        setError(err instanceof Error ? err.message : 'No se pudo completar el inicio de sesión.');
+      }
     }
 
     void handleCallback();
@@ -35,7 +42,7 @@ export function AuthCallbackPage() {
     return () => {
       active = false;
     };
-  }, [navigate]);
+  }, [navigate, setSession]);
 
   if (error) {
     return (

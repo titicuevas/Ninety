@@ -1,24 +1,24 @@
 import { create } from 'zustand';
-import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { signOut as apiSignOut } from '@/lib/auth';
+import type { AuthSession, AuthUser } from '@/types/auth';
 
 interface AuthState {
-  user: User | null;
-  session: Session | null;
+  user: AuthUser | null;
+  session: AuthSession | null;
   loading: boolean;
-  setSession: (session: Session | null) => void;
+  setSession: (session: AuthSession | null) => void;
   setLoading: (loading: boolean) => void;
   signOut: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   session: null,
   loading: true,
   setSession: (session) => set({ session, user: session?.user ?? null }),
   setLoading: (loading) => set({ loading }),
   signOut: async () => {
-    await supabase.auth.signOut();
+    await apiSignOut(get().session?.access_token);
     set({ user: null, session: null });
   },
 }));

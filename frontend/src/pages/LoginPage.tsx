@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { signInWithGoogle } from '@/lib/auth';
-import { supabase } from '@/lib/supabase';
+import { loginWithPassword, signInWithGoogle } from '@/lib/auth';
+import { useAuthStore } from '@/stores/authStore';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -20,6 +20,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const setSession = useAuthStore((s) => s.setSession);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -34,31 +35,26 @@ export function LoginPage() {
     setError(null);
     setLoading(true);
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    });
-
-    setLoading(false);
-
-    if (authError) {
-      setError(authError.message);
-      return;
+    try {
+      const session = await loginWithPassword(data.email, data.password);
+      setSession(session);
+      navigate('/home');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión');
+    } finally {
+      setLoading(false);
     }
-
-    navigate('/home');
   };
 
   const handleGoogleSignIn = async () => {
     setError(null);
     setGoogleLoading(true);
 
-    const { error: authError } = await signInWithGoogle();
-
-    setGoogleLoading(false);
-
-    if (authError) {
-      setError(authError.message);
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      setGoogleLoading(false);
+      setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión con Google');
     }
   };
 

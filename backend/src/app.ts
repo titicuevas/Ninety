@@ -7,6 +7,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { footballRouter } from './routes/football.js';
 import { healthRouter } from './routes/health.js';
 import { profileRouter } from './routes/profile.js';
+import { authRouter } from './routes/auth.js';
 
 const footballLimiter = rateLimit({
   windowMs: 60_000,
@@ -24,6 +25,7 @@ export function createApp() {
   app.use(express.json({ limit: '1mb' }));
 
   app.use('/api/health', healthRouter);
+  app.use('/api/auth', authRouter);
   app.use('/api/profile', profileRouter);
   app.use('/api/football', footballLimiter, footballRouter);
 

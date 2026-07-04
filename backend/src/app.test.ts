@@ -49,6 +49,11 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('POST /api/auth/login valida el body', async () => {
+    const res = await request(createApp()).post('/api/auth/login').send({});
+    assert.equal(res.status, 400);
+  });
+
   it('no expone secret keys en respuestas de error', async () => {
     const res = await request(createApp())
       .get('/api/football/competitions')

@@ -14,7 +14,12 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}, token
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body.error ?? `Error ${response.status}`);
+    const message = typeof body.error === 'string' ? body.error : `Error ${response.status}`;
+    throw new Error(message);
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
   }
 
   return response.json();

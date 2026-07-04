@@ -1,20 +1,74 @@
-import { supabase } from '@/lib/supabase';
+import { apiFetch } from '@/lib/api';
+import { clearSession, consumePkceId, savePkceId, saveSession } from '@/lib/session';
+import type { AuthSession } from '@/types/auth';
 
-const AUTH_CALLBACK_PATH = '/auth/callback';
+interface AuthResponse {
+  session: AuthSession;
+}
 
-function getAuthRedirectUrl(): string {
-  return `${window.location.origin}${AUTH_CALLBACK_PATH}`;
+interface OAuthStartResponse {
+  url: string;
+  pkceId: string;
+}
+
+export async function loginWithPassword(email: string, password: string) {
+  const { session } = await apiFetch<AuthResponse>('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+  saveSession(session);
+  return session;
+}
+
+export async function registerWithPassword(email: string, password: string, display_name: string) {
+  const data = await apiFetch<AuthResponse & { message?: string; session: AuthSession | null }>(
+    '/api/auth/register',
+    {
+      method: 'POST',
+      body: JSON.stringify({ email, password, display_name }),
+    },
+  );
+
+  if (data.session) {
+    saveSession(data.session);
+  }
+
+  return data;
 }
 
 export async function signInWithGoogle() {
-  return supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: getAuthRedirectUrl(),
-      queryParams: {
-        access_type: 'offline',
-        prompt: 'select_account',
-      },
-    },
+  const { url, pkceId } = await apiFetch<OAuthStartResponse>('/api/auth/oauth/google', {
+    method: 'POST',
   });
+  savePkceId(pkceId);
+  window.location.assign(url);
+}
+
+export async function completeOAuthCallback(code: string) {
+  const pkceId = consumePkceId();
+  if (!pkceId) {
+    throw new Error('La sesión OAuth expiró. Inténtalo de nuevo.');
+  }
+
+  const { session } = await apiFetch<AuthResponse>('/api/auth/oauth/exchange', {
+    method: 'POST',
+    body: JSON.stringify({ code, pkceId }),
+  });
+  saveSession(session);
+  return session;
+}
+
+export async function validateSession(accessToken: string) {
+  return apiFetch<{ user: AuthSession['user'] }>(
+    '/api/auth/session',
+    {},
+    accessToken,
+  );
+}
+
+export async function signOut(accessToken?: string | null) {
+  if (accessToken) {
+    await apiFetch('/api/auth/logout', { method: 'POST' }, accessToken).catch(() => undefined);
+  }
+  clearSession();
 }

@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { signInWithGoogle } from '@/lib/auth';
-import { supabase } from '@/lib/supabase';
+import { registerWithPassword, signInWithGoogle } from '@/lib/auth';
+import { useAuthStore } from '@/stores/authStore';
 
 const registerSchema = z
   .object({
@@ -27,6 +27,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 export function RegisterPage() {
   const navigate = useNavigate();
+  const setSession = useAuthStore((s) => s.setSession);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -41,30 +42,31 @@ export function RegisterPage() {
     setError(null);
     setLoading(true);
 
-    const { error: authError } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        data: { display_name: data.display_name },
-      },
-    });
-
-    setLoading(false);
-
-    if (authError) {
-      setError(authError.message);
-      return;
+    try {
+      const result = await registerWithPassword(data.email, data.password, data.display_name);
+      if (result.session) {
+        setSession(result.session);
+        navigate('/profile');
+      } else {
+        setError(result.message ?? 'Revisa tu email para confirmar la cuenta');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo crear la cuenta');
+    } finally {
+      setLoading(false);
     }
-
-    navigate('/profile');
   };
 
   const signInWithGoogleHandler = async () => {
     setError(null);
     setGoogleLoading(true);
-    const { error: authError } = await signInWithGoogle();
-    setGoogleLoading(false);
-    if (authError) setError(authError.message);
+
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      setGoogleLoading(false);
+      setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión con Google');
+    }
   };
 
   return (

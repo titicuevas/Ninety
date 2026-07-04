@@ -10,5 +10,8 @@ export function useProfile() {
     queryKey: ['profile', 'me'],
     queryFn: () => apiFetch<Profile>('/api/profile/me', {}, session?.access_token),
     enabled: !!session,
+    refetchOnWindowFocus: true,
+    // Sincroniza cambios desde otro dispositivo sin suscripción directa a Supabase en el navegador.
+    refetchInterval: 60_000,
   });
 }
