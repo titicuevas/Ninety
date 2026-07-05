@@ -54,6 +54,13 @@ describe('API', () => {
     assert.equal(res.status, 400);
   });
 
+  it('GET / responde página de bienvenida', async () => {
+    const res = await request(createApp()).get('/');
+    assert.equal(res.status, 200);
+    assert.match(res.text, /Ninety API/);
+    assert.match(res.text, /Ir a Ninety/);
+  });
+
   it('no expone secret keys en respuestas de error', async () => {
     const res = await request(createApp())
       .get('/api/football/competitions')

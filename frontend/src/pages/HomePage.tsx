@@ -1,4 +1,6 @@
+import { Link } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuthInit';
@@ -42,6 +44,9 @@ export function HomePage() {
             <p className="mt-2 text-sm text-muted-foreground">
               Busca un partido y guarda tu primer recuerdo futbolero.
             </p>
+            <Button asChild className="mt-4">
+              <Link to="/search">Buscar partido</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>

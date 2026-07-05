@@ -1,109 +1,80 @@
-import { Link, Navigate } from 'react-router-dom';
-import { LazyMotion, domAnimation, m, useReducedMotion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { UnderConstructionIllustration } from '@/components/UnderConstructionIllustration';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useAuth } from '@/hooks/useAuthInit';
 
-const features = [
-  { title: 'Guarda recuerdos', desc: 'Valoración, fotos y con quién lo viste' },
-  { title: 'Tu historia', desc: 'Estadísticas personales de aficionado' },
-  { title: 'Comparte', desc: 'Revive tus mejores partidos con amigos' },
-];
+const roadmap = [
+  { emoji: '🔍', title: 'Buscar partidos', desc: 'Encuentra cualquier partido que hayas visto' },
+  { emoji: '📸', title: 'Capsules', desc: 'Fotos, nota y con quién lo viviste' },
+  { emoji: '📊', title: 'Tu Wrapped', desc: 'Estadísticas de aficionado' },
+] as const;
 
 export function LandingPage() {
-  const { user, loading } = useAuth();
-  const shouldReduceMotion = useReducedMotion();
-
-  if (!loading && user) {
-    return <Navigate to="/home" replace />;
-  }
-
-  const fadeUp = shouldReduceMotion
-    ? { initial: false, animate: { opacity: 1, y: 0 } }
-    : { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.6 } };
-
-  const fadeScale = shouldReduceMotion
-    ? { initial: false, animate: { opacity: 1, scale: 1 } }
-    : {
-        initial: { opacity: 0, scale: 0.96 },
-        animate: { opacity: 1, scale: 1 },
-        transition: { duration: 0.7, delay: 0.15 },
-      };
-
-  const fadeSection = shouldReduceMotion
-    ? { initial: false, animate: { opacity: 1, y: 0 } }
-    : { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.6, delay: 0.3 } };
-
   return (
-    <LazyMotion features={domAnimation}>
-      <div className="relative min-h-screen overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--primary)_0%,_transparent_55%)] opacity-15" />
+    <div className="landing-page min-h-screen bg-background text-foreground">
+      <div className="mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-8 sm:px-6 sm:py-12">
+        <header className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
+              90
+            </span>
+            <span className="text-xl font-semibold tracking-tight">Ninety</span>
+          </div>
+          <Link to="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+            Iniciar sesión
+          </Link>
+        </header>
 
-        <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-          <header className="mb-8 flex items-center justify-between lg:mb-12">
-            <Link to="/" className="flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground sm:h-10 sm:w-10">
-                90
-              </span>
-              <span className="text-lg font-semibold tracking-tight sm:text-xl">Ninety</span>
-            </Link>
-            <Link to="/login" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-              Iniciar sesión
-            </Link>
-          </header>
-
-          <div className="flex flex-1 flex-col items-center gap-10 lg:flex-row lg:items-center lg:gap-14">
-            <m.div className="w-full max-w-xl flex-1 text-center lg:text-left" {...fadeUp}>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-primary sm:text-sm">
-                Bienvenido a Ninety
-              </p>
-
-              <h1 className="mb-4 text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
-                Tu diario futbolero
-              </h1>
-
-              <p className="mb-8 text-base leading-relaxed text-muted-foreground sm:text-lg">
-                Guarda y revive todos los partidos que has visto. Letterboxd + Strava + Spotify Wrapped,
-                pero para el fútbol.
-              </p>
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
-                <Button asChild className="w-full min-w-44 sm:w-auto">
-                  <Link to="/register">Empezar gratis</Link>
-                </Button>
-                <Button asChild variant="secondary" className="w-full min-w-44 sm:w-auto">
-                  <Link to="/login">Iniciar sesión</Link>
-                </Button>
-              </div>
-            </m.div>
-
-            <m.div className="w-full max-w-2xl flex-1" {...fadeScale}>
-              <Card className="overflow-hidden border-border shadow-2xl shadow-emerald-950/20">
-                <img
-                  src="/hero-cover.svg"
-                  alt="Estadio de fútbol con recuerdos de partidos guardados en Ninety"
-                  className="h-auto w-full object-cover"
-                  width={1200}
-                  height={800}
-                  loading="eager"
-                  fetchPriority="high"
-                />
-              </Card>
-            </m.div>
+        <main className="flex flex-1 flex-col items-center text-center">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/35 bg-primary/10 px-4 py-1.5 text-sm font-medium text-emerald-300">
+            🏗️ En desarrollo — v0.2
           </div>
 
-          <m.section className="mt-12 grid gap-4 sm:grid-cols-3 sm:gap-6 lg:mt-16" {...fadeSection}>
-            {features.map((feature) => (
-              <Card key={feature.title} className="bg-card/60">
-                <CardContent className="p-4 text-center sm:p-5 lg:text-left">
-                  <h2 className="text-sm font-semibold sm:text-base">{feature.title}</h2>
-                  <p className="mt-1 text-xs text-muted-foreground sm:text-sm">{feature.desc}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </m.section>
-        </div>
+          <h1 className="mb-3 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
+            Estamos montando
+            <span className="mt-1 block text-primary">tu diario futbolero</span>
+          </h1>
+
+          <p className="mb-8 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
+            Como un estadio antes del primer partido: las gradas se están preparando. Muy pronto podrás
+            guardar y revivir todos los partidos que has visto.
+          </p>
+
+          <div className="mb-8 w-full max-w-md rounded-2xl border border-border bg-zinc-900/60 p-4 shadow-lg shadow-black/20">
+            <UnderConstructionIllustration className="h-auto w-full" />
+          </div>
+
+          <Card className="mb-8 w-full border-border bg-card text-left">
+            <CardContent className="p-5 sm:p-6">
+              <p className="mb-4 text-center text-xs font-bold uppercase tracking-wider text-primary">
+                Qué viene
+              </p>
+              <ul className="grid gap-4 sm:grid-cols-3">
+                {roadmap.map((item) => (
+                  <li key={item.title} className="text-center sm:text-left">
+                    <span className="text-2xl">{item.emoji}</span>
+                    <p className="mt-1 text-sm font-semibold text-foreground">{item.title}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{item.desc}</p>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button asChild className="min-w-44">
+              <Link to="/register">Quiero probarlo</Link>
+            </Button>
+            <Button asChild variant="secondary" className="min-w-44">
+              <Link to="/login">Ya tengo cuenta</Link>
+            </Button>
+          </div>
+
+          <p className="mt-8 text-xs text-muted-foreground">
+            Letterboxd + Strava + Spotify Wrapped, pero para el fútbol ⚽
+          </p>
+        </main>
       </div>
-    </LazyMotion>
+    </div>
   );
 }

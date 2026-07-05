@@ -6,6 +6,7 @@ import { env } from './config/loadEnv.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { footballRouter } from './routes/football.js';
 import { healthRouter } from './routes/health.js';
+import { indexRouter } from './routes/index.js';
 import { profileRouter } from './routes/profile.js';
 import { authRouter } from './routes/auth.js';
 
@@ -24,6 +25,7 @@ export function createApp() {
   app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
   app.use(express.json({ limit: '1mb' }));
 
+  app.use('/', indexRouter);
   app.use('/api/health', healthRouter);
   app.use('/api/auth', authRouter);
   app.use('/api/profile', profileRouter);

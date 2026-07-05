@@ -3,6 +3,7 @@ import { validateSession } from '@/lib/auth';
 import { clearSession, loadSession } from '@/lib/session';
 import { useAuthStore } from '@/stores/authStore';
 
+/** Solo en rutas que necesitan sesión — no bloquea la landing pública. */
 export function useAuthInit() {
   const { setSession, setLoading } = useAuthStore();
 
@@ -10,11 +11,17 @@ export function useAuthInit() {
     let active = true;
 
     async function bootstrap() {
+      setLoading(true);
       const stored = loadSession();
+
       if (!stored) {
         if (active) setLoading(false);
         return;
       }
+
+      const timeout = window.setTimeout(() => {
+        if (active) setLoading(false);
+      }, 4000);
 
       try {
         await validateSession(stored.access_token);
@@ -23,6 +30,7 @@ export function useAuthInit() {
         clearSession();
         if (active) setSession(null);
       } finally {
+        window.clearTimeout(timeout);
         if (active) setLoading(false);
       }
     }

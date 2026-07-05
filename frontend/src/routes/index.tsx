@@ -6,6 +6,7 @@ import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { RegisterPage } from '@/pages/RegisterPage';
+import { SearchMatchPage } from '@/pages/SearchMatchPage';
 
 export function AppRoutes() {
   return (
@@ -21,6 +22,7 @@ export function AppRoutes() {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/home" element={<HomePage />} />
+        <Route path="/search" element={<SearchMatchPage />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Route>
 

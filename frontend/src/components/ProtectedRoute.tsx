@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuthInit';
+import { useAuthInit, useAuth } from '@/hooks/useAuthInit';
 
 function LoadingSpinner() {
   return (
@@ -10,6 +10,7 @@ function LoadingSpinner() {
 }
 
 export function ProtectedRoute() {
+  useAuthInit();
   const { user, loading } = useAuth();
 
   if (loading) return <LoadingSpinner />;
@@ -18,6 +19,7 @@ export function ProtectedRoute() {
 }
 
 export function GuestRoute() {
+  useAuthInit();
   const { user, loading } = useAuth();
 
   if (loading) return <LoadingSpinner />;

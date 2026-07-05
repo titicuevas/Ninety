@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router-dom';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, Search, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuthInit';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +24,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <NavLink to="/home" className={navLinkClass} end>
               <span className="hidden sm:inline">Inicio</span>
               <span className="sm:hidden">Home</span>
+            </NavLink>
+            <NavLink to="/search" className={navLinkClass}>
+              <Search className="h-4 w-4" aria-hidden />
+              <span className="sr-only">Buscar partido</span>
             </NavLink>
             <NavLink to="/profile" className={navLinkClass} aria-label="Perfil">
               <User className="h-4 w-4" />

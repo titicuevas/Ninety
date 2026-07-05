@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { AppRoutes } from '@/routes';
-import { useAuthInit } from '@/hooks/useAuthInit';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -9,16 +8,11 @@ const queryClient = new QueryClient({
   },
 });
 
-function AppContent() {
-  useAuthInit();
-  return <AppRoutes />;
-}
-
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AppContent />
+        <AppRoutes />
       </BrowserRouter>
     </QueryClientProvider>
   );
