@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { UnderConstructionIllustration } from '@/components/UnderConstructionIllustration';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button-variants';
 import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 const roadmap = [
   { emoji: '🔍', title: 'Buscar partidos', desc: 'Encuentra cualquier partido que hayas visto' },
@@ -62,12 +63,12 @@ export function LandingPage() {
           </Card>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild className="min-w-44">
-              <Link to="/register">Quiero probarlo</Link>
-            </Button>
-            <Button asChild variant="secondary" className="min-w-44">
-              <Link to="/login">Ya tengo cuenta</Link>
-            </Button>
+            <Link to="/register" className={cn(buttonVariants(), 'min-w-44 text-center')}>
+              Quiero probarlo
+            </Link>
+            <Link to="/login" className={cn(buttonVariants({ variant: 'secondary' }), 'min-w-44 text-center')}>
+              Ya tengo cuenta
+            </Link>
           </div>
 
           <p className="mt-8 text-xs text-muted-foreground">
