@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
+import { LegalFooter } from '@/components/LegalFooter';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
@@ -100,6 +101,8 @@ export function LoginPage() {
             Regístrate
           </Link>
         </p>
+
+        <LegalFooter className="mt-8" />
       </div>
     </div>
   );

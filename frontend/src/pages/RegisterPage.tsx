@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
+import { LegalFooter } from '@/components/LegalFooter';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
@@ -98,6 +99,18 @@ export function RegisterPage() {
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Al crear tu cuenta aceptas los{' '}
+            <Link to="/terminos" className="text-primary hover:underline">
+              Términos de uso
+            </Link>{' '}
+            y la{' '}
+            <Link to="/privacidad" className="text-primary hover:underline">
+              Política de privacidad
+            </Link>
+            .
+          </p>
+
           <Button type="submit" loading={loading} className="w-full">
             Crear cuenta
           </Button>
@@ -109,6 +122,8 @@ export function RegisterPage() {
             Inicia sesión
           </Link>
         </p>
+
+        <LegalFooter className="mt-8" />
       </div>
     </div>
   );

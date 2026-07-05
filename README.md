@@ -221,23 +221,20 @@ Ninety/
 <a id="roadmap"></a>
 ## 📅 Roadmap
 
-### ✅ v0.2 — Fundación (actual)
-- [x] Estructura frontend/backend separada
-- [x] Autenticación (email + Google OAuth)
-- [x] Landing pública (`/`) + dashboard (`/home`)
-- [x] Perfil de usuario editable
-- [x] shadcn/ui + Radix UI + Express 5
-- [x] Integración football-data.org (proxy API)
-- [x] Storage + Realtime preparados (migración SQL)
-- [x] Tests + seguridad (`check:secrets`)
+### ✅ v1 — MVP (beta abierta)
+- [x] Buscar partidos (ligas, copas, Champions)
+- [x] Crear y editar Capsules
+- [x] Mis Capsules + feed social básico
+- [x] Estadísticas básicas en Home
+- [x] Perfil editable
 - [x] Deploy en Railway
+- [x] Páginas legales (privacidad y términos)
 
-### 🔜 v1 — MVP
-- [ ] Buscar partidos
-- [ ] Crear Capsule (recuerdo de partido)
-- [ ] Mis Capsules
-- [ ] Feed social básico
-- [ ] Estadísticas básicas
+### 🔜 v1.1 — Pulido beta
+- [ ] Google OAuth
+- [ ] Fotos en Capsules
+- [ ] Perfiles públicos
+- [ ] Wrapped visual mejorado
 
 ### 🔮 v2 — Social
 - [ ] Fotos
