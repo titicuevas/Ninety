@@ -1,6 +1,10 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute, GuestRoute } from '@/components/ProtectedRoute';
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
+import { CapsulesPage } from '@/pages/CapsulesPage';
+import { CreateCapsulePage } from '@/pages/CreateCapsulePage';
+import { EditCapsulePage } from '@/pages/EditCapsulePage';
+import { FeedPage } from '@/pages/FeedPage';
 import { HomePage } from '@/pages/HomePage';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/LoginPage';
@@ -22,7 +26,11 @@ export function AppRoutes() {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/home" element={<HomePage />} />
+        <Route path="/feed" element={<FeedPage />} />
         <Route path="/search" element={<SearchMatchPage />} />
+        <Route path="/capsules" element={<CapsulesPage />} />
+        <Route path="/capsules/new" element={<CreateCapsulePage />} />
+        <Route path="/capsules/:id/edit" element={<EditCapsulePage />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Route>
 

@@ -2,10 +2,11 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface GoogleSignInButtonProps {
-  onClick: () => void;
+  onClick?: () => void;
   loading?: boolean;
   className?: string;
   label?: string;
+  disabled?: boolean;
 }
 
 export function GoogleSignInButton({
@@ -13,6 +14,7 @@ export function GoogleSignInButton({
   loading,
   className,
   label = 'Continuar con Google',
+  disabled,
 }: GoogleSignInButtonProps) {
   return (
     <Button
@@ -21,6 +23,7 @@ export function GoogleSignInButton({
       className={cn('w-full gap-3 bg-background hover:bg-secondary', className)}
       onClick={onClick}
       loading={loading}
+      disabled={disabled}
     >
       {!loading && (
         <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { loginWithPassword, signInWithGoogle } from '@/lib/auth';
+import { loginWithPassword } from '@/lib/auth';
 import { useAuthStore } from '@/stores/authStore';
 
 const loginSchema = z.object({
@@ -23,7 +23,6 @@ export function LoginPage() {
   const setSession = useAuthStore((s) => s.setSession);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
 
   const {
     register,
@@ -46,18 +45,6 @@ export function LoginPage() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setError(null);
-    setGoogleLoading(true);
-
-    try {
-      await signInWithGoogle();
-    } catch (err) {
-      setGoogleLoading(false);
-      setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión con Google');
-    }
-  };
-
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
@@ -72,7 +59,15 @@ export function LoginPage() {
           <p className="mt-1 text-sm text-muted-foreground">Inicia sesión en tu diario futbolero</p>
         </div>
 
-        <GoogleSignInButton onClick={handleGoogleSignIn} loading={googleLoading} className="mb-6" />
+        <GoogleSignInButton
+          label="Google — próximamente"
+          disabled
+          className="mb-2 opacity-60"
+        />
+
+        <p className="mb-6 text-center text-xs text-muted-foreground">
+          Por ahora usa email y contraseña. Google lo activaremos más adelante.
+        </p>
 
         <div className="mb-6 flex items-center gap-3">
           <Separator className="flex-1" />
@@ -88,7 +83,11 @@ export function LoginPage() {
             <Input type="password" autoComplete="current-password" {...register('password')} />
           </FormField>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && (
+            <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </div>
+          )}
 
           <Button type="submit" loading={loading} className="w-full">
             Iniciar sesión

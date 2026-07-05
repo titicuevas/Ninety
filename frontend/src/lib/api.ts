@@ -14,8 +14,13 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}, token
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    const message = typeof body.error === 'string' ? body.error : `Error ${response.status}`;
-    throw new Error(message);
+    if (typeof body.error === 'string') {
+      throw new Error(body.error);
+    }
+    if (typeof body.error === 'object' && body.error !== null) {
+      throw new Error('Datos inválidos. Revisa el formulario.');
+    }
+    throw new Error(`Error ${response.status}`);
   }
 
   if (response.status === 204) {

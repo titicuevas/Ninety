@@ -1,10 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { Router } from 'express';
-import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { env } from '../config/loadEnv.js';
 import { createPkceStorage, removePkceStorage } from '../lib/pkceStorage.js';
-import { createUserClient, supabaseAnon } from '../lib/supabase.js';
+import { syncUserProfile } from '../lib/syncUserProfile.js';
+import { createServiceClient, createUserClient, supabaseAnon } from '../lib/supabase.js';
 
 export const authRouter = Router();
 
@@ -25,7 +25,7 @@ const oauthExchangeSchema = z.object({
 });
 
 function createPkceClient(sessionId: string) {
-  return createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+  return createServiceClient(env.SUPABASE_ANON_KEY, {
     auth: {
       storage: createPkceStorage(sessionId),
       flowType: 'pkce',
@@ -48,6 +48,17 @@ function serializeSession(session: NonNullable<Awaited<ReturnType<typeof supabas
   };
 }
 
+async function finalizeAuthSession(
+  session: NonNullable<Awaited<ReturnType<typeof supabaseAnon.auth.signInWithPassword>>['data']['session']>,
+) {
+  await syncUserProfile({
+    id: session.user.id,
+    email: session.user.email,
+    user_metadata: session.user.user_metadata as Record<string, unknown>,
+  });
+  return serializeSession(session);
+}
+
 authRouter.post('/login', async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -62,7 +73,7 @@ authRouter.post('/login', async (req, res) => {
     return;
   }
 
-  res.json({ session: serializeSession(data.session) });
+  res.json({ session: await finalizeAuthSession(data.session) });
 });
 
 authRouter.post('/register', async (req, res) => {
@@ -75,7 +86,7 @@ authRouter.post('/register', async (req, res) => {
   const { data, error } = await supabaseAnon.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
-    options: { data: { display_name: parsed.data.display_name } },
+    options: { data: { display_name: parsed.data.display_name, full_name: parsed.data.display_name } },
   });
 
   if (error) {
@@ -87,6 +98,16 @@ authRouter.post('/register', async (req, res) => {
     res.json({ session: null, message: 'Revisa tu email para confirmar la cuenta' });
     return;
   }
+
+  await syncUserProfile({
+    id: data.session.user.id,
+    email: data.session.user.email,
+    user_metadata: {
+      ...(data.session.user.user_metadata as Record<string, unknown>),
+      display_name: parsed.data.display_name,
+      full_name: parsed.data.display_name,
+    },
+  });
 
   res.json({ session: serializeSession(data.session) });
 });
@@ -143,6 +164,25 @@ authRouter.post('/oauth/google', async (_req, res) => {
     return;
   }
 
+  const probe = await fetch(data.url, { method: 'GET', redirect: 'manual' });
+  const contentType = probe.headers.get('content-type') ?? '';
+
+  if (!probe.ok && contentType.includes('application/json')) {
+    const body = (await probe.json().catch(() => null)) as { msg?: string; error_code?: string } | null;
+    removePkceStorage(pkceId);
+
+    if (body?.msg?.toLowerCase().includes('not enabled') || body?.error_code === 'validation_failed') {
+      res.status(503).json({
+        error:
+          'Google no está activado en Supabase. Ve a Authentication → Providers → Google y configura Client ID y Secret.',
+      });
+      return;
+    }
+
+    res.status(400).json({ error: body?.msg ?? 'No se pudo iniciar sesión con Google' });
+    return;
+  }
+
   res.json({ url: data.url, pkceId });
 });
 
@@ -162,5 +202,5 @@ authRouter.post('/oauth/exchange', async (req, res) => {
     return;
   }
 
-  res.json({ session: serializeSession(data.session) });
+  res.json({ session: await finalizeAuthSession(data.session) });
 });

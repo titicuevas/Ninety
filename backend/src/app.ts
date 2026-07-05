@@ -4,6 +4,7 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { env } from './config/loadEnv.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { capsulesRouter } from './routes/capsules.js';
 import { footballRouter } from './routes/football.js';
 import { healthRouter } from './routes/health.js';
 import { indexRouter } from './routes/index.js';
@@ -29,6 +30,7 @@ export function createApp() {
   app.use('/api/health', healthRouter);
   app.use('/api/auth', authRouter);
   app.use('/api/profile', profileRouter);
+  app.use('/api/capsules', capsulesRouter);
   app.use('/api/football', footballLimiter, footballRouter);
 
   app.use(errorHandler);

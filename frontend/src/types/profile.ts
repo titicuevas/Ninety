@@ -18,5 +18,4 @@ export interface UpdateProfileInput {
   favorite_team?: string | null;
   country?: string | null;
   city?: string | null;
-  bio?: string | null;
 }

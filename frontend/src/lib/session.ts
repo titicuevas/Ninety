@@ -23,10 +23,6 @@ export function clearSession() {
   localStorage.removeItem(SESSION_KEY);
 }
 
-export function savePkceId(pkceId: string) {
-  sessionStorage.setItem(PKCE_KEY, pkceId);
-}
-
 export function consumePkceId(): string | null {
   const pkceId = sessionStorage.getItem(PKCE_KEY);
   sessionStorage.removeItem(PKCE_KEY);

@@ -44,8 +44,55 @@ describe('API', () => {
     assert.match(res.body.error, /Token/);
   });
 
+  it('GET /api/football/teams/competitions requiere auth', async () => {
+    const res = await request(createApp()).get('/api/football/teams/competitions?q=betis');
+    assert.equal(res.status, 401);
+  });
+
+  it('GET /api/football/competitions/curated requiere auth', async () => {
+    const res = await request(createApp()).get('/api/football/competitions/curated');
+    assert.equal(res.status, 401);
+  });
+
+  it('GET /api/football/matches/search valida parámetros', async () => {
+    const res = await request(createApp()).get('/api/football/matches/search');
+    assert.equal(res.status, 401);
+  });
+
   it('GET /api/profile/me requiere auth', async () => {
     const res = await request(createApp()).get('/api/profile/me');
+    assert.equal(res.status, 401);
+  });
+
+  it('GET /api/capsules/me requiere auth', async () => {
+    const res = await request(createApp()).get('/api/capsules/me');
+    assert.equal(res.status, 401);
+  });
+
+  it('GET /api/capsules/feed requiere auth', async () => {
+    const res = await request(createApp()).get('/api/capsules/feed');
+    assert.equal(res.status, 401);
+  });
+
+  it('POST /api/capsules valida el body', async () => {
+    const res = await request(createApp()).post('/api/capsules').send({});
+    assert.equal(res.status, 401);
+  });
+
+  it('GET /api/capsules/:id requiere auth', async () => {
+    const res = await request(createApp()).get('/api/capsules/00000000-0000-4000-8000-000000000001');
+    assert.equal(res.status, 401);
+  });
+
+  it('PATCH /api/capsules/:id requiere auth', async () => {
+    const res = await request(createApp())
+      .patch('/api/capsules/00000000-0000-4000-8000-000000000001')
+      .send({ watched_at: '2025-01-01' });
+    assert.equal(res.status, 401);
+  });
+
+  it('DELETE /api/capsules/:id requiere auth', async () => {
+    const res = await request(createApp()).delete('/api/capsules/00000000-0000-4000-8000-000000000001');
     assert.equal(res.status, 401);
   });
 

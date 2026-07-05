@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import { normalizeProfile, profileUpdatePayload } from '../lib/profileNormalize.js';
+import { syncUserProfile } from '../lib/syncUserProfile.js';
 import { createUserClient, supabaseAnon } from '../lib/supabase.js';
 import { requireAuth, type AuthRequest } from '../middleware/auth.js';
 
@@ -17,7 +19,6 @@ const updateProfileSchema = z.object({
   favorite_team: z.string().max(100).optional().nullable(),
   country: z.string().max(100).optional().nullable(),
   city: z.string().max(100).optional().nullable(),
-  bio: z.string().max(500).optional().nullable(),
 });
 
 function getAccessToken(req: AuthRequest): string | null {
@@ -32,6 +33,16 @@ profileRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   }
 
   const supabase = createUserClient(token);
+  const { data: authData } = await supabaseAnon.auth.getUser(token);
+
+  if (authData.user) {
+    await syncUserProfile({
+      id: authData.user.id,
+      email: authData.user.email,
+      user_metadata: authData.user.user_metadata as Record<string, unknown>,
+    });
+  }
+
   const { data, error } = await supabase.from('profiles').select('*').eq('id', req.userId!).single();
 
   if (error) {
@@ -39,7 +50,7 @@ profileRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  res.json(data);
+  res.json(normalizeProfile(data));
 });
 
 profileRouter.patch('/me', requireAuth, async (req: AuthRequest, res) => {
@@ -59,7 +70,7 @@ profileRouter.patch('/me', requireAuth, async (req: AuthRequest, res) => {
   const supabase = createUserClient(token);
   const { data, error } = await supabase
     .from('profiles')
-    .update({ ...parsed.data, updated_at: new Date().toISOString() })
+    .update(profileUpdatePayload(parsed.data))
     .eq('id', req.userId!)
     .select()
     .single();
@@ -73,13 +84,13 @@ profileRouter.patch('/me', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  res.json(data);
+  res.json(normalizeProfile(data));
 });
 
 profileRouter.get('/:username', async (req, res) => {
   const { data, error } = await supabaseAnon
     .from('profiles')
-    .select('id, username, display_name, avatar_url, favorite_team, country, city, bio, created_at')
+    .select('id, username, full_name, avatar_url, favorite_team, country, city, created_at')
     .eq('username', req.params.username)
     .single();
 
@@ -88,5 +99,5 @@ profileRouter.get('/:username', async (req, res) => {
     return;
   }
 
-  res.json(data);
+  res.json(normalizeProfile(data));
 });

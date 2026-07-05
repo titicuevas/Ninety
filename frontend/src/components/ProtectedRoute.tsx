@@ -14,7 +14,7 @@ export function ProtectedRoute() {
   const { user, loading } = useAuth();
 
   if (loading) return <LoadingSpinner />;
-  if (!user) return <Navigate to="/" replace />;
+  if (!user) return <Navigate to="/login" replace />;
   return <Outlet />;
 }
 
