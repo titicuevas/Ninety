@@ -3,4 +3,5 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
+startCommand = "npx serve dist -s -l tcp://0.0.0.0:$PORT"
 restartPolicyType = "ON_FAILURE"
