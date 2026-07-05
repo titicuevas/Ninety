@@ -1,9 +1,23 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { z } from 'zod';
+import { deleteCapsulePhotoByUrl, uploadCapsulePhotoBuffer } from '../lib/ensureStorage.js';
 import { createUserClient } from '../lib/supabase.js';
 import { requireAuth, type AuthRequest } from '../middleware/auth.js';
 
 export const capsulesRouter = Router();
+
+const photoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024, files: 6 },
+  fileFilter: (_req, file, cb) => {
+    if (['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error('Solo JPG, PNG o WebP.'));
+  },
+});
 
 const createCapsuleSchema = z.object({
   match_id: z.number().int().positive(),
@@ -18,6 +32,7 @@ const createCapsuleSchema = z.object({
   watched_at: z.string().date(),
   rating: z.number().int().min(1).max(5).optional().nullable(),
   note: z.string().max(2000).optional().nullable(),
+  photo_urls: z.array(z.string().url().max(2048)).max(6).optional(),
 });
 
 const feedQuerySchema = z.object({
@@ -111,10 +126,52 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   res.json({ capsules: data ?? [] });
 });
 
+capsulesRouter.post('/photos', requireAuth, photoUpload.array('photos', 6), async (req: AuthRequest, res) => {
+  const files = req.files as Express.Multer.File[] | undefined;
+  if (!files?.length) {
+    res.status(400).json({ error: 'No se recibió ninguna foto.' });
+    return;
+  }
+
+  try {
+    const urls = await Promise.all(
+      files.map((file) => uploadCapsulePhotoBuffer(req.userId!, file.buffer, file.mimetype)),
+    );
+    res.status(201).json({ urls });
+  } catch (err) {
+    res.status(400).json({
+      error: err instanceof Error ? err.message : 'No se pudieron subir las fotos',
+    });
+  }
+});
+
+capsulesRouter.delete('/photos', requireAuth, async (req: AuthRequest, res) => {
+  const parsed = z.object({ url: z.string().url() }).safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'URL inválida' });
+    return;
+  }
+
+  if (!parsed.data.url.includes(`/${req.userId}/`)) {
+    res.status(403).json({ error: 'No puedes borrar esta foto' });
+    return;
+  }
+
+  try {
+    await deleteCapsulePhotoByUrl(parsed.data.url);
+    res.status(204).end();
+  } catch (err) {
+    res.status(400).json({
+      error: err instanceof Error ? err.message : 'No se pudo borrar la foto',
+    });
+  }
+});
+
 const updateCapsuleSchema = z.object({
   watched_at: z.string().date().optional(),
   rating: z.number().int().min(1).max(5).optional().nullable(),
   note: z.string().max(2000).optional().nullable(),
+  photo_urls: z.array(z.string().url().max(2048)).max(6).optional(),
 });
 
 capsulesRouter.get('/:id', requireAuth, async (req: AuthRequest, res) => {
@@ -159,6 +216,7 @@ capsulesRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
     .insert({
       user_id: req.userId!,
       ...parsed.data,
+      photo_urls: parsed.data.photo_urls ?? [],
     })
     .select()
     .single();
@@ -166,6 +224,20 @@ capsulesRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
   if (error) {
     if (error.code === '23505') {
       res.status(409).json({ error: 'Ya guardaste este partido en tu diario' });
+      return;
+    }
+    if (error.message.includes('schema cache') || error.message.includes('Could not find')) {
+      res.status(503).json({
+        error:
+          'La base de datos necesita actualizarse. Ejecuta npm run verify:capsules --prefix backend o la migración 20250705170000 en Supabase.',
+      });
+      return;
+    }
+    if (error.message.includes('invalid input syntax for type uuid')) {
+      res.status(503).json({
+        error:
+          'La columna match_id en Supabase tiene tipo incorrecto. Ejecuta la migración 20250705190000_capsules_match_id_integer.sql en el SQL Editor.',
+      });
       return;
     }
     res.status(400).json({ error: error.message });

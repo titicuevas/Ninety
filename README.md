@@ -231,8 +231,8 @@ Ninety/
 - [x] Páginas legales (privacidad y términos)
 
 ### 🔜 v1.1 — Pulido beta
+- [x] Fotos en Capsules
 - [ ] Google OAuth
-- [ ] Fotos en Capsules
 - [ ] Perfiles públicos
 - [ ] Wrapped visual mejorado
 

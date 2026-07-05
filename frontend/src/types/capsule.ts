@@ -13,6 +13,9 @@ export interface Capsule {
   watched_at: string;
   rating: number | null;
   note: string | null;
+  photo_urls: string[];
+  /** @deprecated compatibilidad con datos antiguos */
+  photo_url?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -30,12 +33,14 @@ export interface CreateCapsuleInput {
   watched_at: string;
   rating?: number | null;
   note?: string | null;
+  photo_urls?: string[];
 }
 
 export interface UpdateCapsuleInput {
   watched_at?: string;
   rating?: number | null;
   note?: string | null;
+  photo_urls?: string[];
 }
 
 export interface CapsulesResponse {

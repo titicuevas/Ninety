@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
+const COPYRIGHT_YEAR = new Date().getFullYear();
+
 export function LegalFooter({ className }: { className?: string }) {
   return (
     <footer className={cn('text-center text-xs text-muted-foreground', className)}>
@@ -13,7 +15,7 @@ export function LegalFooter({ className }: { className?: string }) {
           Términos
         </Link>
       </p>
-      <p className="mt-2">© {new Date().getFullYear()} Ninety</p>
+      <p className="mt-2">© {COPYRIGHT_YEAR} Ninety</p>
     </footer>
   );
 }

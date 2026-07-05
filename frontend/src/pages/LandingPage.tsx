@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { SkipLink } from '@/components/SkipLink';
 import { UnderConstructionIllustration } from '@/components/UnderConstructionIllustration';
 import { LegalFooter } from '@/components/LegalFooter';
 import { buttonVariants } from '@/components/ui/button-variants';
@@ -14,7 +15,7 @@ const features = [
   {
     emoji: '📸',
     title: 'Capsules',
-    desc: 'Guarda fecha, nota y valoración de cada partido',
+    desc: 'Hasta 6 fotos, nota y valoración de cada partido',
   },
   {
     emoji: '📊',
@@ -26,6 +27,7 @@ const features = [
 export function LandingPage() {
   return (
     <div className="landing-page min-h-screen bg-background text-foreground">
+      <SkipLink />
       <div className="mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-8 sm:px-6 sm:py-12">
         <header className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -39,7 +41,7 @@ export function LandingPage() {
           </Link>
         </header>
 
-        <main className="flex flex-1 flex-col items-center text-center">
+        <main id="main-content" className="flex flex-1 flex-col items-center text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/35 bg-primary/10 px-4 py-1.5 text-sm font-medium text-emerald-300">
             ⚽ Beta abierta — v1
           </div>

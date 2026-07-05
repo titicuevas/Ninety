@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
+import { FormAlert } from '@/components/FormAlert';
 import { LegalFooter } from '@/components/LegalFooter';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
@@ -84,11 +85,7 @@ export function LoginPage() {
             <Input type="password" autoComplete="current-password" {...register('password')} />
           </FormField>
 
-          {error && (
-            <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {error}
-            </div>
-          )}
+          {error && <FormAlert>{error}</FormAlert>}
 
           <Button type="submit" loading={loading} className="w-full">
             Iniciar sesión

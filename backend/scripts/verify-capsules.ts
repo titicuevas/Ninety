@@ -1,5 +1,5 @@
 /**
- * Verifica migraciones de capsules en Supabase y aplica la del feed si falta.
+ * Verifica y alinea la tabla capsules + storage en Supabase.
  * Uso: npm run verify:capsules --prefix backend
  */
 import { readFileSync } from 'node:fs';
@@ -30,15 +30,23 @@ const REQUIRED_COLUMNS = [
   'id',
   'user_id',
   'match_id',
+  'match_played_at',
   'home_team_name',
   'away_team_name',
+  'home_team_crest',
+  'away_team_crest',
+  'competition_name',
+  'home_score',
+  'away_score',
   'watched_at',
   'rating',
   'note',
+  'photo_urls',
   'created_at',
+  'updated_at',
 ] as const;
 
-async function applyFeedMigrationWithPg() {
+async function runSqlFile(relativePath: string, label: string) {
   if (!databaseUrl) return false;
 
   let pg: typeof import('pg');
@@ -49,26 +57,69 @@ async function applyFeedMigrationWithPg() {
     return false;
   }
 
-  const sql = readFileSync(resolve(__dirname, '../../supabase/migrations/20250705130000_capsules_feed.sql'), 'utf8');
+  const sql = readFileSync(resolve(__dirname, relativePath), 'utf8');
   const client = new pg.Client({ connectionString: databaseUrl });
 
   try {
     await client.connect();
     await client.query(sql);
-    console.log('✅ Migración feed aplicada vía SUPABASE_DB_URL');
+    console.log(`✅ ${label}`);
     return true;
   } finally {
     await client.end();
   }
 }
 
-async function verifyProfiles() {
-  const { error } = await admin.from('profiles').select('id, username, full_name').limit(1);
+async function verifyColumnAccess() {
+  const selectList = REQUIRED_COLUMNS.join(', ');
+  const { error } = await admin.from('capsules').select(selectList).limit(0);
+
   if (error) {
-    console.error('❌ Tabla profiles:', error.message);
-    process.exit(1);
+    console.error('❌ Columnas de capsules:', error.message);
+    console.error('\n👉 Ejecuta: supabase/migrations/20250705170000_capsules_align_columns.sql\n');
+    return false;
   }
-  console.log('✅ Tabla profiles accesible');
+
+  console.log('✅ Todas las columnas de capsules accesibles');
+  return true;
+}
+
+async function verifyMatchIdType(): Promise<boolean> {
+  const { data: users, error: listError } = await admin.auth.admin.listUsers({ perPage: 200 });
+  if (listError) {
+    console.warn('⚠️  No se pudo comprobar match_id:', listError.message);
+    return true;
+  }
+
+  const demo = users.users.find((u) => u.email === 'demo@ninety.app');
+  if (!demo) {
+    console.warn('⚠️  Usuario demo no encontrado; omitiendo prueba de match_id');
+    return true;
+  }
+
+  const probe = {
+    user_id: demo.id,
+    match_id: 1,
+    home_team_name: '__probe__',
+    away_team_name: '__probe__',
+    watched_at: '2024-01-01',
+  };
+
+  const { data, error } = await admin.from('capsules').insert(probe).select('id').single();
+
+  if (error?.message.includes('invalid input syntax for type uuid')) {
+    console.error('❌ match_id es UUID en Supabase; debe ser integer (IDs de football-data.org)');
+    console.error('\n👉 Ejecuta en SQL Editor: supabase/migrations/20250705190000_capsules_match_id_integer.sql');
+    console.error('   O añade SUPABASE_DB_PASSWORD en backend/.env y ejecuta: npm run apply:capsules-schema\n');
+    return false;
+  }
+
+  if (data?.id) {
+    await admin.from('capsules').delete().eq('id', data.id);
+  }
+
+  console.log('✅ match_id acepta enteros');
+  return true;
 }
 
 async function main() {
@@ -84,35 +135,41 @@ async function main() {
 
   console.log('✅ Tabla capsules existe');
 
-  const { data: sample } = await admin.from('capsules').select('*').limit(1);
-  if (sample && sample.length > 0) {
-    const row = sample[0] as Record<string, unknown>;
-    const missing = REQUIRED_COLUMNS.filter((col) => !(col in row));
-    if (missing.length > 0) {
-      console.error('❌ Faltan columnas:', missing.join(', '));
-      process.exit(1);
-    }
-    console.log('✅ Columnas requeridas presentes');
-  } else {
-    console.log('✅ Estructura OK (tabla vacía)');
+  let columnsOk = await verifyColumnAccess();
+
+  if (!columnsOk && databaseUrl) {
+    console.log('\n🔧 Aplicando migración de alineación…');
+    await runSqlFile('../../supabase/migrations/20250705180000_capsules_full_schema.sql', 'Esquema completo aplicado');
+    columnsOk = await verifyColumnAccess();
   }
 
-  await verifyProfiles();
+  if (!columnsOk) {
+    process.exit(1);
+  }
 
-  const { count } = await admin.from('capsules').select('*', { count: 'exact', head: true });
-  console.log(`✅ Capsules en base de datos: ${count ?? 0}`);
+  let matchIdOk = await verifyMatchIdType();
+
+  if (!matchIdOk && databaseUrl) {
+    console.log('\n🔧 Corrigiendo tipo de match_id…');
+    await runSqlFile('../../supabase/migrations/20250705190000_capsules_match_id_integer.sql', 'match_id → integer');
+    matchIdOk = await verifyMatchIdType();
+  }
+
+  if (!matchIdOk) {
+    process.exit(1);
+  }
 
   if (databaseUrl) {
     try {
-      await applyFeedMigrationWithPg();
+      await runSqlFile('../../supabase/migrations/20250705130000_capsules_feed.sql', 'Política feed aplicada');
+      await runSqlFile('../../supabase/migrations/20250705160000_capsule_photo_urls.sql', 'Migración photo_urls aplicada');
     } catch (err) {
-      console.warn('⚠️  No se pudo aplicar feed automáticamente:', (err as Error).message);
+      console.warn('⚠️  SQL adicional:', (err as Error).message);
     }
-  } else {
-    console.log('\nℹ️  Añade SUPABASE_DB_URL en backend/.env para aplicar SQL automáticamente.');
-    console.log('   O ejecuta manualmente: supabase/migrations/20250705130000_capsules_feed.sql');
   }
 
+  const { count } = await admin.from('capsules').select('*', { count: 'exact', head: true });
+  console.log(`✅ Capsules en base de datos: ${count ?? 0}`);
   console.log('\n🎉 Verificación completada.\n');
 }
 

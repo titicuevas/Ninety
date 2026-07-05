@@ -1,3 +1,5 @@
+import { friendlyApiError } from '@/lib/friendlyErrors';
+
 const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 export async function apiFetch<T>(path: string, options: RequestInit = {}, token?: string | null): Promise<T> {
@@ -15,7 +17,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}, token
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     if (typeof body.error === 'string') {
-      throw new Error(body.error);
+      throw new Error(friendlyApiError(body.error));
     }
     if (typeof body.error === 'object' && body.error !== null) {
       throw new Error('Datos inválidos. Revisa el formulario.');
@@ -25,6 +27,33 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}, token
 
   if (response.status === 204) {
     return undefined as T;
+  }
+
+  return response.json();
+}
+
+export async function apiUpload<T>(
+  path: string,
+  formData: FormData,
+  token?: string | null,
+): Promise<T> {
+  const headers: HeadersInit = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    if (typeof body.error === 'string') {
+      throw new Error(friendlyApiError(body.error));
+    }
+    throw new Error(`Error ${response.status}`);
   }
 
   return response.json();

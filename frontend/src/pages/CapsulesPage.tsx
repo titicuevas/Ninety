@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Pencil, Trash2 } from 'lucide-react';
+import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { Layout } from '@/components/Layout';
 import { StarRating } from '@/components/StarRating';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,12 @@ function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: s
   return (
     <Card>
       <CardContent className="p-4 sm:p-5">
+        <CapsulePhotoGallery
+          capsule={capsule}
+          alt={`Foto del partido ${capsule.home_team_name} vs ${capsule.away_team_name}`}
+          className="mb-4"
+        />
+
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="font-medium">{capsule.home_team_name}</p>

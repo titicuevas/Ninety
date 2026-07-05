@@ -123,7 +123,6 @@ export function SearchMatchPage() {
                 placeholder="Ej. Betis, Madrid, Argentina, Liverpool..."
                 className="pl-9"
                 autoFocus
-                aria-label="Buscar partido por equipos"
               />
             </div>
           </div>
@@ -200,7 +199,7 @@ export function SearchMatchPage() {
         ) : null}
 
         {isSearching ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground" role="status" aria-live="polite">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
             Buscando partidos…
           </div>
@@ -208,14 +207,17 @@ export function SearchMatchPage() {
 
         {isError ? (
           <Card className="border-destructive/40">
-            <CardContent className="p-5 text-sm text-destructive">
-              {error instanceof Error ? error.message : 'No se pudo buscar partidos'}
+            <CardContent className="p-5">
+              <p role="alert" className="text-sm text-destructive">
+                {error instanceof Error ? error.message : 'No se pudo buscar partidos'}
+              </p>
             </CardContent>
           </Card>
         ) : null}
 
         {!isSearching && canSearch && !isError ? (
-          matches.length > 0 ? (
+          <div aria-live="polite" aria-atomic="true">
+            {matches.length > 0 ? (
             <div className="space-y-8">
               {showGrouped
                 ? matchGroups.map((group) => (
@@ -261,7 +263,8 @@ export function SearchMatchPage() {
                 </p>
               </CardContent>
             </Card>
-          )
+            )}
+          </div>
         ) : null}
 
         {!query.trim() && !activeCompetition ? (

@@ -1,5 +1,6 @@
 import { Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { Layout } from '@/components/Layout';
 import { StarRating } from '@/components/StarRating';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,12 @@ function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; cur
             {formatRelativeTime(capsule.created_at)}
           </time>
         </div>
+
+        <CapsulePhotoGallery
+          capsule={capsule}
+          alt={`Foto del partido ${capsule.home_team_name} vs ${capsule.away_team_name}`}
+          className="mb-3"
+        />
 
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">

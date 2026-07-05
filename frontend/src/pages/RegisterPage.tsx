@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
+import { FormAlert } from '@/components/FormAlert';
 import { LegalFooter } from '@/components/LegalFooter';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
@@ -97,7 +98,7 @@ export function RegisterPage() {
             <Input type="password" autoComplete="new-password" {...register('confirmPassword')} />
           </FormField>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <FormAlert>{error}</FormAlert>}
 
           <p className="text-xs leading-relaxed text-muted-foreground">
             Al crear tu cuenta aceptas los{' '}

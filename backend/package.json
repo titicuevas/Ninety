@@ -10,6 +10,9 @@
     "typecheck": "tsc --noEmit",
     "test": "NODE_ENV=test node --import tsx --test src/config/env.test.ts src/app.test.ts src/lib/footballCompetitions.test.ts src/lib/teamMatching.test.ts src/lib/footballTeamCompetitions.test.ts",
     "verify:capsules": "tsx scripts/verify-capsules.ts",
+    "verify:storage": "tsx scripts/verify-storage.ts",
+    "test:capsule-photos": "tsx scripts/e2e-capsule-photos.ts",
+    "apply:capsules-schema": "tsx scripts/apply-capsules-schema.ts",
     "probe:search": "tsx scripts/probe-search.ts",
     "probe:team-comps": "tsx scripts/probe-team-comps.ts"
   },
@@ -20,13 +23,17 @@
     "express": "^5.2.1",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
+    "multer": "^2.2.0",
+    "pg": "^8.22.0",
     "ws": "^8.21.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/multer": "^2.2.0",
     "@types/node": "^22.13.10",
+    "@types/pg": "^8.20.0",
     "@types/supertest": "^6.0.2",
     "@types/ws": "^8.18.1",
     "supertest": "^7.0.0",
