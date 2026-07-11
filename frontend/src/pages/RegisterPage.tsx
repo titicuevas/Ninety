@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { registerWithPassword } from '@/lib/auth';
+import { loginWithGoogle, registerWithPassword } from '@/lib/auth';
 import { useAuthStore } from '@/stores/authStore';
 
 const registerSchema = z
@@ -32,6 +32,18 @@ export function RegisterPage() {
   const setSession = useAuthStore((s) => s.setSession);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    setGoogleLoading(true);
+    try {
+      await loginWithGoogle();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión con Google');
+      setGoogleLoading(false);
+    }
+  };
 
   const {
     register,
@@ -72,11 +84,7 @@ export function RegisterPage() {
           <p className="mt-1 text-sm text-muted-foreground">Empieza a construir tu historia futbolera</p>
         </div>
 
-        <GoogleSignInButton label="Google — próximamente" disabled className="mb-2 opacity-60" />
-
-        <p className="mb-6 text-center text-xs text-muted-foreground">
-          Regístrate con email por ahora. Google llegará más adelante.
-        </p>
+        <GoogleSignInButton loading={googleLoading} onClick={() => void handleGoogleSignIn()} className="mb-6" />
 
         <div className="mb-6 flex items-center gap-3">
           <Separator className="flex-1" />

@@ -35,7 +35,8 @@ export function CapsulePhotosField({
   const blobUrlsRef = useRef<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const visibleExisting = existingUrls.filter((url) => !removedExistingUrls.includes(url));
+  const removedExisting = new Set(removedExistingUrls);
+  const visibleExisting = existingUrls.filter((url) => !removedExisting.has(url));
   const totalCount = visibleExisting.length + newFiles.length;
   const canAddMore = totalCount < MAX_CAPSULE_PHOTOS;
 
@@ -109,27 +110,27 @@ export function CapsulePhotosField({
           </div>
         </button>
       ) : (
-        <div
-          className="mx-auto grid max-w-sm grid-cols-3 gap-2.5 sm:max-w-none sm:grid-cols-4"
-          role="list"
+        <ul
+          className="mx-auto grid max-w-sm list-none grid-cols-3 gap-2.5 p-0 sm:max-w-none sm:grid-cols-4"
           aria-label="Fotos seleccionadas"
         >
           {canAddMore ? (
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-primary/40 bg-primary/5 text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.98] hover:bg-primary/10"
-              aria-label="Añadir fotos del partido"
-            >
-              <Camera className="h-6 w-6" aria-hidden />
-              <span className="text-[11px] font-medium">Añadir</span>
-            </button>
+            <li className="contents">
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-primary/40 bg-primary/5 text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.98] hover:bg-primary/10"
+                aria-label="Añadir fotos del partido"
+              >
+                <Camera className="h-6 w-6" aria-hidden />
+                <span className="text-[11px] font-medium">Añadir</span>
+              </button>
+            </li>
           ) : null}
 
           {previews.map((item, index) => (
-            <div
+            <li
               key={item.id}
-              role="listitem"
               className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border"
             >
               <img src={item.url} alt={`Foto ${index + 1} del partido`} className="h-full w-full object-cover" />
@@ -148,9 +149,9 @@ export function CapsulePhotosField({
               >
                 <X className="h-4 w-4" />
               </button>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       <input

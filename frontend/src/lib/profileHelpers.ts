@@ -2,8 +2,11 @@ export function isAutoUsername(username?: string | null) {
   return !username || /^user_[a-f0-9]{8}$/i.test(username);
 }
 
-export function suggestUsername(displayName: string) {
-  const slug = displayName
+export function suggestUsername(displayName?: string | null) {
+  const trimmed = displayName?.trim();
+  if (!trimmed) return '';
+
+  const slug = trimmed
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()

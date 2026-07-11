@@ -1,6 +1,6 @@
 /**
  * Aplica migración de capsules en Supabase vía Postgres directo.
- * Requiere SUPABASE_DB_URL o SUPABASE_DB_PASSWORD en backend/.env
+ * Requiere SUPABASE_DB_URL en backend/.env
  *
  * Uso: npm run apply:capsules-schema --prefix backend
  */
@@ -24,27 +24,16 @@ const sql = migrations
   )
   .join('\n\n');
 
-function buildConnectionString(): string {
-  if (process.env.SUPABASE_DB_URL) {
-    return process.env.SUPABASE_DB_URL;
-  }
-
-  const password = process.env.SUPABASE_DB_PASSWORD;
-  const url = process.env.SUPABASE_URL;
-  if (!password || !url) {
+async function main() {
+  const connectionString = process.env.SUPABASE_DB_URL;
+  if (!connectionString) {
     throw new Error(
-      'Añade SUPABASE_DB_URL o SUPABASE_DB_PASSWORD en backend/.env\n' +
-        'Dashboard → Project Settings → Database → Connection string (URI)',
+      'Añade SUPABASE_DB_URL en backend/.env\n' +
+        'Dashboard → Project Settings → Database → Connection string (URI)\n' +
+        'O ejecuta las migraciones manualmente en el SQL Editor de Supabase.',
     );
   }
 
-  const ref = new URL(url).hostname.split('.')[0];
-  const region = process.env.SUPABASE_DB_REGION ?? 'eu-central-1';
-  return `postgresql://postgres.${ref}:${encodeURIComponent(password)}@aws-0-${region}.pooler.supabase.com:6543/postgres`;
-}
-
-async function main() {
-  const connectionString = buildConnectionString();
   const client = new pg.Client({ connectionString, ssl: { rejectUnauthorized: false } });
 
   console.log('🔧 Aplicando esquema de capsules…\n');

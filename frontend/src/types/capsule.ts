@@ -55,6 +55,9 @@ export interface CapsuleAuthor {
 
 export interface FeedCapsule extends Capsule {
   profiles: CapsuleAuthor | null;
+  likes_count?: number;
+  liked_by_me?: boolean;
+  comments_count?: number;
 }
 
 export interface FeedResponse {

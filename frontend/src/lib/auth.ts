@@ -1,9 +1,14 @@
 import { apiFetch } from '@/lib/api';
-import { clearSession, consumePkceId, saveSession } from '@/lib/session';
+import { clearSession, consumePkceId, savePkceId, saveSession } from '@/lib/session';
 import type { AuthSession } from '@/types/auth';
 
 interface AuthResponse {
   session: AuthSession;
+}
+
+interface OAuthStartResponse {
+  url: string;
+  pkceId: string;
 }
 
 export async function loginWithPassword(email: string, password: string) {
@@ -29,6 +34,14 @@ export async function registerWithPassword(email: string, password: string, disp
   }
 
   return data;
+}
+
+export async function loginWithGoogle() {
+  const { url, pkceId } = await apiFetch<OAuthStartResponse>('/api/auth/oauth/google', {
+    method: 'POST',
+  });
+  savePkceId(pkceId);
+  window.location.assign(url);
 }
 
 export async function completeOAuthCallback(code: string) {

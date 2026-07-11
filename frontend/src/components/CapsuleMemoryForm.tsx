@@ -26,6 +26,8 @@ export type CapsuleMemorySubmitPayload = CapsuleMemoryFormValues & {
   removedPhotoUrls: string[];
 };
 
+const NO_PHOTO_URLS: string[] = [];
+
 interface CapsuleMemoryFormProps {
   defaultWatchedAt: string;
   defaultNote?: string;
@@ -42,7 +44,7 @@ export function CapsuleMemoryForm({
   defaultWatchedAt,
   defaultNote = '',
   defaultRating = null,
-  existingPhotoUrls = [],
+  existingPhotoUrls = NO_PHOTO_URLS,
   submitLabel,
   isBusy = false,
   error,
@@ -66,11 +68,12 @@ export function CapsuleMemoryForm({
   });
 
   const handleFormSubmit = (data: CapsuleMemoryFormValues) => {
+    const removed = new Set(removedPhotoUrls);
     void onSubmit({
       ...data,
       rating,
       newFiles,
-      keptPhotoUrls: existingPhotoUrls.filter((url) => !removedPhotoUrls.includes(url)),
+      keptPhotoUrls: existingPhotoUrls.filter((url) => !removed.has(url)),
       removedPhotoUrls,
     });
   };

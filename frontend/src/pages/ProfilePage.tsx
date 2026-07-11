@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -13,6 +14,7 @@ import { useAuth } from '@/hooks/useAuthInit';
 import { useAuthStore } from '@/stores/authStore';
 import { apiFetch } from '@/lib/api';
 import { isAutoUsername, suggestUsername } from '@/lib/profileHelpers';
+import { profilePath } from '@/lib/profilePath';
 import type { Profile, UpdateProfileInput } from '@/types/profile';
 
 const profileSchema = z.object({
@@ -128,6 +130,14 @@ export function ProfilePage() {
             <div className="min-w-0">
               <p className="truncate font-medium">{profile?.display_name ?? 'Aficionado'}</p>
               <p className="truncate text-sm text-muted-foreground">{user?.email}</p>
+              {profile?.username && !isAutoUsername(profile.username) ? (
+                <Link
+                  to={profilePath(profile.username)}
+                  className="mt-1 inline-block text-sm text-primary hover:underline"
+                >
+                  Ver perfil público
+                </Link>
+              ) : null}
             </div>
           </div>
 

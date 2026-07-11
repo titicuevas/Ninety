@@ -96,6 +96,33 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/capsules/user/:username requiere auth', async () => {
+    const res = await request(createApp()).get('/api/capsules/user/demo');
+    assert.equal(res.status, 401);
+  });
+
+  it('POST /api/capsules/:id/like requiere auth', async () => {
+    const res = await request(createApp()).post('/api/capsules/00000000-0000-4000-8000-000000000001/like');
+    assert.equal(res.status, 401);
+  });
+
+  it('DELETE /api/capsules/:id/like requiere auth', async () => {
+    const res = await request(createApp()).delete('/api/capsules/00000000-0000-4000-8000-000000000001/like');
+    assert.equal(res.status, 401);
+  });
+
+  it('GET /api/capsules/:id/comments requiere auth', async () => {
+    const res = await request(createApp()).get('/api/capsules/00000000-0000-4000-8000-000000000001/comments');
+    assert.equal(res.status, 401);
+  });
+
+  it('POST /api/capsules/:id/comments requiere auth', async () => {
+    const res = await request(createApp())
+      .post('/api/capsules/00000000-0000-4000-8000-000000000001/comments')
+      .send({ body: 'Hola' });
+    assert.equal(res.status, 401);
+  });
+
   it('POST /api/auth/login valida el body', async () => {
     const res = await request(createApp()).post('/api/auth/login').send({});
     assert.equal(res.status, 400);

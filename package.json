@@ -12,6 +12,7 @@
     "test": "npm run test --prefix backend",
     "check:secrets": "node scripts/check-secrets.mjs",
     "seed:test-user": "node scripts/seed-test-user.mjs",
+    "seed:demo": "npm run generate:test-photos --prefix backend && npm run seed:demo --prefix backend",
     "doctor": "react-doctor frontend --verbose",
     "doctor:install": "react-doctor install -y"
   },

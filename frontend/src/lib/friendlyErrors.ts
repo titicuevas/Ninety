@@ -14,6 +14,14 @@ export function friendlyApiError(message: string): string {
     return 'La base de datos tiene un tipo incorrecto en match_id. Ejecuta la migración 20250705190000 en el SQL Editor de Supabase.';
   }
 
+  if (lower.includes('capsule_likes') || lower.includes('20250711200000')) {
+    return 'Los likes aún no están activados. Ejecuta la migración 20250711200000_capsule_likes.sql en Supabase.';
+  }
+
+  if (lower.includes('capsule_comments') || lower.includes('20250711210000')) {
+    return 'Los comentarios aún no están activados. Ejecuta la migración 20250711210000_capsule_comments.sql en Supabase.';
+  }
+
   if (lower.includes('duplicate key') || lower.includes('23505')) {
     return 'Ya guardaste este partido en tu diario.';
   }

@@ -1,5 +1,7 @@
 import { Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { CapsuleComments } from '@/components/CapsuleComments';
+import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { Layout } from '@/components/Layout';
 import { StarRating } from '@/components/StarRating';
@@ -8,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useCapsuleFeed } from '@/hooks/useCapsules';
 import { useAuth } from '@/hooks/useAuthInit';
 import { formatRelativeTime } from '@/lib/format';
+import { profilePath } from '@/lib/profilePath';
 import type { FeedCapsule } from '@/types/capsule';
 
 function formatScore(capsule: FeedCapsule) {
@@ -15,10 +18,20 @@ function formatScore(capsule: FeedCapsule) {
   return `${capsule.home_score} – ${capsule.away_score}`;
 }
 
-function authorLabel(capsule: FeedCapsule, currentUserId?: string) {
+function AuthorName({ capsule, currentUserId }: { capsule: FeedCapsule; currentUserId?: string }) {
   const name = capsule.profiles?.display_name ?? capsule.profiles?.username ?? 'Aficionado';
-  if (capsule.user_id === currentUserId) return `${name} (tú)`;
-  return name;
+  const label = capsule.user_id === currentUserId ? `${name} (tú)` : name;
+  const username = capsule.profiles?.username;
+
+  if (username && capsule.user_id !== currentUserId) {
+    return (
+      <Link to={profilePath(username)} className="text-sm font-medium text-primary hover:underline">
+        {label}
+      </Link>
+    );
+  }
+
+  return <p className="text-sm font-medium text-primary">{label}</p>;
 }
 
 function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; currentUserId?: string }) {
@@ -28,7 +41,7 @@ function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; cur
     <Card>
       <CardContent className="p-4 sm:p-5">
         <div className="mb-3 flex items-center justify-between gap-2">
-          <p className="text-sm font-medium text-primary">{authorLabel(capsule, currentUserId)}</p>
+          <AuthorName capsule={capsule} currentUserId={currentUserId} />
           <time className="shrink-0 text-xs text-muted-foreground" dateTime={capsule.created_at}>
             {formatRelativeTime(capsule.created_at)}
           </time>
@@ -58,6 +71,19 @@ function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; cur
         ) : null}
 
         {capsule.note ? <p className="mt-3 text-sm text-muted-foreground">{capsule.note}</p> : null}
+
+        <div className="mt-4 flex flex-wrap items-start gap-1 border-t border-border pt-3">
+          <CapsuleLikeButton
+            capsuleId={capsule.id}
+            likesCount={capsule.likes_count}
+            likedByMe={capsule.liked_by_me}
+          />
+          <CapsuleComments
+            capsuleId={capsule.id}
+            commentsCount={capsule.comments_count}
+            currentUserId={currentUserId}
+          />
+        </div>
       </CardContent>
     </Card>
   );

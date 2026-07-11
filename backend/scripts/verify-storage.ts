@@ -122,8 +122,7 @@ async function main() {
       console.log('   - supabase/migrations/20250705160000_capsule_photo_urls.sql\n');
     }
   } else {
-    console.log('\nℹ️  Añade SUPABASE_DB_URL en backend/.env para aplicar políticas y photo_urls.');
-    console.log('   O ejecuta las migraciones SQL manualmente en Supabase.\n');
+    console.log('\nℹ️  Ejecuta las migraciones SQL manualmente en Supabase si faltan políticas de storage.\n');
   }
 
   const { error: uploadTest } = await admin.storage.from(BUCKET).list('', { limit: 1 });

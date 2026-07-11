@@ -109,8 +109,7 @@ async function verifyMatchIdType(): Promise<boolean> {
 
   if (error?.message.includes('invalid input syntax for type uuid')) {
     console.error('❌ match_id es UUID en Supabase; debe ser integer (IDs de football-data.org)');
-    console.error('\n👉 Ejecuta en SQL Editor: supabase/migrations/20250705190000_capsules_match_id_integer.sql');
-    console.error('   O añade SUPABASE_DB_PASSWORD en backend/.env y ejecuta: npm run apply:capsules-schema\n');
+    console.error('\n👉 Ejecuta en SQL Editor: supabase/migrations/20250705190000_capsules_match_id_integer.sql\n');
     return false;
   }
 
@@ -170,6 +169,23 @@ async function main() {
 
   const { count } = await admin.from('capsules').select('*', { count: 'exact', head: true });
   console.log(`✅ Capsules en base de datos: ${count ?? 0}`);
+
+  const { error: likesError } = await admin.from('capsule_likes').select('capsule_id').limit(0);
+  if (likesError) {
+    console.warn('\n⚠️  Tabla capsule_likes no disponible:', likesError.message);
+    console.warn('👉 Ejecuta en SQL Editor: supabase/migrations/20250711200000_capsule_likes.sql');
+  } else {
+    console.log('✅ Tabla capsule_likes accesible');
+  }
+
+  const { error: commentsError } = await admin.from('capsule_comments').select('id').limit(0);
+  if (commentsError) {
+    console.warn('\n⚠️  Tabla capsule_comments no disponible:', commentsError.message);
+    console.warn('👉 Ejecuta en SQL Editor: supabase/migrations/20250711210000_capsule_comments.sql');
+  } else {
+    console.log('✅ Tabla capsule_comments accesible');
+  }
+
   console.log('\n🎉 Verificación completada.\n');
 }
 

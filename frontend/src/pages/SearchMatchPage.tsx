@@ -141,6 +141,7 @@ export function SearchMatchPage() {
               onChange={(e) => handleCompetitionChange(e.target.value)}
               className={selectClassName}
               disabled={isLoadingTeamCompetitions && debouncedQuery.length >= MIN_QUERY_LENGTH}
+              aria-label="Competición"
             >
               <option value="">
                 {resolvedTeam ? `Todas las de ${resolvedTeam.name}` : 'Todas (por equipo)'}
@@ -165,6 +166,7 @@ export function SearchMatchPage() {
                 value={season ?? ''}
                 onChange={(e) => setSeason(Number(e.target.value))}
                 className={selectClassName}
+                aria-label="Edición"
               >
                 {selectedCompetition.seasons.map((year) => (
                   <option key={year} value={year}>

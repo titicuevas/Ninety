@@ -92,6 +92,8 @@ cd Ninety
 2. Ejecuta la migración SQL en `supabase/migrations/20250702000000_initial_profiles.sql`
 3. Activa **Google OAuth** en Authentication → Providers (opcional)
 4. Copia las credenciales del proyecto
+5. Ejecuta las migraciones de `supabase/migrations/` en el **SQL Editor** (en orden por fecha)
+6. Verifica con `npm run verify:capsules --prefix backend`
 
 ### 3. Variables de entorno
 
@@ -232,14 +234,15 @@ Ninety/
 
 ### 🔜 v1.1 — Pulido beta
 - [x] Fotos en Capsules
-- [ ] Google OAuth
-- [ ] Perfiles públicos
-- [ ] Wrapped visual mejorado
+- [x] Google OAuth
+- [x] Perfiles públicos
+- [x] Wrapped visual mejorado
 
 ### 🔮 v2 — Social
-- [ ] Fotos
-- [ ] Amigos
-- [ ] Comentarios, likes, compartir
+- [x] Likes en capsules
+- [x] Comentarios en capsules
+- [ ] Seguir usuarios
+- [ ] Compartir
 - [ ] Wrapped anual
 
 ### 🚀 v3 — Avanzado

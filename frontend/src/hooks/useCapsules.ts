@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
-import type { Capsule, CapsulesResponse, CreateCapsuleInput, FeedResponse, UpdateCapsuleInput } from '@/types/capsule';
+import type { Capsule, CapsulesResponse, CreateCapsuleInput, FeedCapsule, FeedResponse, UpdateCapsuleInput } from '@/types/capsule';
 
 export function useCapsules() {
   const session = useAuthStore((s) => s.session);
@@ -34,6 +34,55 @@ export function useCapsuleFeed() {
     queryKey: ['capsules', 'feed'],
     queryFn: () => apiFetch<FeedResponse>('/api/capsules/feed?limit=30', {}, session?.access_token),
     enabled: !!session,
+  });
+}
+
+export function useToggleCapsuleLike() {
+  const session = useAuthStore((s) => s.session);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ capsuleId, liked }: { capsuleId: string; liked: boolean }) => {
+      const path = `/api/capsules/${capsuleId}/like`;
+      if (liked) {
+        await apiFetch<void>(path, { method: 'DELETE' }, session?.access_token);
+        return;
+      }
+      await apiFetch<{ liked: boolean }>(path, { method: 'POST' }, session?.access_token);
+    },
+    onMutate: async ({ capsuleId, liked }) => {
+      await queryClient.cancelQueries({ queryKey: ['capsules', 'feed'] });
+      const previousFeed = queryClient.getQueryData<FeedResponse>(['capsules', 'feed']);
+
+      const updateCapsule = <T extends { id: string; likes_count?: number; liked_by_me?: boolean }>(c: T): T =>
+        c.id === capsuleId
+          ? {
+              ...c,
+              liked_by_me: !liked,
+              likes_count: Math.max(0, (c.likes_count ?? 0) + (liked ? -1 : 1)),
+            }
+          : c;
+
+      queryClient.setQueryData<FeedResponse>(['capsules', 'feed'], (old) =>
+        old ? { ...old, capsules: old.capsules.map(updateCapsule) } : old,
+      );
+
+      queryClient.setQueriesData<{ profile: unknown; capsules: FeedCapsule[] }>(
+        { queryKey: ['profile', 'public'] },
+        (old) => (old ? { ...old, capsules: old.capsules.map(updateCapsule) } : old),
+      );
+
+      return { previousFeed };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousFeed) {
+        queryClient.setQueryData(['capsules', 'feed'], context.previousFeed);
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ['capsules'] });
+      void queryClient.invalidateQueries({ queryKey: ['profile', 'public'] });
+    },
   });
 }
 

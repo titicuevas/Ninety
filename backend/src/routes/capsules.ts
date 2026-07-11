@@ -2,7 +2,10 @@ import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
 import { deleteCapsulePhotoByUrl, uploadCapsulePhotoBuffer } from '../lib/ensureStorage.js';
-import { createUserClient } from '../lib/supabase.js';
+import { attachCommentCounts, fetchCommentsWithAuthors, isMissingCommentsTable } from '../lib/capsuleComments.js';
+import { attachLikeStats, isMissingLikesTable } from '../lib/capsuleLikes.js';
+import { normalizeProfile } from '../lib/profileNormalize.js';
+import { createUserClient, supabaseAnon } from '../lib/supabase.js';
 import { requireAuth, type AuthRequest } from '../middleware/auth.js';
 
 export const capsulesRouter = Router();
@@ -42,6 +45,10 @@ const feedQuerySchema = z.object({
 
 function getAccessToken(req: AuthRequest): string | null {
   return req.headers.authorization?.replace('Bearer ', '') ?? null;
+}
+
+function routeParam(value: string | string[]): string {
+  return Array.isArray(value) ? value[0] : value;
 }
 
 capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
@@ -94,8 +101,11 @@ capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
     }
   }
 
+  const withLikes = await attachLikeStats(supabase, req.userId!, rows);
+  const feedRows = await attachCommentCounts(supabase, withLikes);
+
   res.json({
-    capsules: rows.map((capsule) => ({
+    capsules: feedRows.map((capsule) => ({
       ...capsule,
       profiles: profileMap.get(capsule.user_id) ?? null,
     })),
@@ -124,6 +134,43 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   }
 
   res.json({ capsules: data ?? [] });
+});
+
+capsulesRouter.get('/user/:username', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const { data: profile, error: profileError } = await supabaseAnon
+    .from('profiles')
+    .select('id, username, full_name, avatar_url, favorite_team, country, city, created_at')
+    .eq('username', req.params.username)
+    .single();
+
+  if (profileError || !profile) {
+    res.status(404).json({ error: 'Usuario no encontrado' });
+    return;
+  }
+
+  const supabase = createUserClient(token);
+  const { data, error } = await supabase
+    .from('capsules')
+    .select('*')
+    .eq('user_id', profile.id)
+    .order('watched_at', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  const withLikes = await attachLikeStats(supabase, req.userId!, data ?? []);
+  const capsulesWithLikes = await attachCommentCounts(supabase, withLikes);
+
+  res.json({ profile: normalizeProfile(profile), capsules: capsulesWithLikes });
 });
 
 capsulesRouter.post('/photos', requireAuth, photoUpload.array('photos', 6), async (req: AuthRequest, res) => {
@@ -172,6 +219,231 @@ const updateCapsuleSchema = z.object({
   rating: z.number().int().min(1).max(5).optional().nullable(),
   note: z.string().max(2000).optional().nullable(),
   photo_urls: z.array(z.string().url().max(2048)).max(6).optional(),
+});
+
+capsulesRouter.post('/:id/like', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const supabase = createUserClient(token);
+  const { data: capsule, error: capsuleError } = await supabase
+    .from('capsules')
+    .select('id')
+    .eq('id', req.params.id)
+    .maybeSingle();
+
+  if (capsuleError) {
+    res.status(400).json({ error: capsuleError.message });
+    return;
+  }
+
+  if (!capsule) {
+    res.status(404).json({ error: 'Capsule no encontrada' });
+    return;
+  }
+
+  const { error } = await supabase.from('capsule_likes').insert({
+    user_id: req.userId!,
+    capsule_id: capsule.id,
+  });
+
+  if (error) {
+    if (error.code === '23505') {
+      res.status(409).json({ error: 'Ya diste like a esta Capsule' });
+      return;
+    }
+    if (isMissingLikesTable(error)) {
+      res.status(503).json({
+        error: 'Ejecuta la migración 20250711200000_capsule_likes.sql en Supabase.',
+      });
+      return;
+    }
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  res.status(201).json({ liked: true });
+});
+
+capsulesRouter.delete('/:id/like', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const supabase = createUserClient(token);
+  const { error, count } = await supabase
+    .from('capsule_likes')
+    .delete({ count: 'exact' })
+    .eq('capsule_id', req.params.id)
+    .eq('user_id', req.userId!);
+
+  if (error) {
+    if (isMissingLikesTable(error)) {
+      res.status(503).json({
+        error: 'Ejecuta la migración 20250711200000_capsule_likes.sql en Supabase.',
+      });
+      return;
+    }
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  if (!count) {
+    res.status(404).json({ error: 'No había like en esta Capsule' });
+    return;
+  }
+
+  res.status(204).end();
+});
+
+const commentBodySchema = z.object({
+  body: z.string().trim().min(1, 'Escribe un comentario').max(500),
+});
+
+capsulesRouter.get('/:id/comments', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const supabase = createUserClient(token);
+  const { data: capsule, error: capsuleError } = await supabase
+    .from('capsules')
+    .select('id')
+    .eq('id', req.params.id)
+    .maybeSingle();
+
+  if (capsuleError) {
+    res.status(400).json({ error: capsuleError.message });
+    return;
+  }
+
+  if (!capsule) {
+    res.status(404).json({ error: 'Capsule no encontrada' });
+    return;
+  }
+
+  try {
+    const comments = await fetchCommentsWithAuthors(supabase, routeParam(req.params.id));
+    res.json({ comments });
+  } catch (err) {
+    if (isMissingCommentsTable(err)) {
+      res.status(503).json({
+        error: 'Ejecuta la migración 20250711210000_capsule_comments.sql en Supabase.',
+      });
+      return;
+    }
+    res.status(400).json({ error: err instanceof Error ? err.message : 'Error al cargar comentarios' });
+  }
+});
+
+capsulesRouter.post('/:id/comments', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const parsed = commentBodySchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const supabase = createUserClient(token);
+  const { data: capsule, error: capsuleError } = await supabase
+    .from('capsules')
+    .select('id')
+    .eq('id', req.params.id)
+    .maybeSingle();
+
+  if (capsuleError) {
+    res.status(400).json({ error: capsuleError.message });
+    return;
+  }
+
+  if (!capsule) {
+    res.status(404).json({ error: 'Capsule no encontrada' });
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from('capsule_comments')
+    .insert({
+      capsule_id: capsule.id,
+      user_id: req.userId!,
+      body: parsed.data.body,
+    })
+    .select('id, capsule_id, user_id, body, created_at')
+    .single();
+
+  if (error) {
+    if (isMissingCommentsTable(error)) {
+      res.status(503).json({
+        error: 'Ejecuta la migración 20250711210000_capsule_comments.sql en Supabase.',
+      });
+      return;
+    }
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('username, full_name, avatar_url')
+    .eq('id', req.userId!)
+    .maybeSingle();
+
+  res.status(201).json({
+    ...data,
+    author: profile
+      ? {
+          username: profile.username,
+          display_name: profile.full_name ?? null,
+          avatar_url: profile.avatar_url,
+        }
+      : null,
+  });
+});
+
+capsulesRouter.delete('/:id/comments/:commentId', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const supabase = createUserClient(token);
+  const { error, count } = await supabase
+    .from('capsule_comments')
+    .delete({ count: 'exact' })
+    .eq('id', req.params.commentId)
+    .eq('capsule_id', req.params.id)
+    .eq('user_id', req.userId!);
+
+  if (error) {
+    if (isMissingCommentsTable(error)) {
+      res.status(503).json({
+        error: 'Ejecuta la migración 20250711210000_capsule_comments.sql en Supabase.',
+      });
+      return;
+    }
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  if (!count) {
+    res.status(404).json({ error: 'Comentario no encontrado' });
+    return;
+  }
+
+  res.status(204).end();
 });
 
 capsulesRouter.get('/:id', requireAuth, async (req: AuthRequest, res) => {
