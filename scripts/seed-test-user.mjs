@@ -2,6 +2,8 @@
 /**
  * Crea un usuario de prueba en Supabase (email ya confirmado).
  * Uso: npm run seed:test-user
+ *
+ * Requiere TEST_USER_PASSWORD en backend/.env (nunca en el repositorio).
  */
 
 import { createRequire } from 'node:module';
@@ -25,10 +27,16 @@ const clientOptions = {
 const url = process.env.SUPABASE_URL;
 const secretKey = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
 const email = process.env.TEST_USER_EMAIL ?? 'demo@ninety.app';
-const password = process.env.TEST_USER_PASSWORD ?? 'DemoNinety123!';
+const password = process.env.TEST_USER_PASSWORD;
 
 if (!url || !secretKey) {
   console.error('❌ Faltan SUPABASE_URL y SUPABASE_SECRET_KEY en backend/.env');
+  process.exit(1);
+}
+
+if (!password) {
+  console.error('❌ Falta TEST_USER_PASSWORD en backend/.env');
+  console.error('   Añade una contraseña local de prueba (no la subas a Git).');
   process.exit(1);
 }
 
@@ -52,5 +60,5 @@ if (error) {
 
 console.log('✅ Usuario de prueba creado');
 console.log(`   Email:    ${email}`);
-console.log(`   Password: ${password === 'DemoNinety123!' ? 'DemoNinety123!' : '(TEST_USER_PASSWORD en .env)'}`);
+console.log(`   Password: (TEST_USER_PASSWORD en backend/.env)`);
 console.log(`   ID:       ${data.user?.id}`);

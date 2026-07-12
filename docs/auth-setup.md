@@ -43,12 +43,20 @@ Los emails de confirmación y reset aparecerán en tu inbox de Mailtrap.
 
 ## Usuario de prueba
 
-```bash
-# Opcional en backend/.env:
-# TEST_USER_EMAIL=demo@ninety.app
-# TEST_USER_PASSWORD=TuPasswordSegura123!
+Añade en `backend/.env` (nunca en Git):
 
+```bash
+TEST_USER_EMAIL=demo@ninety.app
+TEST_USER_PASSWORD=tu-contraseña-local-segura
+```
+
+```bash
 npm run seed:test-user
+# o datos completos con partidos de ejemplo:
+npm run seed:demo
 ```
 
 Luego inicia sesión en `/login` con esas credenciales.
+
+> Si GitHub te avisó de una contraseña filtrada, cámbiala en Supabase
+> (Authentication → Users → demo@ninety.app → Reset password) y actualiza `TEST_USER_PASSWORD`.

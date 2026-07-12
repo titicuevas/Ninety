@@ -12,7 +12,8 @@ const SKIP_PREFIXES = ['.agents/', 'node_modules/'];
 
 const FORBIDDEN_PATTERNS = [
   /sb_secret_[A-Za-z0-9_-]{10,}/,
-  /sb_publishable_[A-Za-z0-9_-]{10,}/,
+  /DemoNinety123!/,
+  /TEST_USER_PASSWORD\s*\?\?\s*['"][^'"]+['"]/,
 ];
 
 function getTrackedFiles() {

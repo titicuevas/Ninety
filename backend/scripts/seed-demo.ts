@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { config } from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
+import { requireTestCredentials } from './testCredentials.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: resolve(__dirname, '../.env') });
@@ -17,8 +18,6 @@ config({ path: resolve(__dirname, '../.env') });
 const API = process.env.API_URL ?? 'http://localhost:3001';
 const url = process.env.SUPABASE_URL;
 const secretKey = process.env.SUPABASE_SECRET_KEY;
-const email = process.env.TEST_USER_EMAIL ?? 'demo@ninety.app';
-const password = process.env.TEST_USER_PASSWORD ?? 'DemoNinety123!';
 const photoDir = process.env.TEST_PHOTO_DIR ?? '/tmp/ninety-test-photos';
 
 const DEMO_CAPSULES = [
@@ -106,7 +105,7 @@ const admin = url && secretKey
     })
   : null;
 
-async function ensureDemoUser(): Promise<string> {
+async function ensureDemoUser(email: string, password: string): Promise<string> {
   if (!admin) throw new Error('Faltan SUPABASE_URL o SUPABASE_SECRET_KEY');
 
   const { data: list } = await admin.auth.admin.listUsers({ perPage: 200 });
@@ -148,7 +147,7 @@ async function ensureDemoProfile(userId: string) {
   console.log('✅ Perfil demo listo (@aficionado_demo)');
 }
 
-async function login(): Promise<string> {
+async function login(email: string, password: string): Promise<string> {
   const res = await fetch(`${API}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -251,10 +250,12 @@ async function upsertCapsule(
 async function main() {
   console.log('🌱 Seed demo — Ninety\n');
 
-  const userId = await ensureDemoUser();
+  const { email, password } = requireTestCredentials();
+
+  const userId = await ensureDemoUser(email, password);
   await ensureDemoProfile(userId);
 
-  const token = await login();
+  const token = await login(email, password);
   console.log('✅ Login demo OK');
 
   let photoUrls: string[] = [];
@@ -272,7 +273,7 @@ async function main() {
   const { count } = await admin!.from('capsules').select('*', { count: 'exact', head: true }).eq('user_id', userId);
   console.log(`\n🎉 Demo listo — ${count ?? 0} partidos para ${email}`);
   console.log(`   Perfil: http://localhost:5173/u/aficionado_demo`);
-  console.log(`   Login:  ${email} / ${password === 'DemoNinety123!' ? 'DemoNinety123!' : '(TEST_USER_PASSWORD)'}\n`);
+  console.log(`   Login:  ${email} (TEST_USER_PASSWORD en backend/.env)\n`);
 }
 
 main().catch((err) => {

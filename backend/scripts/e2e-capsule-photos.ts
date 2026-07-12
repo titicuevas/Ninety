@@ -6,16 +6,16 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config } from 'dotenv';
+import { requireTestCredentials } from './testCredentials.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: resolve(__dirname, '../.env') });
 
 const API = process.env.API_URL ?? 'http://localhost:3001';
-const email = process.env.TEST_USER_EMAIL ?? 'demo@ninety.app';
-const password = process.env.TEST_USER_PASSWORD ?? 'DemoNinety123!';
 const photoDir = process.env.TEST_PHOTO_DIR ?? '/tmp/ninety-test-photos';
 
 async function login(): Promise<string> {
+  const { email, password } = requireTestCredentials();
   const res = await fetch(`${API}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
