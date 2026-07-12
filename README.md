@@ -160,6 +160,70 @@ https://ninety.up.railway.app/**
 
 Guía completa de auth: [docs/auth-setup.md](docs/auth-setup.md)
 
+## 🧪 Probar v1 con la cuenta demo
+
+Cuenta de prueba (seed en Supabase):
+
+| Campo | Valor |
+|-------|-------|
+| Email | `demo@ninety.app` |
+| Username | `@aficionado_demo` |
+| Perfil público | [/u/aficionado_demo](https://ninety.up.railway.app/u/aficionado_demo) |
+
+### 1. Credenciales locales
+
+En `backend/.env` (no subir a Git):
+
+```env
+TEST_USER_EMAIL=demo@ninety.app
+TEST_USER_PASSWORD=tu-contraseña-demo
+```
+
+### 2. Sembrar partidos de ejemplo
+
+Con la API en marcha (`npm run dev`):
+
+```bash
+npm run seed:demo
+```
+
+Crea 5 capsules con fotos de prueba para el usuario demo.
+
+### 3. Tests automatizados
+
+```bash
+# Unit tests del backend
+npm test
+
+# Smoke Supabase + API (local o producción)
+npm run smoke:v1
+API_URL=https://ninety-api.up.railway.app FRONTEND_URL=https://ninety.up.railway.app npm run smoke:v1
+
+# Flujo E2E demo: login, capsules, feed, comentarios, follow
+npm run demo:flow
+API_URL=https://ninety-api.up.railway.app npm run demo:flow
+
+# Todo junto (unit + demo flow)
+npm run test:v1
+```
+
+### 4. Checklist manual responsive
+
+Probar en **móvil** (375px), **tablet** (768px) y **desktop** (1280px):
+
+| Ruta | Qué verificar |
+|------|----------------|
+| `/` | Landing, preview Wrapped, CTAs apilados en móvil |
+| `/login` | Formulario centrado, inputs táctiles |
+| `/home` | Wrapped en grid, banner perfil en columna en móvil |
+| `/feed` | Cards a ancho completo, likes/comentarios sin overflow |
+| `/search` | Grid 1 col móvil → 2 cols tablet+ |
+| `/capsules/new` | Formulario `max-w-md` → `lg:max-w-xl` |
+| `/profile` | Avatar y formulario legibles |
+| `/u/aficionado_demo` | Perfil público sin login, botón Seguir |
+
+Nav: iconos solos en móvil, icono + texto desde `md` (768px).
+
 ## 🩺 React Doctor
 
 Auditoría automática de calidad React (performance, accesibilidad, seguridad, mantenibilidad).

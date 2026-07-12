@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { SkipLink } from '@/components/SkipLink';
 import { LegalFooter } from '@/components/LegalFooter';
-import { UnderConstructionIllustration } from '@/components/UnderConstructionIllustration';
 import { buttonVariants } from '@/components/ui/button-variants';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -56,8 +55,27 @@ export function LandingPage() {
             Letterboxd, pero para el fútbol.
           </p>
 
-          <div className="mb-8 w-full max-w-lg">
-            <UnderConstructionIllustration className="mx-auto h-auto w-full max-h-56 sm:max-h-64" />
+          <div className="mb-8 w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-zinc-900 via-zinc-900 to-emerald-950/40 p-5 shadow-lg shadow-black/20">
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-primary">Tu resumen · preview</p>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-xl bg-background/60 p-3">
+                <p className="text-2xl font-bold text-primary">12</p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground sm:text-xs">Partidos</p>
+              </div>
+              <div className="rounded-xl bg-background/60 p-3">
+                <p className="text-2xl font-bold text-primary">4.2</p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground sm:text-xs">Media</p>
+              </div>
+              <div className="rounded-xl bg-background/60 p-3">
+                <p className="text-2xl font-bold text-primary">3</p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground sm:text-xs">Competiciones</p>
+              </div>
+            </div>
+            <div className="mt-4 rounded-xl border border-border/60 bg-background/40 p-3 text-left">
+              <p className="text-xs text-muted-foreground">Último partido</p>
+              <p className="mt-1 text-sm font-semibold">Real Betis 2 – 1 Villarreal</p>
+              <p className="text-xs text-primary">LaLiga · ⭐⭐⭐⭐</p>
+            </div>
           </div>
 
           <Card className="mb-8 w-full border-border bg-card text-left">

@@ -15,6 +15,7 @@
     "test:capsule-photos": "tsx scripts/e2e-capsule-photos.ts",
     "generate:test-photos": "tsx scripts/generate-test-photos.ts",
     "seed:demo": "tsx scripts/seed-demo.ts",
+    "demo:flow": "tsx scripts/demo-flow.ts",
     "apply:capsules-schema": "tsx scripts/apply-capsules-schema.ts",
     "probe:search": "tsx scripts/probe-search.ts",
     "probe:team-comps": "tsx scripts/probe-team-comps.ts"

@@ -102,7 +102,7 @@ export function EditCapsulePage() {
 
   return (
     <Layout>
-      <div className="mx-auto w-full max-w-md space-y-5 pb-8">
+      <div className="mx-auto w-full max-w-md space-y-5 pb-8 md:max-w-lg lg:max-w-xl">
         <section>
           <h1 className="text-2xl font-bold tracking-tight">Editar Capsule</h1>
           <p className="mt-1 text-sm text-muted-foreground">Actualiza fotos y recuerdos</p>

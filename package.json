@@ -15,6 +15,8 @@
     "seed:demo": "npm run generate:test-photos --prefix backend && npm run seed:demo --prefix backend",
     "doctor": "react-doctor frontend --verbose",
     "smoke:v1": "npm run smoke:v1 --prefix backend",
+    "demo:flow": "npm run demo:flow --prefix backend",
+    "test:v1": "npm run test --prefix backend && npm run demo:flow --prefix backend",
     "doctor:install": "react-doctor install -y"
   },
   "engines": {
