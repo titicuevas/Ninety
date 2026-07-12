@@ -14,6 +14,7 @@
     "seed:test-user": "node scripts/seed-test-user.mjs",
     "seed:demo": "npm run generate:test-photos --prefix backend && npm run seed:demo --prefix backend",
     "doctor": "react-doctor frontend --verbose",
+    "smoke:v1": "npm run smoke:v1 --prefix backend",
     "doctor:install": "react-doctor install -y"
   },
   "engines": {

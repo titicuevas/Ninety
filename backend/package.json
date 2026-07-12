@@ -11,6 +11,7 @@
     "test": "NODE_ENV=test node --import tsx --test src/config/env.test.ts src/app.test.ts src/lib/footballCompetitions.test.ts src/lib/teamMatching.test.ts src/lib/footballTeamCompetitions.test.ts",
     "verify:capsules": "tsx scripts/verify-capsules.ts",
     "verify:storage": "tsx scripts/verify-storage.ts",
+    "smoke:v1": "tsx scripts/smoke-v1.ts",
     "test:capsule-photos": "tsx scripts/e2e-capsule-photos.ts",
     "generate:test-photos": "tsx scripts/generate-test-photos.ts",
     "seed:demo": "tsx scripts/seed-demo.ts",
