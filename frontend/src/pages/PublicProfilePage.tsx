@@ -3,6 +3,7 @@ import { MapPin, Trophy } from 'lucide-react';
 import { CapsuleComments } from '@/components/CapsuleComments';
 import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
+import { FollowButton } from '@/components/FollowButton';
 import { Layout } from '@/components/Layout';
 import { StarRating } from '@/components/StarRating';
 import { Button } from '@/components/ui/button';
@@ -150,12 +151,24 @@ export function PublicProfilePage() {
             <p className="mt-2 text-sm text-muted-foreground">
               {capsules.length === 1 ? '1 partido en su diario' : `${capsules.length} partidos en su diario`}
             </p>
+
+            {(profile.followers_count ?? 0) > 0 || (profile.following_count ?? 0) > 0 ? (
+              <p className="mt-1 text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{profile.followers_count ?? 0}</span>{' '}
+                {profile.followers_count === 1 ? 'seguidor' : 'seguidores'}
+                {' · '}
+                <span className="font-medium text-foreground">{profile.following_count ?? 0}</span>{' '}
+                siguiendo
+              </p>
+            ) : null}
           </div>
 
           {isOwnProfile ? (
             <Button asChild variant="secondary" className="shrink-0">
               <Link to="/profile">Editar perfil</Link>
             </Button>
+          ) : profile.username ? (
+            <FollowButton username={profile.username} followedByMe={profile.followed_by_me} />
           ) : null}
         </section>
 

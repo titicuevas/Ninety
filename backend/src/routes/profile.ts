@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { normalizeProfile, profileUpdatePayload } from '../lib/profileNormalize.js';
 import { syncUserProfile } from '../lib/syncUserProfile.js';
 import { createUserClient, supabaseAnon } from '../lib/supabase.js';
+import { isMissingFollowsTable } from '../lib/userFollows.js';
 import { requireAuth, type AuthRequest } from '../middleware/auth.js';
 
 export const profileRouter = Router();
@@ -23,6 +24,17 @@ const updateProfileSchema = z.object({
 
 function getAccessToken(req: AuthRequest): string | null {
   return req.headers.authorization?.replace('Bearer ', '') ?? null;
+}
+
+async function resolveProfileByUsername(username: string) {
+  const { data, error } = await supabaseAnon
+    .from('profiles')
+    .select('id, username')
+    .eq('username', username)
+    .single();
+
+  if (error || !data) return null;
+  return data;
 }
 
 profileRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
@@ -85,6 +97,86 @@ profileRouter.patch('/me', requireAuth, async (req: AuthRequest, res) => {
   }
 
   res.json(normalizeProfile(data));
+});
+
+profileRouter.post('/:username/follow', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const username = Array.isArray(req.params.username) ? req.params.username[0] : req.params.username;
+  const target = await resolveProfileByUsername(username);
+  if (!target) {
+    res.status(404).json({ error: 'Usuario no encontrado' });
+    return;
+  }
+
+  if (target.id === req.userId) {
+    res.status(400).json({ error: 'No puedes seguirte a ti mismo' });
+    return;
+  }
+
+  const supabase = createUserClient(token);
+  const { error } = await supabase.from('user_follows').insert({
+    follower_id: req.userId!,
+    following_id: target.id,
+  });
+
+  if (error) {
+    if (isMissingFollowsTable(error)) {
+      res.status(503).json({ error: 'Función de seguir no disponible. Ejecuta la migración user_follows.' });
+      return;
+    }
+    if (error.code === '23505') {
+      res.status(409).json({ error: 'Ya sigues a este usuario' });
+      return;
+    }
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  res.status(201).json({ followed: true });
+});
+
+profileRouter.delete('/:username/follow', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const username = Array.isArray(req.params.username) ? req.params.username[0] : req.params.username;
+  const target = await resolveProfileByUsername(username);
+  if (!target) {
+    res.status(404).json({ error: 'Usuario no encontrado' });
+    return;
+  }
+
+  const supabase = createUserClient(token);
+  const { data, error } = await supabase
+    .from('user_follows')
+    .delete()
+    .eq('follower_id', req.userId!)
+    .eq('following_id', target.id)
+    .select('follower_id');
+
+  if (error) {
+    if (isMissingFollowsTable(error)) {
+      res.status(503).json({ error: 'Función de seguir no disponible. Ejecuta la migración user_follows.' });
+      return;
+    }
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  if (!data?.length) {
+    res.status(404).json({ error: 'No seguías a este usuario' });
+    return;
+  }
+
+  res.json({ followed: false });
 });
 
 profileRouter.get('/:username', async (req, res) => {

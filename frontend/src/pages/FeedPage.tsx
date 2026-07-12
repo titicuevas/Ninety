@@ -93,6 +93,7 @@ export function FeedPage() {
   const { user } = useAuth();
   const { data, isLoading, isError, error } = useCapsuleFeed();
   const capsules = data?.capsules ?? [];
+  const followingCount = data?.following_count;
 
   return (
     <Layout>
@@ -100,7 +101,7 @@ export function FeedPage() {
         <section>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Feed</h1>
           <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-            Lo que otros aficionados están guardando en su diario.
+            Partidos de aficionados que sigues y tu propia actividad.
           </p>
         </section>
 
@@ -122,13 +123,22 @@ export function FeedPage() {
           <Card className="border-dashed">
             <CardContent className="p-6 text-center sm:p-10">
               <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground" aria-hidden />
-              <p className="text-lg font-medium">El feed está vacío</p>
+              <p className="text-lg font-medium">Tu feed está vacío</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                Sé el primero en guardar un partido y compartir tu recuerdo con la comunidad.
+                {followingCount === 0
+                  ? 'Sigue a otros aficionados desde su perfil para ver sus partidos aquí.'
+                  : 'La gente que sigues aún no ha publicado partidos, o aún no has guardado ninguno.'}
               </p>
-              <Button asChild className="mt-4">
-                <Link to="/search">Buscar partido</Link>
-              </Button>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {followingCount === 0 ? (
+                  <Button asChild variant="secondary">
+                    <Link to="/u/aficionado_demo">Ver perfil demo</Link>
+                  </Button>
+                ) : null}
+                <Button asChild>
+                  <Link to="/search">Buscar partido</Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ) : null}

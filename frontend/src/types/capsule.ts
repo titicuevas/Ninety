@@ -63,4 +63,5 @@ export interface FeedCapsule extends Capsule {
 export interface FeedResponse {
   capsules: FeedCapsule[];
   total: number;
+  following_count?: number;
 }

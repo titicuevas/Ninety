@@ -9,6 +9,9 @@ export interface Profile {
   bio: string | null;
   created_at: string;
   updated_at?: string;
+  followers_count?: number;
+  following_count?: number;
+  followed_by_me?: boolean;
 }
 
 export interface UpdateProfileInput {

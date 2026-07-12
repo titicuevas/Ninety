@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { deleteCapsulePhotoByUrl, uploadCapsulePhotoBuffer } from '../lib/ensureStorage.js';
 import { attachCommentCounts, fetchCommentsWithAuthors, isMissingCommentsTable } from '../lib/capsuleComments.js';
 import { attachLikeStats, isMissingLikesTable } from '../lib/capsuleLikes.js';
+import { attachFollowStats, getFollowingIds } from '../lib/userFollows.js';
 import { normalizeProfile } from '../lib/profileNormalize.js';
 import { createUserClient, supabaseAnon } from '../lib/supabase.js';
 import { requireAuth, type AuthRequest } from '../middleware/auth.js';
@@ -66,11 +67,19 @@ capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
 
   const { limit, offset } = parsed.data;
   const supabase = createUserClient(token);
-  const { data: capsules, error, count } = await supabase
+  const followingIds = await getFollowingIds(supabase, req.userId!);
+
+  let feedQuery = supabase
     .from('capsules')
     .select('*', { count: 'exact' })
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
+    .order('created_at', { ascending: false });
+
+  if (followingIds !== null) {
+    const feedUserIds = [...new Set([req.userId!, ...followingIds])];
+    feedQuery = feedQuery.in('user_id', feedUserIds);
+  }
+
+  const { data: capsules, error, count } = await feedQuery.range(offset, offset + limit - 1);
 
   if (error) {
     res.status(400).json({ error: error.message });
@@ -110,6 +119,7 @@ capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
       profiles: profileMap.get(capsule.user_id) ?? null,
     })),
     total: count ?? 0,
+    following_count: followingIds?.length ?? undefined,
   });
 });
 
@@ -169,8 +179,10 @@ capsulesRouter.get('/user/:username', requireAuth, async (req: AuthRequest, res)
 
   const withLikes = await attachLikeStats(supabase, req.userId!, data ?? []);
   const capsulesWithLikes = await attachCommentCounts(supabase, withLikes);
+  const normalizedProfile = normalizeProfile(profile);
+  const profileWithFollows = await attachFollowStats(supabase, req.userId!, normalizedProfile);
 
-  res.json({ profile: normalizeProfile(profile), capsules: capsulesWithLikes });
+  res.json({ profile: profileWithFollows, capsules: capsulesWithLikes });
 });
 
 capsulesRouter.post('/photos', requireAuth, photoUpload.array('photos', 6), async (req: AuthRequest, res) => {

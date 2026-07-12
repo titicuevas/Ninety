@@ -123,6 +123,16 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('POST /api/profile/:username/follow requiere auth', async () => {
+    const res = await request(createApp()).post('/api/profile/demo/follow');
+    assert.equal(res.status, 401);
+  });
+
+  it('DELETE /api/profile/:username/follow requiere auth', async () => {
+    const res = await request(createApp()).delete('/api/profile/demo/follow');
+    assert.equal(res.status, 401);
+  });
+
   it('POST /api/auth/login valida el body', async () => {
     const res = await request(createApp()).post('/api/auth/login').send({});
     assert.equal(res.status, 400);

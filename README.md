@@ -241,7 +241,7 @@ Ninety/
 ### 🔮 v2 — Social
 - [x] Likes en capsules
 - [x] Comentarios en capsules
-- [ ] Seguir usuarios
+- [x] Seguir usuarios
 - [ ] Compartir
 - [ ] Wrapped anual
 

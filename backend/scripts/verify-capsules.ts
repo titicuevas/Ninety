@@ -186,6 +186,14 @@ async function main() {
     console.log('✅ Tabla capsule_comments accesible');
   }
 
+  const { error: followsError } = await admin.from('user_follows').select('follower_id').limit(0);
+  if (followsError) {
+    console.warn('\n⚠️  Tabla user_follows no disponible:', followsError.message);
+    console.warn('👉 Ejecuta en SQL Editor: supabase/migrations/20250712200000_user_follows.sql');
+  } else {
+    console.log('✅ Tabla user_follows accesible');
+  }
+
   console.log('\n🎉 Verificación completada.\n');
 }
 
