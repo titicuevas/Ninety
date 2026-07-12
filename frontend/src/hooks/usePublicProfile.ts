@@ -13,9 +13,9 @@ export function usePublicProfile(username: string | undefined) {
   const session = useAuthStore((s) => s.session);
 
   return useQuery({
-    queryKey: ['profile', 'public', username],
+    queryKey: ['profile', 'public', username, session?.access_token ?? 'guest'],
     queryFn: () =>
       apiFetch<UserCapsulesResponse>(`/api/capsules/user/${encodeURIComponent(username!)}`, {}, session?.access_token),
-    enabled: !!session && !!username,
+    enabled: !!username,
   });
 }

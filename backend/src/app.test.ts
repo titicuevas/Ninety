@@ -96,9 +96,9 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
-  it('GET /api/capsules/user/:username requiere auth', async () => {
+  it('GET /api/capsules/user/:username no requiere auth', async () => {
     const res = await request(createApp()).get('/api/capsules/user/demo');
-    assert.equal(res.status, 401);
+    assert.notEqual(res.status, 401);
   });
 
   it('POST /api/capsules/:id/like requiere auth', async () => {

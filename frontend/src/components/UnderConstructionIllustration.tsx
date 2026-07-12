@@ -2,7 +2,7 @@ type Props = {
   className?: string;
 };
 
-/** Ilustración del estadio en obras — inline para evitar fallos de carga y fondo invisible. */
+/** Ilustración del estadio — inline para evitar fallos de carga y fondo transparente. */
 export function UnderConstructionIllustration({ className }: Props) {
   return (
     <svg
@@ -10,7 +10,7 @@ export function UnderConstructionIllustration({ className }: Props) {
       viewBox="0 0 800 500"
       fill="none"
       role="img"
-      aria-label="Estadio de fútbol en obras"
+      aria-label="Ilustración de estadio de fútbol"
       className={className}
     >
       <defs>
@@ -64,7 +64,7 @@ export function UnderConstructionIllustration({ className }: Props) {
         fontWeight="700"
         letterSpacing="3"
       >
-        EN OBRAS
+        BETA
       </text>
       <text
         x="400"
@@ -74,7 +74,7 @@ export function UnderConstructionIllustration({ className }: Props) {
         fontFamily="Inter, system-ui, sans-serif"
         fontSize="11"
       >
-        Pronto abrimos el estadio
+        Tu diario de partidos
       </text>
 
       <rect x="368" y="48" width="64" height="64" rx="14" fill="#10b981" />

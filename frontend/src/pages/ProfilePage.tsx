@@ -15,6 +15,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { apiFetch } from '@/lib/api';
 import { isAutoUsername, suggestUsername } from '@/lib/profileHelpers';
 import { profilePath } from '@/lib/profilePath';
+import { publicProfileUrl } from '@/lib/siteUrl';
 import type { Profile, UpdateProfileInput } from '@/types/profile';
 
 const profileSchema = z.object({
@@ -37,6 +38,7 @@ export function ProfilePage() {
   const queryClient = useQueryClient();
   const { data: profile, isLoading } = useProfile();
   const [success, setSuccess] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const {
     register,
@@ -81,6 +83,17 @@ export function ProfilePage() {
   const applySuggestedUsername = () => {
     const suggestion = suggestUsername(displayName);
     if (suggestion) setValue('username', suggestion, { shouldValidate: true });
+  };
+
+  const copyPublicUrl = async () => {
+    if (!profile?.username || isAutoUsername(profile.username)) return;
+    try {
+      await navigator.clipboard.writeText(publicProfileUrl(profile.username));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard no disponible */
+    }
   };
 
   const onSubmit = (data: ProfileForm) => {
@@ -131,12 +144,18 @@ export function ProfilePage() {
               <p className="truncate font-medium">{profile?.display_name ?? 'Aficionado'}</p>
               <p className="truncate text-sm text-muted-foreground">{user?.email}</p>
               {profile?.username && !isAutoUsername(profile.username) ? (
-                <Link
-                  to={profilePath(profile.username)}
-                  className="mt-1 inline-block text-sm text-primary hover:underline"
-                >
-                  Ver perfil público
-                </Link>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <Link to={profilePath(profile.username)} className="text-sm text-primary hover:underline">
+                    Ver perfil público
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => void copyPublicUrl()}
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {copied ? 'Enlace copiado' : 'Copiar enlace'}
+                  </button>
+                </div>
               ) : null}
             </div>
           </div>

@@ -20,10 +20,11 @@ function formatScore(capsule: FeedCapsule) {
 
 function AuthorName({ capsule, currentUserId }: { capsule: FeedCapsule; currentUserId?: string }) {
   const name = capsule.profiles?.display_name ?? capsule.profiles?.username ?? 'Aficionado';
-  const label = capsule.user_id === currentUserId ? `${name} (tú)` : name;
+  const isSelf = capsule.user_id === currentUserId;
+  const label = isSelf ? `${name} (tú)` : name;
   const username = capsule.profiles?.username;
 
-  if (username && capsule.user_id !== currentUserId) {
+  if (username) {
     return (
       <Link to={profilePath(username)} className="text-sm font-medium text-primary hover:underline">
         {label}
@@ -126,15 +127,10 @@ export function FeedPage() {
               <p className="text-lg font-medium">Tu feed está vacío</p>
               <p className="mt-2 text-sm text-muted-foreground">
                 {followingCount === 0
-                  ? 'Sigue a otros aficionados desde su perfil para ver sus partidos aquí.'
+                  ? 'Visita perfiles de otros aficionados y pulsa Seguir para ver sus partidos aquí.'
                   : 'La gente que sigues aún no ha publicado partidos, o aún no has guardado ninguno.'}
               </p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
-                {followingCount === 0 ? (
-                  <Button asChild variant="secondary">
-                    <Link to="/u/aficionado_demo">Ver perfil demo</Link>
-                  </Button>
-                ) : null}
                 <Button asChild>
                   <Link to="/search">Buscar partido</Link>
                 </Button>

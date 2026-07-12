@@ -6,8 +6,8 @@ import { attachCommentCounts, fetchCommentsWithAuthors, isMissingCommentsTable }
 import { attachLikeStats, isMissingLikesTable } from '../lib/capsuleLikes.js';
 import { attachFollowStats, getFollowingIds } from '../lib/userFollows.js';
 import { normalizeProfile } from '../lib/profileNormalize.js';
-import { createUserClient, supabaseAnon } from '../lib/supabase.js';
-import { requireAuth, type AuthRequest } from '../middleware/auth.js';
+import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
+import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
 export const capsulesRouter = Router();
 
@@ -50,6 +50,12 @@ function getAccessToken(req: AuthRequest): string | null {
 
 function routeParam(value: string | string[]): string {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function getReaderClient(token: string | null) {
+  if (token) return createUserClient(token);
+  if (supabaseAdmin) return supabaseAdmin;
+  return null;
 }
 
 capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
@@ -146,17 +152,20 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   res.json({ capsules: data ?? [] });
 });
 
-capsulesRouter.get('/user/:username', requireAuth, async (req: AuthRequest, res) => {
+capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res) => {
+  const username = routeParam(req.params.username);
   const token = getAccessToken(req);
-  if (!token) {
-    res.status(401).json({ error: 'Token requerido' });
+  const reader = getReaderClient(token);
+
+  if (!reader) {
+    res.status(503).json({ error: 'Perfil público no disponible temporalmente' });
     return;
   }
 
   const { data: profile, error: profileError } = await supabaseAnon
     .from('profiles')
     .select('id, username, full_name, avatar_url, favorite_team, country, city, created_at')
-    .eq('username', req.params.username)
+    .eq('username', username)
     .single();
 
   if (profileError || !profile) {
@@ -164,8 +173,7 @@ capsulesRouter.get('/user/:username', requireAuth, async (req: AuthRequest, res)
     return;
   }
 
-  const supabase = createUserClient(token);
-  const { data, error } = await supabase
+  const { data, error } = await reader
     .from('capsules')
     .select('*')
     .eq('user_id', profile.id)
@@ -177,10 +185,11 @@ capsulesRouter.get('/user/:username', requireAuth, async (req: AuthRequest, res)
     return;
   }
 
-  const withLikes = await attachLikeStats(supabase, req.userId!, data ?? []);
-  const capsulesWithLikes = await attachCommentCounts(supabase, withLikes);
+  const viewerId = req.userId ?? '';
+  const withLikes = await attachLikeStats(reader, viewerId, data ?? []);
+  const capsulesWithLikes = await attachCommentCounts(reader, withLikes);
   const normalizedProfile = normalizeProfile(profile);
-  const profileWithFollows = await attachFollowStats(supabase, req.userId!, normalizedProfile);
+  const profileWithFollows = await attachFollowStats(reader, viewerId, normalizedProfile);
 
   res.json({ profile: profileWithFollows, capsules: capsulesWithLikes });
 });

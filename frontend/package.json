@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "start": "serve dist -s -l tcp://0.0.0.0:${PORT:-4173}",
     "typecheck": "tsc --noEmit",
-    "doctor": "npx react-doctor@latest"
+    "doctor": "react-doctor --verbose"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",

@@ -23,3 +23,21 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
   req.userId = data.user.id;
   next();
 }
+
+/** Autenticación opcional: adjunta userId si hay token válido, sin bloquear anónimos. */
+export async function optionalAuth(req: AuthRequest, res: Response, next: NextFunction) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+
+  if (!token) {
+    next();
+    return;
+  }
+
+  const { data, error } = await supabaseAnon.auth.getUser(token);
+
+  if (!error && data.user) {
+    req.userId = data.user.id;
+  }
+
+  next();
+}

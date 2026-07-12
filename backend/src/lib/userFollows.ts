@@ -64,7 +64,7 @@ export async function attachFollowStats<T extends { id: string }>(
       .from('user_follows')
       .select('*', { count: 'exact', head: true })
       .eq('follower_id', profileId),
-    viewerId !== profileId
+    viewerId && viewerId !== profileId
       ? supabase
           .from('user_follows')
           .select('follower_id')
@@ -86,6 +86,6 @@ export async function attachFollowStats<T extends { id: string }>(
     ...profile,
     followers_count: followersResult.count ?? 0,
     following_count: followingResult.count ?? 0,
-    followed_by_me: viewerId !== profileId && !!followCheck.data,
+    followed_by_me: !!viewerId && viewerId !== profileId && !!followCheck.data,
   };
 }

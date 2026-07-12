@@ -208,17 +208,27 @@ Ninety/
 └── README.md
 ```
 
-## 🔐 API Endpoints (v0.2)
+## 🔐 API Endpoints
 
-| Método | Ruta                        | Descripción              |
-|--------|-----------------------------|--------------------------|
-| GET    | `/api/health`               | Health check             |
-| GET    | `/api/profile/me`           | Perfil del usuario       |
-| PATCH  | `/api/profile/me`           | Actualizar perfil        |
-| GET    | `/api/profile/:username`    | Perfil público           |
-| GET    | `/api/football/matches/search?q=` | Buscar partidos   |
-| GET    | `/api/football/competitions`| Listar competiciones     |
-| GET    | `/api/football/teams?q=`    | Buscar equipos           |
+| Método | Ruta | Auth | Descripción |
+|--------|------|------|-------------|
+| GET | `/api/health` | — | Health check |
+| POST | `/api/auth/login` | — | Login email/contraseña |
+| POST | `/api/auth/register` | — | Registro |
+| POST | `/api/auth/oauth/google` | — | Iniciar OAuth Google |
+| POST | `/api/auth/oauth/exchange` | — | Intercambio PKCE OAuth |
+| GET | `/api/profile/me` | ✅ | Perfil propio |
+| PATCH | `/api/profile/me` | ✅ | Actualizar perfil |
+| GET | `/api/profile/:username` | — | Perfil público (metadatos) |
+| POST/DELETE | `/api/profile/:username/follow` | ✅ | Seguir / dejar de seguir |
+| GET | `/api/capsules/me` | ✅ | Mis capsules |
+| GET | `/api/capsules/feed` | ✅ | Feed (seguidos + tuyo) |
+| GET | `/api/capsules/user/:username` | opcional | Perfil + capsules públicas |
+| POST/PATCH/DELETE | `/api/capsules`… | ✅ | CRUD capsules |
+| POST/DELETE | `/api/capsules/:id/like` | ✅ | Likes |
+| GET/POST/DELETE | `/api/capsules/:id/comments`… | ✅ | Comentarios |
+| GET | `/api/football/matches/search` | ✅ | Buscar partidos |
+| GET | `/api/football/competitions` | ✅ | Competiciones |
 
 <a id="roadmap"></a>
 ## 📅 Roadmap
@@ -232,7 +242,7 @@ Ninety/
 - [x] Deploy en Railway
 - [x] Páginas legales (privacidad y términos)
 
-### 🔜 v1.1 — Pulido beta
+### ✅ v1.1 — Pulido beta
 - [x] Fotos en Capsules
 - [x] Google OAuth
 - [x] Perfiles públicos

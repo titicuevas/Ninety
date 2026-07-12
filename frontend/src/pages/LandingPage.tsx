@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { SkipLink } from '@/components/SkipLink';
-import { UnderConstructionIllustration } from '@/components/UnderConstructionIllustration';
 import { LegalFooter } from '@/components/LegalFooter';
+import { UnderConstructionIllustration } from '@/components/UnderConstructionIllustration';
 import { buttonVariants } from '@/components/ui/button-variants';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -56,8 +56,8 @@ export function LandingPage() {
             Letterboxd, pero para el fútbol.
           </p>
 
-          <div className="mb-8 w-full max-w-md rounded-2xl border border-border bg-zinc-900/60 p-4 shadow-lg shadow-black/20">
-            <UnderConstructionIllustration className="h-auto w-full" />
+          <div className="mb-8 w-full max-w-lg">
+            <UnderConstructionIllustration className="mx-auto h-auto w-full max-h-56 sm:max-h-64" />
           </div>
 
           <Card className="mb-8 w-full border-border bg-card text-left">

@@ -5,13 +5,14 @@ import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { FollowButton } from '@/components/FollowButton';
 import { Layout } from '@/components/Layout';
+import { PublicLayout } from '@/components/PublicLayout';
 import { StarRating } from '@/components/StarRating';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { usePublicProfile } from '@/hooks/usePublicProfile';
 import { useAuth } from '@/hooks/useAuthInit';
 import { formatWatchedDate } from '@/lib/format';
-import { profilePath } from '@/lib/profilePath';
+import { publicProfileUrl } from '@/lib/siteUrl';
 import type { Capsule } from '@/types/capsule';
 
 function formatScore(capsule: Capsule) {
@@ -27,6 +28,8 @@ function PublicCapsuleCard({
   currentUserId?: string;
 }) {
   const score = formatScore(capsule);
+  const likesCount = capsule.likes_count ?? 0;
+  const commentsCount = capsule.comments_count ?? 0;
 
   return (
     <Card>
@@ -60,16 +63,30 @@ function PublicCapsuleCard({
         {capsule.note ? <p className="mt-3 text-sm text-muted-foreground">{capsule.note}</p> : null}
 
         <div className="mt-4 flex flex-wrap items-start gap-1 border-t border-border pt-3">
-          <CapsuleLikeButton
-            capsuleId={capsule.id}
-            likesCount={capsule.likes_count}
-            likedByMe={capsule.liked_by_me}
-          />
-          <CapsuleComments
-            capsuleId={capsule.id}
-            commentsCount={capsule.comments_count}
-            currentUserId={currentUserId}
-          />
+          {currentUserId ? (
+            <>
+              <CapsuleLikeButton
+                capsuleId={capsule.id}
+                likesCount={likesCount}
+                likedByMe={capsule.liked_by_me}
+              />
+              <CapsuleComments
+                capsuleId={capsule.id}
+                commentsCount={commentsCount}
+                currentUserId={currentUserId}
+              />
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {likesCount > 0 ? `${likesCount} me gusta` : null}
+              {likesCount > 0 && commentsCount > 0 ? ' · ' : null}
+              {commentsCount > 0 ? `${commentsCount} comentarios` : null}
+              {(likesCount > 0 || commentsCount > 0) && ' · '}
+              <Link to="/login" className="text-primary hover:underline">
+                Inicia sesión para interactuar
+              </Link>
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -82,31 +99,32 @@ export function PublicProfilePage() {
   const { data, isLoading, isError, error } = usePublicProfile(username);
   const profile = data?.profile;
   const capsules = data?.capsules ?? [];
-  const isOwnProfile = profile?.id === user?.id;
+  const isOwnProfile = !!user && profile?.id === user.id;
+  const Shell = user ? Layout : PublicLayout;
 
   if (isLoading) {
     return (
-      <Layout>
+      <Shell>
         <div className="flex justify-center py-20">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
-      </Layout>
+      </Shell>
     );
   }
 
   if (isError || !profile) {
     return (
-      <Layout>
+      <Shell>
         <div className="mx-auto max-w-lg space-y-4 py-16 text-center">
           <h1 className="text-xl font-semibold">Usuario no encontrado</h1>
           <p className="text-sm text-muted-foreground">
             {error instanceof Error ? error.message : 'No existe ese perfil público.'}
           </p>
           <Button asChild variant="secondary">
-            <Link to="/feed">Volver al feed</Link>
+            <Link to={user ? '/feed' : '/'}>{user ? 'Volver al feed' : 'Volver al inicio'}</Link>
           </Button>
         </div>
-      </Layout>
+      </Shell>
     );
   }
 
@@ -114,7 +132,7 @@ export function PublicProfilePage() {
   const location = [profile.city, profile.country].filter(Boolean).join(', ');
 
   return (
-    <Layout>
+    <Shell>
       <div className="mx-auto max-w-2xl space-y-8">
         <section className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
           {profile.avatar_url ? (
@@ -152,23 +170,24 @@ export function PublicProfilePage() {
               {capsules.length === 1 ? '1 partido en su diario' : `${capsules.length} partidos en su diario`}
             </p>
 
-            {(profile.followers_count ?? 0) > 0 || (profile.following_count ?? 0) > 0 ? (
-              <p className="mt-1 text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">{profile.followers_count ?? 0}</span>{' '}
-                {profile.followers_count === 1 ? 'seguidor' : 'seguidores'}
-                {' · '}
-                <span className="font-medium text-foreground">{profile.following_count ?? 0}</span>{' '}
-                siguiendo
-              </p>
-            ) : null}
+            <p className="mt-1 text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">{profile.followers_count ?? 0}</span>{' '}
+              {profile.followers_count === 1 ? 'seguidor' : 'seguidores'}
+              {' · '}
+              <span className="font-medium text-foreground">{profile.following_count ?? 0}</span> siguiendo
+            </p>
           </div>
 
           {isOwnProfile ? (
             <Button asChild variant="secondary" className="shrink-0">
               <Link to="/profile">Editar perfil</Link>
             </Button>
-          ) : profile.username ? (
+          ) : profile.username && user ? (
             <FollowButton username={profile.username} followedByMe={profile.followed_by_me} />
+          ) : profile.username ? (
+            <Button asChild className="shrink-0">
+              <Link to="/login">Inicia sesión para seguir</Link>
+            </Button>
           ) : null}
         </section>
 
@@ -197,15 +216,15 @@ export function PublicProfilePage() {
           </Card>
         )}
 
-        {profile.username && !isOwnProfile ? (
+        {profile.username ? (
           <p className="text-center text-xs text-muted-foreground">
             Perfil público ·{' '}
-            <Link to={profilePath(profile.username)} className="text-primary hover:underline">
-              ninety.app{profilePath(profile.username)}
-            </Link>
+            <a href={publicProfileUrl(profile.username)} className="text-primary hover:underline">
+              {publicProfileUrl(profile.username).replace(/^https?:\/\//, '')}
+            </a>
           </p>
         ) : null}
       </div>
-    </Layout>
+    </Shell>
   );
 }

@@ -23,6 +23,7 @@ export function AppRoutes() {
       <Route path="/terminos" element={<TermsPage />} />
       <Route path="/welcome" element={<Navigate to="/" replace />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
+      <Route path="/u/:username" element={<PublicProfilePage />} />
 
       <Route element={<GuestRoute />}>
         <Route path="/login" element={<LoginPage />} />
@@ -37,7 +38,6 @@ export function AppRoutes() {
         <Route path="/capsules/new" element={<CreateCapsulePage />} />
         <Route path="/capsules/:id/edit" element={<EditCapsulePage />} />
         <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/u/:username" element={<PublicProfilePage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
