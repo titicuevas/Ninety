@@ -7,7 +7,7 @@ import { CapsulePhotosField } from '@/components/CapsulePhotosField';
 import { FormAlert } from '@/components/FormAlert';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
-import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -92,14 +92,14 @@ export function CapsuleMemoryForm({
       </div>
 
       <div className="space-y-6 rounded-2xl border border-border bg-card p-4 sm:p-6">
-        <FormField label="¿Cuándo lo viste?" error={errors.watched_at?.message} labelClassName="block text-center sm:text-left">
-          <Input type="date" className="h-12 text-center text-base sm:text-left" {...register('watched_at')} />
+        <FormField label="¿Cuándo lo viste?" error={errors.watched_at?.message}>
+          <DateInput {...register('watched_at')} />
         </FormField>
 
         <fieldset className="space-y-3">
-          <legend className="w-full text-center text-sm font-medium">Valoración (opcional)</legend>
+          <legend className="text-sm font-medium">Valoración (opcional)</legend>
           <div
-            className="mx-auto flex max-w-xs justify-center gap-2"
+            className="flex flex-wrap justify-center gap-2 sm:justify-start"
             role="radiogroup"
             aria-label="Valoración del partido"
           >
@@ -125,13 +125,11 @@ export function CapsuleMemoryForm({
         </fieldset>
 
         <div className="space-y-1.5">
-          <Label htmlFor="note" className="block text-center sm:text-left">
-            Nota (opcional)
-          </Label>
+          <Label htmlFor="note">Nota (opcional)</Label>
           <Textarea
             id="note"
             rows={4}
-            className="min-h-28 text-base"
+            className="min-h-28 w-full resize-y text-base"
             placeholder="Con quién lo viste, dónde, qué recuerdas..."
             {...register('note')}
           />
@@ -139,8 +137,8 @@ export function CapsuleMemoryForm({
       </div>
 
       {error ? (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-center">
-          <FormAlert className="text-center">{error}</FormAlert>
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3">
+          <FormAlert>{error}</FormAlert>
         </div>
       ) : null}
 

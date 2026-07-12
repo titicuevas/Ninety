@@ -26,5 +26,13 @@ export function friendlyApiError(message: string): string {
     return 'Ya guardaste este partido en tu diario.';
   }
 
+  if (lower.includes('lenguaje ofensivo') || lower.includes('ofensivo')) {
+    return message;
+  }
+
+  if (lower.includes('no es una imagen válida') || lower.includes('no coincide')) {
+    return message;
+  }
+
   return message;
 }

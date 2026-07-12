@@ -2,6 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
 import { deleteCapsulePhotoByUrl, uploadCapsulePhotoBuffer } from '../lib/ensureStorage.js';
+import { validateCommentBody, validateImageBuffer } from '../lib/contentModeration.js';
 import { attachCommentCounts, fetchCommentsWithAuthors, isMissingCommentsTable } from '../lib/capsuleComments.js';
 import { attachLikeStats, isMissingLikesTable } from '../lib/capsuleLikes.js';
 import { attachFollowStats, getFollowingIds } from '../lib/userFollows.js';
@@ -201,6 +202,14 @@ capsulesRouter.post('/photos', requireAuth, photoUpload.array('photos', 6), asyn
     return;
   }
 
+  for (const file of files) {
+    const imageError = validateImageBuffer(file.buffer, file.mimetype);
+    if (imageError) {
+      res.status(400).json({ error: imageError });
+      return;
+    }
+  }
+
   try {
     const urls = await Promise.all(
       files.map((file) => uploadCapsulePhotoBuffer(req.userId!, file.buffer, file.mimetype)),
@@ -374,6 +383,12 @@ capsulesRouter.post('/:id/comments', requireAuth, async (req: AuthRequest, res) 
   const parsed = commentBodySchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const moderationError = validateCommentBody(parsed.data.body);
+  if (moderationError) {
+    res.status(400).json({ error: moderationError });
     return;
   }
 

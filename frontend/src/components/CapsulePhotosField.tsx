@@ -82,7 +82,10 @@ export function CapsulePhotosField({
           Tus fotos del partido
         </p>
         <p className="text-xs text-muted-foreground">
-          Hasta {MAX_CAPSULE_PHOTOS} fotos · ideal para móvil
+          Hasta {MAX_CAPSULE_PHOTOS} fotos · estadio, pantalla o recuerdo del partido
+        </p>
+        <p className="max-w-sm text-xs text-muted-foreground">
+          No subas desnudos, contenido sexual ni imágenes violentas.
         </p>
         <span
           className="rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary"

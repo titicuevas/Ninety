@@ -71,7 +71,7 @@ export function CreateCapsulePage() {
   return (
     <Layout>
       <div className="mx-auto w-full max-w-md space-y-5 pb-8">
-        <section className="text-center sm:text-left">
+        <section>
           <h1 className="text-2xl font-bold tracking-tight">Nueva Capsule</h1>
           <p className="mt-1 text-sm text-muted-foreground">Guarda el partido con fotos y recuerdos</p>
         </section>

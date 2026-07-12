@@ -129,7 +129,9 @@ export function CapsuleComments({
               aria-label="Nuevo comentario"
             />
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs text-muted-foreground">{draft.length}/500</span>
+              <span className="text-xs text-muted-foreground">
+                {draft.length}/500 · Sé respetuoso
+              </span>
               <Button type="submit" size="sm" loading={addComment.isPending} disabled={!draft.trim()}>
                 Publicar
               </Button>

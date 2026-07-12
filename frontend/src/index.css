@@ -112,6 +112,36 @@ button {
   scrollbar-width: none;
 }
 
+/* Date inputs — legibles en móvil y calendario alineado a la derecha */
+.date-input {
+  appearance: none;
+  -webkit-appearance: none;
+  color-scheme: dark;
+}
+
+.date-input::-webkit-date-and-time-value {
+  text-align: left;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.75;
+  filter: invert(0.85);
+  margin-inline-start: auto;
+  padding: 0.25rem;
+}
+
+.date-input::-webkit-datetime-edit {
+  padding: 0;
+}
+
+@media (max-width: 640px) {
+  .date-input {
+    font-size: 1rem;
+    min-height: 3rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
