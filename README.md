@@ -229,7 +229,7 @@ Probar en **móvil** (375px), **tablet** (768px) y **desktop** (1280px):
 | `/u/aficionado_demo/following` | Lista pública de seguidos |
 | `/c/:id` | Capsule pública, compartir, comentarios en lectura |
 
-Nav: iconos solos en móvil, icono + texto desde `md` (768px).
+Nav: **tab bar inferior** en móvil (&lt;768px); icono + texto en header desde `md`. Safe areas (notch / home indicator) en iOS.
 
 ## 🩺 React Doctor
 

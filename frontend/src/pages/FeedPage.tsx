@@ -104,10 +104,10 @@ export function FeedPage() {
   return (
     <Layout>
       <div className="space-y-8">
-        <section>
+        <section className="space-y-1">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Feed</h1>
-          <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-            Partidos de aficionados que sigues y tu propia actividad.
+          <p className="text-sm text-muted-foreground sm:text-base">
+            El vestuario digital: partidos de a quien sigues y los tuyos.
           </p>
         </section>
 

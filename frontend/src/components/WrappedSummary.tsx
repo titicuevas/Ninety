@@ -117,7 +117,7 @@ export function WrappedSummary({ name, stats, scope, years, onScopeChange }: Wra
             aria-selected={scope === 'all'}
             onClick={() => onScopeChange('all')}
             className={cn(
-              'rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              'min-h-11 rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               scope === 'all'
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-secondary text-muted-foreground hover:text-foreground',
@@ -133,7 +133,7 @@ export function WrappedSummary({ name, stats, scope, years, onScopeChange }: Wra
               aria-selected={scope === year}
               onClick={() => onScopeChange(year)}
               className={cn(
-                'rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'min-h-11 rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 scope === year
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-muted-foreground hover:text-foreground',

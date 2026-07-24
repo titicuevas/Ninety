@@ -43,34 +43,51 @@
   --popover: #141416;
   --popover-foreground: #fafafa;
   --primary: #10b981;
-  --primary-foreground: #ffffff;
+  --primary-foreground: #042f1e;
   --secondary: #1c1c1f;
   --secondary-foreground: #fafafa;
   --muted: #1c1c1f;
-  --muted-foreground: #71717a;
+  /* Contraste AA sobre fondo oscuro (antes #71717a era justo/bajo) */
+  --muted-foreground: #a1a1aa;
   --accent: #10b981;
-  --accent-foreground: #ffffff;
-  --destructive: #ef4444;
-  --border: #27272a;
-  --input: #27272a;
-  --ring: #10b981;
+  --accent-foreground: #042f1e;
+  --destructive: #f87171;
+  --border: #2e2e33;
+  --input: #2e2e33;
+  --ring: #34d399;
+  --pitch-glow: rgba(16, 185, 129, 0.12);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --app-header: 3.5rem;
+  --app-tabbar: 4rem;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   font-family: var(--font-sans);
   background: var(--background);
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Evita overscroll azul/blanco en iOS */
+  background-attachment: fixed;
 }
 
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .sr-only {
@@ -85,15 +102,47 @@ body {
   border-width: 0;
 }
 
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  transform: translateY(-120%);
+  border-radius: 0.75rem;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.15s ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
 :focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
-/* Landing pública — colores fijos por si falla el tema */
+/* Atmósfera “césped / estadio” sutil — no sustituye contenido real */
+.app-shell {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(ellipse 90% 50% at 50% -10%, var(--pitch-glow), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(16, 185, 129, 0.05), transparent 50%);
+  background-attachment: fixed;
+}
+
 .landing-page {
   background-color: #0a0a0b;
   color: #fafafa;
+  background-image:
+    radial-gradient(ellipse 80% 45% at 50% -5%, rgba(16, 185, 129, 0.16), transparent 55%),
+    radial-gradient(ellipse 50% 35% at 0% 80%, rgba(16, 185, 129, 0.06), transparent 50%);
 }
 
 input,
@@ -101,6 +150,14 @@ textarea,
 select,
 button {
   font-family: inherit;
+}
+
+/* Targets táctiles cómodos en móvil (Apple HIG / Material ≈ 44px) */
+@media (pointer: coarse) {
+  .touch-target {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
 }
 
 .scrollbar-none::-webkit-scrollbar {
@@ -112,7 +169,6 @@ button {
   scrollbar-width: none;
 }
 
-/* Date inputs — legibles en móvil y calendario alineado a la derecha */
 .date-input {
   appearance: none;
   -webkit-appearance: none;
@@ -143,6 +199,10 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   *,
   *::before,
   *::after {
