@@ -1,10 +1,16 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Sparkles, Star, Trophy, Users } from 'lucide-react';
+import { Calendar, Check, Camera, Share2, Sparkles, Star, Trophy, Users } from 'lucide-react';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { StarRating } from '@/components/StarRating';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { formatRating, type CapsuleStats } from '@/lib/capsuleStats';
+import {
+  buildWrappedShareText,
+  formatRating,
+  type CapsuleStats,
+  type WrappedScope,
+} from '@/lib/capsuleStats';
 import { formatWatchedDate } from '@/lib/format';
 import type { Capsule } from '@/types/capsule';
 import { cn } from '@/lib/utils';
@@ -70,13 +76,75 @@ function RecentCapsuleRow({ capsule }: { capsule: Capsule }) {
 interface WrappedSummaryProps {
   name: string;
   stats: CapsuleStats;
+  scope: WrappedScope;
+  years: number[];
+  onScopeChange: (scope: WrappedScope) => void;
 }
 
-export function WrappedSummary({ name, stats }: WrappedSummaryProps) {
+export function WrappedSummary({ name, stats, scope, years, onScopeChange }: WrappedSummaryProps) {
+  const [copied, setCopied] = useState(false);
   const bestScore = stats.bestRated ? formatScore(stats.bestRated) : null;
+  const periodLabel = scope === 'all' ? 'Todo tu diario' : `Año ${scope}`;
+  const badgeLabel = scope === 'all' ? 'Tu Wrapped · completo' : `Tu Wrapped · ${scope}`;
+
+  const share = async () => {
+    const text = buildWrappedShareText(name, scope, stats);
+    try {
+      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+        await navigator.share({ title: `Wrapped Ninety · ${periodLabel}`, text });
+        return;
+      }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard no disponible */
+    }
+  };
 
   return (
     <div className="space-y-6">
+      {years.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Periodo del Wrapped">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={scope === 'all'}
+            onClick={() => onScopeChange('all')}
+            className={cn(
+              'rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              scope === 'all'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-secondary text-muted-foreground hover:text-foreground',
+            )}
+          >
+            Todo
+          </button>
+          {years.map((year) => (
+            <button
+              key={year}
+              type="button"
+              role="tab"
+              aria-selected={scope === year}
+              onClick={() => onScopeChange(year)}
+              className={cn(
+                'rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                scope === year
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {year}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       <section
         className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-emerald-600/30 via-emerald-900/20 to-background p-6 sm:p-8"
         aria-labelledby="wrapped-heading"
@@ -91,16 +159,35 @@ export function WrappedSummary({ name, stats }: WrappedSummaryProps) {
         />
 
         <div className="relative">
-          <p className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/20 px-3 py-1 text-xs font-medium text-emerald-100">
-            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-            Tu Wrapped · beta
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/20 px-3 py-1 text-xs font-medium text-emerald-100">
+              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+              {badgeLabel}
+            </p>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="bg-black/30 text-emerald-50 hover:bg-black/45"
+              onClick={() => void share()}
+            >
+              {copied ? (
+                <Check className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+              ) : (
+                <Share2 className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+              )}
+              {copied ? 'Copiado' : 'Compartir'}
+            </Button>
+          </div>
 
           <h2 id="wrapped-heading" className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
             {name}, esto es tu fútbol
+            {scope !== 'all' ? ` en ${scope}` : ''}
           </h2>
           <p className="mt-2 max-w-md text-sm text-white/75 sm:text-base">
-            Un vistazo a los partidos que has vivido y lo que dicen de ti como aficionado.
+            {scope === 'all'
+              ? 'Un vistazo a los partidos que has vivido y lo que dicen de ti como aficionado.'
+              : `Tu resumen anual: partidos, valoraciones y highlights de ${scope}.`}
           </p>
 
           <div className="mt-8 flex flex-wrap items-end gap-6">
@@ -109,7 +196,8 @@ export function WrappedSummary({ name, stats }: WrappedSummaryProps) {
                 {stats.totalMatches}
               </p>
               <p className="mt-1 text-sm font-medium text-emerald-100/90">
-                {stats.totalMatches === 1 ? 'partido en tu diario' : 'partidos en tu diario'}
+                {stats.totalMatches === 1 ? 'partido' : 'partidos'}
+                {scope !== 'all' ? ` en ${scope}` : ' en tu diario'}
               </p>
             </div>
 
@@ -122,89 +210,130 @@ export function WrappedSummary({ name, stats }: WrappedSummaryProps) {
                 <p className="text-2xl font-bold tabular-nums">{stats.notesCount}</p>
                 <p className="text-xs text-white/70">{stats.notesCount === 1 ? 'nota' : 'notas'}</p>
               </div>
+              {scope !== 'all' ? (
+                <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
+                  <p className="text-2xl font-bold tabular-nums">{stats.activeMonths}</p>
+                  <p className="text-xs text-white/70">
+                    {stats.activeMonths === 1 ? 'mes activo' : 'meses activos'}
+                  </p>
+                </div>
+              ) : null}
+              {stats.photosCount > 0 ? (
+                <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
+                  <p className="text-2xl font-bold tabular-nums">{stats.photosCount}</p>
+                  <p className="text-xs text-white/70">fotos</p>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-2">
-        {stats.topTeam ? (
-          <HighlightCard
-            label="Equipo top"
-            title={stats.topTeam.name}
-            subtitle={`Aparece en ${stats.topTeam.count} ${stats.topTeam.count === 1 ? 'partido' : 'partidos'}`}
-            icon={Users}
-          />
-        ) : null}
-        {stats.topCompetition ? (
-          <HighlightCard
-            label="Competición favorita"
-            title={stats.topCompetition.name}
-            subtitle={`${stats.topCompetition.count} ${stats.topCompetition.count === 1 ? 'partido' : 'partidos'}`}
-            icon={Trophy}
-          />
-        ) : null}
-        {stats.lastWatched ? (
-          <HighlightCard
-            label="Último visto"
-            title={`${stats.lastWatched.home_team_name} vs ${stats.lastWatched.away_team_name}`}
-            subtitle={formatWatchedDate(stats.lastWatched.watched_at)}
-            icon={Calendar}
-            className="sm:col-span-2"
-          />
-        ) : null}
-      </section>
-
-      {stats.bestRated ? (
-        <Card className="overflow-hidden border-primary/25 bg-gradient-to-br from-card to-emerald-950/20">
-          <CardContent className="p-0">
-            <div className="border-b border-border/80 px-5 py-4">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
-                <Star className="h-3.5 w-3.5 fill-primary" aria-hidden="true" />
-                Mejor valorado
-              </div>
-              <p className="mt-2 text-lg font-semibold">
-                {stats.bestRated.home_team_name} vs {stats.bestRated.away_team_name}
-              </p>
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                {bestScore ? <span className="text-sm font-medium tabular-nums">{bestScore}</span> : null}
-                <StarRating rating={stats.bestRated.rating ?? 0} />
-                {stats.bestRated.competition_name ? (
-                  <span className="text-xs text-muted-foreground">{stats.bestRated.competition_name}</span>
-                ) : null}
-              </div>
-            </div>
-            <div className="px-5 pb-5 pt-4">
-              <CapsulePhotoGallery
-                capsule={stats.bestRated}
-                alt={`Mejor partido: ${stats.bestRated.home_team_name} vs ${stats.bestRated.away_team_name}`}
+      {stats.totalMatches === 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="p-6 text-center sm:p-8">
+            <p className="text-lg font-medium">Sin partidos en {periodLabel.toLowerCase()}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Cambia de año o guarda un partido visto en este periodo.
+            </p>
+            <Button asChild className="mt-4">
+              <Link to="/search">Buscar partido</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <section className="grid gap-3 sm:grid-cols-2">
+            {stats.topTeam ? (
+              <HighlightCard
+                label="Equipo top"
+                title={stats.topTeam.name}
+                subtitle={`Aparece en ${stats.topTeam.count} ${stats.topTeam.count === 1 ? 'partido' : 'partidos'}`}
+                icon={Users}
               />
-              {stats.bestRated.note ? (
-                <p className="mt-3 text-sm italic text-muted-foreground">"{stats.bestRated.note}"</p>
-              ) : null}
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
+            ) : null}
+            {stats.topCompetition ? (
+              <HighlightCard
+                label="Competición favorita"
+                title={stats.topCompetition.name}
+                subtitle={`${stats.topCompetition.count} ${stats.topCompetition.count === 1 ? 'partido' : 'partidos'}`}
+                icon={Trophy}
+              />
+            ) : null}
+            {stats.lastWatched ? (
+              <HighlightCard
+                label={scope === 'all' ? 'Último visto' : 'Último del año'}
+                title={`${stats.lastWatched.home_team_name} vs ${stats.lastWatched.away_team_name}`}
+                subtitle={formatWatchedDate(stats.lastWatched.watched_at)}
+                icon={Calendar}
+                className="sm:col-span-2"
+              />
+            ) : null}
+            {stats.photosCount > 0 ? (
+              <HighlightCard
+                label="Recuerdos en foto"
+                title={`${stats.photosCount} foto${stats.photosCount === 1 ? '' : 's'}`}
+                subtitle="Guardadas en tus Capsules"
+                icon={Camera}
+                className="sm:col-span-2"
+              />
+            ) : null}
+          </section>
 
-      {stats.recentCapsules.length > 0 ? (
-        <Card>
-          <CardContent className="p-5 sm:p-6">
-            <div className="mb-4 flex items-center justify-between gap-2">
-              <div>
-                <p className="font-semibold">Actividad reciente</p>
-                <p className="text-sm text-muted-foreground">Tus últimas Capsules</p>
-              </div>
-              <Button asChild variant="ghost" size="sm" className="shrink-0">
-                <Link to="/capsules">Ver todas</Link>
-              </Button>
-            </div>
-            {stats.recentCapsules.map((capsule) => (
-              <RecentCapsuleRow key={capsule.id} capsule={capsule} />
-            ))}
-          </CardContent>
-        </Card>
-      ) : null}
+          {stats.bestRated ? (
+            <Card className="overflow-hidden border-primary/25 bg-gradient-to-br from-card to-emerald-950/20">
+              <CardContent className="p-0">
+                <div className="border-b border-border/80 px-5 py-4">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
+                    <Star className="h-3.5 w-3.5 fill-primary" aria-hidden="true" />
+                    Mejor valorado
+                  </div>
+                  <p className="mt-2 text-lg font-semibold">
+                    {stats.bestRated.home_team_name} vs {stats.bestRated.away_team_name}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-3">
+                    {bestScore ? <span className="text-sm font-medium tabular-nums">{bestScore}</span> : null}
+                    <StarRating rating={stats.bestRated.rating ?? 0} />
+                    {stats.bestRated.competition_name ? (
+                      <span className="text-xs text-muted-foreground">{stats.bestRated.competition_name}</span>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="px-5 pb-5 pt-4">
+                  <CapsulePhotoGallery
+                    capsule={stats.bestRated}
+                    alt={`Mejor partido: ${stats.bestRated.home_team_name} vs ${stats.bestRated.away_team_name}`}
+                  />
+                  {stats.bestRated.note ? (
+                    <p className="mt-3 text-sm italic text-muted-foreground">"{stats.bestRated.note}"</p>
+                  ) : null}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {stats.recentCapsules.length > 0 ? (
+            <Card>
+              <CardContent className="p-5 sm:p-6">
+                <div className="mb-4 flex items-center justify-between gap-2">
+                  <div>
+                    <p className="font-semibold">Actividad reciente</p>
+                    <p className="text-sm text-muted-foreground">
+                      {scope === 'all' ? 'Tus últimas Capsules' : `Últimas de ${scope}`}
+                    </p>
+                  </div>
+                  <Button asChild variant="ghost" size="sm" className="shrink-0">
+                    <Link to="/capsules">Ver todas</Link>
+                  </Button>
+                </div>
+                {stats.recentCapsules.map((capsule) => (
+                  <RecentCapsuleRow key={capsule.id} capsule={capsule} />
+                ))}
+              </CardContent>
+            </Card>
+          ) : null}
+        </>
+      )}
 
       <Card>
         <CardContent className="flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">

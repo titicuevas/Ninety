@@ -1,10 +1,17 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { WrappedSummary } from '@/components/WrappedSummary';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCapsules } from '@/hooks/useCapsules';
-import { computeCapsuleStats } from '@/lib/capsuleStats';
+import {
+  computeCapsuleStats,
+  defaultWrappedScope,
+  filterCapsulesByScope,
+  listCapsuleYears,
+  type WrappedScope,
+} from '@/lib/capsuleStats';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuthInit';
 import { isProfileIncomplete } from '@/lib/profileHelpers';
@@ -19,7 +26,11 @@ export function HomePage() {
     typeof user?.user_metadata?.display_name === 'string' ? user.user_metadata.display_name : undefined;
   const name = profile?.display_name ?? metadataName ?? 'Aficionado';
   const capsules = capsulesData?.capsules ?? [];
-  const stats = computeCapsuleStats(capsules);
+  const years = listCapsuleYears(capsules);
+
+  const [scope, setScope] = useState<WrappedScope | null>(null);
+  const activeScope = scope ?? defaultWrappedScope(capsules);
+  const stats = computeCapsuleStats(filterCapsulesByScope(capsules, activeScope));
 
   return (
     <Layout>
@@ -44,12 +55,12 @@ export function HomePage() {
           <div className="flex justify-center py-16">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
-        ) : stats.totalMatches === 0 ? (
+        ) : capsules.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="p-6 text-center sm:p-8">
               <p className="text-lg font-medium">Tu Wrapped empieza aquí</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                Guarda tu primer partido y verás estadísticas, highlights y tu mejor valoración.
+                Guarda tu primer partido y verás estadísticas, highlights y tu resumen anual.
               </p>
               <Button asChild className="mt-4">
                 <Link to="/search">Buscar partido</Link>
@@ -57,7 +68,13 @@ export function HomePage() {
             </CardContent>
           </Card>
         ) : (
-          <WrappedSummary name={name} stats={stats} />
+          <WrappedSummary
+            name={name}
+            stats={stats}
+            scope={activeScope}
+            years={years}
+            onScopeChange={setScope}
+          />
         )}
       </div>
     </Layout>

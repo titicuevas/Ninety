@@ -320,7 +320,7 @@ Ninety/
 - [x] Comentarios en capsules
 - [x] Seguir usuarios
 - [x] Compartir (enlace público `/c/:id`)
-- [ ] Wrapped anual
+- [x] Wrapped anual
 
 ### 🚀 v3 — Avanzado
 - [ ] IA (resúmenes, recomendaciones)
