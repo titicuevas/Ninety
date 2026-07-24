@@ -1,4 +1,4 @@
-export const MAX_CAPSULE_PHOTOS = 6;
+export const MAX_CAPSULE_PHOTOS = 9;
 
 export function getCapsulePhotoUrls(capsule: {
   photo_urls?: string[] | null;

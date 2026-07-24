@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Camera, ImagePlus, X } from 'lucide-react';
 import { MAX_CAPSULE_PHOTOS } from '@/lib/capsulePhotos';
-import { validateCapsulePhotoBatch } from '@/lib/capsulePhoto';
+import { takeCapsulePhotosWithinLimit, validateCapsulePhoto } from '@/lib/capsulePhoto';
 import { cn } from '@/lib/utils';
 
 type PreviewItem = {
@@ -32,43 +32,63 @@ export function CapsulePhotosField({
 }: CapsulePhotosFieldProps) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
-  const blobUrlsRef = useRef<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [newPreviewUrls, setNewPreviewUrls] = useState<string[]>([]);
 
   const removedExisting = new Set(removedExistingUrls);
   const visibleExisting = existingUrls.filter((url) => !removedExisting.has(url));
   const totalCount = visibleExisting.length + newFiles.length;
-  const canAddMore = totalCount < MAX_CAPSULE_PHOTOS;
+  const remaining = Math.max(0, MAX_CAPSULE_PHOTOS - totalCount);
+  const canAddMore = remaining > 0;
 
-  useEffect(
-    () => () => {
-      for (const url of blobUrlsRef.current) URL.revokeObjectURL(url);
-      blobUrlsRef.current = [];
-    },
-    [],
-  );
+  useEffect(() => {
+    const urls = newFiles.map((file) => URL.createObjectURL(file));
+    setNewPreviewUrls(urls);
+    return () => {
+      for (const url of urls) URL.revokeObjectURL(url);
+    };
+  }, [newFiles]);
 
   const previews: PreviewItem[] = [
     ...visibleExisting.map((url) => ({ id: url, url, kind: 'existing' as const })),
-    ...newFiles.map((file, index) => {
-      const url = URL.createObjectURL(file);
-      blobUrlsRef.current.push(url);
-      return { id: `new-${index}-${file.name}`, url, kind: 'new' as const, source: file };
-    }),
+    ...newFiles.map((file, index) => ({
+      id: `new-${index}-${file.name}-${file.size}`,
+      url: newPreviewUrls[index] ?? '',
+      kind: 'new' as const,
+      source: file,
+    })),
   ];
 
   const handlePick = (fileList: FileList | null) => {
     if (!fileList?.length) return;
 
     const incoming = Array.from(fileList);
-    const batchError = validateCapsulePhotoBatch(incoming, totalCount);
-    if (batchError) {
-      setError(batchError);
+    for (const file of incoming) {
+      const fileError = validateCapsulePhoto(file);
+      if (fileError) {
+        setError(fileError);
+        setInfo(null);
+        return;
+      }
+    }
+
+    const { accepted, truncated } = takeCapsulePhotosWithinLimit(incoming, totalCount);
+    if (accepted.length === 0) {
+      setError(`Ya tienes el máximo de ${MAX_CAPSULE_PHOTOS} fotos. Quita alguna para añadir más.`);
+      setInfo(null);
       return;
     }
 
     setError(null);
-    onAddFiles(incoming);
+    setInfo(
+      truncated > 0
+        ? `Se añadieron ${accepted.length}. ${truncated} no cabían (máximo ${MAX_CAPSULE_PHOTOS}).`
+        : remaining - accepted.length === 0
+          ? `Has llegado al máximo de ${MAX_CAPSULE_PHOTOS} fotos.`
+          : null,
+    );
+    onAddFiles(accepted);
     if (inputRef.current) inputRef.current.value = '';
   };
 
@@ -88,10 +108,14 @@ export function CapsulePhotosField({
           No subas desnudos, contenido sexual ni imágenes violentas.
         </p>
         <span
-          className="rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary"
+          className={cn(
+            'rounded-full px-3 py-1 text-xs font-semibold',
+            canAddMore ? 'bg-primary/15 text-primary' : 'bg-amber-500/15 text-amber-200',
+          )}
           aria-live="polite"
         >
           {totalCount}/{MAX_CAPSULE_PHOTOS}
+          {canAddMore ? ` · ${remaining} libre${remaining === 1 ? '' : 's'}` : ' · completo'}
         </span>
       </div>
 
@@ -131,31 +155,39 @@ export function CapsulePhotosField({
             </li>
           ) : null}
 
-          {previews.map((item, index) => (
-            <li
-              key={item.id}
-              className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border"
-            >
-              <img src={item.url} alt={`Foto ${index + 1} del partido`} className="h-full w-full object-cover" />
-              <button
-                type="button"
-                onClick={() => {
-                  if (item.kind === 'existing') {
-                    onRemoveExisting(item.url);
-                    return;
-                  }
-                  const newIndex = newFiles.findIndex((file) => file === item.source);
-                  if (newIndex >= 0) onRemoveNew(newIndex);
-                }}
-                className="absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-black/75 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                aria-label={`Quitar foto ${index + 1}`}
+          {previews.map((item, index) =>
+            item.url ? (
+              <li
+                key={item.id}
+                className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border"
               >
-                <X className="h-4 w-4" />
-              </button>
-            </li>
-          ))}
+                <img src={item.url} alt={`Foto ${index + 1} del partido`} className="h-full w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (item.kind === 'existing') {
+                      onRemoveExisting(item.url);
+                      return;
+                    }
+                    const newIndex = newFiles.findIndex((file) => file === item.source);
+                    if (newIndex >= 0) onRemoveNew(newIndex);
+                  }}
+                  className="absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-black/75 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  aria-label={`Quitar foto ${index + 1}`}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </li>
+            ) : null,
+          )}
         </ul>
       )}
+
+      {!canAddMore && previews.length > 0 ? (
+        <p className="text-center text-xs text-amber-200/90">
+          Límite alcanzado. Quita una foto si quieres cambiar alguna.
+        </p>
+      ) : null}
 
       <input
         id={inputId}
@@ -172,6 +204,11 @@ export function CapsulePhotosField({
       {error ? (
         <p id={errorId} role="alert" className="text-center text-sm text-destructive">
           {error}
+        </p>
+      ) : null}
+      {info && !error ? (
+        <p className="text-center text-sm text-muted-foreground" role="status">
+          {info}
         </p>
       ) : null}
     </section>

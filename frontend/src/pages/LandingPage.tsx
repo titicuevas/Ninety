@@ -14,7 +14,7 @@ const features = [
   {
     emoji: '📸',
     title: 'Capsules',
-    desc: 'Hasta 6 fotos, nota y valoración de cada partido',
+    desc: 'Hasta 9 fotos, nota y valoración de cada partido',
   },
   {
     emoji: '📊',

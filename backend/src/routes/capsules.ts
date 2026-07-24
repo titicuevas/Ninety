@@ -14,7 +14,7 @@ export const capsulesRouter = Router();
 
 const photoUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024, files: 6 },
+  limits: { fileSize: 5 * 1024 * 1024, files: 9 },
   fileFilter: (_req, file, cb) => {
     if (['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
       cb(null, true);
@@ -37,7 +37,7 @@ const createCapsuleSchema = z.object({
   watched_at: z.string().date(),
   rating: z.number().int().min(1).max(5).optional().nullable(),
   note: z.string().max(2000).optional().nullable(),
-  photo_urls: z.array(z.string().url().max(2048)).max(6).optional(),
+  photo_urls: z.array(z.string().url().max(2048)).max(9).optional(),
 });
 
 const feedQuerySchema = z.object({
@@ -195,7 +195,7 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
   res.json({ profile: profileWithFollows, capsules: capsulesWithLikes });
 });
 
-capsulesRouter.post('/photos', requireAuth, photoUpload.array('photos', 6), async (req: AuthRequest, res) => {
+capsulesRouter.post('/photos', requireAuth, photoUpload.array('photos', 9), async (req: AuthRequest, res) => {
   const files = req.files as Express.Multer.File[] | undefined;
   if (!files?.length) {
     res.status(400).json({ error: 'No se recibió ninguna foto.' });
@@ -248,7 +248,7 @@ const updateCapsuleSchema = z.object({
   watched_at: z.string().date().optional(),
   rating: z.number().int().min(1).max(5).optional().nullable(),
   note: z.string().max(2000).optional().nullable(),
-  photo_urls: z.array(z.string().url().max(2048)).max(6).optional(),
+  photo_urls: z.array(z.string().url().max(2048)).max(9).optional(),
 });
 
 capsulesRouter.post('/:id/like', requireAuth, async (req: AuthRequest, res) => {

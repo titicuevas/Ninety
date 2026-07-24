@@ -14,15 +14,16 @@ export function validateCapsulePhoto(file: File): string | null {
   return null;
 }
 
-export function validateCapsulePhotoBatch(files: File[], existingCount = 0): string | null {
-  if (existingCount + files.length > MAX_CAPSULE_PHOTOS) {
-    return `Máximo ${MAX_CAPSULE_PHOTOS} fotos por Capsule.`;
-  }
-  for (const file of files) {
-    const error = validateCapsulePhoto(file);
-    if (error) return error;
-  }
-  return null;
+/** Acepta hasta el hueco disponible; ignora el resto del lote. */
+export function takeCapsulePhotosWithinLimit(files: File[], existingCount = 0): {
+  accepted: File[];
+  truncated: number;
+} {
+  const room = Math.max(0, MAX_CAPSULE_PHOTOS - existingCount);
+  return {
+    accepted: files.slice(0, room),
+    truncated: Math.max(0, files.length - room),
+  };
 }
 
 export async function uploadCapsulePhotos(files: File[], accessToken: string) {
