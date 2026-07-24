@@ -83,11 +83,12 @@ test.describe('Ninety — E2E Playwright', () => {
       timeout: 20_000,
     });
 
-    const firstMatch = page.locator('a[href^="/c/"]').first();
+    const firstMatch = page.locator('main a[href^="/c/"]').first();
     await expect(firstMatch).toBeVisible({ timeout: 15_000 });
-    await firstMatch.click();
+    await Promise.all([page.waitForURL(/\/c\/[0-9a-f-]+/i), firstMatch.click()]);
 
-    await expect(page).toHaveURL(/\/c\/[0-9a-f-]+/i);
-    await expect(page.getByRole('button', { name: /compartir/i })).toBeVisible();
+    // Evita race SPA: en el perfil hay un "Compartir" por capsule.
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Compartir Capsule' })).toHaveCount(1);
   });
 });
