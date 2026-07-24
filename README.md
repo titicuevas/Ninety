@@ -93,6 +93,7 @@ cd Ninety
 3. Activa **Google OAuth** en Authentication → Providers (opcional)
 4. Copia las credenciales del proyecto
 5. Ejecuta las migraciones de `supabase/migrations/` en el **SQL Editor** (en orden por fecha)
+   - Incluye `20250724140000_capsule_photos_limit_9.sql` (límite de fotos 6 → 9)
 6. Verifica con `npm run verify:capsules --prefix backend`
 
 ### 3. Variables de entorno
@@ -138,8 +139,11 @@ npm run dev
 **Frontend** (`ninety`):
 ```env
 VITE_API_URL=https://ninety-api.up.railway.app
+API_URL=https://ninety-api.up.railway.app
+SITE_URL=https://ninety.up.railway.app
 ```
 
+> `API_URL` / `SITE_URL` las usa `serve.mjs` para previews Open Graph (WhatsApp, X, Telegram) en `/c/:id` y `/u/:username`.
 > El frontend ya no incluye el SDK de Supabase: la auth va por `/api/auth/*` en el backend.
 
 **Backend** (`ninety-api`):
@@ -326,6 +330,7 @@ Ninety/
 - [x] Seguir usuarios
 - [x] Listas de seguidores / seguidos
 - [x] Compartir (enlace público `/c/:id`)
+- [x] Previews Open Graph al compartir
 - [x] Wrapped anual
 
 ### 🚀 v3 — Avanzado
