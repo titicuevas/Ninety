@@ -178,12 +178,25 @@ export function PublicProfilePage() {
               {capsules.length === 1 ? '1 partido en su diario' : `${capsules.length} partidos en su diario`}
             </p>
 
-            <p className="mt-1 text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">{profile.followers_count ?? 0}</span>{' '}
-              {profile.followers_count === 1 ? 'seguidor' : 'seguidores'}
-              {' · '}
-              <span className="font-medium text-foreground">{profile.following_count ?? 0}</span> siguiendo
-            </p>
+            {profile.username ? (
+              <p className="mt-1 text-sm text-muted-foreground">
+                <Link
+                  to={`/u/${encodeURIComponent(profile.username)}/followers`}
+                  className="hover:text-foreground hover:underline"
+                >
+                  <span className="font-medium text-foreground">{profile.followers_count ?? 0}</span>{' '}
+                  {profile.followers_count === 1 ? 'seguidor' : 'seguidores'}
+                </Link>
+                {' · '}
+                <Link
+                  to={`/u/${encodeURIComponent(profile.username)}/following`}
+                  className="hover:text-foreground hover:underline"
+                >
+                  <span className="font-medium text-foreground">{profile.following_count ?? 0}</span>{' '}
+                  siguiendo
+                </Link>
+              </p>
+            ) : null}
           </div>
 
           {isOwnProfile ? (

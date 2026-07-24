@@ -148,6 +148,18 @@ export function ProfilePage() {
                   <Link to={profilePath(profile.username)} className="text-sm text-primary hover:underline">
                     Ver perfil público
                   </Link>
+                  <Link
+                    to={`/u/${encodeURIComponent(profile.username)}/followers`}
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    Seguidores
+                  </Link>
+                  <Link
+                    to={`/u/${encodeURIComponent(profile.username)}/following`}
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    Siguiendo
+                  </Link>
                   <button
                     type="button"
                     onClick={() => void copyPublicUrl()}

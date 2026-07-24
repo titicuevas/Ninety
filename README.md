@@ -221,6 +221,8 @@ Probar en **móvil** (375px), **tablet** (768px) y **desktop** (1280px):
 | `/capsules/new` | Formulario `max-w-md` → `lg:max-w-xl` |
 | `/profile` | Avatar y formulario legibles |
 | `/u/aficionado_demo` | Perfil público sin login, botón Seguir |
+| `/u/aficionado_demo/followers` | Lista pública de seguidores |
+| `/u/aficionado_demo/following` | Lista pública de seguidos |
 | `/c/:id` | Capsule pública, compartir, comentarios en lectura |
 
 Nav: iconos solos en móvil, icono + texto desde `md` (768px).
@@ -286,6 +288,8 @@ Ninety/
 | GET | `/api/profile/me` | ✅ | Perfil propio |
 | PATCH | `/api/profile/me` | ✅ | Actualizar perfil |
 | GET | `/api/profile/:username` | — | Perfil público (metadatos) |
+| GET | `/api/profile/:username/followers` | opcional | Lista de seguidores |
+| GET | `/api/profile/:username/following` | opcional | Lista de seguidos |
 | GET | `/api/profile/search` | ✅ | Buscar aficionados (`?q=`) |
 | POST/DELETE | `/api/profile/:username/follow` | ✅ | Seguir / dejar de seguir |
 | GET | `/api/capsules/me` | ✅ | Mis capsules |
@@ -320,6 +324,7 @@ Ninety/
 - [x] Likes en capsules
 - [x] Comentarios en capsules
 - [x] Seguir usuarios
+- [x] Listas de seguidores / seguidos
 - [x] Compartir (enlace público `/c/:id`)
 - [x] Wrapped anual
 

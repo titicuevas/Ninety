@@ -9,6 +9,7 @@ import { HomePage } from '@/pages/HomePage';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { ProfilePage } from '@/pages/ProfilePage';
+import { FollowersPage, FollowingPage } from '@/pages/FollowListPage';
 import { PublicCapsulePage } from '@/pages/PublicCapsulePage';
 import { PublicProfilePage } from '@/pages/PublicProfilePage';
 import { PrivacyPage } from '@/pages/PrivacyPage';
@@ -24,6 +25,8 @@ export function AppRoutes() {
       <Route path="/terminos" element={<TermsPage />} />
       <Route path="/welcome" element={<Navigate to="/" replace />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
+      <Route path="/u/:username/followers" element={<FollowersPage />} />
+      <Route path="/u/:username/following" element={<FollowingPage />} />
       <Route path="/u/:username" element={<PublicProfilePage />} />
       <Route path="/c/:id" element={<PublicCapsulePage />} />
 

@@ -133,6 +133,16 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/profile/:username/followers no requiere auth', async () => {
+    const res = await request(createApp()).get('/api/profile/demo/followers');
+    assert.notEqual(res.status, 401);
+  });
+
+  it('GET /api/profile/:username/following no requiere auth', async () => {
+    const res = await request(createApp()).get('/api/profile/demo/following');
+    assert.notEqual(res.status, 401);
+  });
+
   it('POST /api/profile/:username/follow requiere auth', async () => {
     const res = await request(createApp()).post('/api/profile/demo/follow');
     assert.equal(res.status, 401);

@@ -2,9 +2,9 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { normalizeProfile, profileUpdatePayload } from '../lib/profileNormalize.js';
 import { syncUserProfile } from '../lib/syncUserProfile.js';
-import { createUserClient, supabaseAnon } from '../lib/supabase.js';
-import { isMissingFollowsTable } from '../lib/userFollows.js';
-import { requireAuth, type AuthRequest } from '../middleware/auth.js';
+import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
+import { isMissingFollowsTable, listFollowProfiles, type FollowListKind } from '../lib/userFollows.js';
+import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
 export const profileRouter = Router();
 
@@ -22,8 +22,24 @@ const updateProfileSchema = z.object({
   city: z.string().max(100).optional().nullable(),
 });
 
+const followListQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).default(30),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
 function getAccessToken(req: AuthRequest): string | null {
   return req.headers.authorization?.replace('Bearer ', '') ?? null;
+}
+
+function routeUsername(req: AuthRequest): string {
+  const raw = req.params.username;
+  return Array.isArray(raw) ? raw[0] : raw;
+}
+
+function getReaderClient(token: string | null) {
+  if (token) return createUserClient(token);
+  if (supabaseAdmin) return supabaseAdmin;
+  return null;
 }
 
 async function resolveProfileByUsername(username: string) {
@@ -35,6 +51,49 @@ async function resolveProfileByUsername(username: string) {
 
   if (error || !data) return null;
   return data;
+}
+
+async function handleFollowList(req: AuthRequest, res: import('express').Response, kind: FollowListKind) {
+  const token = getAccessToken(req);
+  const reader = getReaderClient(token);
+  if (!reader) {
+    res.status(503).json({ error: 'Listas de seguimiento no disponibles temporalmente' });
+    return;
+  }
+
+  const parsed = followListQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const username = routeUsername(req);
+  const target = await resolveProfileByUsername(username);
+  if (!target) {
+    res.status(404).json({ error: 'Usuario no encontrado' });
+    return;
+  }
+
+  try {
+    const result = await listFollowProfiles(reader, target.id, kind, {
+      limit: parsed.data.limit,
+      offset: parsed.data.offset,
+      viewerId: req.userId,
+    });
+    res.json({
+      profiles: result.profiles,
+      total: result.total,
+      kind,
+      username: target.username,
+    });
+  } catch (error) {
+    if (isMissingFollowsTable(error)) {
+      res.status(503).json({ error: 'Función de seguir no disponible. Ejecuta la migración user_follows.' });
+      return;
+    }
+    const message = error instanceof Error ? error.message : 'No se pudo cargar la lista';
+    res.status(400).json({ error: message });
+  }
 }
 
 profileRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
@@ -118,7 +177,7 @@ profileRouter.get('/search', requireAuth, async (req: AuthRequest, res) => {
   }
 
   const q = parsed.data.q.toLowerCase();
-  const safe = q.replace(/[%_,.()]/g, '').trim();
+  const safe = q.replace(/[%_,.()"]/g, '').trim();
   if (safe.length < 2) {
     res.status(400).json({ error: 'Escribe al menos 2 caracteres para buscar aficionados' });
     return;
@@ -148,6 +207,14 @@ profileRouter.get('/search', requireAuth, async (req: AuthRequest, res) => {
   res.json({ profiles, query: parsed.data.q });
 });
 
+profileRouter.get('/:username/followers', optionalAuth, (req: AuthRequest, res) => {
+  void handleFollowList(req, res, 'followers');
+});
+
+profileRouter.get('/:username/following', optionalAuth, (req: AuthRequest, res) => {
+  void handleFollowList(req, res, 'following');
+});
+
 profileRouter.post('/:username/follow', requireAuth, async (req: AuthRequest, res) => {
   const token = getAccessToken(req);
   if (!token) {
@@ -155,7 +222,7 @@ profileRouter.post('/:username/follow', requireAuth, async (req: AuthRequest, re
     return;
   }
 
-  const username = Array.isArray(req.params.username) ? req.params.username[0] : req.params.username;
+  const username = routeUsername(req);
   const target = await resolveProfileByUsername(username);
   if (!target) {
     res.status(404).json({ error: 'Usuario no encontrado' });
@@ -196,7 +263,7 @@ profileRouter.delete('/:username/follow', requireAuth, async (req: AuthRequest, 
     return;
   }
 
-  const username = Array.isArray(req.params.username) ? req.params.username[0] : req.params.username;
+  const username = routeUsername(req);
   const target = await resolveProfileByUsername(username);
   if (!target) {
     res.status(404).json({ error: 'Usuario no encontrado' });
