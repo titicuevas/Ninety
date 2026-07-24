@@ -112,7 +112,16 @@ async function ensureDemoUser(email: string, password: string): Promise<string> 
   const existing = list?.users.find((u) => u.email === email);
 
   if (existing) {
-    console.log(`ℹ️  Usuario demo ya existe: ${email}`);
+    const { error: updateError } = await admin.auth.admin.updateUserById(existing.id, {
+      password,
+      email_confirm: true,
+      user_metadata: {
+        display_name: process.env.DEMO_DISPLAY_NAME ?? 'Aficionado Demo',
+        full_name: process.env.DEMO_DISPLAY_NAME ?? 'Aficionado Demo',
+      },
+    });
+    if (updateError) throw new Error(`Actualizar demo: ${updateError.message}`);
+    console.log(`ℹ️  Usuario demo ya existe — contraseña actualizada: ${email}`);
     return existing.id;
   }
 
@@ -120,7 +129,10 @@ async function ensureDemoUser(email: string, password: string): Promise<string> 
     email,
     password,
     email_confirm: true,
-    user_metadata: { display_name: 'Aficionado Demo', full_name: 'Aficionado Demo' },
+    user_metadata: {
+      display_name: process.env.DEMO_DISPLAY_NAME ?? 'Aficionado Demo',
+      full_name: process.env.DEMO_DISPLAY_NAME ?? 'Aficionado Demo',
+    },
   });
 
   if (error || !data.user) throw new Error(error?.message ?? 'No se pudo crear usuario demo');
@@ -131,11 +143,14 @@ async function ensureDemoUser(email: string, password: string): Promise<string> 
 async function ensureDemoProfile(userId: string) {
   if (!admin) return;
 
+  const username = process.env.DEMO_USERNAME ?? 'aficionado_demo';
+  const displayName = process.env.DEMO_DISPLAY_NAME ?? 'Aficionado Demo';
+
   const { error } = await admin.from('profiles').upsert(
     {
       id: userId,
-      username: 'aficionado_demo',
-      full_name: 'Aficionado Demo',
+      username,
+      full_name: displayName,
       favorite_team: 'Real Betis',
       country: 'España',
       city: 'Sevilla',
@@ -144,7 +159,7 @@ async function ensureDemoProfile(userId: string) {
   );
 
   if (error) throw new Error(`Perfil demo: ${error.message}`);
-  console.log('✅ Perfil demo listo (@aficionado_demo)');
+  console.log(`✅ Perfil demo listo (@${username})`);
 }
 
 async function login(email: string, password: string): Promise<string> {
@@ -270,9 +285,10 @@ async function main() {
     await upsertCapsule(token, capsule, photoUrls);
   }
 
+  const username = process.env.DEMO_USERNAME ?? 'aficionado_demo';
   const { count } = await admin!.from('capsules').select('*', { count: 'exact', head: true }).eq('user_id', userId);
   console.log(`\n🎉 Demo listo — ${count ?? 0} partidos para ${email}`);
-  console.log(`   Perfil: http://localhost:5173/u/aficionado_demo`);
+  console.log(`   Perfil: http://localhost:5173/u/${username}`);
   console.log(`   Login:  ${email} (TEST_USER_PASSWORD en backend/.env)\n`);
 }
 

@@ -3,9 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { AuthLayout } from '@/components/AuthLayout';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { FormAlert } from '@/components/FormAlert';
-import { LegalFooter } from '@/components/LegalFooter';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
@@ -60,51 +60,36 @@ export function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <Link to="/" className="inline-flex items-center gap-2">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
-              90
-            </span>
-            <span className="text-xl font-semibold">Ninety</span>
-          </Link>
-          <h1 className="mt-4 text-2xl font-bold">Bienvenido de vuelta</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Inicia sesión en tu diario futbolero</p>
-        </div>
+    <AuthLayout title="Bienvenido de vuelta" subtitle="Inicia sesión en tu diario futbolero">
+      <GoogleSignInButton loading={googleLoading} onClick={() => void handleGoogleSignIn()} className="mb-5" />
 
-        <GoogleSignInButton loading={googleLoading} onClick={() => void handleGoogleSignIn()} className="mb-6" />
-
-        <div className="mb-6 flex items-center gap-3">
-          <Separator className="flex-1" />
-          <span className="text-xs text-muted-foreground">o con email</span>
-          <Separator className="flex-1" />
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <FormField label="Email" error={errors.email?.message}>
-            <Input type="email" autoComplete="email" {...register('email')} />
-          </FormField>
-          <FormField label="Contraseña" error={errors.password?.message}>
-            <Input type="password" autoComplete="current-password" {...register('password')} />
-          </FormField>
-
-          {error && <FormAlert>{error}</FormAlert>}
-
-          <Button type="submit" loading={loading} className="w-full">
-            Iniciar sesión
-          </Button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          ¿No tienes cuenta?{' '}
-          <Link to="/register" className="text-primary hover:underline">
-            Regístrate
-          </Link>
-        </p>
-
-        <LegalFooter className="mt-8" />
+      <div className="mb-5 flex items-center gap-3">
+        <Separator className="flex-1" />
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">o con email</span>
+        <Separator className="flex-1" />
       </div>
-    </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <FormField label="Email" error={errors.email?.message}>
+          <Input type="email" autoComplete="email" placeholder="tu@email.com" {...register('email')} />
+        </FormField>
+        <FormField label="Contraseña" error={errors.password?.message}>
+          <Input type="password" autoComplete="current-password" placeholder="••••••••" {...register('password')} />
+        </FormField>
+
+        {error ? <FormAlert>{error}</FormAlert> : null}
+
+        <Button type="submit" loading={loading} className="w-full">
+          Iniciar sesión
+        </Button>
+      </form>
+
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        ¿No tienes cuenta?{' '}
+        <Link to="/register" className="font-medium text-primary hover:underline">
+          Regístrate
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }

@@ -31,7 +31,38 @@ export function createApp() {
   const app = express();
 
   app.use(helmet());
-  app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        // Peticiones sin Origin (curl, health checks)
+        if (!origin) {
+          callback(null, true);
+          return;
+        }
+
+        const allowed = new Set([
+          env.CLIENT_URL,
+          'http://localhost:5173',
+          'http://127.0.0.1:5173',
+          'https://ninety.up.railway.app',
+        ]);
+
+        if (allowed.has(origin)) {
+          callback(null, true);
+          return;
+        }
+
+        // Dev: cualquier localhost / 127.0.0.1
+        if (env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) {
+          callback(null, true);
+          return;
+        }
+
+        callback(null, false);
+      },
+      credentials: true,
+    }),
+  );
   app.use(express.json({ limit: '1mb' }));
 
   app.use('/', indexRouter);

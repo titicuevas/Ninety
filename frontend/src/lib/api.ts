@@ -1,6 +1,28 @@
 import { friendlyApiError } from '@/lib/friendlyErrors';
 
-const API_URL = import.meta.env.VITE_API_URL ?? '';
+/**
+ * En desarrollo, URL vacía → Vite proxy `/api` → localhost:3001 (evita CORS con 127.0.0.1).
+ * En producción, VITE_API_URL o fallback Railway.
+ */
+function resolveApiUrl(): string {
+  const configured = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '';
+  if (configured) return configured;
+  if (import.meta.env.PROD) return 'https://ninety-api.up.railway.app';
+  return '';
+}
+
+const API_URL = resolveApiUrl();
+
+async function parseError(response: Response): Promise<string> {
+  const body = await response.json().catch(() => ({}));
+  if (typeof body.error === 'string') {
+    return friendlyApiError(body.error);
+  }
+  if (typeof body.error === 'object' && body.error !== null) {
+    return 'Datos inválidos. Revisa el formulario.';
+  }
+  return `Error ${response.status}`;
+}
 
 export async function apiFetch<T>(path: string, options: RequestInit = {}, token?: string | null): Promise<T> {
   const headers: HeadersInit = {
@@ -12,17 +34,16 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}, token
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_URL}${path}`, { ...options, headers });
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, { ...options, headers });
+  } catch (err) {
+    const raw = err instanceof Error ? err.message : 'Failed to fetch';
+    throw new Error(friendlyApiError(raw));
+  }
 
   if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    if (typeof body.error === 'string') {
-      throw new Error(friendlyApiError(body.error));
-    }
-    if (typeof body.error === 'object' && body.error !== null) {
-      throw new Error('Datos inválidos. Revisa el formulario.');
-    }
-    throw new Error(`Error ${response.status}`);
+    throw new Error(await parseError(response));
   }
 
   if (response.status === 204) {
@@ -42,18 +63,20 @@ export async function apiUpload<T>(
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_URL}${path}`, {
-    method: 'POST',
-    headers,
-    body: formData,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+  } catch (err) {
+    const raw = err instanceof Error ? err.message : 'Failed to fetch';
+    throw new Error(friendlyApiError(raw));
+  }
 
   if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    if (typeof body.error === 'string') {
-      throw new Error(friendlyApiError(body.error));
-    }
-    throw new Error(`Error ${response.status}`);
+    throw new Error(await parseError(response));
   }
 
   return response.json();

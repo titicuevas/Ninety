@@ -3,9 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { AuthLayout } from '@/components/AuthLayout';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { FormAlert } from '@/components/FormAlert';
-import { LegalFooter } from '@/components/LegalFooter';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
@@ -71,69 +71,54 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-8">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <Link to="/" className="inline-flex items-center gap-2">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
-              90
-            </span>
-            <span className="text-xl font-semibold">Ninety</span>
+    <AuthLayout title="Crea tu cuenta" subtitle="Empieza a construir tu historia futbolera">
+      <GoogleSignInButton loading={googleLoading} onClick={() => void handleGoogleSignIn()} className="mb-5" />
+
+      <div className="mb-5 flex items-center gap-3">
+        <Separator className="flex-1" />
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">o con email</span>
+        <Separator className="flex-1" />
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <FormField label="Nombre" error={errors.display_name?.message}>
+          <Input autoComplete="name" placeholder="Cómo te llaman" {...register('display_name')} />
+        </FormField>
+        <FormField label="Email" error={errors.email?.message}>
+          <Input type="email" autoComplete="email" placeholder="tu@email.com" {...register('email')} />
+        </FormField>
+        <FormField label="Contraseña" error={errors.password?.message}>
+          <Input type="password" autoComplete="new-password" placeholder="Mínimo 6 caracteres" {...register('password')} />
+        </FormField>
+        <FormField label="Confirmar contraseña" error={errors.confirmPassword?.message}>
+          <Input type="password" autoComplete="new-password" placeholder="Repite la contraseña" {...register('confirmPassword')} />
+        </FormField>
+
+        {error ? <FormAlert>{error}</FormAlert> : null}
+
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Al crear tu cuenta aceptas los{' '}
+          <Link to="/terminos" className="text-primary hover:underline">
+            Términos de uso
+          </Link>{' '}
+          y la{' '}
+          <Link to="/privacidad" className="text-primary hover:underline">
+            Política de privacidad
           </Link>
-          <h1 className="mt-4 text-2xl font-bold">Crea tu cuenta</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Empieza a construir tu historia futbolera</p>
-        </div>
-
-        <GoogleSignInButton loading={googleLoading} onClick={() => void handleGoogleSignIn()} className="mb-6" />
-
-        <div className="mb-6 flex items-center gap-3">
-          <Separator className="flex-1" />
-          <span className="text-xs text-muted-foreground">o con email</span>
-          <Separator className="flex-1" />
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <FormField label="Nombre" error={errors.display_name?.message}>
-            <Input autoComplete="name" {...register('display_name')} />
-          </FormField>
-          <FormField label="Email" error={errors.email?.message}>
-            <Input type="email" autoComplete="email" {...register('email')} />
-          </FormField>
-          <FormField label="Contraseña" error={errors.password?.message}>
-            <Input type="password" autoComplete="new-password" {...register('password')} />
-          </FormField>
-          <FormField label="Confirmar contraseña" error={errors.confirmPassword?.message}>
-            <Input type="password" autoComplete="new-password" {...register('confirmPassword')} />
-          </FormField>
-
-          {error && <FormAlert>{error}</FormAlert>}
-
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            Al crear tu cuenta aceptas los{' '}
-            <Link to="/terminos" className="text-primary hover:underline">
-              Términos de uso
-            </Link>{' '}
-            y la{' '}
-            <Link to="/privacidad" className="text-primary hover:underline">
-              Política de privacidad
-            </Link>
-            .
-          </p>
-
-          <Button type="submit" loading={loading} className="w-full">
-            Crear cuenta
-          </Button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          ¿Ya tienes cuenta?{' '}
-          <Link to="/login" className="text-primary hover:underline">
-            Inicia sesión
-          </Link>
+          .
         </p>
 
-        <LegalFooter className="mt-8" />
-      </div>
-    </div>
+        <Button type="submit" loading={loading} className="w-full">
+          Crear cuenta
+        </Button>
+      </form>
+
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        ¿Ya tienes cuenta?{' '}
+        <Link to="/login" className="font-medium text-primary hover:underline">
+          Inicia sesión
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }
