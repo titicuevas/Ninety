@@ -12,14 +12,10 @@ import type { Profile } from '@/types/profile';
 
 function PeopleResultRow({ profile }: { profile: Profile }) {
   const username = profile.username!;
-  const [followed, setFollowed] = useState(!!profile.followed_by_me);
+  const [followed, setFollowed] = useState(() => !!profile.followed_by_me);
   const toggle = useToggleFollow(username);
   const name = profile.display_name ?? username;
   const location = [profile.city, profile.country].filter(Boolean).join(', ');
-
-  useEffect(() => {
-    setFollowed(!!profile.followed_by_me);
-  }, [profile.followed_by_me, profile.id]);
 
   return (
     <li className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 sm:p-4">
@@ -91,7 +87,7 @@ function PeopleResultRow({ profile }: { profile: Profile }) {
 
 export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string }) {
   const [query, setQuery] = useState(initialQuery);
-  const [debounced, setDebounced] = useState(initialQuery.trim());
+  const [debounced, setDebounced] = useState(() => initialQuery.trim());
 
   useEffect(() => {
     const t = window.setTimeout(() => setDebounced(query.trim()), 350);
@@ -145,7 +141,10 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
         profiles.length > 0 ? (
           <ul className="max-w-xl space-y-2">
             {profiles.map((profile) => (
-              <PeopleResultRow key={profile.id} profile={profile} />
+              <PeopleResultRow
+                key={`${profile.id}:${profile.followed_by_me ? '1' : '0'}`}
+                profile={profile}
+              />
             ))}
           </ul>
         ) : (
