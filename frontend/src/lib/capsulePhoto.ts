@@ -185,11 +185,7 @@ export async function prepareCapsulePhoto(file: File): Promise<File> {
 }
 
 export async function prepareCapsulePhotos(files: File[]): Promise<File[]> {
-  const prepared: File[] = [];
-  for (const file of files) {
-    prepared.push(await prepareCapsulePhoto(file));
-  }
-  return prepared;
+  return Promise.all(files.map((file) => prepareCapsulePhoto(file)));
 }
 
 export async function uploadCapsulePhotos(files: File[], accessToken: string) {
