@@ -137,6 +137,9 @@ export function FeedPage() {
               </p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 <Button asChild>
+                  <Link to="/search?tab=people">Buscar aficionados</Link>
+                </Button>
+                <Button asChild variant="secondary">
                   <Link to="/search">Buscar partido</Link>
                 </Button>
               </div>

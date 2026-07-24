@@ -286,6 +286,7 @@ Ninety/
 | GET | `/api/profile/me` | ✅ | Perfil propio |
 | PATCH | `/api/profile/me` | ✅ | Actualizar perfil |
 | GET | `/api/profile/:username` | — | Perfil público (metadatos) |
+| GET | `/api/profile/search` | ✅ | Buscar aficionados (`?q=`) |
 | POST/DELETE | `/api/profile/:username/follow` | ✅ | Seguir / dejar de seguir |
 | GET | `/api/capsules/me` | ✅ | Mis capsules |
 | GET | `/api/capsules/feed` | ✅ | Feed (seguidos + tuyo) |

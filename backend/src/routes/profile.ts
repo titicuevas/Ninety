@@ -99,6 +99,55 @@ profileRouter.patch('/me', requireAuth, async (req: AuthRequest, res) => {
   res.json(normalizeProfile(data));
 });
 
+const searchQuerySchema = z.object({
+  q: z.string().trim().min(2).max(40),
+  limit: z.coerce.number().int().min(1).max(20).default(12),
+});
+
+profileRouter.get('/search', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const parsed = searchQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Escribe al menos 2 caracteres para buscar aficionados' });
+    return;
+  }
+
+  const q = parsed.data.q.toLowerCase();
+  const safe = q.replace(/[%_,.()]/g, '').trim();
+  if (safe.length < 2) {
+    res.status(400).json({ error: 'Escribe al menos 2 caracteres para buscar aficionados' });
+    return;
+  }
+
+  const pattern = `%${safe}%`;
+  const supabase = createUserClient(token);
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, username, full_name, avatar_url, favorite_team, country, city, created_at')
+    .not('username', 'is', null)
+    .or(`username.ilike."${pattern}",full_name.ilike."${pattern}"`)
+    .neq('id', req.userId!)
+    .order('username', { ascending: true })
+    .limit(parsed.data.limit);
+
+  if (error) {
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  const profiles = (data ?? [])
+    .filter((row) => row.username)
+    .map((row) => normalizeProfile(row));
+
+  res.json({ profiles, query: parsed.data.q });
+});
+
 profileRouter.post('/:username/follow', requireAuth, async (req: AuthRequest, res) => {
   const token = getAccessToken(req);
   if (!token) {

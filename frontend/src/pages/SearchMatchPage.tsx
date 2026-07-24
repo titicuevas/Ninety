@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, Search } from 'lucide-react';
 import { Layout } from '@/components/Layout';
 import { MatchCard } from '@/components/MatchCard';
+import { PeopleSearchPanel } from '@/components/PeopleSearchPanel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,8 +39,20 @@ const selectClassName = cn(
   'ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
 );
 
+type SearchTab = 'matches' | 'people';
+
 export function SearchMatchPage() {
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const tab: SearchTab = params.get('tab') === 'people' ? 'people' : 'matches';
+
+  const setTab = (next: SearchTab) => {
+    const nextParams = new URLSearchParams(params);
+    if (next === 'people') nextParams.set('tab', 'people');
+    else nextParams.delete('tab');
+    setParams(nextParams, { replace: true });
+  };
+
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [competition, setCompetition] = useState('');
@@ -101,184 +114,226 @@ export function SearchMatchPage() {
     <Layout>
       <div className="space-y-8">
         <section>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Buscar partido</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Buscar</h1>
           <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-            Busca por equipo o filtra por competición — ligas, Champions, Mundial, Eurocopa y más.
+            Partidos para tu diario o aficionados para seguir.
           </p>
+          <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Tipo de búsqueda">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'matches'}
+              onClick={() => setTab('matches')}
+              className={cn(
+                'rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                tab === 'matches'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-muted-foreground hover:text-foreground',
+              )}
+            >
+              Partidos
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'people'}
+              onClick={() => setTab('people')}
+              className={cn(
+                'rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                tab === 'people'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-muted-foreground hover:text-foreground',
+              )}
+            >
+              Aficionados
+            </button>
+          </div>
         </section>
 
-        <section className="grid max-w-2xl gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="match-search">Equipo o rival</Label>
-            <div className="relative">
-              <Search
-                className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                aria-hidden
-              />
-              <Input
-                id="match-search"
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Ej. Betis, Madrid, Argentina, Liverpool..."
-                className="pl-9"
-                autoFocus
-              />
-            </div>
-          </div>
+        {tab === 'people' ? (
+          <PeopleSearchPanel />
+        ) : (
+          <>
+            <section className="grid max-w-2xl gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="match-search">Equipo o rival</Label>
+                <div className="relative">
+                  <Search
+                    className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden
+                  />
+                  <Input
+                    id="match-search"
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Ej. Betis, Madrid, Argentina, Liverpool..."
+                    className="pl-9"
+                    autoFocus
+                  />
+                </div>
+              </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="competition-filter">Competición</Label>
-            {resolvedTeam ? (
-              <p className="text-xs text-muted-foreground">
-                Competiciones de {resolvedTeam.name}
-                {isLoadingTeamCompetitions ? '…' : ''}
+              <div className="space-y-1.5">
+                <Label htmlFor="competition-filter">Competición</Label>
+                {resolvedTeam ? (
+                  <p className="text-xs text-muted-foreground">
+                    Competiciones de {resolvedTeam.name}
+                    {isLoadingTeamCompetitions ? '…' : ''}
+                  </p>
+                ) : null}
+                <select
+                  id="competition-filter"
+                  value={activeCompetition}
+                  onChange={(e) => handleCompetitionChange(e.target.value)}
+                  className={selectClassName}
+                  disabled={isLoadingTeamCompetitions && debouncedQuery.length >= MIN_QUERY_LENGTH}
+                  aria-label="Competición"
+                >
+                  <option value="">
+                    {resolvedTeam ? `Todas las de ${resolvedTeam.name}` : 'Todas (por equipo)'}
+                  </option>
+                  {groupedCompetitions.map(([label, items]) => (
+                    <optgroup key={label} label={label}>
+                      {items.map((item) => (
+                        <option key={item.code} value={item.code}>
+                          {item.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+
+              {selectedCompetition?.seasons?.length ? (
+                <div className="space-y-1.5">
+                  <Label htmlFor="season-filter">Edición</Label>
+                  <select
+                    id="season-filter"
+                    value={season ?? ''}
+                    onChange={(e) => setSeason(Number(e.target.value))}
+                    className={selectClassName}
+                    aria-label="Edición"
+                  >
+                    {selectedCompetition.seasons.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                        {year === selectedCompetition.defaultSeason ? ' (reciente)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
+            </section>
+
+            {showMinLengthHint ? (
+              <p className="text-sm text-muted-foreground">
+                Escribe al menos {MIN_QUERY_LENGTH} caracteres, o elige una competición para explorar sus
+                partidos.
               </p>
             ) : null}
-            <select
-              id="competition-filter"
-              value={activeCompetition}
-              onChange={(e) => handleCompetitionChange(e.target.value)}
-              className={selectClassName}
-              disabled={isLoadingTeamCompetitions && debouncedQuery.length >= MIN_QUERY_LENGTH}
-              aria-label="Competición"
-            >
-              <option value="">
-                {resolvedTeam ? `Todas las de ${resolvedTeam.name}` : 'Todas (por equipo)'}
-              </option>
-              {groupedCompetitions.map(([label, items]) => (
-                <optgroup key={label} label={label}>
-                  {items.map((item) => (
-                    <option key={item.code} value={item.code}>
-                      {item.name}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </div>
 
-          {selectedCompetition?.seasons?.length ? (
-            <div className="space-y-1.5">
-              <Label htmlFor="season-filter">Edición</Label>
-              <select
-                id="season-filter"
-                value={season ?? ''}
-                onChange={(e) => setSeason(Number(e.target.value))}
-                className={selectClassName}
-                aria-label="Edición"
+            {requiresTeamQuery && !debouncedQuery ? (
+              <p className="text-sm text-muted-foreground">
+                Para {selectedCompetition?.name ?? 'este torneo'} escribe una selección o equipo — por
+                ejemplo España, Argentina, Betis…
+                {selectedCompetition?.seasons?.length ? ` Edición ${season}.` : ''}
+              </p>
+            ) : null}
+
+            {activeCompetition && !requiresTeamQuery && !debouncedQuery ? (
+              <p className="text-sm text-muted-foreground">
+                Mostrando partidos recientes de {selectedCompetition?.name ?? 'esta competición'}.
+                {selectedCompetition?.seasons?.length ? ` Edición ${season}.` : ''}
+              </p>
+            ) : null}
+
+            {isSearching ? (
+              <div
+                className="flex items-center gap-2 text-sm text-muted-foreground"
+                role="status"
+                aria-live="polite"
               >
-                {selectedCompetition.seasons.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                    {year === selectedCompetition.defaultSeason ? ' (reciente)' : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : null}
-        </section>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                Buscando partidos…
+              </div>
+            ) : null}
 
-        {showMinLengthHint ? (
-          <p className="text-sm text-muted-foreground">
-            Escribe al menos {MIN_QUERY_LENGTH} caracteres, o elige una competición para explorar sus partidos.
-          </p>
-        ) : null}
+            {isError ? (
+              <Card className="border-destructive/40">
+                <CardContent className="p-5">
+                  <p role="alert" className="text-sm text-destructive">
+                    {error instanceof Error ? error.message : 'No se pudo buscar partidos'}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : null}
 
-        {requiresTeamQuery && !debouncedQuery ? (
-          <p className="text-sm text-muted-foreground">
-            Para {selectedCompetition?.name ?? 'este torneo'} escribe una selección o equipo — por ejemplo
-            España, Argentina, Betis…
-            {selectedCompetition?.seasons?.length ? ` Edición ${season}.` : ''}
-          </p>
-        ) : null}
+            {!isSearching && canSearch && !isError ? (
+              <div aria-live="polite" aria-atomic="true">
+                {matches.length > 0 ? (
+                  <div className="space-y-8">
+                    {showGrouped
+                      ? matchGroups.map((group) => (
+                          <section key={group.key} className="space-y-3">
+                            <h2 className="text-sm font-semibold tracking-wide text-primary uppercase">
+                              {group.label}
+                            </h2>
+                            <ul className="space-y-3">
+                              {group.matches.map((match) => (
+                                <li key={match.id}>
+                                  <MatchCard
+                                    match={match}
+                                    onSelect={() => navigate('/capsules/new', { state: { match } })}
+                                  />
+                                </li>
+                              ))}
+                            </ul>
+                          </section>
+                        ))
+                      : (
+                          <ul className="space-y-3">
+                            {matches.map((match) => (
+                              <li key={match.id}>
+                                <MatchCard
+                                  match={match}
+                                  onSelect={() => navigate('/capsules/new', { state: { match } })}
+                                />
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                  </div>
+                ) : (
+                  <Card className="border-dashed">
+                    <CardContent className="p-6 text-center sm:p-10">
+                      <p className="text-lg font-medium">Sin resultados</p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {activeCompetition
+                          ? requiresTeamQuery
+                            ? `No hay partidos de «${debouncedQuery}» en ${selectedCompetition?.name ?? 'este torneo'}. Prueba otro nombre (España, Argentina, Betis…).`
+                            : `No hay partidos en ${selectedCompetition?.name ?? 'esta competición'} para «${debouncedQuery || 'tu búsqueda'}».`
+                          : `No encontramos partidos para «${debouncedQuery}». Prueba otro equipo o elige una competición.`}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            ) : null}
 
-        {activeCompetition && !requiresTeamQuery && !debouncedQuery ? (
-          <p className="text-sm text-muted-foreground">
-            Mostrando partidos recientes de {selectedCompetition?.name ?? 'esta competición'}.
-            {selectedCompetition?.seasons?.length ? ` Edición ${season}.` : ''}
-          </p>
-        ) : null}
-
-        {isSearching ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground" role="status" aria-live="polite">
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-            Buscando partidos…
-          </div>
-        ) : null}
-
-        {isError ? (
-          <Card className="border-destructive/40">
-            <CardContent className="p-5">
-              <p role="alert" className="text-sm text-destructive">
-                {error instanceof Error ? error.message : 'No se pudo buscar partidos'}
-              </p>
-            </CardContent>
-          </Card>
-        ) : null}
-
-        {!isSearching && canSearch && !isError ? (
-          <div aria-live="polite" aria-atomic="true">
-            {matches.length > 0 ? (
-            <div className="space-y-8">
-              {showGrouped
-                ? matchGroups.map((group) => (
-                    <section key={group.key} className="space-y-3">
-                      <h2 className="text-sm font-semibold tracking-wide text-primary uppercase">
-                        {group.label}
-                      </h2>
-                      <ul className="space-y-3">
-                        {group.matches.map((match) => (
-                          <li key={match.id}>
-                            <MatchCard
-                              match={match}
-                              onSelect={() => navigate('/capsules/new', { state: { match } })}
-                            />
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
-                  ))
-                : (
-                    <ul className="space-y-3">
-                      {matches.map((match) => (
-                        <li key={match.id}>
-                          <MatchCard
-                            match={match}
-                            onSelect={() => navigate('/capsules/new', { state: { match } })}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-            </div>
-          ) : (
-            <Card className="border-dashed">
-              <CardContent className="p-6 text-center sm:p-10">
-                <p className="text-lg font-medium">Sin resultados</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {activeCompetition
-                    ? requiresTeamQuery
-                      ? `No hay partidos de «${debouncedQuery}» en ${selectedCompetition?.name ?? 'este torneo'}. Prueba otro nombre (España, Argentina, Betis…).`
-                      : `No hay partidos en ${selectedCompetition?.name ?? 'esta competición'} para «${debouncedQuery || 'tu búsqueda'}».`
-                    : `No encontramos partidos para «${debouncedQuery}». Prueba otro equipo o elige una competición.`}
-                </p>
-              </CardContent>
-            </Card>
-            )}
-          </div>
-        ) : null}
-
-        {!query.trim() && !activeCompetition ? (
-          <Card className="border-dashed">
-            <CardContent className="p-6 text-center sm:p-10">
-              <p className="text-lg font-medium">¿Qué partido viste?</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Escribe un apodo o parte del nombre (Betis, Madrid, España…). No hace falta el nombre completo.
-              </p>
-            </CardContent>
-          </Card>
-        ) : null}
+            {!query.trim() && !activeCompetition ? (
+              <Card className="border-dashed">
+                <CardContent className="p-6 text-center sm:p-10">
+                  <p className="text-lg font-medium">¿Qué partido viste?</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Escribe un apodo o parte del nombre (Betis, Madrid, España…). No hace falta el nombre
+                    completo.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : null}
+          </>
+        )}
       </div>
     </Layout>
   );

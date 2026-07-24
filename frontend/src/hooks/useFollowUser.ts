@@ -72,6 +72,7 @@ export function useToggleFollow(username: string) {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['profile', 'public', username] });
+      void queryClient.invalidateQueries({ queryKey: ['profile', 'search'] });
       void queryClient.invalidateQueries({ queryKey: ['capsules', 'feed'] });
     },
   });

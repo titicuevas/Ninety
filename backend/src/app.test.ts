@@ -128,6 +128,11 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/profile/search requiere auth', async () => {
+    const res = await request(createApp()).get('/api/profile/search?q=beta');
+    assert.equal(res.status, 401);
+  });
+
   it('POST /api/profile/:username/follow requiere auth', async () => {
     const res = await request(createApp()).post('/api/profile/demo/follow');
     assert.equal(res.status, 401);
