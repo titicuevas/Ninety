@@ -118,28 +118,37 @@ export function CapsuleComments({
 
       {open ? (
         <div className="mt-3 space-y-3 border-t border-border pt-3">
-          <form onSubmit={(e) => void handleSubmit(e)} className="space-y-2">
-            <Textarea
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="Escribe un comentario…"
-              maxLength={500}
-              rows={2}
-              className="min-h-[72px] resize-none text-sm"
-              aria-label="Nuevo comentario"
-            />
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs text-muted-foreground">
-                {draft.length}/500 · Sé respetuoso
-              </span>
-              <Button type="submit" size="sm" loading={addComment.isPending} disabled={!draft.trim()}>
-                Publicar
-              </Button>
-            </div>
-            {addComment.error ? (
-              <p className="text-xs text-destructive">{(addComment.error as Error).message}</p>
-            ) : null}
-          </form>
+          {currentUserId ? (
+            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-2">
+              <Textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder="Escribe un comentario…"
+                maxLength={500}
+                rows={2}
+                className="min-h-[72px] resize-none text-sm"
+                aria-label="Nuevo comentario"
+              />
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {draft.length}/500 · Sé respetuoso
+                </span>
+                <Button type="submit" size="sm" loading={addComment.isPending} disabled={!draft.trim()}>
+                  Publicar
+                </Button>
+              </div>
+              {addComment.error ? (
+                <p className="text-xs text-destructive">{(addComment.error as Error).message}</p>
+              ) : null}
+            </form>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              <Link to="/login" className="text-primary hover:underline">
+                Inicia sesión
+              </Link>{' '}
+              para comentar.
+            </p>
+          )}
 
           {isLoading ? (
             <div className="flex justify-center py-4">

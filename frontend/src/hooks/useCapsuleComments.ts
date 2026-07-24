@@ -8,10 +8,10 @@ export function useCapsuleComments(capsuleId: string, enabled: boolean) {
   const session = useAuthStore((s) => s.session);
 
   return useQuery({
-    queryKey: ['capsules', capsuleId, 'comments'],
+    queryKey: ['capsules', capsuleId, 'comments', session?.access_token ? 'auth' : 'guest'],
     queryFn: () =>
       apiFetch<CapsuleCommentsResponse>(`/api/capsules/${capsuleId}/comments`, {}, session?.access_token),
-    enabled: !!session && enabled,
+    enabled,
   });
 }
 

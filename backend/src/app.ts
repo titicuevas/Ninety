@@ -19,6 +19,14 @@ const footballLimiter = rateLimit({
   message: { error: 'Demasiadas peticiones. Inténtalo en un minuto.' },
 });
 
+const authLimiter = rateLimit({
+  windowMs: 15 * 60_000,
+  max: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.' },
+});
+
 export function createApp() {
   const app = express();
 
@@ -28,7 +36,7 @@ export function createApp() {
 
   app.use('/', indexRouter);
   app.use('/api/health', healthRouter);
-  app.use('/api/auth', authRouter);
+  app.use('/api/auth', authLimiter, authRouter);
   app.use('/api/profile', profileRouter);
   app.use('/api/capsules', capsulesRouter);
   app.use('/api/football', footballLimiter, footballRouter);

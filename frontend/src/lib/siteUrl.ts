@@ -9,3 +9,7 @@ export function siteOrigin(): string {
 export function publicProfileUrl(username: string): string {
   return `${siteOrigin()}/u/${encodeURIComponent(username)}`;
 }
+
+export function publicCapsuleUrl(capsuleId: string): string {
+  return `${siteOrigin()}/c/${encodeURIComponent(capsuleId)}`;
+}

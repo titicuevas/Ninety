@@ -221,6 +221,7 @@ Probar en **móvil** (375px), **tablet** (768px) y **desktop** (1280px):
 | `/capsules/new` | Formulario `max-w-md` → `lg:max-w-xl` |
 | `/profile` | Avatar y formulario legibles |
 | `/u/aficionado_demo` | Perfil público sin login, botón Seguir |
+| `/c/:id` | Capsule pública, compartir, comentarios en lectura |
 
 Nav: iconos solos en móvil, icono + texto desde `md` (768px).
 
@@ -279,6 +280,7 @@ Ninety/
 | GET | `/api/health` | — | Health check |
 | POST | `/api/auth/login` | — | Login email/contraseña |
 | POST | `/api/auth/register` | — | Registro |
+| POST | `/api/auth/refresh` | — | Renovar sesión con refresh_token |
 | POST | `/api/auth/oauth/google` | — | Iniciar OAuth Google |
 | POST | `/api/auth/oauth/exchange` | — | Intercambio PKCE OAuth |
 | GET | `/api/profile/me` | ✅ | Perfil propio |
@@ -288,6 +290,7 @@ Ninety/
 | GET | `/api/capsules/me` | ✅ | Mis capsules |
 | GET | `/api/capsules/feed` | ✅ | Feed (seguidos + tuyo) |
 | GET | `/api/capsules/user/:username` | opcional | Perfil + capsules públicas |
+| GET | `/api/capsules/:id` | opcional | Capsule pública (compartir) |
 | POST/PATCH/DELETE | `/api/capsules`… | ✅ | CRUD capsules |
 | POST/DELETE | `/api/capsules/:id/like` | ✅ | Likes |
 | GET/POST/DELETE | `/api/capsules/:id/comments`… | ✅ | Comentarios |
@@ -316,7 +319,7 @@ Ninety/
 - [x] Likes en capsules
 - [x] Comentarios en capsules
 - [x] Seguir usuarios
-- [ ] Compartir
+- [x] Compartir (enlace público `/c/:id`)
 - [ ] Wrapped anual
 
 ### 🚀 v3 — Avanzado

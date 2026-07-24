@@ -9,6 +9,7 @@ import { HomePage } from '@/pages/HomePage';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { ProfilePage } from '@/pages/ProfilePage';
+import { PublicCapsulePage } from '@/pages/PublicCapsulePage';
 import { PublicProfilePage } from '@/pages/PublicProfilePage';
 import { PrivacyPage } from '@/pages/PrivacyPage';
 import { RegisterPage } from '@/pages/RegisterPage';
@@ -24,6 +25,7 @@ export function AppRoutes() {
       <Route path="/welcome" element={<Navigate to="/" replace />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route path="/u/:username" element={<PublicProfilePage />} />
+      <Route path="/c/:id" element={<PublicCapsulePage />} />
 
       <Route element={<GuestRoute />}>
         <Route path="/login" element={<LoginPage />} />

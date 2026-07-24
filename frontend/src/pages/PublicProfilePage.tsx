@@ -6,6 +6,7 @@ import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { FollowButton } from '@/components/FollowButton';
 import { Layout } from '@/components/Layout';
 import { PublicLayout } from '@/components/PublicLayout';
+import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { StarRating } from '@/components/StarRating';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -30,6 +31,7 @@ function PublicCapsuleCard({
   const score = formatScore(capsule);
   const likesCount = capsule.likes_count ?? 0;
   const commentsCount = capsule.comments_count ?? 0;
+  const shareTitle = `${capsule.home_team_name} vs ${capsule.away_team_name}`;
 
   return (
     <Card>
@@ -42,7 +44,9 @@ function PublicCapsuleCard({
 
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="font-medium">{capsule.home_team_name}</p>
+            <Link to={`/c/${capsule.id}`} className="font-medium hover:text-primary hover:underline">
+              {capsule.home_team_name}
+            </Link>
             <p className="text-muted-foreground">{capsule.away_team_name}</p>
             {capsule.competition_name ? (
               <p className="mt-1 text-xs text-primary">{capsule.competition_name}</p>
@@ -77,16 +81,20 @@ function PublicCapsuleCard({
               />
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              {likesCount > 0 ? `${likesCount} me gusta` : null}
-              {likesCount > 0 && commentsCount > 0 ? ' · ' : null}
-              {commentsCount > 0 ? `${commentsCount} comentarios` : null}
-              {(likesCount > 0 || commentsCount > 0) && ' · '}
-              <Link to="/login" className="text-primary hover:underline">
-                Inicia sesión para interactuar
-              </Link>
-            </p>
+            <>
+              <CapsuleComments capsuleId={capsule.id} commentsCount={commentsCount} />
+              <p className="w-full text-sm text-muted-foreground">
+                {likesCount > 0 ? `${likesCount} me gusta` : null}
+                {likesCount > 0 && commentsCount > 0 ? ' · ' : null}
+                {commentsCount > 0 ? `${commentsCount} comentarios` : null}
+                {(likesCount > 0 || commentsCount > 0) && ' · '}
+                <Link to="/login" className="text-primary hover:underline">
+                  Inicia sesión para interactuar
+                </Link>
+              </p>
+            </>
           )}
+          <ShareCapsuleButton capsuleId={capsule.id} title={shareTitle} />
         </div>
       </CardContent>
     </Card>

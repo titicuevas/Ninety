@@ -79,9 +79,9 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
-  it('GET /api/capsules/:id requiere auth', async () => {
+  it('GET /api/capsules/:id no requiere auth', async () => {
     const res = await request(createApp()).get('/api/capsules/00000000-0000-4000-8000-000000000001');
-    assert.equal(res.status, 401);
+    assert.notEqual(res.status, 401);
   });
 
   it('PATCH /api/capsules/:id requiere auth', async () => {
@@ -111,9 +111,14 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
-  it('GET /api/capsules/:id/comments requiere auth', async () => {
+  it('GET /api/capsules/:id/comments no requiere auth', async () => {
     const res = await request(createApp()).get('/api/capsules/00000000-0000-4000-8000-000000000001/comments');
-    assert.equal(res.status, 401);
+    assert.notEqual(res.status, 401);
+  });
+
+  it('POST /api/auth/refresh valida el body', async () => {
+    const res = await request(createApp()).post('/api/auth/refresh').send({});
+    assert.equal(res.status, 400);
   });
 
   it('POST /api/capsules/:id/comments requiere auth', async () => {

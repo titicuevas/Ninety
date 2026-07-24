@@ -65,3 +65,6 @@ export interface FeedResponse {
   total: number;
   following_count?: number;
 }
+
+/** Capsule pública (detalle /c/:id) */
+export type PublicCapsule = FeedCapsule;

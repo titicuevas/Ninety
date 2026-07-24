@@ -66,6 +66,15 @@ export async function validateSession(accessToken: string) {
   );
 }
 
+export async function refreshSession(refreshToken: string) {
+  const { session } = await apiFetch<AuthResponse>('/api/auth/refresh', {
+    method: 'POST',
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+  saveSession(session);
+  return session;
+}
+
 export async function signOut(accessToken?: string | null) {
   if (accessToken) {
     await apiFetch('/api/auth/logout', { method: 'POST' }, accessToken).catch(() => undefined);

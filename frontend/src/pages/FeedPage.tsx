@@ -4,6 +4,7 @@ import { CapsuleComments } from '@/components/CapsuleComments';
 import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { Layout } from '@/components/Layout';
+import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { StarRating } from '@/components/StarRating';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -37,6 +38,7 @@ function AuthorName({ capsule, currentUserId }: { capsule: FeedCapsule; currentU
 
 function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; currentUserId?: string }) {
   const score = formatScore(capsule);
+  const shareTitle = `${capsule.home_team_name} vs ${capsule.away_team_name}`;
 
   return (
     <Card>
@@ -56,7 +58,9 @@ function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; cur
 
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="font-medium">{capsule.home_team_name}</p>
+            <Link to={`/c/${capsule.id}`} className="font-medium hover:text-primary hover:underline">
+              {capsule.home_team_name}
+            </Link>
             <p className="text-muted-foreground">{capsule.away_team_name}</p>
             {capsule.competition_name ? (
               <p className="mt-1 text-xs text-muted-foreground">{capsule.competition_name}</p>
@@ -84,6 +88,7 @@ function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; cur
             commentsCount={capsule.comments_count}
             currentUserId={currentUserId}
           />
+          <ShareCapsuleButton capsuleId={capsule.id} title={shareTitle} />
         </div>
       </CardContent>
     </Card>

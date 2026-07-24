@@ -106,6 +106,18 @@ async function checkPublicProfile() {
       return;
     }
     pass(`Perfil público @${body.profile.username} (${body.capsules?.length ?? 0} capsules)`);
+
+    const firstId = body.capsules?.[0]?.id as string | undefined;
+    if (firstId) {
+      const capsule = await checkJson(`/api/capsules/${firstId}`);
+      if (capsule.res.status === 200 && capsule.body.id === firstId) {
+        pass(`Capsule pública GET /api/capsules/${firstId.slice(0, 8)}…`);
+      } else {
+        fail(`GET /api/capsules/:id → ${capsule.res.status}`);
+      }
+    } else {
+      warn('Sin capsules en el perfil demo — no se pudo probar /c/:id');
+    }
   } catch (err) {
     fail(`Perfil público: ${err instanceof Error ? err.message : err}`);
   }

@@ -35,13 +35,24 @@ export function PrivacyPage() {
           </li>
           <li>
             <strong className="text-foreground">Contenido:</strong> Capsules que creas (partidos, fechas, valoraciones,
-            notas) y actividad visible en el feed.
+            notas, fotos) y actividad en el feed.
           </li>
           <li>
             <strong className="text-foreground">Técnicos:</strong> logs básicos de uso, dirección IP aproximada y datos
-            de sesión necesarios para mantener la cuenta segura.
+            de sesión necesarios para mantener la cuenta segura. La sesión se guarda en el almacenamiento local del
+            navegador (<code className="text-foreground">localStorage</code>), no en cookies de seguimiento. No usamos
+            cookies de marketing ni analítica de terceros.
           </li>
         </ul>
+      </Section>
+
+      <Section title="2.1. Contenido público">
+        <p>
+          Ninety funciona como un diario social: tu perfil (<code className="text-foreground">/u/usuario</code>) y tus
+          Capsules son <strong className="text-foreground">públicos</strong> y pueden verse sin iniciar sesión,
+          también mediante enlaces compartibles (<code className="text-foreground">/c/…</code>). No publiques datos
+          personales sensibles en notas o fotos.
+        </p>
       </Section>
 
       <Section title="3. Para qué usamos tus datos">

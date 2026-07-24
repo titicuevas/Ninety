@@ -24,6 +24,10 @@ const oauthExchangeSchema = z.object({
   pkceId: z.string().uuid(),
 });
 
+const refreshSchema = z.object({
+  refresh_token: z.string().min(1),
+});
+
 function createPkceClient(sessionId: string) {
   return createServiceClient(env.SUPABASE_ANON_KEY, {
     auth: {
@@ -140,6 +144,25 @@ authRouter.get('/session', async (req, res) => {
       user_metadata: data.user.user_metadata,
     },
   });
+});
+
+authRouter.post('/refresh', async (req, res) => {
+  const parsed = refreshSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const { data, error } = await supabaseAnon.auth.refreshSession({
+    refresh_token: parsed.data.refresh_token,
+  });
+
+  if (error || !data.session) {
+    res.status(401).json({ error: error?.message ?? 'No se pudo renovar la sesión' });
+    return;
+  }
+
+  res.json({ session: await finalizeAuthSession(data.session) });
 });
 
 authRouter.post('/oauth/google', async (_req, res) => {

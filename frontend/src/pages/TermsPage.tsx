@@ -47,7 +47,8 @@ export function TermsPage() {
       <Section title="4. Contenido que publicas">
         <p>
           Conservas los derechos sobre tus Capsules y notas. Al publicar en Ninety nos concedes una licencia no
-          exclusiva para mostrar ese contenido dentro de la app (por ejemplo, en tu feed o perfil).
+          exclusiva para mostrar ese contenido en la app y en páginas públicas (perfil y enlaces de Capsule). El
+          diario es público por diseño: cualquiera con el enlace puede verlo.
         </p>
       </Section>
 

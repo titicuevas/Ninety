@@ -49,6 +49,10 @@ export function EditCapsulePage() {
     );
   }
 
+  if (session?.user?.id && capsule.user_id !== session.user.id) {
+    return <Navigate to={`/c/${capsule.id}`} replace />;
+  }
+
   const handleSubmit = async (payload: {
     watched_at: string;
     rating: number | null;

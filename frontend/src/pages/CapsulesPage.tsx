@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Pencil, Trash2 } from 'lucide-react';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { Layout } from '@/components/Layout';
+import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { StarRating } from '@/components/StarRating';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +17,7 @@ function formatScore(capsule: Capsule) {
 
 function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: string) => void }) {
   const score = formatScore(capsule);
+  const shareTitle = `${capsule.home_team_name} vs ${capsule.away_team_name}`;
 
   return (
     <Card>
@@ -28,7 +30,9 @@ function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: s
 
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="font-medium">{capsule.home_team_name}</p>
+            <Link to={`/c/${capsule.id}`} className="font-medium hover:text-primary hover:underline">
+              {capsule.home_team_name}
+            </Link>
             <p className="text-muted-foreground">{capsule.away_team_name}</p>
             {capsule.competition_name ? (
               <p className="mt-1 text-xs text-primary">{capsule.competition_name}</p>
@@ -48,7 +52,8 @@ function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: s
 
         {capsule.note ? <p className="mt-3 text-sm text-muted-foreground">{capsule.note}</p> : null}
 
-        <div className="mt-4 flex gap-2">
+        <div className="mt-4 flex flex-wrap gap-2">
+          <ShareCapsuleButton capsuleId={capsule.id} title={shareTitle} variant="outline" />
           <Button asChild variant="secondary" size="sm">
             <Link to={`/capsules/${capsule.id}/edit`}>
               <Pencil className="mr-1.5 h-3.5 w-3.5" />

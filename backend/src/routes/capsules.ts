@@ -335,18 +335,20 @@ const commentBodySchema = z.object({
   body: z.string().trim().min(1, 'Escribe un comentario').max(500),
 });
 
-capsulesRouter.get('/:id/comments', requireAuth, async (req: AuthRequest, res) => {
+capsulesRouter.get('/:id/comments', optionalAuth, async (req: AuthRequest, res) => {
   const token = getAccessToken(req);
-  if (!token) {
-    res.status(401).json({ error: 'Token requerido' });
+  const reader = getReaderClient(token);
+
+  if (!reader) {
+    res.status(503).json({ error: 'Comentarios no disponibles temporalmente' });
     return;
   }
 
-  const supabase = createUserClient(token);
-  const { data: capsule, error: capsuleError } = await supabase
+  const capsuleId = routeParam(req.params.id);
+  const { data: capsule, error: capsuleError } = await reader
     .from('capsules')
     .select('id')
-    .eq('id', req.params.id)
+    .eq('id', capsuleId)
     .maybeSingle();
 
   if (capsuleError) {
@@ -360,7 +362,7 @@ capsulesRouter.get('/:id/comments', requireAuth, async (req: AuthRequest, res) =
   }
 
   try {
-    const comments = await fetchCommentsWithAuthors(supabase, routeParam(req.params.id));
+    const comments = await fetchCommentsWithAuthors(reader, capsuleId);
     res.json({ comments });
   } catch (err) {
     if (isMissingCommentsTable(err)) {
@@ -482,27 +484,48 @@ capsulesRouter.delete('/:id/comments/:commentId', requireAuth, async (req: AuthR
   res.status(204).end();
 });
 
-capsulesRouter.get('/:id', requireAuth, async (req: AuthRequest, res) => {
+capsulesRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
   const token = getAccessToken(req);
-  if (!token) {
-    res.status(401).json({ error: 'Token requerido' });
+  const reader = getReaderClient(token);
+
+  if (!reader) {
+    res.status(503).json({ error: 'Capsule pública no disponible temporalmente' });
     return;
   }
 
-  const supabase = createUserClient(token);
-  const { data, error } = await supabase
-    .from('capsules')
-    .select('*')
-    .eq('id', req.params.id)
-    .eq('user_id', req.userId!)
-    .single();
+  const capsuleId = routeParam(req.params.id);
+  const { data, error } = await reader.from('capsules').select('*').eq('id', capsuleId).maybeSingle();
 
-  if (error || !data) {
+  if (error) {
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  if (!data) {
     res.status(404).json({ error: 'Capsule no encontrada' });
     return;
   }
 
-  res.json(data);
+  const viewerId = req.userId ?? '';
+  const [withLikes] = await attachLikeStats(reader, viewerId, [data]);
+  const [withComments] = await attachCommentCounts(reader, [withLikes]);
+
+  const { data: profile } = await supabaseAnon
+    .from('profiles')
+    .select('id, username, full_name, avatar_url')
+    .eq('id', data.user_id)
+    .maybeSingle();
+
+  res.json({
+    ...withComments,
+    profiles: profile
+      ? {
+          username: profile.username,
+          display_name: profile.full_name ?? null,
+          avatar_url: profile.avatar_url,
+        }
+      : null,
+  });
 });
 
 capsulesRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
