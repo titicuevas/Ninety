@@ -119,7 +119,7 @@ export function EditCapsulePage() {
           defaultNote={capsule.note ?? ''}
           defaultRating={capsule.rating}
           existingPhotoUrls={getCapsulePhotoUrls(capsule)}
-          submitLabel="Guardar cambios"
+          submitLabel={uploading ? 'Subiendo fotos…' : 'Guardar cambios'}
           isBusy={uploading || updateCapsule.isPending}
           error={
             submitError ??

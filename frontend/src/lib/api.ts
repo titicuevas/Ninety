@@ -5,9 +5,13 @@ import { friendlyApiError } from '@/lib/friendlyErrors';
  * En producción, VITE_API_URL o fallback Railway.
  */
 function resolveApiUrl(): string {
-  const configured = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '';
+  const viteEnv =
+    typeof import.meta !== 'undefined'
+      ? (import.meta as ImportMeta & { env?: Record<string, string | boolean | undefined> }).env
+      : undefined;
+  const configured = (viteEnv?.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '';
   if (configured) return configured;
-  if (import.meta.env.PROD) return 'https://ninety-api.up.railway.app';
+  if (viteEnv?.PROD) return 'https://ninety-api.up.railway.app';
   return '';
 }
 

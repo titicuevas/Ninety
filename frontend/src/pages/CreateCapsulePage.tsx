@@ -80,7 +80,7 @@ export function CreateCapsulePage() {
 
         <CapsuleMemoryForm
           defaultWatchedAt={defaultWatchedAt(match)}
-          submitLabel="Guardar Capsule"
+          submitLabel={uploading ? 'Subiendo fotos…' : 'Guardar Capsule'}
           isBusy={uploading || createCapsule.isPending}
           error={
             submitError ??
