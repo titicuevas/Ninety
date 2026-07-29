@@ -14,6 +14,8 @@ const FORBIDDEN_PATTERNS = [
   /sb_secret_[A-Za-z0-9_-]{10,}/,
   /DemoNinety123!/,
   /TEST_USER_PASSWORD\s*\?\?\s*['"][^'"]+['"]/,
+  // VAPID private key assignment with a real-looking value (not empty / placeholder)
+  /VAPID_PRIVATE_KEY\s*=\s*['"]?[A-Za-z0-9_-]{20,}['"]?/,
 ];
 
 function getTrackedFiles() {
