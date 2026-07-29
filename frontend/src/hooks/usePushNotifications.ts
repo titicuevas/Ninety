@@ -29,9 +29,16 @@ export function usePushPublicKey() {
 }
 
 export function usePushEnabled() {
+  const session = useAuthStore((s) => s.session);
   return useQuery({
     queryKey: ['notifications', 'push-enabled'],
-    queryFn: async () => false,
+    queryFn: async () => {
+      if (!session?.access_token || !('serviceWorker' in navigator)) return false;
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      return !!subscription;
+    },
+    enabled: !!session?.access_token,
     staleTime: Infinity,
     initialData: false,
   });
@@ -81,6 +88,39 @@ export function useEnablePush() {
     },
     onSuccess: () => {
       queryClient.setQueryData(['notifications', 'push-enabled'], true);
+      void queryClient.invalidateQueries({ queryKey: ['notifications', 'push-public-key'] });
+    },
+  });
+}
+
+export function useDisablePush() {
+  const session = useAuthStore((s) => s.session);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!('serviceWorker' in navigator)) return false;
+
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (!subscription) return false;
+
+      const endpoint = subscription.endpoint;
+      await subscription.unsubscribe();
+
+      await apiFetch(
+        '/api/notifications/push/subscribe',
+        {
+          method: 'DELETE',
+          body: JSON.stringify({ endpoint }),
+        },
+        session?.access_token,
+      );
+
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(['notifications', 'push-enabled'], false);
       void queryClient.invalidateQueries({ queryKey: ['notifications', 'push-public-key'] });
     },
   });

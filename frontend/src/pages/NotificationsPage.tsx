@@ -5,7 +5,12 @@ import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNotifications, useMarkAllRead, type AppNotification } from '@/hooks/useNotifications';
-import { useEnablePush, usePushEnabled, usePushPublicKey } from '@/hooks/usePushNotifications';
+import {
+  useDisablePush,
+  useEnablePush,
+  usePushEnabled,
+  usePushPublicKey,
+} from '@/hooks/usePushNotifications';
 import { cn } from '@/lib/utils';
 
 function timeAgo(dateStr: string): string {
@@ -69,6 +74,7 @@ export function NotificationsPage() {
   const { data: pushKey, isError: pushUnavailable } = usePushPublicKey();
   const { data: pushEnabled = false } = usePushEnabled();
   const enablePush = useEnablePush();
+  const disablePush = useDisablePush();
   const notifications = data?.notifications ?? [];
   const unread = data?.unread_count ?? 0;
   const canEnablePush = !!pushKey?.enabled && !pushUnavailable;
@@ -98,7 +104,17 @@ export function NotificationsPage() {
               </Button>
             ) : null}
             {pushEnabled ? (
-              <span className="text-xs text-muted-foreground">Alertas activadas</span>
+              <>
+                <span className="text-xs text-muted-foreground">Alertas activadas</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  loading={disablePush.isPending}
+                  onClick={() => disablePush.mutate()}
+                >
+                  Desactivar alertas
+                </Button>
+              </>
             ) : null}
             {unread > 0 && (
               <Button
@@ -116,6 +132,13 @@ export function NotificationsPage() {
         {enablePush.isError ? (
           <p className="text-sm text-destructive">
             {enablePush.error instanceof Error ? enablePush.error.message : 'No se pudieron activar las alertas'}
+          </p>
+        ) : null}
+        {disablePush.isError ? (
+          <p className="text-sm text-destructive">
+            {disablePush.error instanceof Error
+              ? disablePush.error.message
+              : 'No se pudieron desactivar las alertas'}
           </p>
         ) : null}
 
