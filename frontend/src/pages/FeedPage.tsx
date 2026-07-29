@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CapsuleComments } from '@/components/CapsuleComments';
@@ -12,7 +13,10 @@ import { useCapsuleFeed } from '@/hooks/useCapsules';
 import { useAuth } from '@/hooks/useAuthInit';
 import { formatRelativeTime } from '@/lib/format';
 import { profilePath } from '@/lib/profilePath';
+import { cn } from '@/lib/utils';
 import type { FeedCapsule } from '@/types/capsule';
+
+type FeedSort = 'recent' | 'popular';
 
 function formatScore(capsule: FeedCapsule) {
   if (capsule.home_score == null || capsule.away_score == null) return null;
@@ -95,20 +99,52 @@ function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; cur
   );
 }
 
+function sortCapsules(capsules: FeedCapsule[], sort: FeedSort): FeedCapsule[] {
+  if (sort === 'recent') return capsules;
+  return [...capsules].sort((a, b) => {
+    const scoreA = (a.likes_count ?? 0) + (a.comments_count ?? 0);
+    const scoreB = (b.likes_count ?? 0) + (b.comments_count ?? 0);
+    return scoreB - scoreA || b.created_at.localeCompare(a.created_at);
+  });
+}
+
 export function FeedPage() {
   const { user } = useAuth();
   const { data, isLoading, isError, error } = useCapsuleFeed();
-  const capsules = data?.capsules ?? [];
+  const [sort, setSort] = useState<FeedSort>('recent');
+  const rawCapsules = data?.capsules ?? [];
+  const capsules = useMemo(() => sortCapsules(rawCapsules, sort), [rawCapsules, sort]);
   const followingCount = data?.following_count;
 
   return (
     <Layout>
       <div className="space-y-8">
-        <section className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Feed</h1>
-          <p className="text-sm text-muted-foreground sm:text-base">
-            El vestuario digital: partidos de a quien sigues y los tuyos.
-          </p>
+        <section className="space-y-3">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Feed</h1>
+            <p className="mt-1 text-sm text-muted-foreground sm:text-base">
+              El vestuario digital: partidos de a quien sigues y los tuyos.
+            </p>
+          </div>
+          <div className="flex gap-2" role="tablist" aria-label="Orden del feed">
+            {([['recent', 'Recientes'], ['popular', 'Populares']] as const).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={sort === key}
+                onClick={() => setSort(key)}
+                className={cn(
+                  'min-h-9 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  sort === key
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </section>
 
         {isLoading ? (

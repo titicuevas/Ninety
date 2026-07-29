@@ -13,6 +13,12 @@ export interface CapsuleStats {
   recentCapsules: Capsule[];
   /** Meses con al menos un partido (1–12), solo útil en vistas anuales */
   activeMonths: number;
+  /** Racha más larga de días consecutivos con partido */
+  longestStreak: number;
+  /** Top 3 equipos más vistos */
+  topTeams: Array<{ name: string; count: number }>;
+  /** Partidos por mes (índice 0 = enero, 11 = diciembre) */
+  matchesByMonth: number[];
 }
 
 export type WrappedScope = 'all' | number;
@@ -51,6 +57,41 @@ function competitionCounts(capsules: Capsule[]) {
   }
 
   return counts;
+}
+
+function computeLongestStreak(capsules: Capsule[]): number {
+  if (capsules.length === 0) return 0;
+  const days = [...new Set(capsules.map((c) => c.watched_at.slice(0, 10)))].sort();
+  let max = 1;
+  let cur = 1;
+  for (let i = 1; i < days.length; i++) {
+    const prev = new Date(days[i - 1]).getTime();
+    const curr = new Date(days[i]).getTime();
+    if (curr - prev === 86_400_000) {
+      cur++;
+      if (cur > max) max = cur;
+    } else {
+      cur = 1;
+    }
+  }
+  return max;
+}
+
+function topNEntries(counts: Map<string, number>, n: number): Array<{ name: string; count: number }> {
+  return [...counts.entries()]
+    .filter(([name]) => name.trim())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n)
+    .map(([name, count]) => ({ name, count }));
+}
+
+function computeMatchesByMonth(capsules: Capsule[]): number[] {
+  const months = new Array<number>(12).fill(0);
+  for (const c of capsules) {
+    const m = Number(c.watched_at.slice(5, 7));
+    if (m >= 1 && m <= 12) months[m - 1]++;
+  }
+  return months;
 }
 
 function capsuleYear(capsule: Capsule): number {
@@ -114,6 +155,9 @@ export function computeCapsuleStats(capsules: Capsule[]): CapsuleStats {
     bestRated,
     recentCapsules: sortedByWatched.slice(0, 3),
     activeMonths: months.size,
+    longestStreak: computeLongestStreak(capsules),
+    topTeams: topNEntries(teamCounts(capsules), 3),
+    matchesByMonth: computeMatchesByMonth(capsules),
   };
 }
 
