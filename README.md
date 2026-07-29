@@ -193,23 +193,47 @@ npm run seed:demo
 
 Crea 5 capsules con fotos de prueba para el usuario demo.
 
-### 3. Tests automatizados
+### 3. Tests automatizados (pirámide QE)
 
 ```bash
-# Unit tests del backend
+# Unit backend
 npm test
 
-# Smoke Supabase + API (local o producción)
+# Unit helpers frontend (fotos)
+npm test --prefix frontend
+
+# Smoke Supabase + API
 npm run smoke:v1
-API_URL=https://ninety-api.up.railway.app FRONTEND_URL=https://ninety.up.railway.app npm run smoke:v1
 
-# Flujo E2E demo: login, capsules, feed, comentarios, follow
+# Demo flow API (login, capsules, follow…)
 npm run demo:flow
-API_URL=https://ninety-api.up.railway.app npm run demo:flow
 
-# Todo junto (unit + demo flow)
-npm run test:v1
+# —— Playwright E2E ——
+# Requiere: npx playwright install chromium
+# Auth: TEST_USER_PASSWORD en backend/.env
+
+npm run test:e2e:public    # smoke público + a11y (sin login; CI)
+npm run test:e2e:smoke     # smoke público + home/feed autenticados
+npm run test:e2e:critical  # búsqueda, follow lists, nav móvil
+npm run test:e2e:a11y      # axe WCAG 2 A/AA
+npm run test:e2e:mobile    # Pixel 5
+npm run test:e2e           # suite completa
+npm run test:e2e:ui        # modo UI Playwright
+
+# Combo rápido QE local
+npm run test:qa
 ```
+
+Estructura `e2e/`:
+
+| Carpeta | Qué cubre |
+|---------|-----------|
+| `smoke/` | Salud mínima (landing, login form, API health, home) |
+| `critical/` | Flujos de negocio (buscar aficionados, listas, capsule pública, nav móvil) |
+| `a11y/` | Accesibilidad con axe-core |
+| `helpers/` | Login, token, asserts a11y |
+
+Tags: `@smoke` · `@critical` · `@a11y` · `@mobile`
 
 ### 4. Checklist manual responsive
 

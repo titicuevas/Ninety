@@ -98,7 +98,7 @@ export function PublicCapsulePage() {
             </div>
 
             {capsule.rating ? (
-              <div className="mt-4" aria-label={`Valoración: ${capsule.rating} de 5`}>
+              <div className="mt-4">
                 <StarRating rating={capsule.rating} />
               </div>
             ) : null}

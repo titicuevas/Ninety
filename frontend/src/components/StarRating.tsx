@@ -17,11 +17,15 @@ export function StarRating({
   className?: string;
 }) {
   return (
-    <div className={cn('flex items-center gap-0.5 text-primary', className)} aria-hidden>
+    <div
+      className={cn('flex items-center gap-0.5 text-primary', className)}
+      role="img"
+      aria-label={`Valoración: ${rating} de 5`}
+    >
       {[1, 2, 3, 4, 5]
         .filter((star) => star <= rating)
         .map((star) => (
-          <Star key={star} className={cn(sizeClass[size], 'fill-current')} />
+          <Star key={star} className={cn(sizeClass[size], 'fill-current')} aria-hidden />
         ))}
     </div>
   );

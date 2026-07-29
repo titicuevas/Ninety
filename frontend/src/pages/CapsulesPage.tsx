@@ -45,7 +45,7 @@ function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: s
         </div>
 
         {capsule.rating ? (
-          <div className="mt-3" aria-label={`Valoración: ${capsule.rating} de 5`}>
+          <div className="mt-3">
             <StarRating rating={capsule.rating} />
           </div>
         ) : null}
