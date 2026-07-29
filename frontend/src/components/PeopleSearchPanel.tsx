@@ -10,7 +10,7 @@ import { profilePath } from '@/lib/profilePath';
 import { cn } from '@/lib/utils';
 import type { Profile } from '@/types/profile';
 
-function PeopleResultRow({ profile }: { profile: Profile }) {
+export function PeopleResultRow({ profile }: { profile: Profile }) {
   const username = profile.username!;
   const [followed, setFollowed] = useState(() => !!profile.followed_by_me);
   const toggle = useToggleFollow(username);

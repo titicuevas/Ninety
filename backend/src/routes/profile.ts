@@ -208,6 +208,44 @@ profileRouter.get('/search', requireAuth, async (req: AuthRequest, res) => {
   res.json({ profiles, query: parsed.data.q });
 });
 
+profileRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const limit = Math.min(Math.max(Number(req.query.limit) || 6, 1), 12);
+  const supabase = createUserClient(token);
+
+  const { data: followingRows } = await supabase
+    .from('user_follows')
+    .select('following_id')
+    .eq('follower_id', req.userId!);
+
+  const followingIds = new Set((followingRows ?? []).map((row) => row.following_id));
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, username, full_name, avatar_url, favorite_team, country, city, created_at')
+    .not('username', 'is', null)
+    .neq('id', req.userId!)
+    .order('created_at', { ascending: false })
+    .limit(Math.max(limit * 3, 18));
+
+  if (error) {
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  const profiles = (data ?? [])
+    .filter((row) => row.username && !followingIds.has(row.id))
+    .slice(0, limit)
+    .map((row) => ({ ...normalizeProfile(row), followed_by_me: false }));
+
+  res.json({ profiles });
+});
+
 profileRouter.get('/:username/followers', optionalAuth, (req: AuthRequest, res) => {
   void handleFollowList(req, res, 'followers');
 });

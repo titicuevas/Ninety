@@ -5,11 +5,13 @@ import { CapsuleComments } from '@/components/CapsuleComments';
 import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { Layout } from '@/components/Layout';
+import { PeopleResultRow } from '@/components/PeopleSearchPanel';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { StarRating } from '@/components/StarRating';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCapsuleFeed } from '@/hooks/useCapsules';
+import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { useAuth } from '@/hooks/useAuthInit';
 import { formatRelativeTime } from '@/lib/format';
 import { profilePath } from '@/lib/profilePath';
@@ -117,6 +119,9 @@ export function FeedPage() {
     [data?.capsules, sort],
   );
   const followingCount = data?.following_count;
+  const isEmpty = !isLoading && !isError && capsules.length === 0;
+  const { data: discoverData } = useDiscoverProfiles(isEmpty);
+  const suggestions = discoverData?.profiles ?? [];
 
   return (
     <Layout>
@@ -164,25 +169,40 @@ export function FeedPage() {
         ) : null}
 
         {!isLoading && !isError && capsules.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="p-6 text-center sm:p-10">
-              <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground" aria-hidden />
-              <p className="text-lg font-medium">Tu feed está vacío</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {followingCount === 0
-                  ? 'Visita perfiles de otros aficionados y pulsa Seguir para ver sus partidos aquí.'
-                  : 'La gente que sigues aún no ha publicado partidos, o aún no has guardado ninguno.'}
-              </p>
-              <div className="mt-4 flex flex-wrap justify-center gap-2">
-                <Button asChild>
-                  <Link to="/search?tab=people">Buscar aficionados</Link>
-                </Button>
-                <Button asChild variant="secondary">
-                  <Link to="/search">Buscar partido</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <Card className="border-dashed">
+              <CardContent className="p-6 text-center sm:p-10">
+                <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground" aria-hidden />
+                <p className="text-lg font-medium">Tu feed está vacío</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {followingCount === 0
+                    ? 'Sigue a otros aficionados para ver sus partidos aquí.'
+                    : 'La gente que sigues aún no ha publicado partidos, o aún no has guardado ninguno.'}
+                </p>
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  <Button asChild>
+                    <Link to="/search?tab=people">Buscar aficionados</Link>
+                  </Button>
+                  <Button asChild variant="secondary">
+                    <Link to="/search">Buscar partido</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {suggestions.length > 0 ? (
+              <section className="space-y-3">
+                <h2 className="text-sm font-semibold tracking-wide text-primary uppercase">
+                  Aficionados sugeridos
+                </h2>
+                <ul className="space-y-2">
+                  {suggestions.map((profile) => (
+                    <PeopleResultRow key={profile.id} profile={profile} />
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+          </div>
         ) : null}
 
         {!isLoading && !isError && capsules.length > 0 ? (
