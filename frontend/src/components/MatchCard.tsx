@@ -58,8 +58,8 @@ export function MatchCard({ match, onSelect, className }: MatchCardProps) {
   const summary = matchSummary(match);
 
   const content = (
-    <Card className={cn('transition-colors', onSelect && 'hover:border-primary/40', className)}>
-      <CardContent className="flex items-center gap-3 p-4 sm:gap-4 sm:p-5">
+    <Card className={cn('transition-colors', onSelect && 'hover:border-primary/40 active:scale-[0.99]', className)}>
+      <CardContent className="flex min-h-[4.5rem] items-center gap-3 p-4 sm:min-h-0 sm:gap-4 sm:p-5">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <TeamCrest team={match.homeTeam} />
           <div className="min-w-0 flex-1">

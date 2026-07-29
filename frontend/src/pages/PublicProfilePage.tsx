@@ -200,13 +200,17 @@ export function PublicProfilePage() {
           </div>
 
           {isOwnProfile ? (
-            <Button asChild variant="secondary" className="shrink-0">
+            <Button asChild variant="secondary" className="w-full shrink-0 sm:w-auto">
               <Link to="/profile">Editar perfil</Link>
             </Button>
           ) : profile.username && user ? (
-            <FollowButton username={profile.username} followedByMe={profile.followed_by_me} />
+            <FollowButton
+              username={profile.username}
+              followedByMe={profile.followed_by_me}
+              className="w-full sm:w-auto"
+            />
           ) : profile.username ? (
-            <Button asChild className="shrink-0">
+            <Button asChild className="w-full shrink-0 sm:w-auto">
               <Link to="/login">Inicia sesión para seguir</Link>
             </Button>
           ) : null}

@@ -13,6 +13,11 @@ const NAV_ITEMS: { to: string; label: string; icon: LucideIcon; end?: boolean }[
   { to: '/profile', label: 'Perfil', icon: User },
 ];
 
+/**
+ * Breakpoint de shell:
+ * - < lg (1024px): tab bar inferior (móvil + tablet portrait) — uso principal
+ * - ≥ lg: nav horizontal en header (desktop / tablet landscape ancha)
+ */
 function desktopNavClass(isActive: boolean) {
   return cn(
     'inline-flex min-h-10 items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors',
@@ -23,7 +28,7 @@ function desktopNavClass(isActive: boolean) {
 
 function mobileTabClass(isActive: boolean) {
   return cn(
-    'flex min-h-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1 text-[10px] font-medium sm:text-[11px]',
+    'flex min-h-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1.5 text-[10px] font-medium sm:text-xs',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
     isActive ? 'text-primary' : 'text-muted-foreground',
   );
@@ -36,9 +41,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="app-shell min-h-dvh">
       <SkipLink />
 
-      <header
-        className="sticky top-0 z-50 border-b border-border/80 bg-background/85 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md supports-[backdrop-filter]:bg-background/75"
-      >
+      <header className="sticky top-0 z-50 border-b border-border/80 bg-background/85 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-4 sm:h-16 sm:px-6 lg:max-w-6xl">
           <Link
             to="/home"
@@ -50,7 +53,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <span className="truncate text-base font-semibold tracking-tight sm:text-lg">Ninety</span>
           </Link>
 
-          <nav className="hidden items-center gap-1 md:flex" aria-label="Navegación principal">
+          <nav className="hidden items-center gap-1 lg:flex" aria-label="Navegación principal">
             {NAV_ITEMS.map((item) => (
               <NavLink
                 key={item.to}
@@ -75,7 +78,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             onClick={() => signOut()}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
             aria-label="Cerrar sesión"
           >
             <LogOut className="h-5 w-5" aria-hidden />
@@ -86,19 +89,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <main
         id="main-content"
         className={cn(
-          'mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:max-w-6xl',
-          // Espacio para tab bar + safe area en móvil; normal en tablet+
-          'pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-8',
+          'mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 sm:py-8 lg:max-w-6xl',
+          // Tab bar hasta lg (móvil + tablet); desktop sin padding extra
+          'pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))] lg:pb-8',
         )}
       >
         {children}
       </main>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-50 border-t border-border/80 bg-background/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md md:hidden"
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-border/80 bg-background/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md lg:hidden"
         aria-label="Navegación principal"
       >
-        <ul className="mx-auto flex h-16 max-w-lg list-none items-stretch gap-0.5 px-1 py-0.5">
+        <ul className="mx-auto flex h-[4.25rem] max-w-2xl list-none items-stretch gap-0.5 px-1 py-0.5 sm:h-16 sm:max-w-3xl sm:px-2">
           {NAV_ITEMS.map((item) => (
             <li key={item.to} className="flex flex-1">
               <NavLink
@@ -108,11 +111,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               >
                 {({ isActive }) => (
                   <>
-                    <item.icon className={cn('h-5 w-5', isActive && 'scale-105')} aria-hidden />
+                    <item.icon className={cn('h-5 w-5 sm:h-6 sm:w-6', isActive && 'scale-105')} aria-hidden />
                     <span>{item.label}</span>
-                    {isActive ? (
-                      <span className="sr-only">(página actual)</span>
-                    ) : null}
+                    {isActive ? <span className="sr-only">(página actual)</span> : null}
                   </>
                 )}
               </NavLink>

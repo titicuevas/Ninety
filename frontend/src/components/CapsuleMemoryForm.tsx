@@ -142,7 +142,7 @@ export function CapsuleMemoryForm({
         </div>
       ) : null}
 
-      <div className="sticky bottom-16 z-10 -mx-4 space-y-3 border-t border-border bg-background/95 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md md:static md:bottom-auto md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+      <div className="sticky bottom-16 z-10 -mx-4 space-y-3 border-t border-border bg-background/95 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:static lg:bottom-auto lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
         <Button type="submit" loading={isBusy} className="h-12 w-full text-base">
           {submitLabel}
         </Button>

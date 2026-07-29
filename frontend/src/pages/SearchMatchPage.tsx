@@ -35,7 +35,7 @@ function defaultSeasonFor(competition: CuratedCompetition | undefined): number |
 }
 
 const selectClassName = cn(
-  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm',
+  'flex h-12 w-full rounded-lg border border-input bg-secondary px-3 py-2 text-base sm:h-11 sm:text-sm',
   'ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
 );
 

@@ -57,10 +57,32 @@ export default defineConfig({
     },
     {
       name: 'mobile',
-      testMatch: /critical\/mobile-nav\.spec\.ts|smoke\/authenticated\.spec\.ts/,
+      testMatch: /critical\/(mobile-nav|responsive)\.spec\.ts|smoke\/authenticated\.spec\.ts/,
       dependencies: ['setup'],
       use: {
         ...devices['Pixel 5'],
+        storageState: authFile,
+      },
+    },
+    {
+      name: 'tablet',
+      testMatch: /critical\/(mobile-nav|responsive)\.spec\.ts|smoke\/authenticated\.spec\.ts/,
+      dependencies: ['setup'],
+      use: {
+        ...devices['Desktop Chrome'],
+        // iPad portrait ~834×1194 — Chromium (sin depender de WebKit)
+        viewport: { width: 834, height: 1194 },
+        isMobile: true,
+        hasTouch: true,
+        storageState: authFile,
+      },
+    },
+    {
+      name: 'desktop-shell',
+      testMatch: /critical\/responsive-desktop\.spec\.ts/,
+      dependencies: ['setup'],
+      use: {
+        ...devices['Desktop Chrome'],
         storageState: authFile,
       },
     },

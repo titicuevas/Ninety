@@ -190,7 +190,7 @@ export function WrappedSummary({ name, stats, scope, years, onScopeChange }: Wra
               : `Tu resumen anual: partidos, valoraciones y highlights de ${scope}.`}
           </p>
 
-          <div className="mt-8 flex flex-wrap items-end gap-6">
+          <div className="mt-8 space-y-4">
             <div>
               <p className="text-5xl font-bold tabular-nums tracking-tight sm:text-6xl">
                 {stats.totalMatches}
@@ -201,7 +201,7 @@ export function WrappedSummary({ name, stats, scope, years, onScopeChange }: Wra
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
               <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
                 <p className="text-2xl font-bold tabular-nums">{formatRating(stats.averageRating)}</p>
                 <p className="text-xs text-white/70">media ⭐</p>

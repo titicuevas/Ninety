@@ -18,7 +18,7 @@ export function FollowButton({ username, followedByMe = false, className }: Foll
   }, [followedByMe, username]);
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex flex-col items-stretch gap-1 sm:items-end">
       <button
         type="button"
         onClick={() =>
@@ -33,7 +33,7 @@ export function FollowButton({ username, followedByMe = false, className }: Foll
         aria-pressed={followed}
         aria-label={followed ? 'Dejar de seguir' : 'Seguir'}
         className={cn(
-          'inline-flex shrink-0 items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
+          'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           followed
             ? 'bg-secondary text-foreground hover:bg-secondary/80'
