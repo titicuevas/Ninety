@@ -27,8 +27,10 @@ interface CapsulePhotosFieldProps {
   className?: string;
 }
 
+const NO_EXISTING_URLS: string[] = [];
+
 export function CapsulePhotosField({
-  existingUrls = [],
+  existingUrls = NO_EXISTING_URLS,
   newFiles,
   removedExistingUrls,
   onAddFiles,

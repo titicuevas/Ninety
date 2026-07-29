@@ -1,7 +1,7 @@
 import { apiFetch, apiUpload } from '@/lib/api';
 import { MAX_CAPSULE_PHOTOS } from '@/lib/capsulePhotos';
 
-export const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 const MAX_EDGE_PX = 1600;
 const JPEG_QUALITY = 0.82;
 
@@ -110,7 +110,7 @@ function canvasToJpegBlob(canvas: HTMLCanvasElement, quality: number): Promise<B
  * Redimensiona y convierte a JPEG para móvil/PC (incluye intento HEIC en Safari).
  * Mantiene el archivo si ya es JPEG/PNG/WebP pequeño y dentro del límite.
  */
-export async function prepareCapsulePhoto(file: File): Promise<File> {
+async function prepareCapsulePhoto(file: File): Promise<File> {
   const mime = guessImageMime(file);
   const preError = validateCapsulePhoto(file);
   if (preError && !HEIC_TYPES.has(mime)) {
@@ -198,7 +198,7 @@ export async function uploadCapsulePhotos(files: File[], accessToken: string) {
   return urls;
 }
 
-export async function deleteCapsulePhotoByUrl(photoUrl: string, accessToken: string) {
+async function deleteCapsulePhotoByUrl(photoUrl: string, accessToken: string) {
   await apiFetch(
     '/api/capsules/photos',
     {

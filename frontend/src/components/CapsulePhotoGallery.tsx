@@ -7,25 +7,26 @@ import { cn } from '@/lib/utils';
 function PhotoLightbox({
   urls,
   alt,
-  startIndex,
+  index,
+  onIndexChange,
   onClose,
 }: {
   urls: string[];
   alt: string;
-  startIndex: number;
+  index: number;
+  onIndexChange: (next: number) => void;
   onClose: () => void;
 }) {
-  const [index, setIndex] = useState(startIndex);
   const titleId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const goPrev = useCallback(() => {
-    setIndex((i) => (i - 1 + urls.length) % urls.length);
-  }, [urls.length]);
+    onIndexChange((index - 1 + urls.length) % urls.length);
+  }, [index, onIndexChange, urls.length]);
 
   const goNext = useCallback(() => {
-    setIndex((i) => (i + 1) % urls.length);
-  }, [urls.length]);
+    onIndexChange((index + 1) % urls.length);
+  }, [index, onIndexChange, urls.length]);
 
   const onGoPrev = useEffectEvent(goPrev);
   const onGoNext = useEffectEvent(goNext);
@@ -119,7 +120,6 @@ function PhotoLightbox({
         src={urls[index]}
         alt={`${alt} (${index + 1} de ${urls.length})`}
         className="max-h-[85vh] max-w-full rounded-lg object-contain"
-        onClick={(e) => e.stopPropagation()}
       />
 
       {urls.length > 1 ? (
@@ -157,7 +157,13 @@ export function CapsulePhotoGallery({
           <CapsulePhoto url={urls[0]} alt={alt} className="aspect-[4/3] w-full" />
         </button>
         {lightboxIndex !== null ? (
-          <PhotoLightbox urls={urls} alt={alt} startIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
+          <PhotoLightbox
+            urls={urls}
+            alt={alt}
+            index={lightboxIndex}
+            onIndexChange={setLightboxIndex}
+            onClose={() => setLightboxIndex(null)}
+          />
         ) : null}
       </>
     );
@@ -193,7 +199,13 @@ export function CapsulePhotoGallery({
         Desliza · toca para ampliar · {urls.length} fotos
       </p>
       {lightboxIndex !== null ? (
-        <PhotoLightbox urls={urls} alt={alt} startIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
+        <PhotoLightbox
+          urls={urls}
+          alt={alt}
+          index={lightboxIndex}
+          onIndexChange={setLightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
       ) : null}
     </>
   );

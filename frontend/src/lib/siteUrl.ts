@@ -1,5 +1,5 @@
 /** URL base del sitio (sin barra final). */
-export function siteOrigin(): string {
+function siteOrigin(): string {
   if (typeof window !== 'undefined') {
     return window.location.origin;
   }
