@@ -24,6 +24,21 @@ export async function loginAsDemo(page: Page) {
 }
 
 /**
+ * Abre Home con storageState si sigue siendo válido; si no, rehace login por UI.
+ * Evita flakes cuando el refresh token del auth.setup ya se ha quedado viejo.
+ */
+export async function openAuthenticatedHome(page: Page) {
+  await page.goto('/home');
+  await page.waitForURL(/\/(home|login)/, { timeout: 20_000 });
+
+  if (page.url().includes('/login')) {
+    await loginAsDemo(page);
+  }
+
+  await expect(page).toHaveURL(/\/home/, { timeout: 20_000 });
+}
+
+/**
  * Navegación client-side tras login: evita race de ProtectedRoute
  * al hacer page.goto() con sesión en localStorage.
  */

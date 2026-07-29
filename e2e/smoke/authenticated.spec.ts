@@ -1,16 +1,16 @@
 import { expect, test } from '@playwright/test';
+import { openAuthenticatedHome } from '../helpers/auth';
 
 test.describe('Smoke — autenticado @smoke', () => {
   test('home muestra Wrapped o empty state', async ({ page }) => {
-    await page.goto('/home');
-    await expect(page).toHaveURL(/\/home/);
+    await openAuthenticatedHome(page);
     await expect(
       page.getByRole('heading', { name: /esto es tu fútbol|tu wrapped empieza/i }),
     ).toBeVisible({ timeout: 20_000 });
   });
 
   test('feed accesible desde la app', async ({ page }) => {
-    await page.goto('/home');
+    await openAuthenticatedHome(page);
     await page
       .getByRole('navigation', { name: /navegación principal/i })
       .getByRole('link', { name: /feed/i })

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openAuthenticatedHome } from '../helpers/auth';
 
 /**
  * Regresión de shell responsive:
@@ -7,8 +8,7 @@ import { expect, test } from '@playwright/test';
  */
 test.describe('Responsive shell @critical @mobile @tablet', () => {
   test('muestra tab bar en viewport estrecho', async ({ page }) => {
-    await page.goto('/home');
-    await expect(page).toHaveURL(/\/home/);
+    await openAuthenticatedHome(page);
 
     const navs = page.getByRole('navigation', { name: /navegación principal/i });
     await expect(navs).toHaveCount(1);
@@ -25,7 +25,7 @@ test.describe('Responsive shell @critical @mobile @tablet', () => {
   });
 
   test('home Wrapped no desborda en horizontal', async ({ page }) => {
-    await page.goto('/home');
+    await openAuthenticatedHome(page);
     await expect(
       page.getByRole('heading', { name: /esto es tu fútbol|tu wrapped empieza/i }),
     ).toBeVisible({ timeout: 20_000 });

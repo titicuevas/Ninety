@@ -48,7 +48,7 @@ export default defineConfig({
     },
     {
       name: 'chromium',
-      testMatch: /smoke\/authenticated\.spec\.ts|critical\/(people-search|follow-lists)\.spec\.ts/,
+      testMatch: /smoke\/authenticated\.spec\.ts|critical\/(people-search|follow-lists|capsule-create-photos)\.spec\.ts/,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
@@ -89,10 +89,18 @@ export default defineConfig({
   ],
   webServer: process.env.E2E_BASE_URL
     ? undefined
-    : {
-        command: 'npm run dev',
-        url: 'http://localhost:5173',
-        reuseExistingServer: !process.env.CI,
-        timeout: 120_000,
-      },
+    : [
+        {
+          command: 'npm run dev --prefix backend',
+          url: 'http://localhost:3001/api/health',
+          reuseExistingServer: !process.env.CI,
+          timeout: 120_000,
+        },
+        {
+          command: 'npm run dev --prefix frontend',
+          url: 'http://localhost:5173',
+          reuseExistingServer: !process.env.CI,
+          timeout: 120_000,
+        },
+      ],
 });

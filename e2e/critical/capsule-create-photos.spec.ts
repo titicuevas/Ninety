@@ -1,0 +1,90 @@
+import { expect, test, type APIRequestContext } from '@playwright/test';
+import { API_BASE, goAppNav, openAuthenticatedHome, readAccessToken } from '../helpers/auth';
+
+type CapsuleSummary = { match_id: number };
+type CapsulesResponse = { capsules?: CapsuleSummary[] };
+
+type MatchSearchResponse = {
+  matches?: Array<{
+    id: number;
+    homeTeam: { name: string };
+    awayTeam: { name: string };
+  }>;
+};
+
+const JPEG_BUFFER = Buffer.from(
+  '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDAREAAhEBAxEB/8QAFAABAAAAAAAAAAAAAAAAAAAAAv/EABQRAQAAAAAAAAAAAAAAAAAAAAD/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAGfAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEBAD8Af//Z',
+  'base64',
+);
+
+const SEARCH_CANDIDATES = ['Liverpool', 'Argentina', 'Betis', 'Barcelona'];
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+async function getJson<T>(url: string, token: string, request: APIRequestContext) {
+  const response = await request.get(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  expect(response.ok()).toBeTruthy();
+  return (await response.json()) as T;
+}
+
+async function pickUnsavedMatch(token: string, request: APIRequestContext) {
+  const existing = await getJson<CapsulesResponse>(`${API_BASE}/api/capsules/me`, token, request);
+  const existingMatchIds = new Set((existing.capsules ?? []).map((capsule) => capsule.match_id));
+
+  for (const query of SEARCH_CANDIDATES) {
+    const data = await getJson<MatchSearchResponse>(
+      `${API_BASE}/api/football/matches/search?q=${encodeURIComponent(query)}`,
+      token,
+      request,
+    );
+    const candidate = (data.matches ?? []).find((match) => !existingMatchIds.has(match.id));
+    if (candidate) return { query, match: candidate };
+  }
+
+  throw new Error('No encontré un partido nuevo para la cuenta QA en las búsquedas candidatas.');
+}
+
+test.describe('Crítico — creación de capsule con fotos @critical', () => {
+  test('crea una capsule con fotos desde la UI autenticada', async ({ page, request }) => {
+    await openAuthenticatedHome(page);
+
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const { query, match } = await pickUnsavedMatch(token!, request);
+    const note = `E2E fotos ${Date.now()}`;
+
+    await goAppNav(page, /buscar/i);
+    await expect(page).toHaveURL(/\/search/);
+    await page.getByLabel('Equipo o rival').fill(query);
+
+    const matchButton = page.getByRole('button', {
+      name: new RegExp(`Guardar partido: ${escapeRegExp(match.homeTeam.name)}.*${escapeRegExp(match.awayTeam.name)}`, 'i'),
+    });
+    await expect(matchButton.first()).toBeVisible({ timeout: 20_000 });
+    await matchButton.first().click();
+
+    await expect(page).toHaveURL(/\/capsules\/new/);
+    await expect(page.getByRole('heading', { name: /nueva capsule/i })).toBeVisible();
+
+    await page.locator('input[type="file"]').first().setInputFiles([
+      { name: 'photo-1.jpg', mimeType: 'image/jpeg', buffer: JPEG_BUFFER },
+      { name: 'photo-2.jpg', mimeType: 'image/jpeg', buffer: JPEG_BUFFER },
+    ]);
+
+    await expect(page.getByText(/^2\/9\b/)).toBeVisible({ timeout: 20_000 });
+    await page.getByRole('radio', { name: '4 de 5 estrellas' }).click();
+    await page.getByLabel('Nota (opcional)').fill(note);
+    await page.getByRole('button', { name: /guardar capsule/i }).click();
+
+    await expect(page).toHaveURL(/\/capsules/);
+
+    const capsuleCard = page.locator('li').filter({ hasText: note }).first();
+    await expect(capsuleCard).toBeVisible({ timeout: 20_000 });
+    await expect(capsuleCard.getByRole('button', { name: /ampliar foto 1 de/i })).toBeVisible();
+  });
+});

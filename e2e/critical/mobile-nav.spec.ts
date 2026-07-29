@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { openAuthenticatedHome } from '../helpers/auth';
 
 test.describe('Crítico — navegación móvil @critical @mobile', () => {
   test('tab bar inferior navega entre Inicio y Feed', async ({ page }) => {
-    await page.goto('/home');
-    await expect(page).toHaveURL(/\/home/);
+    await openAuthenticatedHome(page);
 
     const tabBar = page.getByRole('navigation', { name: /navegación principal/i });
     await expect(tabBar).toBeVisible();
@@ -18,7 +18,7 @@ test.describe('Crítico — navegación móvil @critical @mobile', () => {
   });
 
   test('buscar desde tab bar abre Aficionados', async ({ page }) => {
-    await page.goto('/home');
+    await openAuthenticatedHome(page);
     const tabBar = page.getByRole('navigation', { name: /navegación principal/i });
     await tabBar.getByRole('link', { name: /buscar/i }).click();
     await expect(page).toHaveURL(/\/search/);
