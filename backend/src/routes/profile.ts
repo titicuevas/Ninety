@@ -4,6 +4,7 @@ import { normalizeProfile, profileUpdatePayload } from '../lib/profileNormalize.
 import { syncUserProfile } from '../lib/syncUserProfile.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
 import { notifyUser } from '../lib/notifyUser.js';
+import { rankDiscoverProfiles } from '../lib/discoverProfiles.js';
 import { isMissingFollowsTable, listFollowProfiles, type FollowListKind } from '../lib/userFollows.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
@@ -218,10 +219,14 @@ profileRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {
   const limit = Math.min(Math.max(Number(req.query.limit) || 6, 1), 12);
   const supabase = createUserClient(token);
 
-  const { data: followingRows } = await supabase
-    .from('user_follows')
-    .select('following_id')
-    .eq('follower_id', req.userId!);
+  const [{ data: me }, { data: followingRows }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('favorite_team, city, country')
+      .eq('id', req.userId!)
+      .maybeSingle(),
+    supabase.from('user_follows').select('following_id').eq('follower_id', req.userId!),
+  ]);
 
   const followingIds = new Set((followingRows ?? []).map((row) => row.following_id));
 
@@ -231,17 +236,21 @@ profileRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {
     .not('username', 'is', null)
     .neq('id', req.userId!)
     .order('created_at', { ascending: false })
-    .limit(Math.max(limit * 3, 18));
+    .limit(Math.max(limit * 8, 40));
 
   if (error) {
     res.status(400).json({ error: error.message });
     return;
   }
 
-  const profiles = (data ?? [])
-    .filter((row) => row.username && !followingIds.has(row.id))
-    .slice(0, limit)
-    .map((row) => ({ ...normalizeProfile(row), followed_by_me: false }));
+  const ranked = rankDiscoverProfiles(
+    (data ?? []).filter((row): row is typeof row & { username: string } => !!row.username),
+    me ?? {},
+    followingIds,
+    limit,
+  );
+
+  const profiles = ranked.map((row) => ({ ...normalizeProfile(row), followed_by_me: false }));
 
   res.json({ profiles });
 });

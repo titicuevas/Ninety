@@ -1,10 +1,82 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { requireAuth, type AuthRequest } from '../middleware/auth.js';
 import { supabaseAdmin } from '../lib/supabase.js';
+import { getVapidPublicKey, isPushConfigured } from '../lib/webPush.js';
 
 export const notificationsRouter = Router();
 
 notificationsRouter.use(requireAuth);
+
+const pushSubscribeSchema = z.object({
+  endpoint: z.string().url(),
+  keys: z.object({
+    p256dh: z.string().min(1),
+    auth: z.string().min(1),
+  }),
+});
+
+notificationsRouter.get('/push/public-key', (_req, res) => {
+  if (!isPushConfigured()) {
+    res.status(503).json({ error: 'Push no configurado', enabled: false });
+    return;
+  }
+  res.json({ publicKey: getVapidPublicKey(), enabled: true });
+});
+
+notificationsRouter.post('/push/subscribe', async (req: AuthRequest, res, next) => {
+  try {
+    if (!isPushConfigured()) {
+      res.status(503).json({ error: 'Push no configurado' });
+      return;
+    }
+
+    const parsed = pushSubscribeSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'Suscripción inválida' });
+      return;
+    }
+
+    const { endpoint, keys } = parsed.data;
+    const { error } = await supabaseAdmin!.from('push_subscriptions').upsert(
+      {
+        user_id: req.userId!,
+        endpoint,
+        p256dh: keys.p256dh,
+        auth: keys.auth,
+        user_agent: req.headers['user-agent']?.slice(0, 300) ?? null,
+      },
+      { onConflict: 'user_id,endpoint' },
+    );
+
+    if (error) {
+      if (error.code === '42P01') {
+        res.status(503).json({ error: 'Ejecuta la migración push_subscriptions en Supabase.' });
+        return;
+      }
+      throw error;
+    }
+
+    res.status(201).json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+notificationsRouter.delete('/push/subscribe', async (req: AuthRequest, res, next) => {
+  try {
+    const endpoint = typeof req.body?.endpoint === 'string' ? req.body.endpoint : null;
+    let query = supabaseAdmin!.from('push_subscriptions').delete().eq('user_id', req.userId!);
+    if (endpoint) query = query.eq('endpoint', endpoint);
+
+    const { error } = await query;
+    if (error && error.code !== '42P01') throw error;
+
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
 
 notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
   try {
@@ -39,12 +111,16 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
     if (actorIds.length > 0) {
       const { data: profileData } = await supabaseAdmin!
         .from('profiles')
-        .select('id, username, display_name, avatar_url')
+        .select('id, username, full_name, avatar_url')
         .in('id', actorIds);
 
       if (profileData) {
         for (const p of profileData) {
-          profiles[p.id] = { username: p.username, display_name: p.display_name, avatar_url: p.avatar_url };
+          profiles[p.id] = {
+            username: p.username,
+            display_name: p.full_name ?? null,
+            avatar_url: p.avatar_url,
+          };
         }
       }
     }

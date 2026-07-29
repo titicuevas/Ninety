@@ -5,6 +5,7 @@ import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNotifications, useMarkAllRead, type AppNotification } from '@/hooks/useNotifications';
+import { useEnablePush, usePushEnabled, usePushPublicKey } from '@/hooks/usePushNotifications';
 import { cn } from '@/lib/utils';
 
 function timeAgo(dateStr: string): string {
@@ -65,8 +66,12 @@ function NotificationItem({ n }: { n: AppNotification }) {
 export function NotificationsPage() {
   const { data, isLoading } = useNotifications();
   const markAll = useMarkAllRead();
+  const { data: pushKey, isError: pushUnavailable } = usePushPublicKey();
+  const { data: pushEnabled = false } = usePushEnabled();
+  const enablePush = useEnablePush();
   const notifications = data?.notifications ?? [];
   const unread = data?.unread_count ?? 0;
+  const canEnablePush = !!pushKey?.enabled && !pushUnavailable;
 
   useEffect(() => {
     if (unread > 0) {
@@ -79,19 +84,40 @@ export function NotificationsPage() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Notificaciones</h1>
-          {unread > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => markAll.mutate()}
-              disabled={markAll.isPending}
-            >
-              Marcar todo leído
-            </Button>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {canEnablePush && !pushEnabled ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                loading={enablePush.isPending}
+                onClick={() => enablePush.mutate()}
+              >
+                Activar alertas
+              </Button>
+            ) : null}
+            {pushEnabled ? (
+              <span className="text-xs text-muted-foreground">Alertas activadas</span>
+            ) : null}
+            {unread > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => markAll.mutate()}
+                disabled={markAll.isPending}
+              >
+                Marcar todo leído
+              </Button>
+            )}
+          </div>
         </div>
+
+        {enablePush.isError ? (
+          <p className="text-sm text-destructive">
+            {enablePush.error instanceof Error ? enablePush.error.message : 'No se pudieron activar las alertas'}
+          </p>
+        ) : null}
 
         {isLoading ? (
           <div className="flex justify-center py-16">
