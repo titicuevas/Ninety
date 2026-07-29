@@ -112,8 +112,10 @@ export function FeedPage() {
   const { user } = useAuth();
   const { data, isLoading, isError, error } = useCapsuleFeed();
   const [sort, setSort] = useState<FeedSort>('recent');
-  const rawCapsules = data?.capsules ?? [];
-  const capsules = useMemo(() => sortCapsules(rawCapsules, sort), [rawCapsules, sort]);
+  const capsules = useMemo(
+    () => sortCapsules(data?.capsules ?? [], sort),
+    [data?.capsules, sort],
+  );
   const followingCount = data?.following_count;
 
   return (

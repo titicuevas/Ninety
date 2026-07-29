@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, Heart, UserPlus, MessageCircle } from 'lucide-react';
 import { Layout } from '@/components/Layout';
@@ -66,6 +67,14 @@ export function NotificationsPage() {
   const markAll = useMarkAllRead();
   const notifications = data?.notifications ?? [];
   const unread = data?.unread_count ?? 0;
+
+  useEffect(() => {
+    if (unread > 0) {
+      markAll.mutate();
+    }
+    // Solo al cargar/cambiar el contador; mutate es estable en TanStack Query
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- markAll.mutate
+  }, [unread]);
 
   return (
     <Layout>

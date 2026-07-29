@@ -73,6 +73,70 @@ function RecentCapsuleRow({ capsule }: { capsule: Capsule }) {
   );
 }
 
+function TopTeamsCard({ teams }: { teams: Array<{ name: string; count: number }> }) {
+  if (teams.length <= 1) return null;
+
+  return (
+    <Card>
+      <CardContent className="p-5 sm:p-6">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">Top equipos</p>
+        <ol className="space-y-2">
+          {teams.map((team, i) => (
+            <li key={team.name} className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
+                  {i + 1}
+                </span>
+                <span className="truncate text-sm font-medium">{team.name}</span>
+              </div>
+              <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+                {team.count} {team.count === 1 ? 'partido' : 'partidos'}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </CardContent>
+    </Card>
+  );
+}
+
+const MONTH_LABELS = ['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'] as const;
+
+function MatchesByMonthChart({ matchesByMonth }: { matchesByMonth: number[] }) {
+  if (!matchesByMonth.some((v) => v > 0)) return null;
+
+  const max = Math.max(...matchesByMonth, 1);
+
+  return (
+    <Card>
+      <CardContent className="p-5 sm:p-6">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">
+          Partidos por mes
+        </p>
+        <div className="flex h-24 items-end gap-1" aria-label="Gráfico de partidos por mes">
+          {matchesByMonth.map((count, i) => {
+            const height = count > 0 ? Math.max((count / max) * 100, 8) : 4;
+            const monthKey = `month-${i + 1}`;
+            return (
+              <div key={monthKey} className="flex flex-1 flex-col items-center gap-1">
+                <div
+                  className={cn(
+                    'w-full rounded-sm transition-all',
+                    count > 0 ? 'bg-primary/70' : 'bg-secondary',
+                  )}
+                  style={{ height: `${height}%` }}
+                  title={`${MONTH_LABELS[i]}: ${count}`}
+                />
+                <span className="text-[9px] text-muted-foreground">{MONTH_LABELS[i]}</span>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 interface WrappedSummaryProps {
   name: string;
   stats: CapsuleStats;
@@ -321,58 +385,8 @@ export function WrappedSummary({ name, stats, scope, years, onScopeChange }: Wra
             />
           ) : null}
 
-          {stats.topTeams.length > 1 ? (
-            <Card>
-              <CardContent className="p-5 sm:p-6">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">Top equipos</p>
-                <ol className="space-y-2">
-                  {stats.topTeams.map((team, i) => (
-                    <li key={team.name} className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
-                          {i + 1}
-                        </span>
-                        <span className="truncate text-sm font-medium">{team.name}</span>
-                      </div>
-                      <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
-                        {team.count} {team.count === 1 ? 'partido' : 'partidos'}
-                      </span>
-                    </li>
-                  ))}
-                </ol>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          {stats.matchesByMonth.some((v) => v > 0) ? (
-            <Card>
-              <CardContent className="p-5 sm:p-6">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">
-                  Partidos por mes
-                </p>
-                <div className="flex items-end gap-1 h-24" aria-label="Gráfico de partidos por mes">
-                  {stats.matchesByMonth.map((count, i) => {
-                    const max = Math.max(...stats.matchesByMonth, 1);
-                    const height = count > 0 ? Math.max((count / max) * 100, 8) : 4;
-                    const monthNames = ['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-                    return (
-                      <div key={i} className="flex flex-1 flex-col items-center gap-1">
-                        <div
-                          className={cn(
-                            'w-full rounded-sm transition-all',
-                            count > 0 ? 'bg-primary/70' : 'bg-secondary',
-                          )}
-                          style={{ height: `${height}%` }}
-                          title={`${monthNames[i]}: ${count}`}
-                        />
-                        <span className="text-[9px] text-muted-foreground">{monthNames[i]}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          ) : null}
+          <TopTeamsCard teams={stats.topTeams} />
+          <MatchesByMonthChart matchesByMonth={stats.matchesByMonth} />
 
           {stats.recentCapsules.length > 0 ? (
             <Card>

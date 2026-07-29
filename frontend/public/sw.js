@@ -10,9 +10,13 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))),
-    ),
+    caches.keys().then((keys) => {
+      const deletions = [];
+      for (const key of keys) {
+        if (key !== CACHE_NAME) deletions.push(caches.delete(key));
+      }
+      return Promise.all(deletions);
+    }),
   );
   self.clients.claim();
 });
