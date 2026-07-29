@@ -6,6 +6,7 @@ import { validateCommentBody, validateImageBuffer } from '../lib/contentModerati
 import { attachCommentCounts, fetchCommentsWithAuthors, isMissingCommentsTable } from '../lib/capsuleComments.js';
 import { attachLikeStats, isMissingLikesTable } from '../lib/capsuleLikes.js';
 import { attachFollowStats, getFollowingIds } from '../lib/userFollows.js';
+import { notifyUser } from '../lib/notifyUser.js';
 import { normalizeProfile } from '../lib/profileNormalize.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
@@ -261,7 +262,7 @@ capsulesRouter.post('/:id/like', requireAuth, async (req: AuthRequest, res) => {
   const supabase = createUserClient(token);
   const { data: capsule, error: capsuleError } = await supabase
     .from('capsules')
-    .select('id')
+    .select('id, user_id')
     .eq('id', req.params.id)
     .maybeSingle();
 
@@ -295,6 +296,7 @@ capsulesRouter.post('/:id/like', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
+  notifyUser({ userId: capsule.user_id, actorId: req.userId!, type: 'like', capsuleId: capsule.id });
   res.status(201).json({ liked: true });
 });
 
@@ -397,7 +399,7 @@ capsulesRouter.post('/:id/comments', requireAuth, async (req: AuthRequest, res) 
   const supabase = createUserClient(token);
   const { data: capsule, error: capsuleError } = await supabase
     .from('capsules')
-    .select('id')
+    .select('id, user_id')
     .eq('id', req.params.id)
     .maybeSingle();
 
@@ -431,6 +433,8 @@ capsulesRouter.post('/:id/comments', requireAuth, async (req: AuthRequest, res) 
     res.status(400).json({ error: error.message });
     return;
   }
+
+  notifyUser({ userId: capsule.user_id, actorId: req.userId!, type: 'comment', capsuleId: capsule.id });
 
   const { data: profile } = await supabase
     .from('profiles')

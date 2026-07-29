@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { normalizeProfile, profileUpdatePayload } from '../lib/profileNormalize.js';
 import { syncUserProfile } from '../lib/syncUserProfile.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
+import { notifyUser } from '../lib/notifyUser.js';
 import { isMissingFollowsTable, listFollowProfiles, type FollowListKind } from '../lib/userFollows.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
@@ -253,6 +254,7 @@ profileRouter.post('/:username/follow', requireAuth, async (req: AuthRequest, re
     return;
   }
 
+  notifyUser({ userId: target.id, actorId: req.userId!, type: 'follow' });
   res.status(201).json({ followed: true });
 });
 

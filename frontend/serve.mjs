@@ -2,6 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import zlib from 'node:zlib';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(__dirname, 'dist');
@@ -157,9 +158,36 @@ async function ogForProfile(username) {
   });
 }
 
+const SECURITY_HEADERS = {
+  'X-Frame-Options': 'SAMEORIGIN',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+};
+
 function send(res, status, body, headers = {}) {
-  res.writeHead(status, headers);
+  res.writeHead(status, { ...SECURITY_HEADERS, ...headers });
   res.end(body);
+}
+
+function sendCompressed(req, res, status, body, headers = {}) {
+  const accept = req.headers['accept-encoding'] || '';
+  const merged = { ...SECURITY_HEADERS, ...headers };
+
+  if (accept.includes('gzip') && body.length > 1024) {
+    zlib.gzip(body, (err, compressed) => {
+      if (err) {
+        res.writeHead(status, merged);
+        res.end(body);
+      } else {
+        res.writeHead(status, { ...merged, 'Content-Encoding': 'gzip', 'Vary': 'Accept-Encoding' });
+        res.end(compressed);
+      }
+    });
+  } else {
+    res.writeHead(status, merged);
+    res.end(body);
+  }
 }
 
 function safeJoin(root, requestPath) {
@@ -174,23 +202,31 @@ function contentType(filePath) {
   return MIME[path.extname(filePath).toLowerCase()] ?? 'application/octet-stream';
 }
 
-function serveFile(res, filePath) {
+const COMPRESSIBLE = new Set(['.html', '.js', '.css', '.json', '.svg', '.txt', '.map']);
+
+function serveFile(req, res, filePath) {
   fs.readFile(filePath, (err, data) => {
     if (err) {
       send(res, 404, 'Not found', { 'Content-Type': 'text/plain; charset=utf-8' });
       return;
     }
-    send(res, 200, data, {
+    const headers = {
       'Content-Type': contentType(filePath),
       'Cache-Control': filePath.endsWith('index.html')
         ? 'no-cache'
         : 'public, max-age=31536000, immutable',
-    });
+    };
+    const ext = path.extname(filePath).toLowerCase();
+    if (COMPRESSIBLE.has(ext)) {
+      sendCompressed(req, res, 200, data, headers);
+    } else {
+      send(res, 200, data, headers);
+    }
   });
 }
 
-function serveSpa(res) {
-  serveFile(res, path.join(DIST, 'index.html'));
+function serveSpa(req, res) {
+  serveFile(req, res, path.join(DIST, 'index.html'));
 }
 
 const server = http.createServer(async (req, res) => {
@@ -201,6 +237,12 @@ const server = http.createServer(async (req, res) => {
 
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const pathname = url.pathname;
+
+  if (pathname === '/health' || pathname === '/healthz') {
+    send(res, 200, JSON.stringify({ status: 'ok' }), { 'Content-Type': 'application/json' });
+    return;
+  }
+
   const ua = req.headers['user-agent'] || '';
   const isBot = BOT_UA.test(ua);
 
@@ -209,7 +251,7 @@ const server = http.createServer(async (req, res) => {
     if (capsuleMatch) {
       const html = await ogForCapsule(capsuleMatch[1]);
       if (html) {
-        send(res, 200, html, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' });
+        sendCompressed(req, res, 200, Buffer.from(html), { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' });
         return;
       }
     }
@@ -218,14 +260,14 @@ const server = http.createServer(async (req, res) => {
     if (profileMatch) {
       const html = await ogForProfile(profileMatch[1]);
       if (html) {
-        send(res, 200, html, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' });
+        sendCompressed(req, res, 200, Buffer.from(html), { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' });
         return;
       }
     }
   }
 
   if (pathname === '/' || pathname === '') {
-    serveSpa(res);
+    serveSpa(req, res);
     return;
   }
 
@@ -237,11 +279,11 @@ const server = http.createServer(async (req, res) => {
 
   fs.stat(filePath, (err, stats) => {
     if (!err && stats.isFile()) {
-      serveFile(res, filePath);
+      serveFile(req, res, filePath);
       return;
     }
     // SPA fallback
-    serveSpa(res);
+    serveSpa(req, res);
   });
 });
 

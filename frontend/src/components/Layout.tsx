@@ -1,8 +1,9 @@
 import { Link, NavLink } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
-import { Home, LogOut, Newspaper, Search, Ticket, User } from 'lucide-react';
+import { Bell, Home, LogOut, Newspaper, Search, Ticket, User } from 'lucide-react';
 import { SkipLink } from '@/components/SkipLink';
 import { useAuth } from '@/hooks/useAuthInit';
+import { useUnreadCount } from '@/hooks/useNotifications';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
@@ -31,6 +32,28 @@ function mobileTabClass(isActive: boolean) {
     'flex min-h-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1.5 text-[10px] font-medium sm:text-xs',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
     isActive ? 'text-primary' : 'text-muted-foreground',
+  );
+}
+
+function NotificationBell({ className }: { className?: string }) {
+  const unread = useUnreadCount();
+  return (
+    <NavLink
+      to="/notifications"
+      className={({ isActive }) =>
+        cn(className, isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground')
+      }
+      aria-label={`Notificaciones${unread > 0 ? ` (${unread} sin leer)` : ''}`}
+    >
+      <span className="relative inline-flex">
+        <Bell className="h-5 w-5" aria-hidden />
+        {unread > 0 && (
+          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+            {unread > 9 ? '9+' : unread}
+          </span>
+        )}
+      </span>
+    </NavLink>
   );
 }
 
@@ -65,24 +88,28 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <span>{item.label}</span>
               </NavLink>
             ))}
+            <NotificationBell className="ml-1 inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
             <button
               type="button"
               onClick={() => signOut()}
-              className="ml-1 inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Cerrar sesión"
             >
               <LogOut className="h-4 w-4" aria-hidden />
             </button>
           </nav>
 
-          <button
-            type="button"
-            onClick={() => signOut()}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
-            aria-label="Cerrar sesión"
-          >
-            <LogOut className="h-5 w-5" aria-hidden />
-          </button>
+          <div className="flex items-center gap-1 lg:hidden">
+            <NotificationBell className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+            <button
+              type="button"
+              onClick={() => signOut()}
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="Cerrar sesión"
+            >
+              <LogOut className="h-5 w-5" aria-hidden />
+            </button>
+          </div>
         </div>
       </header>
 

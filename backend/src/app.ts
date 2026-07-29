@@ -10,6 +10,7 @@ import { healthRouter } from './routes/health.js';
 import { indexRouter } from './routes/index.js';
 import { profileRouter } from './routes/profile.js';
 import { authRouter } from './routes/auth.js';
+import { notificationsRouter } from './routes/notifications.js';
 
 const footballLimiter = rateLimit({
   windowMs: 60_000,
@@ -71,6 +72,7 @@ export function createApp() {
   app.use('/api/profile', profileRouter);
   app.use('/api/capsules', capsulesRouter);
   app.use('/api/football', footballLimiter, footballRouter);
+  app.use('/api/notifications', notificationsRouter);
 
   app.use(errorHandler);
 

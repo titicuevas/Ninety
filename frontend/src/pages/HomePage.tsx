@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
+import { OnboardingSteps } from '@/components/OnboardingSteps';
 import { WrappedSummary } from '@/components/WrappedSummary';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCapsules } from '@/hooks/useCapsules';
+import { useFollowList } from '@/hooks/useFollowList';
 import {
   computeCapsuleStats,
   defaultWrappedScope,
@@ -20,7 +22,11 @@ export function HomePage() {
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const { data: capsulesData, isLoading } = useCapsules();
+  const { data: followingData } = useFollowList(profile?.username ?? undefined, 'following');
   const profileIncomplete = isProfileIncomplete(profile);
+  const hasCapsule = (capsulesData?.capsules?.length ?? 0) > 0;
+  const hasFollow = (followingData?.total ?? 0) > 0;
+  const showOnboarding = !isLoading && (!hasCapsule || !hasFollow || profileIncomplete);
 
   const metadataName =
     typeof user?.user_metadata?.display_name === 'string' ? user.user_metadata.display_name : undefined;
@@ -49,6 +55,14 @@ export function HomePage() {
               </Button>
             </CardContent>
           </Card>
+        ) : null}
+
+        {showOnboarding ? (
+          <OnboardingSteps
+            hasProfile={!profileIncomplete}
+            hasCapsule={hasCapsule}
+            hasFollow={hasFollow}
+          />
         ) : null}
 
         {isLoading ? (

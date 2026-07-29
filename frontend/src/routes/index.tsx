@@ -14,6 +14,7 @@ import { PublicCapsulePage } from '@/pages/PublicCapsulePage';
 import { PublicProfilePage } from '@/pages/PublicProfilePage';
 import { PrivacyPage } from '@/pages/PrivacyPage';
 import { RegisterPage } from '@/pages/RegisterPage';
+import { NotificationsPage } from '@/pages/NotificationsPage';
 import { SearchMatchPage } from '@/pages/SearchMatchPage';
 import { TermsPage } from '@/pages/TermsPage';
 
@@ -42,6 +43,7 @@ export function AppRoutes() {
         <Route path="/capsules" element={<CapsulesPage />} />
         <Route path="/capsules/new" element={<CreateCapsulePage />} />
         <Route path="/capsules/:id/edit" element={<EditCapsulePage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Route>
 
