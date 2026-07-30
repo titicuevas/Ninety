@@ -78,6 +78,7 @@ function PublicCapsuleCard({
                 capsuleId={capsule.id}
                 commentsCount={commentsCount}
                 currentUserId={currentUserId}
+                capsuleOwnerId={capsule.user_id}
               />
             </>
           ) : (

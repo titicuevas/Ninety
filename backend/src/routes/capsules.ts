@@ -455,7 +455,7 @@ capsulesRouter.get('/:id/comments', optionalAuth, async (req: AuthRequest, res) 
   const capsuleId = routeParam(req.params.id);
   const { data: capsule, error: capsuleError } = await reader
     .from('capsules')
-    .select('id')
+    .select('id, user_id, is_public')
     .eq('id', capsuleId)
     .maybeSingle();
 
@@ -464,7 +464,7 @@ capsulesRouter.get('/:id/comments', optionalAuth, async (req: AuthRequest, res) 
     return;
   }
 
-  if (!capsule) {
+  if (!capsule || !canViewCapsule(capsule, req.userId)) {
     res.status(404).json({ error: 'Capsule no encontrada' });
     return;
   }
@@ -567,13 +567,61 @@ capsulesRouter.delete('/:id/comments/:commentId', requireAuth, async (req: AuthR
     return;
   }
 
+  const capsuleId = routeParam(req.params.id);
+  const commentId = routeParam(req.params.commentId);
   const supabase = createUserClient(token);
+
+  const { data: comment, error: commentError } = await supabase
+    .from('capsule_comments')
+    .select('id, user_id, capsule_id')
+    .eq('id', commentId)
+    .eq('capsule_id', capsuleId)
+    .maybeSingle();
+
+  if (commentError) {
+    if (isMissingCommentsTable(commentError)) {
+      res.status(503).json({
+        error: 'Ejecuta la migración 20250711210000_capsule_comments.sql en Supabase.',
+      });
+      return;
+    }
+    res.status(400).json({ error: commentError.message });
+    return;
+  }
+
+  if (!comment) {
+    res.status(404).json({ error: 'Comentario no encontrado' });
+    return;
+  }
+
+  const { data: capsule, error: capsuleError } = await supabase
+    .from('capsules')
+    .select('id, user_id')
+    .eq('id', capsuleId)
+    .maybeSingle();
+
+  if (capsuleError) {
+    res.status(400).json({ error: capsuleError.message });
+    return;
+  }
+
+  if (!capsule) {
+    res.status(404).json({ error: 'Capsule no encontrada' });
+    return;
+  }
+
+  const isAuthor = comment.user_id === req.userId;
+  const isCapsuleOwner = capsule.user_id === req.userId;
+  if (!isAuthor && !isCapsuleOwner) {
+    res.status(403).json({ error: 'No puedes borrar este comentario' });
+    return;
+  }
+
   const { error, count } = await supabase
     .from('capsule_comments')
     .delete({ count: 'exact' })
-    .eq('id', req.params.commentId)
-    .eq('capsule_id', req.params.id)
-    .eq('user_id', req.userId!);
+    .eq('id', commentId)
+    .eq('capsule_id', capsuleId);
 
   if (error) {
     if (isMissingCommentsTable(error)) {

@@ -16,17 +16,25 @@ import type { CapsuleComment } from '@/types/comment';
 function CommentItem({
   comment,
   currentUserId,
+  capsuleOwnerId,
   onDelete,
   deleting,
 }: {
   comment: CapsuleComment;
   currentUserId?: string;
+  capsuleOwnerId?: string;
   onDelete: (id: string) => void;
   deleting: boolean;
 }) {
   const name = comment.author?.display_name ?? comment.author?.username ?? 'Aficionado';
   const username = comment.author?.username;
   const isOwn = comment.user_id === currentUserId;
+  const canDelete =
+    !!currentUserId && (isOwn || (!!capsuleOwnerId && currentUserId === capsuleOwnerId));
+  const deleteLabel =
+    isOwn || !capsuleOwnerId || currentUserId !== capsuleOwnerId
+      ? 'Borrar comentario'
+      : 'Eliminar comentario (moderación)';
 
   return (
     <div className="flex gap-2 text-sm">
@@ -48,13 +56,13 @@ function CommentItem({
         </div>
         <p className="mt-0.5 whitespace-pre-wrap break-words text-muted-foreground">{comment.body}</p>
       </div>
-      {isOwn ? (
+      {canDelete ? (
         <Button
           type="button"
           variant="ghost"
           size="sm"
           className="h-8 w-8 shrink-0 p-0 text-muted-foreground hover:text-destructive"
-          aria-label="Borrar comentario"
+          aria-label={deleteLabel}
           disabled={deleting}
           onClick={() => onDelete(comment.id)}
         >
@@ -69,6 +77,7 @@ interface CapsuleCommentsProps {
   capsuleId: string;
   commentsCount?: number;
   currentUserId?: string;
+  capsuleOwnerId?: string;
   className?: string;
 }
 
@@ -76,6 +85,7 @@ export function CapsuleComments({
   capsuleId,
   commentsCount = 0,
   currentUserId,
+  capsuleOwnerId,
   className,
 }: CapsuleCommentsProps) {
   const [open, setOpen] = useState(false);
@@ -167,6 +177,7 @@ export function CapsuleComments({
                   <CommentItem
                     comment={comment}
                     currentUserId={currentUserId}
+                    capsuleOwnerId={capsuleOwnerId}
                     onDelete={(id) => deleteComment.mutate(id)}
                     deleting={deleteComment.isPending}
                   />

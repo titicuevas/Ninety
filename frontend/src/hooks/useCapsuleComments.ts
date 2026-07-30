@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import type { CapsuleComment, CapsuleCommentsResponse } from '@/types/comment';
@@ -13,6 +13,25 @@ export function useCapsuleComments(capsuleId: string, enabled: boolean) {
       apiFetch<CapsuleCommentsResponse>(`/api/capsules/${capsuleId}/comments`, {}, session?.access_token),
     enabled,
   });
+}
+
+function bumpFeedCommentCount(
+  old: InfiniteData<FeedResponse> | undefined,
+  capsuleId: string,
+  delta: number,
+): InfiniteData<FeedResponse> | undefined {
+  if (!old) return old;
+  return {
+    ...old,
+    pages: old.pages.map((page) => ({
+      ...page,
+      capsules: page.capsules.map((c) =>
+        c.id === capsuleId
+          ? { ...c, comments_count: Math.max(0, (c.comments_count ?? 0) + delta) }
+          : c,
+      ),
+    })),
+  };
 }
 
 export function useAddCapsuleComment(capsuleId: string) {
@@ -47,30 +66,28 @@ export function useDeleteCapsuleComment(capsuleId: string) {
       ),
     onMutate: async (commentId) => {
       await queryClient.cancelQueries({ queryKey: ['capsules', capsuleId, 'comments'] });
-      const previous = queryClient.getQueryData<CapsuleCommentsResponse>(['capsules', capsuleId, 'comments']);
+      const previousComments = queryClient.getQueriesData<CapsuleCommentsResponse>({
+        queryKey: ['capsules', capsuleId, 'comments'],
+      });
+      const previousFeed = queryClient.getQueryData<InfiniteData<FeedResponse>>(['capsules', 'feed']);
 
-      queryClient.setQueryData<CapsuleCommentsResponse>(['capsules', capsuleId, 'comments'], (old) =>
-        old ? { comments: old.comments.filter((c) => c.id !== commentId) } : old,
+      queryClient.setQueriesData<CapsuleCommentsResponse>(
+        { queryKey: ['capsules', capsuleId, 'comments'] },
+        (old) => (old ? { comments: old.comments.filter((c) => c.id !== commentId) } : old),
       );
 
-      queryClient.setQueryData<FeedResponse>(['capsules', 'feed'], (old) =>
-        old
-          ? {
-              ...old,
-              capsules: old.capsules.map((c) =>
-                c.id === capsuleId
-                  ? { ...c, comments_count: Math.max(0, (c.comments_count ?? 0) - 1) }
-                  : c,
-              ),
-            }
-          : old,
+      queryClient.setQueryData<InfiniteData<FeedResponse>>(['capsules', 'feed'], (old) =>
+        bumpFeedCommentCount(old, capsuleId, -1),
       );
 
-      return { previous };
+      return { previousComments, previousFeed };
     },
     onError: (_err, _commentId, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(['capsules', capsuleId, 'comments'], context.previous);
+      context?.previousComments?.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
+      if (context?.previousFeed) {
+        queryClient.setQueryData(['capsules', 'feed'], context.previousFeed);
       }
     },
     onSettled: () => {

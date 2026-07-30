@@ -93,6 +93,7 @@ function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; cur
             capsuleId={capsule.id}
             commentsCount={capsule.comments_count}
             currentUserId={currentUserId}
+            capsuleOwnerId={capsule.user_id}
           />
           <ShareCapsuleButton
             capsuleId={capsule.id}

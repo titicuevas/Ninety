@@ -122,6 +122,7 @@ export function PublicCapsulePage() {
                     capsuleId={capsule.id}
                     commentsCount={capsule.comments_count}
                     currentUserId={user.id}
+                    capsuleOwnerId={capsule.user_id}
                   />
                 </>
               ) : (
@@ -129,6 +130,7 @@ export function PublicCapsulePage() {
                   <CapsuleComments
                     capsuleId={capsule.id}
                     commentsCount={capsule.comments_count}
+                    capsuleOwnerId={capsule.user_id}
                   />
                   <p className="w-full pt-2 text-sm text-muted-foreground">
                     {(capsule.likes_count ?? 0) > 0 ? `${capsule.likes_count} me gusta · ` : null}
