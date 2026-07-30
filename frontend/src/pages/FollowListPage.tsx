@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Users } from 'lucide-react';
 import { FollowButton } from '@/components/FollowButton';
@@ -6,7 +7,7 @@ import { PublicLayout } from '@/components/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuthInit';
-import { useFollowList, type FollowListKind } from '@/hooks/useFollowList';
+import { useFollowListInfinite, type FollowListKind } from '@/hooks/useFollowList';
 import { profilePath } from '@/lib/profilePath';
 import type { Profile } from '@/types/profile';
 
@@ -60,14 +61,26 @@ function FollowListRow({
 function FollowListPage({ kind }: { kind: FollowListKind }) {
   const { username } = useParams<{ username: string }>();
   const { user } = useAuth();
-  const { data, isLoading, isError, error } = useFollowList(username, kind);
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useFollowListInfinite(username, kind);
   const Shell = user ? Layout : PublicLayout;
 
   const title = kind === 'followers' ? 'Seguidores' : 'Siguiendo';
   const emptyCopy =
-    kind === 'followers'
-      ? 'Todavía no tiene seguidores.'
-      : 'Todavía no sigue a nadie.';
+    kind === 'followers' ? 'Todavía no tiene seguidores.' : 'Todavía no sigue a nadie.';
+
+  const profiles = useMemo(
+    () => data?.pages.flatMap((page) => page.profiles) ?? [],
+    [data],
+  );
+  const total = data?.pages[0]?.total ?? profiles.length;
 
   if (isLoading) {
     return (
@@ -95,8 +108,6 @@ function FollowListPage({ kind }: { kind: FollowListKind }) {
     );
   }
 
-  const profiles = data?.profiles ?? [];
-  const total = data?.total ?? profiles.length;
   const otherKind: FollowListKind = kind === 'followers' ? 'following' : 'followers';
   const otherLabel = otherKind === 'followers' ? 'Seguidores' : 'Siguiendo';
 
@@ -152,11 +163,25 @@ function FollowListPage({ kind }: { kind: FollowListKind }) {
         </div>
 
         {profiles.length > 0 ? (
-          <ul className="space-y-2">
-            {profiles.map((profile) => (
-              <FollowListRow key={profile.id} profile={profile} currentUserId={user?.id} />
-            ))}
-          </ul>
+          <div className="space-y-4">
+            <ul className="space-y-2">
+              {profiles.map((profile) => (
+                <FollowListRow key={profile.id} profile={profile} currentUserId={user?.id} />
+              ))}
+            </ul>
+            {hasNextPage ? (
+              <div className="flex justify-center pt-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  loading={isFetchingNextPage}
+                  onClick={() => void fetchNextPage()}
+                >
+                  Cargar más
+                </Button>
+              </div>
+            ) : null}
+          </div>
         ) : (
           <Card>
             <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
