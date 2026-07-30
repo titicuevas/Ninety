@@ -40,6 +40,7 @@ const createCapsuleSchema = z.object({
   note: z.string().max(2000).optional().nullable(),
   photo_urls: z.array(z.string().url().max(2048)).max(9).optional(),
   is_public: z.boolean().optional().default(true),
+  watch_context: z.enum(['stadium', 'tv', 'pub', 'other']).optional().nullable(),
 });
 
 const feedQuerySchema = z.object({
@@ -54,6 +55,7 @@ const meQuerySchema = z.object({
   year: z.coerce.number().int().min(1990).max(2100).optional(),
   rating_min: z.coerce.number().int().min(1).max(5).optional(),
   visibility: z.enum(['all', 'public', 'private']).optional().default('all'),
+  watch_context: z.enum(['stadium', 'tv', 'pub', 'other']).optional(),
 });
 
 function getAccessToken(req: AuthRequest): string | null {
@@ -81,8 +83,23 @@ function isMissingPrivacyColumn(error: { message?: string } | null | undefined):
   );
 }
 
+function isMissingWatchContextColumn(error: { message?: string } | null | undefined): boolean {
+  const message = error?.message ?? '';
+  return (
+    message.includes('watch_context') &&
+    (message.includes('schema cache') ||
+      message.includes('Could not find') ||
+      message.includes('column') ||
+      message.includes('does not exist'))
+  );
+}
+
 function privacyMigrationHint() {
   return 'Ejecuta la migración 20250730140000_capsule_privacy.sql en Supabase.';
+}
+
+function watchContextMigrationHint() {
+  return 'Ejecuta la migración 20250730160000_watch_context.sql en Supabase.';
 }
 
 function canViewCapsule(
@@ -182,7 +199,7 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  const { limit, offset, year, rating_min, visibility } = parsed.data;
+  const { limit, offset, year, rating_min, visibility, watch_context } = parsed.data;
   const rawQ = parsed.data.q?.toLowerCase() ?? '';
   const safeQ = rawQ.replace(/[%_,.()"]/g, '').trim();
 
@@ -208,6 +225,10 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
     query = query.eq('is_public', false);
   }
 
+  if (watch_context) {
+    query = query.eq('watch_context', watch_context);
+  }
+
   if (safeQ.length >= 2) {
     const pattern = `%${safeQ}%`;
     query = query.or(
@@ -224,6 +245,10 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   if (error) {
     if (visibility !== 'all' && isMissingPrivacyColumn(error)) {
       res.status(503).json({ error: privacyMigrationHint() });
+      return;
+    }
+    if (watch_context && isMissingWatchContextColumn(error)) {
+      res.status(503).json({ error: watchContextMigrationHint() });
       return;
     }
     res.status(400).json({ error: error.message });
@@ -356,6 +381,7 @@ const updateCapsuleSchema = z.object({
   note: z.string().max(2000).optional().nullable(),
   photo_urls: z.array(z.string().url().max(2048)).max(9).optional(),
   is_public: z.boolean().optional(),
+  watch_context: z.enum(['stadium', 'tv', 'pub', 'other']).optional().nullable(),
 });
 
 capsulesRouter.post('/:id/like', requireAuth, async (req: AuthRequest, res) => {
@@ -729,6 +755,10 @@ capsulesRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
       res.status(503).json({ error: privacyMigrationHint() });
       return;
     }
+    if (isMissingWatchContextColumn(error)) {
+      res.status(503).json({ error: watchContextMigrationHint() });
+      return;
+    }
     if (error.message.includes('schema cache') || error.message.includes('Could not find')) {
       res.status(503).json({
         error:
@@ -775,6 +805,10 @@ capsulesRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
   if (error) {
     if (isMissingPrivacyColumn(error)) {
       res.status(503).json({ error: privacyMigrationHint() });
+      return;
+    }
+    if (isMissingWatchContextColumn(error)) {
+      res.status(503).json({ error: watchContextMigrationHint() });
       return;
     }
     res.status(404).json({ error: 'Capsule no encontrada' });

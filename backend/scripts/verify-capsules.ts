@@ -43,6 +43,7 @@ const REQUIRED_COLUMNS = [
   'note',
   'photo_urls',
   'is_public',
+  'watch_context',
   'created_at',
   'updated_at',
 ] as const;

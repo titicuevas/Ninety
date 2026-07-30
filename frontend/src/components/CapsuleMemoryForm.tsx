@@ -11,6 +11,11 @@ import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import {
+  WATCH_CONTEXTS,
+  WATCH_CONTEXT_LABELS,
+  type WatchContext,
+} from '@/lib/watchContext';
 
 const memorySchema = z.object({
   watched_at: z.string().date('Fecha inválida'),
@@ -22,6 +27,7 @@ export type CapsuleMemoryFormValues = z.infer<typeof memorySchema>;
 export type CapsuleMemorySubmitPayload = CapsuleMemoryFormValues & {
   rating: number | null;
   is_public: boolean;
+  watch_context: WatchContext | null;
   newFiles: File[];
   keptPhotoUrls: string[];
   removedPhotoUrls: string[];
@@ -34,6 +40,7 @@ interface CapsuleMemoryFormProps {
   defaultNote?: string;
   defaultRating?: number | null;
   defaultIsPublic?: boolean;
+  defaultWatchContext?: WatchContext | null;
   existingPhotoUrls?: string[];
   submitLabel: string;
   isBusy?: boolean;
@@ -47,6 +54,7 @@ export function CapsuleMemoryForm({
   defaultNote = '',
   defaultRating = null,
   defaultIsPublic = true,
+  defaultWatchContext = null,
   existingPhotoUrls = NO_PHOTO_URLS,
   submitLabel,
   isBusy = false,
@@ -56,6 +64,7 @@ export function CapsuleMemoryForm({
 }: CapsuleMemoryFormProps) {
   const [rating, setRating] = useState<number | null>(defaultRating);
   const [isPublic, setIsPublic] = useState(defaultIsPublic);
+  const [watchContext, setWatchContext] = useState<WatchContext | null>(defaultWatchContext);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [removedPhotoUrls, setRemovedPhotoUrls] = useState<string[]>([]);
 
@@ -77,6 +86,7 @@ export function CapsuleMemoryForm({
       ...data,
       rating,
       is_public: isPublic,
+      watch_context: watchContext,
       newFiles,
       keptPhotoUrls: existingPhotoUrls.filter((url) => !removed.has(url)),
       removedPhotoUrls,
@@ -100,6 +110,43 @@ export function CapsuleMemoryForm({
         <FormField label="¿Cuándo lo viste?" error={errors.watched_at?.message}>
           <DateInput {...register('watched_at')} />
         </FormField>
+
+        <fieldset className="space-y-3">
+          <legend className="text-sm font-medium">¿Dónde lo viste? (opcional)</legend>
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Contexto de visionado">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={watchContext === null}
+              onClick={() => setWatchContext(null)}
+              className={cn(
+                'min-h-10 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                watchContext === null
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-muted-foreground hover:text-foreground',
+              )}
+            >
+              Sin decir
+            </button>
+            {WATCH_CONTEXTS.map((value) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={watchContext === value}
+                onClick={() => setWatchContext(value)}
+                className={cn(
+                  'min-h-10 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  watchContext === value
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {WATCH_CONTEXT_LABELS[value]}
+              </button>
+            ))}
+          </div>
+        </fieldset>
 
         <fieldset className="space-y-3">
           <legend className="text-sm font-medium">Valoración (opcional)</legend>
@@ -135,7 +182,7 @@ export function CapsuleMemoryForm({
             id="note"
             rows={4}
             className="min-h-28 w-full resize-y text-base"
-            placeholder="Con quién lo viste, dónde, qué recuerdas..."
+            placeholder="Con quién lo viste, qué recuerdas..."
             {...register('note')}
           />
         </div>

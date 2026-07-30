@@ -5,6 +5,7 @@ import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { Layout } from '@/components/Layout';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { StarRating } from '@/components/StarRating';
+import { WatchContextBadge } from '@/components/WatchContextBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,12 @@ import {
 import { listCapsuleYears } from '@/lib/capsuleStats';
 import { formatWatchedDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import {
+  WATCH_CONTEXTS,
+  WATCH_CONTEXT_LABELS,
+  isWatchContext,
+  type WatchContext,
+} from '@/lib/watchContext';
 import type { Capsule } from '@/types/capsule';
 
 function formatScore(capsule: Capsule) {
@@ -44,6 +51,7 @@ function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: s
               <Link to={`/c/${capsule.id}`} className="font-medium hover:text-primary hover:underline">
                 {capsule.home_team_name}
               </Link>
+              <WatchContextBadge context={capsule.watch_context} />
               {!isPublic ? (
                 <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                   Privada
@@ -117,6 +125,10 @@ function parseVisibility(value: string | null): MyCapsulesVisibility {
   return 'all';
 }
 
+function parseWatchContext(value: string | null): WatchContext | undefined {
+  return isWatchContext(value) ? value : undefined;
+}
+
 function FilterChip({
   active,
   children,
@@ -150,6 +162,7 @@ export function CapsulesPage() {
   const year = parseYear(searchParams.get('year'));
   const ratingMin = parseRatingMin(searchParams.get('rating'));
   const visibility = parseVisibility(searchParams.get('visibility'));
+  const watchContext = parseWatchContext(searchParams.get('context'));
   const q = deferredQ.length >= 2 ? deferredQ : '';
 
   const { data: allCapsulesData } = useCapsules();
@@ -167,7 +180,7 @@ export function CapsulesPage() {
     hasNextPage,
     isFetchingNextPage,
     isFetching,
-  } = useMyCapsulesInfinite({ q, year, ratingMin, visibility });
+  } = useMyCapsulesInfinite({ q, year, ratingMin, visibility, watchContext });
   const deleteCapsule = useDeleteCapsule();
   const capsules = useMemo(
     () => data?.pages.flatMap((page) => page.capsules) ?? [],
@@ -176,7 +189,11 @@ export function CapsulesPage() {
   const total = data?.pages[0]?.total ?? capsules.length;
 
   const hasFilters =
-    q.length >= 2 || year != null || ratingMin != null || visibility !== 'all';
+    q.length >= 2 ||
+    year != null ||
+    ratingMin != null ||
+    visibility !== 'all' ||
+    watchContext != null;
   const diaryEmpty = !hasFilters && !isLoading && !isError && total === 0;
   const filterEmpty = hasFilters && !isLoading && !isError && capsules.length === 0;
 
@@ -299,6 +316,26 @@ export function CapsulesPage() {
                 }
               >
                 {label}
+              </FilterChip>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por contexto">
+            <FilterChip
+              active={watchContext == null}
+              onClick={() => patchParams({ context: null })}
+            >
+              Cualquier lugar
+            </FilterChip>
+            {WATCH_CONTEXTS.map((value) => (
+              <FilterChip
+                key={value}
+                active={watchContext === value}
+                onClick={() =>
+                  patchParams({ context: watchContext === value ? null : value })
+                }
+              >
+                {WATCH_CONTEXT_LABELS[value]}
               </FilterChip>
             ))}
           </div>

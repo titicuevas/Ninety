@@ -1,4 +1,5 @@
 import type { Capsule } from '@/types/capsule';
+import { WATCH_CONTEXT_LABELS, isWatchContext } from '@/lib/watchContext';
 
 export interface CapsuleStats {
   totalMatches: number;
@@ -27,6 +28,8 @@ export interface CapsuleStats {
   firstWatched: Capsule | null;
   /** Partidos valorados con 5 estrellas */
   fiveStarCount: number;
+  /** Contexto de visionado más frecuente */
+  topWatchContext: { name: string; count: number } | null;
 }
 
 export type WrappedScope = 'all' | number;
@@ -191,6 +194,13 @@ export function computeCapsuleStats(capsules: Capsule[]): CapsuleStats {
   const matchesByMonth = computeMatchesByMonth(capsules);
   const competitions = competitionCounts(capsules);
 
+  const watchContextCounts = new Map<string, number>();
+  for (const capsule of capsules) {
+    if (!isWatchContext(capsule.watch_context)) continue;
+    const label = WATCH_CONTEXT_LABELS[capsule.watch_context];
+    watchContextCounts.set(label, (watchContextCounts.get(label) ?? 0) + 1);
+  }
+
   return {
     totalMatches: capsules.length,
     averageRating,
@@ -210,6 +220,7 @@ export function computeCapsuleStats(capsules: Capsule[]): CapsuleStats {
     matchesByMonth,
     peakMonth: computePeakMonth(matchesByMonth),
     fiveStarCount: ratings.filter((r) => r >= 5).length,
+    topWatchContext: topEntry(watchContextCounts),
   };
 }
 
@@ -232,6 +243,9 @@ export function buildWrappedShareText(name: string, scope: WrappedScope, stats: 
     lines.push(
       `Mes pico: ${MONTH_NAMES_ES[stats.peakMonth.month - 1]} (${stats.peakMonth.count})`,
     );
+  }
+  if (stats.topWatchContext) {
+    lines.push(`Lo ves más: ${stats.topWatchContext.name}`);
   }
   if (stats.fiveStarCount > 0) {
     lines.push(`5★: ${stats.fiveStarCount}`);

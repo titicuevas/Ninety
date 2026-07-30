@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Check, Camera, Flame, Mountain, Share2, Sparkles, Star, Trophy, Users } from 'lucide-react';
+import { Calendar, Check, Camera, Flame, MapPin, Mountain, Share2, Sparkles, Star, Trophy, Users } from 'lucide-react';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { StarRating } from '@/components/StarRating';
 import { Button } from '@/components/ui/button';
@@ -383,6 +383,14 @@ export function WrappedSummary({ name, stats, scope, years, onScopeChange }: Wra
                 title={MONTH_NAMES_ES[stats.peakMonth.month - 1]}
                 subtitle={`${stats.peakMonth.count} ${stats.peakMonth.count === 1 ? 'partido' : 'partidos'}`}
                 icon={Mountain}
+              />
+            ) : null}
+            {stats.topWatchContext ? (
+              <HighlightCard
+                label="Dónde lo ves más"
+                title={stats.topWatchContext.name}
+                subtitle={`${stats.topWatchContext.count} ${stats.topWatchContext.count === 1 ? 'partido' : 'partidos'}`}
+                icon={MapPin}
               />
             ) : null}
             {stats.firstWatched ? (

@@ -16,6 +16,8 @@ export interface Capsule {
   photo_urls: string[];
   /** false = solo el dueño; default true si la columna aún no existe en cache */
   is_public?: boolean;
+  /** Dónde lo viste: estadio, TV, bar u otro */
+  watch_context?: 'stadium' | 'tv' | 'pub' | 'other' | null;
   /** @deprecated compatibilidad con datos antiguos */
   photo_url?: string | null;
   created_at: string;
@@ -37,6 +39,7 @@ export interface CreateCapsuleInput {
   note?: string | null;
   photo_urls?: string[];
   is_public?: boolean;
+  watch_context?: 'stadium' | 'tv' | 'pub' | 'other' | null;
 }
 
 export interface UpdateCapsuleInput {
@@ -45,6 +48,7 @@ export interface UpdateCapsuleInput {
   note?: string | null;
   photo_urls?: string[];
   is_public?: boolean;
+  watch_context?: 'stadium' | 'tv' | 'pub' | 'other' | null;
 }
 
 export interface CapsulesResponse {

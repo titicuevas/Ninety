@@ -58,6 +58,7 @@ export function EditCapsulePage() {
     rating: number | null;
     note?: string;
     is_public: boolean;
+    watch_context: 'stadium' | 'tv' | 'pub' | 'other' | null;
     newFiles: File[];
     keptPhotoUrls: string[];
     removedPhotoUrls: string[];
@@ -87,6 +88,7 @@ export function EditCapsulePage() {
           note: payload.note?.trim() || null,
           photo_urls: [...payload.keptPhotoUrls, ...uploadedUrls],
           is_public: payload.is_public,
+          watch_context: payload.watch_context,
         },
         {
           onSuccess: () => navigate('/capsules', { replace: true }),
@@ -121,6 +123,7 @@ export function EditCapsulePage() {
           defaultNote={capsule.note ?? ''}
           defaultRating={capsule.rating}
           defaultIsPublic={capsule.is_public !== false}
+          defaultWatchContext={capsule.watch_context ?? null}
           existingPhotoUrls={getCapsulePhotoUrls(capsule)}
           submitLabel={uploading ? 'Subiendo fotos…' : 'Guardar cambios'}
           isBusy={uploading || updateCapsule.isPending}

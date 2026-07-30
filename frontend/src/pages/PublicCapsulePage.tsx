@@ -6,6 +6,7 @@ import { Layout } from '@/components/Layout';
 import { PublicLayout } from '@/components/PublicLayout';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { StarRating } from '@/components/StarRating';
+import { WatchContextBadge } from '@/components/WatchContextBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuthInit';
@@ -98,6 +99,9 @@ export function PublicCapsulePage() {
                 {capsule.competition_name ? (
                   <p className="mt-1 text-sm text-primary">{capsule.competition_name}</p>
                 ) : null}
+                <div className="mt-2">
+                  <WatchContextBadge context={capsule.watch_context} />
+                </div>
               </div>
               {score ? <p className="shrink-0 text-lg font-semibold tabular-nums">{score}</p> : null}
             </div>

@@ -8,6 +8,7 @@ import { Layout } from '@/components/Layout';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { StarRating } from '@/components/StarRating';
+import { WatchContextBadge } from '@/components/WatchContextBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCapsuleFeed } from '@/hooks/useCapsules';
@@ -64,9 +65,12 @@ function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; cur
 
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <Link to={`/c/${capsule.id}`} className="font-medium hover:text-primary hover:underline">
-              {capsule.home_team_name}
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link to={`/c/${capsule.id}`} className="font-medium hover:text-primary hover:underline">
+                {capsule.home_team_name}
+              </Link>
+              <WatchContextBadge context={capsule.watch_context} />
+            </div>
             <p className="text-muted-foreground">{capsule.away_team_name}</p>
             {capsule.competition_name ? (
               <p className="mt-1 text-xs text-muted-foreground">{capsule.competition_name}</p>
