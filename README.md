@@ -277,6 +277,23 @@ npm run doctor:install      # instalar skill para Cursor + CI
 
 **Reglas que seguimos:** LazyMotion + `useReducedMotion`, botones con `type` explícito, componentes React 19 sin `forwardRef`, Storage preparado vía `useCapsuleStorage`.
 
+## 🛡 Secretos y CI
+
+Evitar filtrar claves (Supabase secret, VAPID, tokens) en el repo:
+
+| Capa | Qué |
+|------|-----|
+| Local | `npm run check:secrets` — patrones propios (Supabase secret, VAPID, passwords de demo) |
+| CI | [TruffleHog OSS](https://github.com/marketplace/actions/trufflehog-oss) en push/PR a `main` |
+
+- Workflow: `.github/workflows/trufflehog.yml`
+- Escanea el rango de commits vs la rama por defecto y **falla** si encuentra secretos **verificados** (`--only-verified`)
+- Los secretos reales viven solo en `.env` (gitignored) y en variables de Railway/Supabase
+
+```bash
+npm run check:secrets
+```
+
 ## 📂 Estructura del proyecto
 
 ```
