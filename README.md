@@ -287,7 +287,7 @@ Evitar filtrar claves (Supabase secret, VAPID, tokens) en el repo:
 | CI | [TruffleHog OSS](https://github.com/marketplace/actions/trufflehog-oss) en push/PR a `main` |
 
 - Workflow: `.github/workflows/trufflehog.yml`
-- Escanea el rango de commits vs la rama por defecto y **falla** si encuentra secretos **verificados** (`--only-verified`)
+- Escanea el rango del push/PR y **falla** si encuentra secretos **verificados** (`--results=verified`)
 - Los secretos reales viven solo en `.env` (gitignored) y en variables de Railway/Supabase
 
 ```bash

@@ -27,12 +27,50 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Sin base/head: la action calcula el rango según el evento
-      # (push → before/after; PR → base/head SHA). Evita el fallo
-      # "BASE and HEAD commits are the same" en pushes a main.
+      # La action oficial falla en push a main con base/head=default
+      # ("BASE and HEAD are the same") y, sin ellos, a veces pasa
+      # --since-commit/--branch mal entrecomillados (exit 1 = error de
+      # escaneo, no hallazgo; los secretos verificados salen con 183).
+      - name: Resolve scan range
+        id: range
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD_REF="${{ github.event.pull_request.head.sha }}"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            BASE="${{ github.event.before }}"
+            HEAD_REF="${{ github.event.after }}"
+            if [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+              BASE="$(git rev-parse "${HEAD_REF}^" 2>/dev/null || git rev-list --max-parents=0 HEAD)"
+            fi
+          else
+            HEAD_REF="$(git rev-parse HEAD)"
+            BASE="$(git rev-parse HEAD^ 2>/dev/null || git rev-list --max-parents=0 HEAD)"
+          fi
+
+          if [ "$BASE" = "$HEAD_REF" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "BASE y HEAD iguales ($HEAD_REF); nada que escanear."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "base=$BASE" >> "$GITHUB_OUTPUT"
+            echo "head=$HEAD_REF" >> "$GITHUB_OUTPUT"
+            echo "Escaneando $BASE..$HEAD_REF"
+          fi
+
       - name: TruffleHog OSS
-        uses: trufflesecurity/trufflehog@v3.96.0
-        with:
-          path: ./
-          # Solo secretos verificados → menos falsos positivos
-          extra_args: --only-verified --no-update
+        if: steps.range.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "${{ github.workspace }}:/repo:ro" \
+            -w /repo \
+            ghcr.io/trufflesecurity/trufflehog:3.96.0 \
+            git file:///repo \
+            --since-commit "${{ steps.range.outputs.base }}" \
+            --branch "${{ steps.range.outputs.head }}" \
+            --results=verified \
+            --fail \
+            --no-update \
+            --github-actions
