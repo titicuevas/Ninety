@@ -110,9 +110,18 @@ export function useToggleCapsuleLike() {
           : old,
       );
 
-      queryClient.setQueriesData<{ profile: unknown; capsules: FeedCapsule[] }>(
+      queryClient.setQueriesData<InfiniteData<{ capsules: FeedCapsule[] }>>(
         { queryKey: ['profile', 'public'] },
-        (old) => (old ? { ...old, capsules: old.capsules.map(updateCapsule) } : old),
+        (old) =>
+          old
+            ? {
+                ...old,
+                pages: old.pages.map((page) => ({
+                  ...page,
+                  capsules: page.capsules.map(updateCapsule),
+                })),
+              }
+            : old,
       );
 
       return { previousFeed };

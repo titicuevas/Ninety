@@ -104,9 +104,18 @@ function PublicCapsuleCard({
 export function PublicProfilePage() {
   const { username } = useParams<{ username: string }>();
   const { user } = useAuth();
-  const { data, isLoading, isError, error } = usePublicProfile(username);
-  const profile = data?.profile;
-  const capsules = data?.capsules ?? [];
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = usePublicProfile(username);
+  const profile = data?.pages[0]?.profile;
+  const capsules = data?.pages.flatMap((page) => page.capsules) ?? [];
+  const total = data?.pages[0]?.total ?? capsules.length;
   const isOwnProfile = !!user && profile?.id === user.id;
   const Shell = user ? Layout : PublicLayout;
 
@@ -175,7 +184,7 @@ export function PublicProfilePage() {
             </div>
 
             <p className="mt-2 text-sm text-muted-foreground">
-              {capsules.length === 1 ? '1 partido en su diario' : `${capsules.length} partidos en su diario`}
+              {total === 1 ? '1 partido en su diario' : `${total} partidos en su diario`}
             </p>
 
             {profile.username ? (
@@ -222,6 +231,18 @@ export function PublicProfilePage() {
             {capsules.map((capsule) => (
               <PublicCapsuleCard key={capsule.id} capsule={capsule} currentUserId={user?.id} />
             ))}
+            {hasNextPage ? (
+              <div className="flex justify-center pt-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={isFetchingNextPage}
+                  onClick={() => void fetchNextPage()}
+                >
+                  {isFetchingNextPage ? 'Cargando…' : 'Cargar más'}
+                </Button>
+              </div>
+            ) : null}
           </section>
         ) : (
           <Card>

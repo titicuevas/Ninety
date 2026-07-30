@@ -195,12 +195,26 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
     return;
   }
 
-  const { data, error } = await reader
+  const limitRaw = typeof req.query.limit === 'string' ? Number(req.query.limit) : undefined;
+  const offsetRaw = typeof req.query.offset === 'string' ? Number(req.query.offset) : 0;
+  const limit =
+    limitRaw != null && Number.isFinite(limitRaw)
+      ? Math.min(Math.max(Math.trunc(limitRaw), 1), 50)
+      : undefined;
+  const offset = Number.isFinite(offsetRaw) ? Math.max(Math.trunc(offsetRaw), 0) : 0;
+
+  let query = reader
     .from('capsules')
-    .select('*')
+    .select('*', { count: 'exact' })
     .eq('user_id', profile.id)
     .order('watched_at', { ascending: false })
     .order('created_at', { ascending: false });
+
+  if (limit != null) {
+    query = query.range(offset, offset + limit - 1);
+  }
+
+  const { data, error, count } = await query;
 
   if (error) {
     res.status(400).json({ error: error.message });
@@ -213,7 +227,11 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
   const normalizedProfile = normalizeProfile(profile);
   const profileWithFollows = await attachFollowStats(reader, viewerId, normalizedProfile);
 
-  res.json({ profile: profileWithFollows, capsules: capsulesWithLikes });
+  res.json({
+    profile: profileWithFollows,
+    capsules: capsulesWithLikes,
+    total: count ?? capsulesWithLikes.length,
+  });
 });
 
 capsulesRouter.post('/photos', requireAuth, photoUpload.array('photos', 9), async (req: AuthRequest, res) => {

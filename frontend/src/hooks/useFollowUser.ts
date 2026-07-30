@@ -4,10 +4,13 @@ import { useAuthStore } from '@/stores/authStore';
 import type { FeedResponse } from '@/types/capsule';
 import type { Profile } from '@/types/profile';
 
-interface PublicProfileData {
+interface PublicProfilePage {
   profile: Profile;
   capsules: unknown[];
+  total: number;
 }
+
+type PublicProfileInfinite = InfiniteData<PublicProfilePage>;
 
 function updateProfileFollow(
   profile: Profile,
@@ -53,23 +56,35 @@ export function useToggleFollow(username: string) {
       await queryClient.cancelQueries({ queryKey: ['profile', 'public', username] });
       await queryClient.cancelQueries({ queryKey: ['capsules', 'feed'] });
 
-      const previousProfile = queryClient.getQueryData<PublicProfileData>(['profile', 'public', username]);
+      const previousProfiles = queryClient.getQueriesData<PublicProfileInfinite>({
+        queryKey: ['profile', 'public', username],
+      });
       const previousFeed = queryClient.getQueryData<InfiniteData<FeedResponse>>(['capsules', 'feed']);
 
-      queryClient.setQueryData<PublicProfileData>(['profile', 'public', username], (old) =>
-        old ? { ...old, profile: updateProfileFollow(old.profile, followed) } : old,
+      queryClient.setQueriesData<PublicProfileInfinite>(
+        { queryKey: ['profile', 'public', username] },
+        (old) =>
+          old
+            ? {
+                ...old,
+                pages: old.pages.map((page) => ({
+                  ...page,
+                  profile: updateProfileFollow(page.profile, followed),
+                })),
+              }
+            : old,
       );
 
       queryClient.setQueryData<InfiniteData<FeedResponse>>(['capsules', 'feed'], (old) =>
         bumpFeedFollowingCount(old, followed ? -1 : 1),
       );
 
-      return { previousProfile, previousFeed };
+      return { previousProfiles, previousFeed };
     },
     onError: (_err, _vars, context) => {
-      if (context?.previousProfile) {
-        queryClient.setQueryData(['profile', 'public', username], context.previousProfile);
-      }
+      context?.previousProfiles?.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
       if (context?.previousFeed) {
         queryClient.setQueryData(['capsules', 'feed'], context.previousFeed);
       }

@@ -21,6 +21,23 @@ test.describe('Smoke — público @smoke', () => {
       timeout: 20_000,
     });
     await expect(page.getByRole('link', { name: /seguidores/i })).toBeVisible();
+    await expect(page.getByText(/\d+ partidos? en su diario/i)).toBeVisible();
+  });
+
+  test('API perfil público soporta paginación', async ({ request }) => {
+    const res = await request.get(
+      `${API_BASE}/api/capsules/user/${DEMO_USERNAME}?limit=5&offset=0`,
+    );
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      profile?: { username?: string };
+      capsules?: unknown[];
+      total?: number;
+    };
+    expect(body.profile?.username).toBeTruthy();
+    expect(Array.isArray(body.capsules)).toBe(true);
+    expect(body.capsules!.length).toBeLessThanOrEqual(5);
+    expect(typeof body.total).toBe('number');
   });
 
   test('listas followers/following públicas no 401', async ({ request }) => {
