@@ -1,6 +1,7 @@
 import { supabaseAdmin } from './supabase.js';
+import { CAPSULE_PHOTOS_BUCKET, capsulePhotoPathFromUrl } from './capsulePhotoPaths.js';
 
-export const CAPSULE_PHOTOS_BUCKET = 'capsule-photos';
+export { CAPSULE_PHOTOS_BUCKET, capsulePhotoPathFromUrl } from './capsulePhotoPaths.js';
 export const AVATARS_BUCKET = 'avatars';
 
 async function ensureBucket(
@@ -120,12 +121,34 @@ export async function uploadAvatarBuffer(
 export async function deleteCapsulePhotoByUrl(photoUrl: string) {
   if (!supabaseAdmin) return;
 
-  const marker = `/storage/v1/object/public/${CAPSULE_PHOTOS_BUCKET}/`;
-  const index = photoUrl.indexOf(marker);
-  if (index === -1) return;
+  const path = capsulePhotoPathFromUrl(photoUrl);
+  if (!path) return;
 
-  const path = decodeURIComponent(photoUrl.slice(index + marker.length).split('?')[0]!);
   await supabaseAdmin.storage.from(CAPSULE_PHOTOS_BUCKET).remove([path]);
+}
+
+/**
+ * Borra fotos del bucket pertenecientes a `userId`.
+ * Ignora URLs ajenas / no gestionadas y no lanza si el objeto ya no existe.
+ */
+export async function deleteCapsulePhotosByUrls(photoUrls: string[], userId: string) {
+  if (!supabaseAdmin || photoUrls.length === 0) return;
+
+  const prefix = `${userId}/`;
+  const paths = [
+    ...new Set(
+      photoUrls
+        .map(capsulePhotoPathFromUrl)
+        .filter((path): path is string => !!path && path.startsWith(prefix)),
+    ),
+  ];
+
+  if (paths.length === 0) return;
+
+  const { error } = await supabaseAdmin.storage.from(CAPSULE_PHOTOS_BUCKET).remove(paths);
+  if (error) {
+    console.warn(`Storage cleanup Capsule (${userId}): ${error.message}`);
+  }
 }
 
 export async function deleteAvatarByUrl(avatarUrl: string) {

@@ -127,11 +127,37 @@ async function createCapsule(token: string, photoUrls: string[]) {
   return body;
 }
 
+async function deleteCapsule(token: string, id: string) {
+  const res = await fetch(`${API}/api/capsules/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.status !== 204) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(
+      `Borrar capsule falló (${res.status}): ${typeof body.error === 'string' ? body.error : 'error'}`,
+    );
+  }
+  console.log('✅ Capsule borrada');
+}
+
+async function assertPhotosGone(urls: string[]) {
+  for (const url of urls) {
+    const res = await fetch(url, { method: 'GET' });
+    if (res.ok) {
+      throw new Error(`Foto aún accesible tras borrar Capsule: ${url}`);
+    }
+  }
+  console.log(`✅ ${urls.length} fotos ya no están en Storage`);
+}
+
 async function main() {
   console.log('🧪 Test E2E — Capsule con 6 fotos\n');
   const token = await login();
   const photoUrls = await uploadPhotos(token);
-  await createCapsule(token, photoUrls);
+  const capsule = await createCapsule(token, photoUrls);
+  await deleteCapsule(token, capsule.id);
+  await assertPhotosGone(photoUrls);
   console.log('\n🎉 Test completado con éxito.\n');
 }
 

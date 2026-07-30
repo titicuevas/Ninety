@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
-import { deleteCapsulePhotoByUrl, uploadCapsulePhotoBuffer } from '../lib/ensureStorage.js';
+import { deleteCapsulePhotoByUrl, deleteCapsulePhotosByUrls, uploadCapsulePhotoBuffer } from '../lib/ensureStorage.js';
 import { validateCommentBody, validateImageBuffer } from '../lib/contentModeration.js';
 import { attachCommentCounts, fetchCommentsWithAuthors, isMissingCommentsTable } from '../lib/capsuleComments.js';
 import { attachLikeStats, isMissingLikesTable } from '../lib/capsuleLikes.js';
@@ -923,11 +923,30 @@ capsulesRouter.delete('/:id', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
+  const capsuleId = routeParam(req.params.id);
   const supabase = createUserClient(token);
-  const { error, count } = await supabase
+
+  const { data: capsule, error: fetchError } = await supabase
     .from('capsules')
-    .delete({ count: 'exact' })
-    .eq('id', req.params.id)
+    .select('id, photo_urls')
+    .eq('id', capsuleId)
+    .eq('user_id', req.userId!)
+    .maybeSingle();
+
+  if (fetchError) {
+    res.status(400).json({ error: fetchError.message });
+    return;
+  }
+
+  if (!capsule) {
+    res.status(404).json({ error: 'Capsule no encontrada' });
+    return;
+  }
+
+  const { error } = await supabase
+    .from('capsules')
+    .delete()
+    .eq('id', capsuleId)
     .eq('user_id', req.userId!);
 
   if (error) {
@@ -935,9 +954,17 @@ capsulesRouter.delete('/:id', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  if (!count) {
-    res.status(404).json({ error: 'Capsule no encontrada' });
-    return;
+  const photoUrls = Array.isArray(capsule.photo_urls)
+    ? capsule.photo_urls.filter((url): url is string => typeof url === 'string')
+    : [];
+
+  try {
+    await deleteCapsulePhotosByUrls(photoUrls, req.userId!);
+  } catch (err) {
+    console.warn(
+      'No se pudieron limpiar fotos tras borrar Capsule:',
+      err instanceof Error ? err.message : err,
+    );
   }
 
   res.status(204).end();
