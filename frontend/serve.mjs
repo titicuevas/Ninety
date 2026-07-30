@@ -149,16 +149,29 @@ async function ogForProfile(username) {
         : Array.isArray(data.capsules)
           ? data.capsules.length
           : 0;
-  const team = profile.favorite_team ? ` · ${profile.favorite_team}` : '';
+  const bio = typeof profile.bio === 'string' && profile.bio.trim() ? profile.bio.trim() : null;
+  const team = typeof profile.favorite_team === 'string' && profile.favorite_team.trim()
+    ? profile.favorite_team.trim()
+    : null;
+  const topTeam =
+    data.stats?.topTeam?.name && typeof data.stats.topTeam.name === 'string'
+      ? data.stats.topTeam.name
+      : null;
+
   const title = `${name} (@${profile.username || username}) | Ninety`;
-  const description = `${count === 1 ? '1 partido' : `${count} partidos`} en su diario futbolero${team}.`.slice(
-    0,
-    180,
-  );
+  const description = [
+    `${count === 1 ? '1 partido' : `${count} partidos`} en su diario futbolero`,
+    team,
+    bio,
+    !bio && topTeam ? `Más visto: ${topTeam}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+    .slice(0, 180);
 
   return renderOgHtml({
     title,
-    description,
+    description: description || 'Diario futbolero en Ninety.',
     url: `${SITE_URL}/u/${encodeURIComponent(username)}`,
     image: profile.avatar_url || defaultImage(),
     type: 'profile',

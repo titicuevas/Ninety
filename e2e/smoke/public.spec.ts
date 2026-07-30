@@ -22,6 +22,7 @@ test.describe('Smoke — público @smoke', () => {
     });
     await expect(page.getByRole('link', { name: /seguidores/i })).toBeVisible();
     await expect(page.getByText(/\d+ partidos? en su diario/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /compartir perfil/i })).toBeVisible();
 
     const wrapped = page.getByRole('heading', { name: /el fútbol de/i });
     const emptyDiary = page.getByText(/aún no ha publicado partidos/i);
@@ -33,6 +34,20 @@ test.describe('Smoke — público @smoke', () => {
     } else {
       await expect(emptyDiary.or(page.locator('main'))).toBeVisible();
     }
+  });
+
+  test('OG del perfil público incluye metas para bots', async ({ request }) => {
+    const site = (process.env.E2E_SITE_URL ?? 'https://ninety.up.railway.app').replace(/\/$/, '');
+    const res = await request.get(`${site}/u/${DEMO_USERNAME}`, {
+      headers: { 'User-Agent': 'facebookexternalhit/1.1' },
+    });
+    expect(res.ok()).toBeTruthy();
+    const html = await res.text();
+    expect(html).toMatch(/property="og:title"/i);
+    expect(html).toMatch(/property="og:description"/i);
+    expect(html).toMatch(/property="og:image"/i);
+    expect(html).toMatch(new RegExp(`/u/${DEMO_USERNAME}`, 'i'));
+    expect(html).toMatch(/diario futbolero/i);
   });
 
   test('API perfil público acepta filtros y stats', async ({ request }) => {

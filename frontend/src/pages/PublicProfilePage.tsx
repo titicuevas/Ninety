@@ -9,6 +9,7 @@ import { Layout } from '@/components/Layout';
 import { PublicLayout } from '@/components/PublicLayout';
 import { PublicWrappedSummary } from '@/components/PublicWrappedSummary';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
+import { ShareProfileButton } from '@/components/ShareProfileButton';
 import { StarRating } from '@/components/StarRating';
 import { WatchContextBadge } from '@/components/WatchContextBadge';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { usePublicProfile } from '@/hooks/usePublicProfile';
 import { useAuth } from '@/hooks/useAuthInit';
 import { formatWatchedDate } from '@/lib/format';
+import { isAutoUsername } from '@/lib/profileHelpers';
 import { publicProfileUrl } from '@/lib/siteUrl';
 import { cn } from '@/lib/utils';
 import {
@@ -306,21 +308,30 @@ export function PublicProfilePage() {
             ) : null}
           </div>
 
-          {isOwnProfile ? (
-            <Button asChild variant="secondary" className="w-full shrink-0 sm:w-auto">
-              <Link to="/profile">Editar perfil</Link>
-            </Button>
-          ) : profile.username && user ? (
-            <FollowButton
-              username={profile.username}
-              followedByMe={profile.followed_by_me}
-              className="w-full sm:w-auto"
-            />
-          ) : profile.username ? (
-            <Button asChild className="w-full shrink-0 sm:w-auto">
-              <Link to="/login">Inicia sesión para seguir</Link>
-            </Button>
-          ) : null}
+          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-start">
+            {isOwnProfile ? (
+              <Button asChild variant="secondary" className="w-full sm:w-auto">
+                <Link to="/profile">Editar perfil</Link>
+              </Button>
+            ) : profile.username && user ? (
+              <FollowButton
+                username={profile.username}
+                followedByMe={profile.followed_by_me}
+                className="w-full sm:w-auto"
+              />
+            ) : profile.username ? (
+              <Button asChild className="w-full sm:w-auto">
+                <Link to="/login">Inicia sesión para seguir</Link>
+              </Button>
+            ) : null}
+            {profile.username && !isAutoUsername(profile.username) ? (
+              <ShareProfileButton
+                username={profile.username}
+                displayName={displayName}
+                className="w-full sm:w-auto"
+              />
+            ) : null}
+          </div>
         </section>
 
         {stats && stats.totalMatches > 0 ? (

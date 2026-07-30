@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Layout } from '@/components/Layout';
+import { ShareProfileButton } from '@/components/ShareProfileButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField } from '@/components/ui/form-field';
@@ -18,7 +19,6 @@ import { friendlyApiError } from '@/lib/friendlyErrors';
 import { AVATAR_ACCEPT, removeProfileAvatar, uploadProfileAvatar } from '@/lib/profileAvatar';
 import { isAutoUsername, suggestUsername } from '@/lib/profileHelpers';
 import { profilePath } from '@/lib/profilePath';
-import { publicProfileUrl } from '@/lib/siteUrl';
 import type { Profile, UpdateProfileInput } from '@/types/profile';
 
 const profileSchema = z.object({
@@ -42,7 +42,6 @@ export function ProfilePage() {
   const queryClient = useQueryClient();
   const { data: profile, isLoading } = useProfile();
   const [success, setSuccess] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [avatarBusy, setAvatarBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -98,17 +97,6 @@ export function ProfilePage() {
   const applySuggestedUsername = () => {
     const suggestion = suggestUsername(displayName);
     if (suggestion) setValue('username', suggestion, { shouldValidate: true });
-  };
-
-  const copyPublicUrl = async () => {
-    if (!profile?.username || isAutoUsername(profile.username)) return;
-    try {
-      await navigator.clipboard.writeText(publicProfileUrl(profile.username));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* clipboard no disponible */
-    }
   };
 
   const onSubmit = (data: ProfileForm) => {
@@ -221,7 +209,7 @@ export function ProfilePage() {
               </div>
               {avatarError ? <p className="text-xs text-destructive">{avatarError}</p> : null}
               {profile?.username && !isAutoUsername(profile.username) ? (
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                   <Link to={profilePath(profile.username)} className="text-sm text-primary hover:underline">
                     Ver perfil público
                   </Link>
@@ -237,13 +225,12 @@ export function ProfilePage() {
                   >
                     Siguiendo
                   </Link>
-                  <button
-                    type="button"
-                    onClick={() => void copyPublicUrl()}
-                    className="text-sm text-muted-foreground hover:text-foreground"
-                  >
-                    {copied ? 'Enlace copiado' : 'Copiar enlace'}
-                  </button>
+                  <ShareProfileButton
+                    username={profile.username}
+                    displayName={profile.display_name}
+                    size="sm"
+                    variant="outline"
+                  />
                 </div>
               ) : null}
             </div>
