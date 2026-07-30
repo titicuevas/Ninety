@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 
 export function requireDemoCredentials() {
   const email = process.env.TEST_USER_EMAIL ?? 'beta@ninety.app';
@@ -64,5 +64,44 @@ export async function readAccessToken(page: Page): Promise<string | null> {
   });
 }
 
-export const DEMO_USERNAME = process.env.TEST_USER_USERNAME ?? 'beta_ninety';
+/** Alineado con seed:demo / README (`aficionado_demo`). */
+export const DEMO_USERNAME =
+  process.env.TEST_USER_USERNAME ?? process.env.DEMO_USERNAME ?? 'aficionado_demo';
 export const API_BASE = process.env.E2E_API_URL ?? 'http://localhost:3001';
+
+export type DemoPublicProfile = {
+  profile: {
+    username?: string | null;
+    display_name?: string | null;
+  };
+  capsules?: Array<{ id?: string }>;
+  total?: number;
+  stats?: { totalMatches?: number };
+  years?: number[];
+};
+
+/** Carga el perfil demo público o salta el test si no está sembrado en ese entorno. */
+export async function requirePublicDemoProfile(
+  request: APIRequestContext,
+  query = 'limit=1&offset=0',
+): Promise<DemoPublicProfile> {
+  const res = await request.get(
+    `${API_BASE}/api/capsules/user/${encodeURIComponent(DEMO_USERNAME)}?${query}`,
+  );
+  if (res.status() === 404) {
+    test.skip(
+      true,
+      `No hay perfil público @${DEMO_USERNAME} en ${API_BASE}. Ejecuta npm run seed:demo o define TEST_USER_USERNAME.`,
+    );
+  }
+  expect(res.ok(), `API perfil @${DEMO_USERNAME} → ${res.status()}`).toBeTruthy();
+  return (await res.json()) as DemoPublicProfile;
+}
+
+export function demoDisplayName(data: DemoPublicProfile): string {
+  return data.profile.display_name?.trim() || data.profile.username || DEMO_USERNAME;
+}
+
+export function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}

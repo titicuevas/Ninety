@@ -27,11 +27,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Sin base/head: la action calcula el rango según el evento
+      # (push → before/after; PR → base/head SHA). Evita el fallo
+      # "BASE and HEAD commits are the same" en pushes a main.
       - name: TruffleHog OSS
         uses: trufflesecurity/trufflehog@v3.96.0
         with:
           path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
           # Solo secretos verificados → menos falsos positivos
           extra_args: --only-verified --no-update

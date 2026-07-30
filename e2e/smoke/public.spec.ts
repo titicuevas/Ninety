@@ -1,5 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { API_BASE, DEMO_USERNAME } from '../helpers/auth';
+import {
+  API_BASE,
+  DEMO_USERNAME,
+  demoDisplayName,
+  escapeRegExp,
+  requirePublicDemoProfile,
+} from '../helpers/auth';
 
 test.describe('Smoke — público @smoke', () => {
   test('landing carga con marca Ninety', async ({ page }) => {
@@ -15,9 +21,12 @@ test.describe('Smoke — público @smoke', () => {
     await expect(page.getByLabel('Contraseña')).toBeVisible();
   });
 
-  test('perfil público demo responde', async ({ page }) => {
+  test('perfil público demo responde', async ({ page, request }) => {
+    const data = await requirePublicDemoProfile(request);
+    const name = demoDisplayName(data);
+
     await page.goto(`/u/${DEMO_USERNAME}`);
-    await expect(page.getByRole('heading', { name: /beta ninety/i })).toBeVisible({
+    await expect(page.getByRole('heading', { name: new RegExp(escapeRegExp(name), 'i') })).toBeVisible({
       timeout: 20_000,
     });
     await expect(page.getByRole('link', { name: /seguidores/i })).toBeVisible();
@@ -26,7 +35,6 @@ test.describe('Smoke — público @smoke', () => {
 
     const wrapped = page.getByRole('heading', { name: /el fútbol de/i });
     const emptyDiary = page.getByText(/aún no ha publicado partidos/i);
-    // Si el demo tiene Capsules públicas, debe verse el Wrapped público
     if (await wrapped.isVisible().catch(() => false)) {
       await expect(page.getByText(/wrapped público/i)).toBeVisible();
       await expect(page.getByLabel(/buscar en el diario público/i)).toBeVisible();
@@ -37,7 +45,11 @@ test.describe('Smoke — público @smoke', () => {
   });
 
   test('OG del perfil público incluye metas para bots', async ({ request }) => {
-    const site = (process.env.E2E_SITE_URL ?? 'https://ninety.up.railway.app').replace(/\/$/, '');
+    await requirePublicDemoProfile(request);
+    const site = (process.env.E2E_SITE_URL ?? process.env.E2E_BASE_URL ?? 'https://ninety.up.railway.app').replace(
+      /\/$/,
+      '',
+    );
     const res = await request.get(`${site}/u/${DEMO_USERNAME}`, {
       headers: { 'User-Agent': 'facebookexternalhit/1.1' },
     });
@@ -51,17 +63,7 @@ test.describe('Smoke — público @smoke', () => {
   });
 
   test('API perfil público acepta filtros y stats', async ({ request }) => {
-    const res = await request.get(
-      `${API_BASE}/api/capsules/user/${DEMO_USERNAME}?limit=5&offset=0&rating_min=4`,
-    );
-    expect(res.ok()).toBeTruthy();
-    const body = (await res.json()) as {
-      profile?: { username?: string };
-      capsules?: unknown[];
-      total?: number;
-      stats?: { totalMatches?: number };
-      years?: number[];
-    };
+    const body = await requirePublicDemoProfile(request, 'limit=5&offset=0&rating_min=4');
     expect(body.profile?.username).toBeTruthy();
     expect(Array.isArray(body.capsules)).toBe(true);
     expect(body.capsules!.length).toBeLessThanOrEqual(5);
@@ -72,6 +74,7 @@ test.describe('Smoke — público @smoke', () => {
   });
 
   test('listas followers/following públicas no 401', async ({ request }) => {
+    await requirePublicDemoProfile(request);
     const followers = await request.get(`${API_BASE}/api/profile/${DEMO_USERNAME}/followers`);
     const following = await request.get(`${API_BASE}/api/profile/${DEMO_USERNAME}/following`);
     expect(followers.status()).not.toBe(401);
@@ -81,13 +84,7 @@ test.describe('Smoke — público @smoke', () => {
   });
 
   test('detalle Capsule pública muestra autor y CTA de seguir', async ({ page, request }) => {
-    const list = await request.get(
-      `${API_BASE}/api/capsules/user/${DEMO_USERNAME}?limit=1&offset=0`,
-    );
-    expect(list.ok()).toBeTruthy();
-    const body = (await list.json()) as {
-      capsules?: Array<{ id?: string; profiles?: { username?: string } }>;
-    };
+    const body = await requirePublicDemoProfile(request, 'limit=1&offset=0');
     const capsuleId = body.capsules?.[0]?.id;
     test.skip(!capsuleId, 'El usuario demo no tiene Capsules públicas');
 
