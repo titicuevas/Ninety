@@ -138,20 +138,40 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
+  const paginate = req.query.limit != null && req.query.limit !== '';
+  let limit: number | undefined;
+  let offset = 0;
+
+  if (paginate) {
+    const parsed = feedQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() });
+      return;
+    }
+    limit = parsed.data.limit;
+    offset = parsed.data.offset;
+  }
+
   const supabase = createUserClient(token);
-  const { data, error } = await supabase
+  let query = supabase
     .from('capsules')
-    .select('*')
+    .select('*', { count: 'exact' })
     .eq('user_id', req.userId!)
     .order('watched_at', { ascending: false })
     .order('created_at', { ascending: false });
+
+  if (limit != null) {
+    query = query.range(offset, offset + limit - 1);
+  }
+
+  const { data, error, count } = await query;
 
   if (error) {
     res.status(400).json({ error: error.message });
     return;
   }
 
-  res.json({ capsules: data ?? [] });
+  res.json({ capsules: data ?? [], total: count ?? data?.length ?? 0 });
 });
 
 capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res) => {

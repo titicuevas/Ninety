@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Pencil, Trash2 } from 'lucide-react';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
@@ -6,7 +7,7 @@ import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { StarRating } from '@/components/StarRating';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useCapsules, useDeleteCapsule } from '@/hooks/useCapsules';
+import { useDeleteCapsule, useMyCapsulesInfinite } from '@/hooks/useCapsules';
 import { formatWatchedDate } from '@/lib/format';
 import type { Capsule } from '@/types/capsule';
 
@@ -77,9 +78,21 @@ function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: s
 }
 
 export function CapsulesPage() {
-  const { data, isLoading, isError, error } = useCapsules();
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useMyCapsulesInfinite();
   const deleteCapsule = useDeleteCapsule();
-  const capsules = data?.capsules ?? [];
+  const capsules = useMemo(
+    () => data?.pages.flatMap((page) => page.capsules) ?? [],
+    [data],
+  );
+  const total = data?.pages[0]?.total ?? capsules.length;
 
   const handleDelete = (id: string) => {
     if (!window.confirm('¿Eliminar esta Capsule?')) return;
@@ -94,6 +107,14 @@ export function CapsulesPage() {
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Mis Capsules</h1>
             <p className="mt-2 text-sm text-muted-foreground sm:text-base">
               Todos los partidos que has guardado en tu diario.
+              {!isLoading && total > 0 ? (
+                <>
+                  {' '}
+                  <span className="text-foreground">
+                    {total} {total === 1 ? 'partido' : 'partidos'}
+                  </span>
+                </>
+              ) : null}
             </p>
           </div>
           <Button asChild className="shrink-0">
@@ -130,13 +151,26 @@ export function CapsulesPage() {
         ) : null}
 
         {!isLoading && !isError && capsules.length > 0 ? (
-          <ul className="space-y-3">
-            {capsules.map((capsule) => (
-              <li key={capsule.id}>
-                <CapsuleCard capsule={capsule} onDelete={handleDelete} />
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-4">
+            <ul className="space-y-3">
+              {capsules.map((capsule) => (
+                <li key={capsule.id}>
+                  <CapsuleCard capsule={capsule} onDelete={handleDelete} />
+                </li>
+              ))}
+            </ul>
+            {hasNextPage ? (
+              <div className="flex justify-center pt-2">
+                <Button
+                  variant="secondary"
+                  loading={isFetchingNextPage}
+                  onClick={() => void fetchNextPage()}
+                >
+                  Cargar más
+                </Button>
+              </div>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </Layout>

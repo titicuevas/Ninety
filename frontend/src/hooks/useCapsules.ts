@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/authStore';
 import type { Capsule, CapsulesResponse, CreateCapsuleInput, FeedCapsule, FeedResponse, UpdateCapsuleInput } from '@/types/capsule';
 
 const FEED_PAGE_SIZE = 20;
+const MY_CAPSULES_PAGE_SIZE = 20;
 
 export function useCapsules() {
   const session = useAuthStore((s) => s.session);
@@ -11,6 +12,28 @@ export function useCapsules() {
   return useQuery({
     queryKey: ['capsules', 'me'],
     queryFn: () => apiFetch<CapsulesResponse>('/api/capsules/me', {}, session?.access_token),
+    enabled: !!session,
+  });
+}
+
+/** Listado paginado de Mis Capsules (no usar en Wrapped/Home). */
+export function useMyCapsulesInfinite() {
+  const session = useAuthStore((s) => s.session);
+
+  return useInfiniteQuery({
+    queryKey: ['capsules', 'me', 'page'],
+    queryFn: ({ pageParam }) =>
+      apiFetch<CapsulesResponse>(
+        `/api/capsules/me?limit=${MY_CAPSULES_PAGE_SIZE}&offset=${pageParam}`,
+        {},
+        session?.access_token,
+      ),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, page) => sum + page.capsules.length, 0);
+      const total = lastPage.total ?? loaded;
+      return loaded < total ? loaded : undefined;
+    },
     enabled: !!session,
   });
 }

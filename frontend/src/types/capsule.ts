@@ -45,6 +45,7 @@ export interface UpdateCapsuleInput {
 
 export interface CapsulesResponse {
   capsules: Capsule[];
+  total?: number;
 }
 
 export interface CapsuleAuthor {
