@@ -270,7 +270,7 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
 
   const { data: profile, error: profileError } = await supabaseAnon
     .from('profiles')
-    .select('id, username, full_name, avatar_url, favorite_team, country, city, created_at')
+    .select('id, username, full_name, avatar_url, favorite_team, country, city, bio, created_at')
     .eq('username', username)
     .single();
 

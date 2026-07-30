@@ -26,12 +26,17 @@ export function profileUpdatePayload(input: {
   favorite_team?: string | null;
   country?: string | null;
   city?: string | null;
+  bio?: string | null;
 }) {
-  const { display_name, ...rest } = input;
+  const { display_name, bio, ...rest } = input;
   const payload: Record<string, unknown> = { ...rest };
 
   if (display_name !== undefined) {
     payload.full_name = display_name;
+  }
+
+  if (bio !== undefined) {
+    payload.bio = bio?.trim() ? bio.trim() : null;
   }
 
   return payload;

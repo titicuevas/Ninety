@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useAuthStore } from '@/stores/authStore';
@@ -28,6 +29,7 @@ const profileSchema = z.object({
   favorite_team: z.string().optional(),
   country: z.string().optional(),
   city: z.string().optional(),
+  bio: z.string().max(280, 'Máximo 280 caracteres').optional(),
 });
 
 type ProfileForm = z.infer<typeof profileSchema>;
@@ -50,12 +52,14 @@ export function ProfilePage() {
   } = useForm<ProfileForm>({ resolver: zodResolver(profileSchema) });
 
   const displayName = watch('display_name');
+  const bioValue = watch('bio') ?? '';
 
   const mutation = useMutation({
     mutationFn: (data: UpdateProfileInput) =>
       apiFetch<Profile>('/api/profile/me', { method: 'PATCH', body: JSON.stringify(data) }, session?.access_token),
     onSuccess: (data) => {
       queryClient.setQueryData(['profile', 'me'], data);
+      void queryClient.invalidateQueries({ queryKey: ['profile', 'public'] });
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     },
@@ -76,6 +80,7 @@ export function ProfilePage() {
         favorite_team: profile.favorite_team ?? '',
         country: profile.country ?? '',
         city: profile.city ?? '',
+        bio: profile.bio ?? '',
       });
     }
   }, [profile, reset, user]);
@@ -103,6 +108,7 @@ export function ProfilePage() {
       favorite_team: data.favorite_team || null,
       country: data.country || null,
       city: data.city || null,
+      bio: data.bio?.trim() || null,
     });
   };
 
@@ -208,6 +214,20 @@ export function ProfilePage() {
                 <Input placeholder="Barcelona" {...register('city')} />
               </FormField>
             </div>
+
+            <FormField
+              label="Bio"
+              error={errors.bio?.message}
+              hint={`${bioValue.length}/280 · Opcional, visible en tu perfil público`}
+            >
+              <Textarea
+                rows={3}
+                className="min-h-24 resize-y"
+                placeholder="Aficionado, estadio o cómo vives el fútbol…"
+                maxLength={280}
+                {...register('bio')}
+              />
+            </FormField>
 
             {mutation.error ? (
               <p className="text-sm text-destructive">{(mutation.error as Error).message}</p>

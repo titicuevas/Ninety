@@ -22,6 +22,7 @@ const updateProfileSchema = z.object({
   favorite_team: z.string().max(100).optional().nullable(),
   country: z.string().max(100).optional().nullable(),
   city: z.string().max(100).optional().nullable(),
+  bio: z.string().max(280).optional().nullable(),
 });
 
 const followListQuerySchema = z.object({
@@ -347,7 +348,7 @@ profileRouter.delete('/:username/follow', requireAuth, async (req: AuthRequest, 
 profileRouter.get('/:username', async (req, res) => {
   const { data, error } = await supabaseAnon
     .from('profiles')
-    .select('id, username, full_name, avatar_url, favorite_team, country, city, created_at')
+    .select('id, username, full_name, avatar_url, favorite_team, country, city, bio, created_at')
     .eq('username', req.params.username)
     .single();
 

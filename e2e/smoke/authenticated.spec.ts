@@ -35,4 +35,16 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(page).toHaveURL(/\/feed/);
     await expect(page.getByRole('heading', { name: /^feed$/i })).toBeVisible();
   });
+
+  test('perfil editable muestra campo bio', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page
+      .getByRole('navigation', { name: /navegación principal/i })
+      .getByRole('link', { name: /perfil/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/profile/);
+    await expect(page.getByRole('heading', { name: /tu perfil/i })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByLabel(/^bio$/i)).toBeVisible();
+  });
 });

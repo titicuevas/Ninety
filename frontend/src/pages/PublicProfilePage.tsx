@@ -192,6 +192,10 @@ export function PublicProfilePage() {
               ) : null}
             </div>
 
+            {profile.bio?.trim() ? (
+              <p className="mt-3 max-w-prose text-sm text-muted-foreground sm:text-left">{profile.bio.trim()}</p>
+            ) : null}
+
             <p className="mt-2 text-sm text-muted-foreground">
               {total === 1 ? '1 partido en su diario' : `${total} partidos en su diario`}
             </p>
