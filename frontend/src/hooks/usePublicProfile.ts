@@ -3,6 +3,7 @@ import { apiFetch } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import type { Capsule } from '@/types/capsule';
 import type { Profile } from '@/types/profile';
+import type { PublicProfileStats } from '@/types/publicProfile';
 
 const PUBLIC_PROFILE_PAGE_SIZE = 20;
 
@@ -10,6 +11,7 @@ interface UserCapsulesResponse {
   profile: Profile;
   capsules: Capsule[];
   total: number;
+  stats?: PublicProfileStats;
 }
 
 export function usePublicProfile(username: string | undefined) {

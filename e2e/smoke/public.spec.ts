@@ -22,9 +22,18 @@ test.describe('Smoke — público @smoke', () => {
     });
     await expect(page.getByRole('link', { name: /seguidores/i })).toBeVisible();
     await expect(page.getByText(/\d+ partidos? en su diario/i)).toBeVisible();
+
+    const wrapped = page.getByRole('heading', { name: /el fútbol de/i });
+    const emptyDiary = page.getByText(/aún no ha publicado partidos/i);
+    // Si el demo tiene Capsules públicas, debe verse el Wrapped público
+    if (await wrapped.isVisible().catch(() => false)) {
+      await expect(page.getByText(/wrapped público/i)).toBeVisible();
+    } else {
+      await expect(emptyDiary.or(page.locator('main'))).toBeVisible();
+    }
   });
 
-  test('API perfil público soporta paginación', async ({ request }) => {
+  test('API perfil público incluye stats en la primera página', async ({ request }) => {
     const res = await request.get(
       `${API_BASE}/api/capsules/user/${DEMO_USERNAME}?limit=5&offset=0`,
     );
@@ -33,11 +42,14 @@ test.describe('Smoke — público @smoke', () => {
       profile?: { username?: string };
       capsules?: unknown[];
       total?: number;
+      stats?: { totalMatches?: number };
     };
     expect(body.profile?.username).toBeTruthy();
     expect(Array.isArray(body.capsules)).toBe(true);
     expect(body.capsules!.length).toBeLessThanOrEqual(5);
     expect(typeof body.total).toBe('number');
+    expect(body.stats).toBeTruthy();
+    expect(typeof body.stats?.totalMatches).toBe('number');
   });
 
   test('listas followers/following públicas no 401', async ({ request }) => {

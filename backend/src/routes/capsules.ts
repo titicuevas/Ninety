@@ -8,6 +8,7 @@ import { attachLikeStats, isMissingLikesTable } from '../lib/capsuleLikes.js';
 import { attachFollowStats, getFollowingIds } from '../lib/userFollows.js';
 import { notifyUser } from '../lib/notifyUser.js';
 import { normalizeProfile } from '../lib/profileNormalize.js';
+import { computePublicProfileStats } from '../lib/publicProfileStats.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
@@ -314,6 +315,23 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
     return;
   }
 
+  let stats = null;
+  if (offset === 0) {
+    let statsQuery = reader
+      .from('capsules')
+      .select('watched_at, rating, home_team_name, away_team_name, competition_name, watch_context')
+      .eq('user_id', profile.id);
+
+    if (viewerId !== profile.id) {
+      statsQuery = statsQuery.eq('is_public', true);
+    }
+
+    const { data: statsRows, error: statsError } = await statsQuery;
+    if (!statsError) {
+      stats = computePublicProfileStats(statsRows ?? []);
+    }
+  }
+
   const withLikes = await attachLikeStats(reader, viewerId, data ?? []);
   const capsulesWithLikes = await attachCommentCounts(reader, withLikes);
   const normalizedProfile = normalizeProfile(profile);
@@ -323,6 +341,7 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
     profile: profileWithFollows,
     capsules: capsulesWithLikes,
     total: count ?? capsulesWithLikes.length,
+    ...(stats ? { stats } : {}),
   });
 });
 

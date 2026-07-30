@@ -6,6 +6,7 @@ import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { FollowButton } from '@/components/FollowButton';
 import { Layout } from '@/components/Layout';
 import { PublicLayout } from '@/components/PublicLayout';
+import { PublicWrappedSummary } from '@/components/PublicWrappedSummary';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { StarRating } from '@/components/StarRating';
 import { WatchContextBadge } from '@/components/WatchContextBadge';
@@ -125,6 +126,7 @@ export function PublicProfilePage() {
   const profile = data?.pages[0]?.profile;
   const capsules = data?.pages.flatMap((page) => page.capsules) ?? [];
   const total = data?.pages[0]?.total ?? capsules.length;
+  const stats = data?.pages[0]?.stats;
   const isOwnProfile = !!user && profile?.id === user.id;
   const Shell = user ? Layout : PublicLayout;
 
@@ -237,6 +239,10 @@ export function PublicProfilePage() {
             </Button>
           ) : null}
         </section>
+
+        {stats && stats.totalMatches > 0 ? (
+          <PublicWrappedSummary name={displayName} stats={stats} />
+        ) : null}
 
         {capsules.length > 0 ? (
           <section className="space-y-4">
