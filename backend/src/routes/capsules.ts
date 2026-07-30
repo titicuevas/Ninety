@@ -705,7 +705,13 @@ capsulesRouter.post('/:id/comments', requireAuth, async (req: AuthRequest, res) 
     return;
   }
 
-  notifyUser({ userId: capsule.user_id, actorId: req.userId!, type: 'comment', capsuleId: capsule.id });
+  notifyUser({
+    userId: capsule.user_id,
+    actorId: req.userId!,
+    type: 'comment',
+    capsuleId: capsule.id,
+    body: parsed.data.body,
+  });
 
   const { data: profile } = await supabase
     .from('profiles')

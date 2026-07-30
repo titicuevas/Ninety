@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+  type InfiniteData,
+} from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -13,6 +18,8 @@ export interface AppNotification {
   type: 'like' | 'follow' | 'comment';
   actor_id: string;
   capsule_id: string | null;
+  /** Snippet del comentario (si type=comment). */
+  body?: string | null;
   read: boolean;
   created_at: string;
   actor: NotificationActor | null;
@@ -21,15 +28,33 @@ export interface AppNotification {
 interface NotificationsResponse {
   notifications: AppNotification[];
   unread_count: number;
+  total: number;
 }
 
-const QUERY_KEY = ['notifications'];
+const QUERY_KEY = ['notifications'] as const;
+const PAGE_SIZE = 30;
 
 export function useNotifications() {
   const session = useAuthStore((s) => s.session);
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: QUERY_KEY,
-    queryFn: () => apiFetch<NotificationsResponse>('/api/notifications', {}, session?.access_token),
+    queryFn: ({ pageParam }) => {
+      const params = new URLSearchParams({
+        limit: String(PAGE_SIZE),
+        offset: String(pageParam),
+      });
+      return apiFetch<NotificationsResponse>(
+        `/api/notifications?${params.toString()}`,
+        {},
+        session?.access_token,
+      );
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, page) => sum + page.notifications.length, 0);
+      const total = lastPage.total ?? loaded;
+      return loaded < total ? loaded : undefined;
+    },
     enabled: !!session,
     staleTime: 15_000,
     refetchInterval: 60_000,
@@ -40,7 +65,7 @@ export function useNotifications() {
 
 export function useUnreadCount() {
   const { data } = useNotifications();
-  return data?.unread_count ?? 0;
+  return data?.pages[0]?.unread_count ?? 0;
 }
 
 export function useMarkAllRead() {
@@ -51,7 +76,7 @@ export function useMarkAllRead() {
     mutationFn: () =>
       apiFetch<{ ok: boolean }>('/api/notifications/read-all', { method: 'POST' }, session?.access_token),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEY });
+      void qc.invalidateQueries({ queryKey: QUERY_KEY });
     },
   });
 }
@@ -69,20 +94,26 @@ export function useMarkNotificationsRead() {
       ),
     onMutate: async (ids) => {
       await qc.cancelQueries({ queryKey: QUERY_KEY });
-      const previous = qc.getQueryData<NotificationsResponse>(QUERY_KEY);
-      qc.setQueryData<NotificationsResponse>(QUERY_KEY, (old) => {
+      const previous = qc.getQueryData<InfiniteData<NotificationsResponse>>(QUERY_KEY);
+      qc.setQueryData<InfiniteData<NotificationsResponse>>(QUERY_KEY, (old) => {
         if (!old) return old;
         const idSet = new Set(ids);
         let unreadDelta = 0;
-        const notifications = old.notifications.map((n) => {
-          if (!idSet.has(n.id) || n.read) return n;
-          unreadDelta += 1;
-          return { ...n, read: true };
-        });
+        const pages = old.pages.map((page) => ({
+          ...page,
+          notifications: page.notifications.map((n) => {
+            if (!idSet.has(n.id) || n.read) return n;
+            unreadDelta += 1;
+            return { ...n, read: true };
+          }),
+        }));
         return {
           ...old,
-          notifications,
-          unread_count: Math.max(0, old.unread_count - unreadDelta),
+          pages: pages.map((page, index) =>
+            index === 0
+              ? { ...page, unread_count: Math.max(0, page.unread_count - unreadDelta) }
+              : page,
+          ),
         };
       });
       return { previous };
@@ -109,13 +140,18 @@ export function useClearReadNotifications() {
       ),
     onMutate: async () => {
       await qc.cancelQueries({ queryKey: QUERY_KEY });
-      const previous = qc.getQueryData<NotificationsResponse>(QUERY_KEY);
-      qc.setQueryData<NotificationsResponse>(QUERY_KEY, (old) => {
+      const previous = qc.getQueryData<InfiniteData<NotificationsResponse>>(QUERY_KEY);
+      qc.setQueryData<InfiniteData<NotificationsResponse>>(QUERY_KEY, (old) => {
         if (!old) return old;
-        return {
-          ...old,
-          notifications: old.notifications.filter((n) => !n.read),
-        };
+        const pages = old.pages.map((page) => {
+          const notifications = page.notifications.filter((n) => !n.read);
+          return {
+            ...page,
+            notifications,
+            total: Math.max(0, (page.total ?? 0) - (page.notifications.length - notifications.length)),
+          };
+        });
+        return { ...old, pages };
       });
       return { previous };
     },

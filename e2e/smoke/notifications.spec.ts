@@ -24,6 +24,11 @@ test.describe('Smoke — notificaciones @smoke', () => {
     const list = page.locator('[class*="divide-"]');
 
     await expect(empty.or(list)).toBeVisible({ timeout: 15_000 });
+
+    const loadMore = page.getByRole('button', { name: /cargar más/i });
+    if (await loadMore.isVisible()) {
+      await expect(loadMore).toBeEnabled();
+    }
   });
 
   test('UI de push: activar, desactivar o sin configurar', async ({ page }) => {
@@ -38,9 +43,9 @@ test.describe('Smoke — notificaciones @smoke', () => {
     const enabledLabel = page.getByText(/alertas activadas/i);
     const empty = page.getByText(/sin notificaciones/i);
     const list = page.locator('[class*="divide-"]');
+    const diagnostics = page.getByTestId('push-diagnostics');
 
-    // La página carga aunque push no esté configurado en el entorno
-    await expect(empty.or(list).or(enable).or(disable).or(enabledLabel)).toBeVisible({
+    await expect(empty.or(list).or(enable).or(disable).or(enabledLabel).or(diagnostics)).toBeVisible({
       timeout: 15_000,
     });
 
@@ -51,25 +56,10 @@ test.describe('Smoke — notificaciones @smoke', () => {
       await expect(enabledLabel).toBeVisible();
       await expect(testPush).toBeVisible();
     }
-  });
 
-  test('muestra la tarjeta de estado de push', async ({ page }) => {
-    await openAuthenticatedHome(page);
-    await page.goto('/notifications');
-    await page.waitForURL(/\/notifications/);
-
-    await expect(page.getByText(/servidor push/i)).toBeVisible();
-    await expect(page.getByText(/navegador/i)).toBeVisible();
-    await expect(page.getByText(/permiso/i)).toBeVisible();
-
-    await expect(
-      page.getByText(/configurado|pendiente en backend\/railway/i),
-    ).toBeVisible();
-    await expect(
-      page.getByText(/compatible|no compatible/i),
-    ).toBeVisible();
-    await expect(
-      page.getByText(/permitidas|bloqueadas|pendientes|no compatible/i),
-    ).toBeVisible();
+    // Diagnóstico demoted: solo si push no está listo o el permiso está bloqueado
+    if (await diagnostics.isVisible()) {
+      await expect(diagnostics).toContainText(/alertas push/i);
+    }
   });
 });

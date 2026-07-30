@@ -43,6 +43,34 @@ const textMap = {
   comment: 'comentó en tu cápsula',
 } as const;
 
+function ActorAvatar({ n }: { n: AppNotification }) {
+  const Icon = iconMap[n.type];
+  const name = n.actor?.display_name || n.actor?.username || '?';
+  const avatarUrl = n.actor?.avatar_url;
+
+  return (
+    <span className="relative mt-0.5 shrink-0">
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt=""
+          className="h-10 w-10 rounded-full border border-border object-cover"
+        />
+      ) : (
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+          {name.slice(0, 1).toUpperCase()}
+        </span>
+      )}
+      <span
+        className="absolute -right-0.5 -bottom-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-background bg-secondary text-muted-foreground"
+        aria-hidden
+      >
+        <Icon className="h-2.5 w-2.5" />
+      </span>
+    </span>
+  );
+}
+
 function NotificationItem({
   n,
   onOpen,
@@ -50,28 +78,31 @@ function NotificationItem({
   n: AppNotification;
   onOpen?: (id: string) => void;
 }) {
-  const Icon = iconMap[n.type];
   const actorName = n.actor?.display_name || (n.actor?.username ? `@${n.actor.username}` : 'Alguien');
-  const link = n.type === 'follow' && n.actor?.username
-    ? `/u/${n.actor.username}`
-    : n.capsule_id
-      ? `/c/${n.capsule_id}`
-      : undefined;
+  const link =
+    n.type === 'follow' && n.actor?.username
+      ? `/u/${n.actor.username}`
+      : n.capsule_id
+        ? `/c/${n.capsule_id}`
+        : undefined;
+  const snippet = n.type === 'comment' && n.body?.trim() ? n.body.trim() : null;
 
   const content = (
-    <div className={cn(
-      'flex items-start gap-3 rounded-lg p-3 transition-colors',
-      !n.read && 'bg-primary/5',
-      link && 'hover:bg-secondary/60',
-    )}>
-      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground">
-        <Icon className="h-4 w-4" />
-      </span>
+    <div
+      className={cn(
+        'flex items-start gap-3 rounded-lg p-3 transition-colors',
+        !n.read && 'bg-primary/5',
+        link && 'hover:bg-secondary/60',
+      )}
+    >
+      <ActorAvatar n={n} />
       <div className="min-w-0 flex-1">
         <p className="text-sm">
-          <span className="font-medium">{actorName}</span>{' '}
-          {textMap[n.type]}
+          <span className="font-medium">{actorName}</span> {textMap[n.type]}
         </p>
+        {snippet ? (
+          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">«{snippet}»</p>
+        ) : null}
         <p className="mt-0.5 text-xs text-muted-foreground">{timeAgo(n.created_at)}</p>
       </div>
       {!n.read && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary" />}
@@ -105,7 +136,13 @@ function NotificationItem({
 }
 
 export function NotificationsPage() {
-  const { data, isLoading } = useNotifications();
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useNotifications();
   const markAll = useMarkAllRead();
   const markRead = useMarkNotificationsRead();
   const clearRead = useClearReadNotifications();
@@ -115,10 +152,11 @@ export function NotificationsPage() {
   const enablePush = useEnablePush();
   const disablePush = useDisablePush();
   const testPush = useTestPush();
-  const notifications = data?.notifications ?? [];
-  const unread = data?.unread_count ?? 0;
+  const notifications = data?.pages.flatMap((page) => page.notifications) ?? [];
+  const unread = data?.pages[0]?.unread_count ?? 0;
   const hasRead = notifications.some((n) => n.read);
   const canEnablePush = !!pushKey?.enabled && !pushUnavailable;
+  const showPushDiagnostics = !canEnablePush || pushSupport?.permission === 'denied';
   const pushPermissionLabel =
     pushSupport?.permission === 'granted'
       ? 'Permitidas'
@@ -214,32 +252,16 @@ export function NotificationsPage() {
           </p>
         ) : null}
 
-        <Card>
-          <CardContent className="grid gap-3 p-5 sm:grid-cols-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Servidor push
-              </p>
-              <p className="mt-1 text-sm font-medium">
-                {canEnablePush ? 'Configurado' : 'Pendiente en backend/Railway'}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Navegador
-              </p>
-              <p className="mt-1 text-sm font-medium">
-                {pushSupport?.supported ? 'Compatible' : 'No compatible'}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Permiso
-              </p>
-              <p className="mt-1 text-sm font-medium">{pushPermissionLabel}</p>
-            </div>
-          </CardContent>
-        </Card>
+        {showPushDiagnostics ? (
+          <p className="text-xs text-muted-foreground" data-testid="push-diagnostics">
+            Alertas push:{' '}
+            {canEnablePush ? 'servidor listo' : 'pendiente en backend/Railway'}
+            {' · '}
+            {pushSupport?.supported ? 'navegador compatible' : 'navegador no compatible'}
+            {' · '}
+            permiso {pushPermissionLabel.toLowerCase()}
+          </p>
+        ) : null}
 
         {isLoading ? (
           <div className="flex justify-center py-16">
@@ -256,14 +278,27 @@ export function NotificationsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="divide-y divide-border rounded-lg border">
-            {notifications.map((n) => (
-              <NotificationItem
-                key={n.id}
-                n={n}
-                onOpen={(id) => markRead.mutate([id])}
-              />
-            ))}
+          <div className="space-y-3">
+            <div className="divide-y divide-border rounded-lg border">
+              {notifications.map((n) => (
+                <NotificationItem
+                  key={n.id}
+                  n={n}
+                  onOpen={(id) => markRead.mutate([id])}
+                />
+              ))}
+            </div>
+            {hasNextPage ? (
+              <div className="flex justify-center pt-1">
+                <Button
+                  variant="secondary"
+                  loading={isFetchingNextPage}
+                  onClick={() => void fetchNextPage()}
+                >
+                  Cargar más
+                </Button>
+              </div>
+            ) : null}
           </div>
         )}
       </div>

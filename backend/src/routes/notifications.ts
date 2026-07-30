@@ -120,19 +120,60 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
     const limit = Math.min(Number(req.query.limit) || 30, 50);
     const offset = Number(req.query.offset) || 0;
 
-    const { data, error } = await supabaseAdmin!
-      .from('notifications')
-      .select('id, type, actor_id, capsule_id, read, created_at')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+    type NotificationRow = {
+      id: string;
+      type: string;
+      actor_id: string;
+      capsule_id: string | null;
+      body?: string | null;
+      read: boolean;
+      created_at: string;
+    };
 
-    if (error) {
-      if (error.code === '42P01') {
-        res.json({ notifications: [], unread_count: 0 });
+    let rows: NotificationRow[] = [];
+    let listError: { message?: string; code?: string } | null = null;
+    let total = 0;
+
+    {
+      const result = await supabaseAdmin!
+        .from('notifications')
+        .select('id, type, actor_id, capsule_id, body, read, created_at', { count: 'exact' })
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      listError = result.error;
+      rows = (result.data as NotificationRow[] | null) ?? [];
+      total = result.count ?? 0;
+    }
+
+    if (listError) {
+      const missingBody =
+        (listError.message ?? '').includes('body') &&
+        ((listError.message ?? '').includes('schema cache') ||
+          (listError.message ?? '').includes('Could not find') ||
+          (listError.message ?? '').includes('column') ||
+          (listError.message ?? '').includes('does not exist'));
+
+      if (missingBody) {
+        const fallback = await supabaseAdmin!
+          .from('notifications')
+          .select('id, type, actor_id, capsule_id, read, created_at', { count: 'exact' })
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1);
+        listError = fallback.error;
+        rows = (fallback.data as NotificationRow[] | null) ?? [];
+        total = fallback.count ?? 0;
+      }
+    }
+
+    if (listError) {
+      if (listError.code === '42P01') {
+        res.json({ notifications: [], unread_count: 0, total: 0 });
         return;
       }
-      throw error;
+      throw listError;
     }
 
     const { count } = await supabaseAdmin!
@@ -141,8 +182,11 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
       .eq('user_id', userId)
       .eq('read', false);
 
-    const actorIds = [...new Set((data ?? []).map((n) => n.actor_id))];
-    const profiles: Record<string, { username: string | null; display_name: string | null; avatar_url: string | null }> = {};
+    const actorIds = [...new Set(rows.map((n) => n.actor_id))];
+    const profiles: Record<
+      string,
+      { username: string | null; display_name: string | null; avatar_url: string | null }
+    > = {};
 
     if (actorIds.length > 0) {
       const { data: profileData } = await supabaseAdmin!
@@ -161,12 +205,13 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
       }
     }
 
-    const notifications = (data ?? []).map((n) => ({
+    const notifications = rows.map((n) => ({
       ...n,
+      body: typeof n.body === 'string' ? n.body : null,
       actor: profiles[n.actor_id] ?? null,
     }));
 
-    res.json({ notifications, unread_count: count ?? 0 });
+    res.json({ notifications, unread_count: count ?? 0, total });
   } catch (err) {
     next(err);
   }
