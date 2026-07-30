@@ -9,6 +9,22 @@ test.describe('Smoke — autenticado @smoke', () => {
     ).toBeVisible({ timeout: 20_000 });
   });
 
+  test('Wrapped permite cambiar periodo y compartir', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    const wrappedHeading = page.getByRole('heading', { name: /esto es tu fútbol/i });
+    const empty = page.getByRole('heading', { name: /tu wrapped empieza/i });
+    await expect(wrappedHeading.or(empty)).toBeVisible({ timeout: 20_000 });
+
+    if (await empty.isVisible().catch(() => false)) return;
+
+    const tabs = page.getByRole('tablist', { name: /periodo del wrapped/i });
+    await expect(tabs).toBeVisible();
+    const allTab = tabs.getByRole('tab', { name: /^todo$/i });
+    await allTab.click();
+    await expect(page).toHaveURL(/wrapped=all/);
+    await expect(page.getByRole('button', { name: /compartir|copiado/i })).toBeVisible();
+  });
+
   test('feed accesible desde la app', async ({ page }) => {
     await openAuthenticatedHome(page);
     await page

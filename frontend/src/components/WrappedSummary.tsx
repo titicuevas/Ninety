@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Check, Camera, Flame, Share2, Sparkles, Star, Trophy, Users } from 'lucide-react';
+import { Calendar, Check, Camera, Flame, Mountain, Share2, Sparkles, Star, Trophy, Users } from 'lucide-react';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { StarRating } from '@/components/StarRating';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
+  MONTH_NAMES_ES,
   buildWrappedShareText,
   formatRating,
   type CapsuleStats,
@@ -54,7 +55,10 @@ function RecentCapsuleRow({ capsule }: { capsule: Capsule }) {
   const score = formatScore(capsule);
 
   return (
-    <div className="flex items-start justify-between gap-3 border-b border-border py-3 last:border-0 last:pb-0">
+    <Link
+      to={`/c/${capsule.id}`}
+      className="flex items-start justify-between gap-3 border-b border-border py-3 last:border-0 last:pb-0 hover:bg-muted/30"
+    >
       <div className="min-w-0">
         <p className="truncate text-sm font-medium">
           {capsule.home_team_name} vs {capsule.away_team_name}
@@ -69,7 +73,7 @@ function RecentCapsuleRow({ capsule }: { capsule: Capsule }) {
           </div>
         ) : null}
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -100,9 +104,44 @@ function TopTeamsCard({ teams }: { teams: Array<{ name: string; count: number }>
   );
 }
 
+function TopCompetitionsCard({ competitions }: { competitions: Array<{ name: string; count: number }> }) {
+  if (competitions.length <= 1) return null;
+
+  return (
+    <Card>
+      <CardContent className="p-5 sm:p-6">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">
+          Top competiciones
+        </p>
+        <ol className="space-y-2">
+          {competitions.map((comp, i) => (
+            <li key={comp.name} className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
+                  {i + 1}
+                </span>
+                <span className="truncate text-sm font-medium">{comp.name}</span>
+              </div>
+              <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+                {comp.count} {comp.count === 1 ? 'partido' : 'partidos'}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </CardContent>
+    </Card>
+  );
+}
+
 const MONTH_LABELS = ['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'] as const;
 
-function MatchesByMonthChart({ matchesByMonth }: { matchesByMonth: number[] }) {
+function MatchesByMonthChart({
+  matchesByMonth,
+  peakMonth,
+}: {
+  matchesByMonth: number[];
+  peakMonth: { month: number; count: number } | null;
+}) {
   if (!matchesByMonth.some((v) => v > 0)) return null;
 
   const max = Math.max(...matchesByMonth, 1);
@@ -117,17 +156,25 @@ function MatchesByMonthChart({ matchesByMonth }: { matchesByMonth: number[] }) {
           {matchesByMonth.map((count, i) => {
             const height = count > 0 ? Math.max((count / max) * 100, 8) : 4;
             const monthKey = `month-${i + 1}`;
+            const isPeak = peakMonth?.month === i + 1;
             return (
               <div key={monthKey} className="flex flex-1 flex-col items-center gap-1">
                 <div
                   className={cn(
                     'w-full rounded-sm transition-all',
-                    count > 0 ? 'bg-primary/70' : 'bg-secondary',
+                    count > 0 ? (isPeak ? 'bg-primary' : 'bg-primary/70') : 'bg-secondary',
                   )}
                   style={{ height: `${height}%` }}
-                  title={`${MONTH_LABELS[i]}: ${count}`}
+                  title={`${MONTH_NAMES_ES[i]}: ${count}`}
                 />
-                <span className="text-[9px] text-muted-foreground">{MONTH_LABELS[i]}</span>
+                <span
+                  className={cn(
+                    'text-[9px]',
+                    isPeak ? 'font-semibold text-primary' : 'text-muted-foreground',
+                  )}
+                >
+                  {MONTH_LABELS[i]}
+                </span>
               </div>
             );
           })}
@@ -288,6 +335,12 @@ export function WrappedSummary({ name, stats, scope, years, onScopeChange }: Wra
                   <p className="text-xs text-white/70">fotos</p>
                 </div>
               ) : null}
+              {stats.fiveStarCount > 0 ? (
+                <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
+                  <p className="text-2xl font-bold tabular-nums">{stats.fiveStarCount}</p>
+                  <p className="text-xs text-white/70">con 5★</p>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -322,6 +375,22 @@ export function WrappedSummary({ name, stats, scope, years, onScopeChange }: Wra
                 title={stats.topCompetition.name}
                 subtitle={`${stats.topCompetition.count} ${stats.topCompetition.count === 1 ? 'partido' : 'partidos'}`}
                 icon={Trophy}
+              />
+            ) : null}
+            {stats.peakMonth ? (
+              <HighlightCard
+                label="Mes pico"
+                title={MONTH_NAMES_ES[stats.peakMonth.month - 1]}
+                subtitle={`${stats.peakMonth.count} ${stats.peakMonth.count === 1 ? 'partido' : 'partidos'}`}
+                icon={Mountain}
+              />
+            ) : null}
+            {stats.firstWatched ? (
+              <HighlightCard
+                label={scope === 'all' ? 'Primero del diario' : 'Primero del año'}
+                title={`${stats.firstWatched.home_team_name} vs ${stats.firstWatched.away_team_name}`}
+                subtitle={formatWatchedDate(stats.firstWatched.watched_at)}
+                icon={Sparkles}
               />
             ) : null}
             {stats.lastWatched ? (
@@ -386,7 +455,8 @@ export function WrappedSummary({ name, stats, scope, years, onScopeChange }: Wra
           ) : null}
 
           <TopTeamsCard teams={stats.topTeams} />
-          <MatchesByMonthChart matchesByMonth={stats.matchesByMonth} />
+          <TopCompetitionsCard competitions={stats.topCompetitions} />
+          <MatchesByMonthChart matchesByMonth={stats.matchesByMonth} peakMonth={stats.peakMonth} />
 
           {stats.recentCapsules.length > 0 ? (
             <Card>

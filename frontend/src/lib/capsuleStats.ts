@@ -17,8 +17,16 @@ export interface CapsuleStats {
   longestStreak: number;
   /** Top 3 equipos más vistos */
   topTeams: Array<{ name: string; count: number }>;
+  /** Top 3 competiciones */
+  topCompetitions: Array<{ name: string; count: number }>;
   /** Partidos por mes (índice 0 = enero, 11 = diciembre) */
   matchesByMonth: number[];
+  /** Mes con más partidos (1–12) */
+  peakMonth: { month: number; count: number } | null;
+  /** Primer partido del periodo (por watched_at) */
+  firstWatched: Capsule | null;
+  /** Partidos valorados con 5 estrellas */
+  fiveStarCount: number;
 }
 
 export type WrappedScope = 'all' | number;
@@ -94,6 +102,43 @@ function computeMatchesByMonth(capsules: Capsule[]): number[] {
   return months;
 }
 
+function computePeakMonth(matchesByMonth: number[]): { month: number; count: number } | null {
+  let peak: { month: number; count: number } | null = null;
+  for (let i = 0; i < matchesByMonth.length; i++) {
+    const count = matchesByMonth[i];
+    if (count <= 0) continue;
+    if (!peak || count > peak.count) peak = { month: i + 1, count };
+  }
+  return peak;
+}
+
+export const MONTH_NAMES_ES = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+] as const;
+
+export function parseWrappedScopeParam(value: string | null | undefined): WrappedScope | null {
+  if (value == null || value === '') return null;
+  if (value === 'all') return 'all';
+  const year = Number(value);
+  if (Number.isInteger(year) && year >= 1990 && year <= 2100) return year;
+  return null;
+}
+
+export function wrappedScopeToParam(scope: WrappedScope): string {
+  return scope === 'all' ? 'all' : String(scope);
+}
+
 function capsuleYear(capsule: Capsule): number {
   return Number(capsule.watched_at.slice(0, 4));
 }
@@ -143,21 +188,28 @@ export function computeCapsuleStats(capsules: Capsule[]): CapsuleStats {
     return sum + urls;
   }, 0);
 
+  const matchesByMonth = computeMatchesByMonth(capsules);
+  const competitions = competitionCounts(capsules);
+
   return {
     totalMatches: capsules.length,
     averageRating,
     ratedCount: ratings.length,
     notesCount: capsules.filter((c) => c.note?.trim()).length,
     photosCount,
-    topCompetition: topEntry(competitionCounts(capsules)),
+    topCompetition: topEntry(competitions),
     topTeam: topEntry(teamCounts(capsules)),
     lastWatched: sortedByWatched[0] ?? null,
+    firstWatched: sortedByWatched[sortedByWatched.length - 1] ?? null,
     bestRated,
     recentCapsules: sortedByWatched.slice(0, 3),
     activeMonths: months.size,
     longestStreak: computeLongestStreak(capsules),
     topTeams: topNEntries(teamCounts(capsules), 3),
-    matchesByMonth: computeMatchesByMonth(capsules),
+    topCompetitions: topNEntries(competitions, 3),
+    matchesByMonth,
+    peakMonth: computePeakMonth(matchesByMonth),
+    fiveStarCount: ratings.filter((r) => r >= 5).length,
   };
 }
 
@@ -176,6 +228,14 @@ export function buildWrappedShareText(name: string, scope: WrappedScope, stats: 
   ];
   if (stats.topTeam) lines.push(`Equipo top: ${stats.topTeam.name}`);
   if (stats.topCompetition) lines.push(`Competición: ${stats.topCompetition.name}`);
+  if (stats.peakMonth) {
+    lines.push(
+      `Mes pico: ${MONTH_NAMES_ES[stats.peakMonth.month - 1]} (${stats.peakMonth.count})`,
+    );
+  }
+  if (stats.fiveStarCount > 0) {
+    lines.push(`5★: ${stats.fiveStarCount}`);
+  }
   if (stats.bestRated) {
     lines.push(
       `Mejor partido: ${stats.bestRated.home_team_name} vs ${stats.bestRated.away_team_name}`,

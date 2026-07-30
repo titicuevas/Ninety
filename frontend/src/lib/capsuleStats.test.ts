@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { computeCapsuleStats, type CapsuleStats } from './capsuleStats.ts';
+import {
+  MONTH_NAMES_ES,
+  buildWrappedShareText,
+  computeCapsuleStats,
+  parseWrappedScopeParam,
+  type CapsuleStats,
+} from './capsuleStats.ts';
 import type { Capsule } from '../types/capsule.ts';
 
 function capsule(partial: Partial<Capsule> & Pick<Capsule, 'id' | 'watched_at' | 'home_team_name' | 'away_team_name'>): Capsule {
@@ -58,5 +64,67 @@ describe('computeCapsuleStats', () => {
     assert.equal(stats.matchesByMonth[0], 2);
     assert.equal(stats.matchesByMonth[6], 1);
     assert.equal(stats.matchesByMonth.reduce((a, b) => a + b, 0), 3);
+  });
+
+  it('detecta mes pico, primer partido y 5 estrellas', () => {
+    const stats = computeCapsuleStats([
+      capsule({
+        id: '1',
+        watched_at: '2025-01-10',
+        home_team_name: 'A',
+        away_team_name: 'B',
+        competition_name: 'LaLiga',
+        rating: 5,
+      }),
+      capsule({
+        id: '2',
+        watched_at: '2025-03-01',
+        home_team_name: 'C',
+        away_team_name: 'D',
+        competition_name: 'LaLiga',
+        rating: 4,
+      }),
+      capsule({
+        id: '3',
+        watched_at: '2025-03-15',
+        home_team_name: 'E',
+        away_team_name: 'F',
+        competition_name: 'Champions',
+        rating: 5,
+      }),
+      capsule({
+        id: '4',
+        watched_at: '2025-03-20',
+        home_team_name: 'G',
+        away_team_name: 'H',
+        competition_name: 'LaLiga',
+      }),
+    ]);
+
+    assert.equal(stats.peakMonth?.month, 3);
+    assert.equal(stats.peakMonth?.count, 3);
+    assert.equal(stats.firstWatched?.id, '1');
+    assert.equal(stats.lastWatched?.id, '4');
+    assert.equal(stats.fiveStarCount, 2);
+    assert.equal(stats.topCompetitions[0]?.name, 'LaLiga');
+    assert.equal(stats.topCompetitions[0]?.count, 3);
+  });
+});
+
+describe('wrapped scope helpers', () => {
+  it('parsea query wrapped', () => {
+    assert.equal(parseWrappedScopeParam('all'), 'all');
+    assert.equal(parseWrappedScopeParam('2025'), 2025);
+    assert.equal(parseWrappedScopeParam('nope'), null);
+  });
+
+  it('incluye mes pico en el texto de compartir', () => {
+    const stats = computeCapsuleStats([
+      capsule({ id: '1', watched_at: '2025-02-01', home_team_name: 'A', away_team_name: 'B', rating: 5 }),
+      capsule({ id: '2', watched_at: '2025-02-10', home_team_name: 'C', away_team_name: 'D' }),
+    ]);
+    const text = buildWrappedShareText('Henry', 2025, stats);
+    assert.match(text, new RegExp(MONTH_NAMES_ES[1]));
+    assert.match(text, /5★: 1/);
   });
 });

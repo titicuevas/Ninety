@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { OnboardingSteps } from '@/components/OnboardingSteps';
 import { WrappedSummary } from '@/components/WrappedSummary';
@@ -12,6 +11,8 @@ import {
   defaultWrappedScope,
   filterCapsulesByScope,
   listCapsuleYears,
+  parseWrappedScopeParam,
+  wrappedScopeToParam,
   type WrappedScope,
 } from '@/lib/capsuleStats';
 import { useProfile } from '@/hooks/useProfile';
@@ -23,6 +24,7 @@ export function HomePage() {
   const { data: profile } = useProfile();
   const { data: capsulesData, isLoading } = useCapsules();
   const { data: followingData } = useFollowList(profile?.username ?? undefined, 'following');
+  const [searchParams, setSearchParams] = useSearchParams();
   const profileIncomplete = isProfileIncomplete(profile);
   const hasCapsule = (capsulesData?.capsules?.length ?? 0) > 0;
   const hasFollow = (followingData?.total ?? 0) > 0;
@@ -34,9 +36,19 @@ export function HomePage() {
   const capsules = capsulesData?.capsules ?? [];
   const years = listCapsuleYears(capsules);
 
-  const [scope, setScope] = useState<WrappedScope | null>(null);
-  const activeScope = scope ?? defaultWrappedScope(capsules);
+  const scopeFromUrl = parseWrappedScopeParam(searchParams.get('wrapped'));
+  const scopeValid =
+    scopeFromUrl === 'all' || (typeof scopeFromUrl === 'number' && years.includes(scopeFromUrl));
+  const activeScope: WrappedScope = scopeValid && scopeFromUrl != null
+    ? scopeFromUrl
+    : defaultWrappedScope(capsules);
   const stats = computeCapsuleStats(filterCapsulesByScope(capsules, activeScope));
+
+  const onScopeChange = (next: WrappedScope) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('wrapped', wrappedScopeToParam(next));
+    setSearchParams(nextParams, { replace: true });
+  };
 
   return (
     <Layout>
@@ -87,7 +99,7 @@ export function HomePage() {
             stats={stats}
             scope={activeScope}
             years={years}
-            onScopeChange={setScope}
+            onScopeChange={onScopeChange}
           />
         )}
       </div>
