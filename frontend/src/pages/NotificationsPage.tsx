@@ -1,10 +1,14 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, Heart, UserPlus, MessageCircle } from 'lucide-react';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useNotifications, useMarkAllRead, type AppNotification } from '@/hooks/useNotifications';
+import {
+  useNotifications,
+  useMarkAllRead,
+  useMarkNotificationsRead,
+  type AppNotification,
+} from '@/hooks/useNotifications';
 import {
   useDisablePush,
   useEnablePush,
@@ -38,7 +42,13 @@ const textMap = {
   comment: 'comentó en tu cápsula',
 } as const;
 
-function NotificationItem({ n }: { n: AppNotification }) {
+function NotificationItem({
+  n,
+  onOpen,
+}: {
+  n: AppNotification;
+  onOpen?: (id: string) => void;
+}) {
   const Icon = iconMap[n.type];
   const actorName = n.actor?.display_name || (n.actor?.username ? `@${n.actor.username}` : 'Alguien');
   const link = n.type === 'follow' && n.actor?.username
@@ -67,12 +77,36 @@ function NotificationItem({ n }: { n: AppNotification }) {
     </div>
   );
 
-  return link ? <Link to={link}>{content}</Link> : content;
+  if (link) {
+    return (
+      <Link
+        to={link}
+        onClick={() => {
+          if (!n.read) onOpen?.(n.id);
+        }}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className="block w-full text-left"
+      onClick={() => {
+        if (!n.read) onOpen?.(n.id);
+      }}
+    >
+      {content}
+    </button>
+  );
 }
 
 export function NotificationsPage() {
   const { data, isLoading } = useNotifications();
   const markAll = useMarkAllRead();
+  const markRead = useMarkNotificationsRead();
   const { data: pushKey, isError: pushUnavailable } = usePushPublicKey();
   const { data: pushSupport } = usePushSupport();
   const { data: pushEnabled = false } = usePushEnabled();
@@ -90,14 +124,6 @@ export function NotificationsPage() {
         : pushSupport?.permission === 'default'
           ? 'Pendientes'
           : 'No compatible';
-
-  useEffect(() => {
-    if (unread > 0) {
-      markAll.mutate();
-    }
-    // Solo al cargar/cambiar el contador; mutate es estable en TanStack Query
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- markAll.mutate
-  }, [unread]);
 
   return (
     <Layout>
@@ -214,7 +240,11 @@ export function NotificationsPage() {
         ) : (
           <div className="divide-y divide-border rounded-lg border">
             {notifications.map((n) => (
-              <NotificationItem key={n.id} n={n} />
+              <NotificationItem
+                key={n.id}
+                n={n}
+                onOpen={(id) => markRead.mutate([id])}
+              />
             ))}
           </div>
         )}

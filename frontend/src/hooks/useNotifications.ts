@@ -53,3 +53,43 @@ export function useMarkAllRead() {
     },
   });
 }
+
+export function useMarkNotificationsRead() {
+  const session = useAuthStore((s) => s.session);
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: string[]) =>
+      apiFetch<{ ok: boolean }>(
+        '/api/notifications/read',
+        { method: 'POST', body: JSON.stringify({ ids }) },
+        session?.access_token,
+      ),
+    onMutate: async (ids) => {
+      await qc.cancelQueries({ queryKey: QUERY_KEY });
+      const previous = qc.getQueryData<NotificationsResponse>(QUERY_KEY);
+      qc.setQueryData<NotificationsResponse>(QUERY_KEY, (old) => {
+        if (!old) return old;
+        const idSet = new Set(ids);
+        let unreadDelta = 0;
+        const notifications = old.notifications.map((n) => {
+          if (!idSet.has(n.id) || n.read) return n;
+          unreadDelta += 1;
+          return { ...n, read: true };
+        });
+        return {
+          ...old,
+          notifications,
+          unread_count: Math.max(0, old.unread_count - unreadDelta),
+        };
+      });
+      return { previous };
+    },
+    onError: (_err, _ids, context) => {
+      if (context?.previous) qc.setQueryData(QUERY_KEY, context.previous);
+    },
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: QUERY_KEY });
+    },
+  });
+}

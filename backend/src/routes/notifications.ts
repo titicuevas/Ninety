@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { requireAuth, type AuthRequest } from '../middleware/auth.js';
 import { supabaseAdmin } from '../lib/supabase.js';
@@ -7,6 +8,14 @@ import { getVapidPublicKey, isPushConfigured, sendPushToUser } from '../lib/webP
 export const notificationsRouter = Router();
 
 notificationsRouter.use(requireAuth);
+
+const pushTestLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas pruebas de push. Espera un minuto.' },
+});
 
 const pushSubscribeSchema = z.object({
   endpoint: z.string().url(),
@@ -78,7 +87,7 @@ notificationsRouter.delete('/push/subscribe', async (req: AuthRequest, res, next
   }
 });
 
-notificationsRouter.post('/push/test', async (req: AuthRequest, res, next) => {
+notificationsRouter.post('/push/test', pushTestLimiter, async (req: AuthRequest, res, next) => {
   try {
     if (!isPushConfigured()) {
       res.status(503).json({ error: 'Push no configurado' });
