@@ -1,9 +1,10 @@
-import { useDeferredValue, useState, type ReactNode } from 'react';
+import { useDeferredValue, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { MapPin, Trophy, X } from 'lucide-react';
 import { CapsuleComments } from '@/components/CapsuleComments';
 import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
+import { FilterChip } from '@/components/FilterChip';
 import { FollowButton } from '@/components/FollowButton';
 import { Layout } from '@/components/Layout';
 import { PublicLayout } from '@/components/PublicLayout';
@@ -20,7 +21,6 @@ import { useAuth } from '@/hooks/useAuthInit';
 import { formatWatchedDate } from '@/lib/format';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { publicProfileUrl } from '@/lib/siteUrl';
-import { cn } from '@/lib/utils';
 import {
   WATCH_CONTEXTS,
   WATCH_CONTEXT_LABELS,
@@ -138,31 +138,6 @@ function parseRatingMin(value: string | null): number | undefined {
 
 function parseWatchContext(value: string | null): WatchContext | undefined {
   return isWatchContext(value) ? value : undefined;
-}
-
-function FilterChip({
-  active,
-  children,
-  onClick,
-}: {
-  active: boolean;
-  children: ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'min-h-10 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        active
-          ? 'bg-primary text-primary-foreground'
-          : 'bg-secondary text-muted-foreground hover:text-foreground',
-      )}
-    >
-      {children}
-    </button>
-  );
 }
 
 export function PublicProfilePage() {

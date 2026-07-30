@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, Search } from 'lucide-react';
+import { FilterChip } from '@/components/FilterChip';
 import { MatchCard } from '@/components/MatchCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -45,31 +46,6 @@ const selectClassName = cn(
   'flex h-12 w-full rounded-lg border border-input bg-secondary px-3 py-2 text-base sm:h-11 sm:text-sm',
   'ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
 );
-
-function FilterChip({
-  active,
-  children,
-  onClick,
-}: {
-  active: boolean;
-  children: ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'min-h-10 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        active
-          ? 'bg-primary text-primary-foreground'
-          : 'bg-secondary text-muted-foreground hover:text-foreground',
-      )}
-    >
-      {children}
-    </button>
-  );
-}
 
 export function MatchSearchPanel() {
   const navigate = useNavigate();

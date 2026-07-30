@@ -1,7 +1,8 @@
-import { useDeferredValue, useMemo, useState, type ReactNode } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Pencil, Trash2, X } from 'lucide-react';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
+import { FilterChip } from '@/components/FilterChip';
 import { Layout } from '@/components/Layout';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { StarRating } from '@/components/StarRating';
@@ -17,7 +18,6 @@ import {
 } from '@/hooks/useCapsules';
 import { listCapsuleYears } from '@/lib/capsuleStats';
 import { formatWatchedDate } from '@/lib/format';
-import { cn } from '@/lib/utils';
 import {
   WATCH_CONTEXTS,
   WATCH_CONTEXT_LABELS,
@@ -127,31 +127,6 @@ function parseVisibility(value: string | null): MyCapsulesVisibility {
 
 function parseWatchContext(value: string | null): WatchContext | undefined {
   return isWatchContext(value) ? value : undefined;
-}
-
-function FilterChip({
-  active,
-  children,
-  onClick,
-}: {
-  active: boolean;
-  children: ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'min-h-10 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        active
-          ? 'bg-primary text-primary-foreground'
-          : 'bg-secondary text-muted-foreground hover:text-foreground',
-      )}
-    >
-      {children}
-    </button>
-  );
 }
 
 export function CapsulesPage() {
