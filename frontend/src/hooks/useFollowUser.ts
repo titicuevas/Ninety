@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import type { FeedResponse } from '@/types/capsule';
@@ -21,6 +21,21 @@ function updateProfileFollow(
   };
 }
 
+function bumpFeedFollowingCount(
+  old: InfiniteData<FeedResponse> | undefined,
+  delta: number,
+): InfiniteData<FeedResponse> | undefined {
+  if (!old) return old;
+  return {
+    ...old,
+    pages: old.pages.map((page, index) =>
+      index === 0
+        ? { ...page, following_count: Math.max(0, (page.following_count ?? 0) + delta) }
+        : page,
+    ),
+  };
+}
+
 export function useToggleFollow(username: string) {
   const session = useAuthStore((s) => s.session);
   const queryClient = useQueryClient();
@@ -39,26 +54,15 @@ export function useToggleFollow(username: string) {
       await queryClient.cancelQueries({ queryKey: ['capsules', 'feed'] });
 
       const previousProfile = queryClient.getQueryData<PublicProfileData>(['profile', 'public', username]);
-      const previousFeed = queryClient.getQueryData<FeedResponse>(['capsules', 'feed']);
+      const previousFeed = queryClient.getQueryData<InfiniteData<FeedResponse>>(['capsules', 'feed']);
 
       queryClient.setQueryData<PublicProfileData>(['profile', 'public', username], (old) =>
         old ? { ...old, profile: updateProfileFollow(old.profile, followed) } : old,
       );
 
-      if (!followed) {
-        queryClient.setQueryData<FeedResponse>(['capsules', 'feed'], (old) =>
-          old ? { ...old, following_count: (old.following_count ?? 0) + 1 } : old,
-        );
-      } else {
-        queryClient.setQueryData<FeedResponse>(['capsules', 'feed'], (old) =>
-          old
-            ? {
-                ...old,
-                following_count: Math.max(0, (old.following_count ?? 0) - 1),
-              }
-            : old,
-        );
-      }
+      queryClient.setQueryData<InfiniteData<FeedResponse>>(['capsules', 'feed'], (old) =>
+        bumpFeedFollowingCount(old, followed ? -1 : 1),
+      );
 
       return { previousProfile, previousFeed };
     },

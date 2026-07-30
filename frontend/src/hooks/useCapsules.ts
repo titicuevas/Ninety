@@ -1,7 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import type { Capsule, CapsulesResponse, CreateCapsuleInput, FeedCapsule, FeedResponse, UpdateCapsuleInput } from '@/types/capsule';
+
+const FEED_PAGE_SIZE = 20;
 
 export function useCapsules() {
   const session = useAuthStore((s) => s.session);
@@ -30,9 +32,19 @@ export function useCreateCapsule() {
 export function useCapsuleFeed() {
   const session = useAuthStore((s) => s.session);
 
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ['capsules', 'feed'],
-    queryFn: () => apiFetch<FeedResponse>('/api/capsules/feed?limit=30', {}, session?.access_token),
+    queryFn: ({ pageParam }) =>
+      apiFetch<FeedResponse>(
+        `/api/capsules/feed?limit=${FEED_PAGE_SIZE}&offset=${pageParam}`,
+        {},
+        session?.access_token,
+      ),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, page) => sum + page.capsules.length, 0);
+      return loaded < lastPage.total ? loaded : undefined;
+    },
     enabled: !!session,
   });
 }
@@ -52,7 +64,7 @@ export function useToggleCapsuleLike() {
     },
     onMutate: async ({ capsuleId, liked }) => {
       await queryClient.cancelQueries({ queryKey: ['capsules', 'feed'] });
-      const previousFeed = queryClient.getQueryData<FeedResponse>(['capsules', 'feed']);
+      const previousFeed = queryClient.getQueryData<InfiniteData<FeedResponse>>(['capsules', 'feed']);
 
       const updateCapsule = <T extends { id: string; likes_count?: number; liked_by_me?: boolean }>(c: T): T =>
         c.id === capsuleId
@@ -63,8 +75,16 @@ export function useToggleCapsuleLike() {
             }
           : c;
 
-      queryClient.setQueryData<FeedResponse>(['capsules', 'feed'], (old) =>
-        old ? { ...old, capsules: old.capsules.map(updateCapsule) } : old,
+      queryClient.setQueryData<InfiniteData<FeedResponse>>(['capsules', 'feed'], (old) =>
+        old
+          ? {
+              ...old,
+              pages: old.pages.map((page) => ({
+                ...page,
+                capsules: page.capsules.map(updateCapsule),
+              })),
+            }
+          : old,
       );
 
       queryClient.setQueriesData<{ profile: unknown; capsules: FeedCapsule[] }>(

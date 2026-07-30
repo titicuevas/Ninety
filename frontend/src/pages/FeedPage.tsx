@@ -112,13 +112,25 @@ function sortCapsules(capsules: FeedCapsule[], sort: FeedSort): FeedCapsule[] {
 
 export function FeedPage() {
   const { user } = useAuth();
-  const { data, isLoading, isError, error } = useCapsuleFeed();
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useCapsuleFeed();
   const [sort, setSort] = useState<FeedSort>('recent');
-  const capsules = useMemo(
-    () => sortCapsules(data?.capsules ?? [], sort),
-    [data?.capsules, sort],
+  const rawCapsules = useMemo(
+    () => data?.pages.flatMap((page) => page.capsules) ?? [],
+    [data],
   );
-  const followingCount = data?.following_count;
+  const capsules = useMemo(
+    () => sortCapsules(rawCapsules, sort),
+    [rawCapsules, sort],
+  );
+  const followingCount = data?.pages[0]?.following_count;
   const isEmpty = !isLoading && !isError && capsules.length === 0;
   const { data: discoverData } = useDiscoverProfiles(isEmpty);
   const suggestions = discoverData?.profiles ?? [];
@@ -206,13 +218,26 @@ export function FeedPage() {
         ) : null}
 
         {!isLoading && !isError && capsules.length > 0 ? (
-          <ul className="space-y-3">
-            {capsules.map((capsule) => (
-              <li key={capsule.id}>
-                <FeedCapsuleCard capsule={capsule} currentUserId={user?.id} />
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-4">
+            <ul className="space-y-3">
+              {capsules.map((capsule) => (
+                <li key={capsule.id}>
+                  <FeedCapsuleCard capsule={capsule} currentUserId={user?.id} />
+                </li>
+              ))}
+            </ul>
+            {hasNextPage ? (
+              <div className="flex justify-center pt-2">
+                <Button
+                  variant="secondary"
+                  loading={isFetchingNextPage}
+                  onClick={() => void fetchNextPage()}
+                >
+                  Cargar más
+                </Button>
+              </div>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </Layout>
