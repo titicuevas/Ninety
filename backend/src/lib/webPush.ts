@@ -19,17 +19,19 @@ function ensureWebPushConfigured() {
 export async function sendPushToUser(
   userId: string,
   payload: { title: string; body: string; url?: string },
-) {
-  if (!ensureWebPushConfigured() || !supabaseAdmin) return;
+): Promise<{ sent: number; skipped: number }> {
+  if (!ensureWebPushConfigured() || !supabaseAdmin) return { sent: 0, skipped: 0 };
 
   const { data: rows } = await supabaseAdmin
     .from('push_subscriptions')
     .select('id, endpoint, p256dh, auth')
     .eq('user_id', userId);
 
-  if (!rows?.length) return;
+  if (!rows?.length) return { sent: 0, skipped: 0 };
 
   const body = JSON.stringify(payload);
+  let sent = 0;
+  let skipped = 0;
 
   await Promise.all(
     rows.map(async (row) => {
@@ -41,7 +43,9 @@ export async function sendPushToUser(
           },
           body,
         );
+        sent += 1;
       } catch (err: unknown) {
+        skipped += 1;
         const status = err && typeof err === 'object' && 'statusCode' in err ? Number(err.statusCode) : 0;
         // 404/410 = subscription expired
         if (status === 404 || status === 410) {
@@ -50,4 +54,6 @@ export async function sendPushToUser(
       }
     }),
   );
+
+  return { sent, skipped };
 }

@@ -34,6 +34,7 @@ test.describe('Smoke — notificaciones @smoke', () => {
 
     const enable = page.getByRole('button', { name: /activar alertas/i });
     const disable = page.getByRole('button', { name: /desactivar alertas/i });
+    const testPush = page.getByRole('button', { name: /enviar prueba/i });
     const enabledLabel = page.getByText(/alertas activadas/i);
     const empty = page.getByText(/sin notificaciones/i);
     const list = page.locator('[class*="divide-"]');
@@ -48,6 +49,7 @@ test.describe('Smoke — notificaciones @smoke', () => {
     }
     if (await disable.isVisible()) {
       await expect(enabledLabel).toBeVisible();
+      await expect(testPush).toBeVisible();
     }
   });
 

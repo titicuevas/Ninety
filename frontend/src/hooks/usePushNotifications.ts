@@ -108,6 +108,7 @@ export function useEnablePush() {
     onSuccess: () => {
       queryClient.setQueryData(['notifications', 'push-enabled'], true);
       void queryClient.invalidateQueries({ queryKey: ['notifications', 'push-public-key'] });
+      void queryClient.invalidateQueries({ queryKey: ['notifications', 'push-support'] });
     },
   });
 }
@@ -141,6 +142,16 @@ export function useDisablePush() {
     onSuccess: () => {
       queryClient.setQueryData(['notifications', 'push-enabled'], false);
       void queryClient.invalidateQueries({ queryKey: ['notifications', 'push-public-key'] });
+      void queryClient.invalidateQueries({ queryKey: ['notifications', 'push-support'] });
     },
+  });
+}
+
+export function useTestPush() {
+  const session = useAuthStore((s) => s.session);
+
+  return useMutation({
+    mutationFn: () =>
+      apiFetch<{ ok: boolean; sent: number }>('/api/notifications/push/test', { method: 'POST' }, session?.access_token),
   });
 }

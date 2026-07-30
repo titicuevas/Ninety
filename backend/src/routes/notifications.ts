@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, type AuthRequest } from '../middleware/auth.js';
 import { supabaseAdmin } from '../lib/supabase.js';
-import { getVapidPublicKey, isPushConfigured } from '../lib/webPush.js';
+import { getVapidPublicKey, isPushConfigured, sendPushToUser } from '../lib/webPush.js';
 
 export const notificationsRouter = Router();
 
@@ -73,6 +73,33 @@ notificationsRouter.delete('/push/subscribe', async (req: AuthRequest, res, next
     if (error && error.code !== '42P01') throw error;
 
     res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+notificationsRouter.post('/push/test', async (req: AuthRequest, res, next) => {
+  try {
+    if (!isPushConfigured()) {
+      res.status(503).json({ error: 'Push no configurado' });
+      return;
+    }
+
+    const result = await sendPushToUser(req.userId!, {
+      title: 'Ninety',
+      body: 'Prueba de alertas: si ves esto, el push funciona.',
+      url: '/notifications',
+    });
+
+    if (result.sent === 0) {
+      res.status(400).json({
+        error: 'No hay ninguna suscripción activa. Pulsa «Activar alertas» primero.',
+        ...result,
+      });
+      return;
+    }
+
+    res.json({ ok: true, ...result });
   } catch (err) {
     next(err);
   }

@@ -11,6 +11,7 @@ import {
   usePushEnabled,
   usePushPublicKey,
   usePushSupport,
+  useTestPush,
 } from '@/hooks/usePushNotifications';
 import { cn } from '@/lib/utils';
 
@@ -77,6 +78,7 @@ export function NotificationsPage() {
   const { data: pushEnabled = false } = usePushEnabled();
   const enablePush = useEnablePush();
   const disablePush = useDisablePush();
+  const testPush = useTestPush();
   const notifications = data?.notifications ?? [];
   const unread = data?.unread_count ?? 0;
   const canEnablePush = !!pushKey?.enabled && !pushUnavailable;
@@ -117,6 +119,14 @@ export function NotificationsPage() {
               <>
                 <span className="text-xs text-muted-foreground">Alertas activadas</span>
                 <Button
+                  variant="secondary"
+                  size="sm"
+                  loading={testPush.isPending}
+                  onClick={() => testPush.mutate()}
+                >
+                  Enviar prueba
+                </Button>
+                <Button
                   variant="ghost"
                   size="sm"
                   loading={disablePush.isPending}
@@ -150,6 +160,14 @@ export function NotificationsPage() {
               ? disablePush.error.message
               : 'No se pudieron desactivar las alertas'}
           </p>
+        ) : null}
+        {testPush.isError ? (
+          <p className="text-sm text-destructive">
+            {testPush.error instanceof Error ? testPush.error.message : 'No se pudo enviar la prueba'}
+          </p>
+        ) : null}
+        {testPush.isSuccess ? (
+          <p className="text-sm text-primary">Prueba enviada. Revisa las notificaciones del sistema.</p>
         ) : null}
 
         <Card>
