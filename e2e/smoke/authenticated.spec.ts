@@ -39,18 +39,22 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(page.getByRole('heading', { name: /^feed$/i })).toBeVisible();
   });
 
-  test('perfil editable muestra campo bio', async ({ page }) => {
+  test('Buscar partidos muestra chips de temporada', async ({ page }) => {
     await openAuthenticatedHome(page);
     await page
       .getByRole('navigation', { name: /navegación principal/i })
-      .getByRole('link', { name: /perfil/i })
+      .getByRole('link', { name: /buscar/i })
       .first()
       .click();
-    await expect(page).toHaveURL(/\/profile/);
-    await expect(page.getByRole('heading', { name: /tu perfil/i })).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByLabel(/^bio$/i)).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: /subir foto|cambiar foto/i }),
-    ).toBeVisible();
+    await expect(page).toHaveURL(/\/search/);
+    await expect(page.getByRole('heading', { name: /^buscar$/i })).toBeVisible();
+
+    await page.getByLabel(/equipo o rival/i).fill('Betis');
+    await expect(page.getByRole('group', { name: /temporada/i })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: /^cualquiera$/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /esta temporada/i })).toBeVisible();
+
+    await page.getByRole('button', { name: /esta temporada/i }).click();
+    await expect(page).toHaveURL(/season=/);
   });
 });

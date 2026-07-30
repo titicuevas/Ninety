@@ -198,8 +198,8 @@ async function findTeamsByQuery(query: string, competitionCode?: string, season?
   return loadTeamsForSearch({ query, competitionCode, season });
 }
 
-export async function searchMatchesByTeam(query: string): Promise<FootballMatch[]> {
-  const teams = await findTeamsByQuery(query);
+export async function searchMatchesByTeam(query: string, season?: number): Promise<FootballMatch[]> {
+  const teams = await findTeamsByQuery(query, undefined, season);
   if (teams.length === 0) return [];
 
   const teamIds = new Set(teams.map((team) => team.id).filter((id): id is number => id != null));
@@ -207,7 +207,7 @@ export async function searchMatchesByTeam(query: string): Promise<FootballMatch[
   const collected: FootballMatch[] = [];
 
   for (const team of teams) {
-    collected.push(...(await fetchTeamMatches(team, undefined)));
+    collected.push(...(await fetchTeamMatches(team, undefined, season)));
   }
 
   return sortMatchesByDateDesc(
@@ -231,5 +231,5 @@ export async function searchMatches(options: {
 
   if (!trimmed) return [];
 
-  return searchMatchesByTeam(trimmed);
+  return searchMatchesByTeam(trimmed, season);
 }
