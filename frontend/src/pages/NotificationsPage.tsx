@@ -7,6 +7,7 @@ import {
   useNotifications,
   useMarkAllRead,
   useMarkNotificationsRead,
+  useClearReadNotifications,
   type AppNotification,
 } from '@/hooks/useNotifications';
 import {
@@ -107,6 +108,7 @@ export function NotificationsPage() {
   const { data, isLoading } = useNotifications();
   const markAll = useMarkAllRead();
   const markRead = useMarkNotificationsRead();
+  const clearRead = useClearReadNotifications();
   const { data: pushKey, isError: pushUnavailable } = usePushPublicKey();
   const { data: pushSupport } = usePushSupport();
   const { data: pushEnabled = false } = usePushEnabled();
@@ -115,6 +117,7 @@ export function NotificationsPage() {
   const testPush = useTestPush();
   const notifications = data?.notifications ?? [];
   const unread = data?.unread_count ?? 0;
+  const hasRead = notifications.some((n) => n.read);
   const canEnablePush = !!pushKey?.enabled && !pushUnavailable;
   const pushPermissionLabel =
     pushSupport?.permission === 'granted'
@@ -172,6 +175,16 @@ export function NotificationsPage() {
                 Marcar todo leído
               </Button>
             )}
+            {hasRead ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => clearRead.mutate()}
+                loading={clearRead.isPending}
+              >
+                Limpiar leídas
+              </Button>
+            ) : null}
           </div>
         </div>
 
@@ -194,6 +207,11 @@ export function NotificationsPage() {
         ) : null}
         {testPush.isSuccess ? (
           <p className="text-sm text-primary">Prueba enviada. Revisa las notificaciones del sistema.</p>
+        ) : null}
+        {clearRead.isError ? (
+          <p className="text-sm text-destructive">
+            {clearRead.error instanceof Error ? clearRead.error.message : 'No se pudieron limpiar'}
+          </p>
         ) : null}
 
         <Card>

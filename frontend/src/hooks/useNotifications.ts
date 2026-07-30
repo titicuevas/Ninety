@@ -31,8 +31,10 @@ export function useNotifications() {
     queryKey: QUERY_KEY,
     queryFn: () => apiFetch<NotificationsResponse>('/api/notifications', {}, session?.access_token),
     enabled: !!session,
-    staleTime: 30_000,
+    staleTime: 15_000,
     refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 }
 
@@ -86,6 +88,38 @@ export function useMarkNotificationsRead() {
       return { previous };
     },
     onError: (_err, _ids, context) => {
+      if (context?.previous) qc.setQueryData(QUERY_KEY, context.previous);
+    },
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: QUERY_KEY });
+    },
+  });
+}
+
+export function useClearReadNotifications() {
+  const session = useAuthStore((s) => s.session);
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: () =>
+      apiFetch<{ ok: boolean; deleted: number }>(
+        '/api/notifications/read',
+        { method: 'DELETE' },
+        session?.access_token,
+      ),
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: QUERY_KEY });
+      const previous = qc.getQueryData<NotificationsResponse>(QUERY_KEY);
+      qc.setQueryData<NotificationsResponse>(QUERY_KEY, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          notifications: old.notifications.filter((n) => !n.read),
+        };
+      });
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
       if (context?.previous) qc.setQueryData(QUERY_KEY, context.previous);
     },
     onSettled: () => {

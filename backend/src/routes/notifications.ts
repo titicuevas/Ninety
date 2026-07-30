@@ -212,3 +212,28 @@ notificationsRouter.post('/read-all', async (req: AuthRequest, res, next) => {
     next(err);
   }
 });
+
+notificationsRouter.delete('/read', async (req: AuthRequest, res, next) => {
+  try {
+    const userId = req.userId!;
+
+    const { data, error } = await supabaseAdmin!
+      .from('notifications')
+      .delete()
+      .eq('user_id', userId)
+      .eq('read', true)
+      .select('id');
+
+    if (error) {
+      if (error.code === '42P01') {
+        res.json({ ok: true, deleted: 0 });
+        return;
+      }
+      throw error;
+    }
+
+    res.json({ ok: true, deleted: data?.length ?? 0 });
+  } catch (err) {
+    next(err);
+  }
+});
