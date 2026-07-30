@@ -1,14 +1,22 @@
-import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { Pencil, Trash2 } from 'lucide-react';
+import { useDeferredValue, useMemo, useState, type ReactNode } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Pencil, Trash2, X } from 'lucide-react';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { Layout } from '@/components/Layout';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { StarRating } from '@/components/StarRating';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useDeleteCapsule, useMyCapsulesInfinite } from '@/hooks/useCapsules';
+import { Input } from '@/components/ui/input';
+import {
+  useCapsules,
+  useDeleteCapsule,
+  useMyCapsulesInfinite,
+  type MyCapsulesVisibility,
+} from '@/hooks/useCapsules';
+import { listCapsuleYears } from '@/lib/capsuleStats';
 import { formatWatchedDate } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import type { Capsule } from '@/types/capsule';
 
 function formatScore(capsule: Capsule) {
@@ -90,7 +98,66 @@ function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: s
   );
 }
 
+function parseYear(value: string | null): number | undefined {
+  if (!value) return undefined;
+  const year = Number(value);
+  if (!Number.isInteger(year) || year < 1990 || year > 2100) return undefined;
+  return year;
+}
+
+function parseRatingMin(value: string | null): number | undefined {
+  if (!value) return undefined;
+  const rating = Number(value);
+  if (![3, 4, 5].includes(rating)) return undefined;
+  return rating;
+}
+
+function parseVisibility(value: string | null): MyCapsulesVisibility {
+  if (value === 'public' || value === 'private') return value;
+  return 'all';
+}
+
+function FilterChip({
+  active,
+  children,
+  onClick,
+}: {
+  active: boolean;
+  children: ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'min-h-10 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        active
+          ? 'bg-primary text-primary-foreground'
+          : 'bg-secondary text-muted-foreground hover:text-foreground',
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function CapsulesPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [qDraft, setQDraft] = useState(() => searchParams.get('q') ?? '');
+  const deferredQ = useDeferredValue(qDraft.trim());
+
+  const year = parseYear(searchParams.get('year'));
+  const ratingMin = parseRatingMin(searchParams.get('rating'));
+  const visibility = parseVisibility(searchParams.get('visibility'));
+  const q = deferredQ.length >= 2 ? deferredQ : '';
+
+  const { data: allCapsulesData } = useCapsules();
+  const years = useMemo(
+    () => listCapsuleYears(allCapsulesData?.capsules ?? []),
+    [allCapsulesData?.capsules],
+  );
+
   const {
     data,
     isLoading,
@@ -99,13 +166,33 @@ export function CapsulesPage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useMyCapsulesInfinite();
+    isFetching,
+  } = useMyCapsulesInfinite({ q, year, ratingMin, visibility });
   const deleteCapsule = useDeleteCapsule();
   const capsules = useMemo(
     () => data?.pages.flatMap((page) => page.capsules) ?? [],
     [data],
   );
   const total = data?.pages[0]?.total ?? capsules.length;
+
+  const hasFilters =
+    q.length >= 2 || year != null || ratingMin != null || visibility !== 'all';
+  const diaryEmpty = !hasFilters && !isLoading && !isError && total === 0;
+  const filterEmpty = hasFilters && !isLoading && !isError && capsules.length === 0;
+
+  const patchParams = (patch: Record<string, string | null>) => {
+    const next = new URLSearchParams(searchParams);
+    for (const [key, value] of Object.entries(patch)) {
+      if (value == null || value === '') next.delete(key);
+      else next.set(key, value);
+    }
+    setSearchParams(next, { replace: true });
+  };
+
+  const clearFilters = () => {
+    setQDraft('');
+    setSearchParams({}, { replace: true });
+  };
 
   const handleDelete = (id: string) => {
     if (!window.confirm('¿Eliminar esta Capsule?')) return;
@@ -120,11 +207,12 @@ export function CapsulesPage() {
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Mis Capsules</h1>
             <p className="mt-2 text-sm text-muted-foreground sm:text-base">
               Todos los partidos que has guardado en tu diario.
-              {!isLoading && total > 0 ? (
+              {!isLoading && (hasFilters || total > 0) ? (
                 <>
                   {' '}
                   <span className="text-foreground">
                     {total} {total === 1 ? 'partido' : 'partidos'}
+                    {hasFilters ? ' con estos filtros' : ''}
                   </span>
                 </>
               ) : null}
@@ -133,6 +221,98 @@ export function CapsulesPage() {
           <Button asChild className="shrink-0">
             <Link to="/search">Buscar partido</Link>
           </Button>
+        </section>
+
+        <section className="space-y-3" aria-label="Filtros del diario">
+          <div className="relative">
+            <Input
+              value={qDraft}
+              onChange={(e) => {
+                const value = e.target.value;
+                setQDraft(value);
+                const trimmed = value.trim();
+                patchParams({ q: trimmed.length >= 2 ? trimmed : null });
+              }}
+              placeholder="Buscar equipo, competición o nota…"
+              aria-label="Buscar en tus Capsules"
+            />
+            {qDraft ? (
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground"
+                aria-label="Limpiar búsqueda"
+                onClick={() => {
+                  setQDraft('');
+                  patchParams({ q: null });
+                }}
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </button>
+            ) : null}
+          </div>
+
+          {years.length > 0 ? (
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por año">
+              <FilterChip active={year == null} onClick={() => patchParams({ year: null })}>
+                Todos los años
+              </FilterChip>
+              {years.map((y) => (
+                <FilterChip
+                  key={y}
+                  active={year === y}
+                  onClick={() => patchParams({ year: year === y ? null : String(y) })}
+                >
+                  {y}
+                </FilterChip>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por valoración">
+            <FilterChip active={ratingMin == null} onClick={() => patchParams({ rating: null })}>
+              Cualquier ★
+            </FilterChip>
+            {[5, 4, 3].map((min) => (
+              <FilterChip
+                key={min}
+                active={ratingMin === min}
+                onClick={() => patchParams({ rating: ratingMin === min ? null : String(min) })}
+              >
+                {min}+ ★
+              </FilterChip>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por visibilidad">
+            {(
+              [
+                ['all', 'Todas'],
+                ['public', 'Públicas'],
+                ['private', 'Privadas'],
+              ] as const
+            ).map(([value, label]) => (
+              <FilterChip
+                key={value}
+                active={visibility === value}
+                onClick={() =>
+                  patchParams({ visibility: value === 'all' ? null : value })
+                }
+              >
+                {label}
+              </FilterChip>
+            ))}
+          </div>
+
+          {hasFilters ? (
+            <div className="flex items-center gap-3">
+              <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
+                Limpiar filtros
+              </Button>
+              {isFetching && !isFetchingNextPage ? (
+                <span className="text-xs text-muted-foreground">Actualizando…</span>
+              ) : null}
+            </div>
+          ) : null}
         </section>
 
         {isLoading ? (
@@ -149,7 +329,7 @@ export function CapsulesPage() {
           </Card>
         ) : null}
 
-        {!isLoading && !isError && capsules.length === 0 ? (
+        {diaryEmpty ? (
           <Card className="border-dashed">
             <CardContent className="p-6 text-center sm:p-10">
               <p className="text-lg font-medium">Aún no tienes Capsules</p>
@@ -158,6 +338,20 @@ export function CapsulesPage() {
               </p>
               <Button asChild className="mt-4">
                 <Link to="/search">Buscar partido</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {filterEmpty ? (
+          <Card className="border-dashed">
+            <CardContent className="p-6 text-center sm:p-10">
+              <p className="text-lg font-medium">Ningún partido con estos filtros</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Prueba otro año, valoración o limpia la búsqueda.
+              </p>
+              <Button type="button" variant="secondary" className="mt-4" onClick={clearFilters}>
+                Limpiar filtros
               </Button>
             </CardContent>
           </Card>

@@ -47,6 +47,15 @@ const feedQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
+const meQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).optional(),
+  offset: z.coerce.number().int().min(0).default(0),
+  q: z.string().trim().max(100).optional(),
+  year: z.coerce.number().int().min(1990).max(2100).optional(),
+  rating_min: z.coerce.number().int().min(1).max(5).optional(),
+  visibility: z.enum(['all', 'public', 'private']).optional().default('all'),
+});
+
 function getAccessToken(req: AuthRequest): string | null {
   return req.headers.authorization?.replace('Bearer ', '') ?? null;
 }
@@ -167,19 +176,15 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  const paginate = req.query.limit != null && req.query.limit !== '';
-  let limit: number | undefined;
-  let offset = 0;
-
-  if (paginate) {
-    const parsed = feedQuerySchema.safeParse(req.query);
-    if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.flatten() });
-      return;
-    }
-    limit = parsed.data.limit;
-    offset = parsed.data.offset;
+  const parsed = meQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
   }
+
+  const { limit, offset, year, rating_min, visibility } = parsed.data;
+  const rawQ = parsed.data.q?.toLowerCase() ?? '';
+  const safeQ = rawQ.replace(/[%_,.()"]/g, '').trim();
 
   const supabase = createUserClient(token);
   let query = supabase
@@ -189,6 +194,27 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
     .order('watched_at', { ascending: false })
     .order('created_at', { ascending: false });
 
+  if (year != null) {
+    query = query.gte('watched_at', `${year}-01-01`).lte('watched_at', `${year}-12-31`);
+  }
+
+  if (rating_min != null) {
+    query = query.gte('rating', rating_min);
+  }
+
+  if (visibility === 'public') {
+    query = query.eq('is_public', true);
+  } else if (visibility === 'private') {
+    query = query.eq('is_public', false);
+  }
+
+  if (safeQ.length >= 2) {
+    const pattern = `%${safeQ}%`;
+    query = query.or(
+      `home_team_name.ilike."${pattern}",away_team_name.ilike."${pattern}",competition_name.ilike."${pattern}",note.ilike."${pattern}"`,
+    );
+  }
+
   if (limit != null) {
     query = query.range(offset, offset + limit - 1);
   }
@@ -196,6 +222,10 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   const { data, error, count } = await query;
 
   if (error) {
+    if (visibility !== 'all' && isMissingPrivacyColumn(error)) {
+      res.status(503).json({ error: privacyMigrationHint() });
+      return;
+    }
     res.status(400).json({ error: error.message });
     return;
   }

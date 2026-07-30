@@ -6,6 +6,29 @@ import type { Capsule, CapsulesResponse, CreateCapsuleInput, FeedCapsule, FeedRe
 const FEED_PAGE_SIZE = 20;
 const MY_CAPSULES_PAGE_SIZE = 20;
 
+export type MyCapsulesVisibility = 'all' | 'public' | 'private';
+
+export type MyCapsulesFilters = {
+  q?: string;
+  year?: number;
+  ratingMin?: number;
+  visibility?: MyCapsulesVisibility;
+};
+
+function buildMyCapsulesQuery(filters: MyCapsulesFilters, offset: number): string {
+  const params = new URLSearchParams();
+  params.set('limit', String(MY_CAPSULES_PAGE_SIZE));
+  params.set('offset', String(offset));
+  const q = filters.q?.trim();
+  if (q && q.length >= 2) params.set('q', q);
+  if (filters.year != null) params.set('year', String(filters.year));
+  if (filters.ratingMin != null) params.set('rating_min', String(filters.ratingMin));
+  if (filters.visibility && filters.visibility !== 'all') {
+    params.set('visibility', filters.visibility);
+  }
+  return `/api/capsules/me?${params.toString()}`;
+}
+
 export function useCapsules() {
   const session = useAuthStore((s) => s.session);
 
@@ -17,14 +40,18 @@ export function useCapsules() {
 }
 
 /** Listado paginado de Mis Capsules (no usar en Wrapped/Home). */
-export function useMyCapsulesInfinite() {
+export function useMyCapsulesInfinite(filters: MyCapsulesFilters = {}) {
   const session = useAuthStore((s) => s.session);
+  const q = filters.q?.trim() ?? '';
+  const year = filters.year;
+  const ratingMin = filters.ratingMin;
+  const visibility = filters.visibility ?? 'all';
 
   return useInfiniteQuery({
-    queryKey: ['capsules', 'me', 'page'],
+    queryKey: ['capsules', 'me', 'page', { q, year, ratingMin, visibility }],
     queryFn: ({ pageParam }) =>
       apiFetch<CapsulesResponse>(
-        `/api/capsules/me?limit=${MY_CAPSULES_PAGE_SIZE}&offset=${pageParam}`,
+        buildMyCapsulesQuery({ q, year, ratingMin, visibility }, pageParam),
         {},
         session?.access_token,
       ),
