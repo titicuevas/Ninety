@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { CapsuleComments } from '@/components/CapsuleComments';
 import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
+import { FollowButton } from '@/components/FollowButton';
 import { Layout } from '@/components/Layout';
 import { PublicLayout } from '@/components/PublicLayout';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
@@ -12,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuthInit';
 import { usePublicCapsule } from '@/hooks/usePublicCapsule';
 import { formatWatchedDate } from '@/lib/format';
+import { isAutoUsername } from '@/lib/profileHelpers';
 import { profilePath } from '@/lib/profilePath';
 import { publicCapsuleUrl } from '@/lib/siteUrl';
 
@@ -55,30 +57,74 @@ export function PublicCapsulePage() {
   const score = formatScore(capsule.home_score, capsule.away_score);
   const authorName = capsule.profiles?.display_name ?? capsule.profiles?.username ?? 'Aficionado';
   const username = capsule.profiles?.username;
+  const avatarUrl = capsule.profiles?.avatar_url;
   const shareTitle = `${capsule.home_team_name} vs ${capsule.away_team_name}`;
   const isOwn = !!user && capsule.user_id === user.id;
+  const canFollow = !!username && !isAutoUsername(username) && !isOwn;
 
   return (
     <Shell>
       <div className="mx-auto max-w-2xl space-y-6">
         <section className="flex flex-wrap items-center justify-between gap-3">
-          <div className="min-w-0">
-            {username ? (
-              <Link to={profilePath(username)} className="text-sm font-medium text-primary hover:underline">
-                {authorName}
-                {isOwn ? ' (tú)' : ''}
+          <div className="flex min-w-0 items-center gap-3">
+            {username && !isAutoUsername(username) ? (
+              <Link to={profilePath(username)} className="shrink-0" aria-label={`Perfil de ${authorName}`}>
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt=""
+                    className="h-11 w-11 rounded-full border border-border object-cover"
+                  />
+                ) : (
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                    {authorName.slice(0, 1).toUpperCase()}
+                  </span>
+                )}
               </Link>
+            ) : avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt=""
+                className="h-11 w-11 shrink-0 rounded-full border border-border object-cover"
+              />
             ) : (
-              <p className="text-sm font-medium text-primary">{authorName}</p>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                {authorName.slice(0, 1).toUpperCase()}
+              </span>
             )}
-            <p className="text-xs text-muted-foreground">Visto {formatWatchedDate(capsule.watched_at)}</p>
+
+            <div className="min-w-0">
+              {username && !isAutoUsername(username) ? (
+                <Link to={profilePath(username)} className="text-sm font-medium text-primary hover:underline">
+                  {authorName}
+                  {isOwn ? ' (tú)' : ''}
+                </Link>
+              ) : (
+                <p className="text-sm font-medium text-primary">
+                  {authorName}
+                  {isOwn ? ' (tú)' : ''}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">Visto {formatWatchedDate(capsule.watched_at)}</p>
+            </div>
           </div>
-          <ShareCapsuleButton
-            capsuleId={capsule.id}
-            title={shareTitle}
-            variant="outline"
-            isPublic={capsule.is_public !== false}
-          />
+
+          <div className="flex flex-wrap items-center gap-2">
+            {canFollow && user && username ? (
+              <FollowButton username={username} followedByMe={capsule.profiles?.followed_by_me} />
+            ) : null}
+            {canFollow && !user ? (
+              <Button asChild size="sm" variant="secondary">
+                <Link to="/login">Inicia sesión para seguir</Link>
+              </Button>
+            ) : null}
+            <ShareCapsuleButton
+              capsuleId={capsule.id}
+              title={shareTitle}
+              variant="outline"
+              isPublic={capsule.is_public !== false}
+            />
+          </div>
         </section>
 
         <Card>

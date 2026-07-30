@@ -80,6 +80,35 @@ test.describe('Smoke — público @smoke', () => {
     expect(following.ok()).toBeTruthy();
   });
 
+  test('detalle Capsule pública muestra autor y CTA de seguir', async ({ page, request }) => {
+    const list = await request.get(
+      `${API_BASE}/api/capsules/user/${DEMO_USERNAME}?limit=1&offset=0`,
+    );
+    expect(list.ok()).toBeTruthy();
+    const body = (await list.json()) as {
+      capsules?: Array<{ id?: string; profiles?: { username?: string } }>;
+    };
+    const capsuleId = body.capsules?.[0]?.id;
+    test.skip(!capsuleId, 'El usuario demo no tiene Capsules públicas');
+
+    const detail = await request.get(`${API_BASE}/api/capsules/${capsuleId}`);
+    expect(detail.ok()).toBeTruthy();
+    const capsule = (await detail.json()) as {
+      profiles?: { username?: string | null; followed_by_me?: boolean; avatar_url?: string | null };
+    };
+    expect(capsule.profiles).toBeTruthy();
+    expect(typeof capsule.profiles?.followed_by_me).toBe('boolean');
+
+    await page.goto(`/c/${capsuleId}`);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('button', { name: /compartir capsule/i })).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: /inicia sesión para seguir/i }).or(
+        page.getByRole('button', { name: /seguir|siguiendo/i }),
+      ),
+    ).toBeVisible();
+  });
+
   test('API health', async ({ request }) => {
     const res = await request.get(`${API_BASE}/api/health`);
     expect(res.ok()).toBeTruthy();

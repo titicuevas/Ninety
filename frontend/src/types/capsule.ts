@@ -60,6 +60,7 @@ export interface CapsuleAuthor {
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
+  followed_by_me?: boolean;
 }
 
 export interface FeedCapsule extends Capsule {

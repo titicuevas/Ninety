@@ -777,6 +777,20 @@ capsulesRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
     .eq('id', data.user_id)
     .maybeSingle();
 
+  let followed_by_me = false;
+  if (viewerId && profile && viewerId !== profile.id) {
+    const { data: followRow, error: followError } = await reader
+      .from('user_follows')
+      .select('follower_id')
+      .eq('follower_id', viewerId)
+      .eq('following_id', profile.id)
+      .maybeSingle();
+
+    if (!followError) {
+      followed_by_me = !!followRow;
+    }
+  }
+
   res.json({
     ...withComments,
     profiles: profile
@@ -784,6 +798,7 @@ capsulesRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
           username: profile.username,
           display_name: profile.full_name ?? null,
           avatar_url: profile.avatar_url,
+          followed_by_me,
         }
       : null,
   });
