@@ -23,6 +23,9 @@ test.describe('Smoke — autenticado @smoke', () => {
     await allTab.click();
     await expect(page).toHaveURL(/wrapped=all/);
     await expect(page.getByRole('button', { name: /compartir|copiado/i })).toBeVisible();
+    await page.getByRole('button', { name: /compartir|copiado/i }).click();
+    // Sin Web Share en Chromium headless suele copiar al clipboard; el botón no debe romper
+    await expect(page.getByRole('button', { name: /compartir|copiado/i })).toBeVisible();
   });
 
   test('feed accesible desde la app', async ({ page }) => {

@@ -1,5 +1,6 @@
 import type { Capsule } from '@/types/capsule';
 import { WATCH_CONTEXT_LABELS, isWatchContext } from '@/lib/watchContext';
+import { siteUrl } from '@/lib/siteUrl';
 
 export interface CapsuleStats {
   totalMatches: number;
@@ -229,7 +230,12 @@ export function formatRating(value: number | null) {
   return value.toFixed(1);
 }
 
-export function buildWrappedShareText(name: string, scope: WrappedScope, stats: CapsuleStats): string {
+export function buildWrappedShareText(
+  name: string,
+  scope: WrappedScope,
+  stats: CapsuleStats,
+  profileUrl?: string | null,
+): string {
   const period = scope === 'all' ? 'todo mi diario' : String(scope);
   const lines = [
     `⚽ Mi Wrapped Ninety · ${period}`,
@@ -255,6 +261,6 @@ export function buildWrappedShareText(name: string, scope: WrappedScope, stats: 
       `Mejor partido: ${stats.bestRated.home_team_name} vs ${stats.bestRated.away_team_name}`,
     );
   }
-  lines.push('', 'ninety.up.railway.app');
+  lines.push('', profileUrl?.trim() || siteUrl());
   return lines.join('\n');
 }

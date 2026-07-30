@@ -100,6 +100,7 @@ export function HomePage() {
             scope={activeScope}
             years={years}
             onScopeChange={onScopeChange}
+            username={profile?.username}
           />
         )}
       </div>

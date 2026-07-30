@@ -13,6 +13,8 @@ import {
   type WrappedScope,
 } from '@/lib/capsuleStats';
 import { formatWatchedDate } from '@/lib/format';
+import { isAutoUsername } from '@/lib/profileHelpers';
+import { publicProfileUrl } from '@/lib/siteUrl';
 import type { Capsule } from '@/types/capsule';
 import { cn } from '@/lib/utils';
 
@@ -190,19 +192,34 @@ interface WrappedSummaryProps {
   scope: WrappedScope;
   years: number[];
   onScopeChange: (scope: WrappedScope) => void;
+  /** Username público para deep link al compartir. */
+  username?: string | null;
 }
 
-export function WrappedSummary({ name, stats, scope, years, onScopeChange }: WrappedSummaryProps) {
+export function WrappedSummary({
+  name,
+  stats,
+  scope,
+  years,
+  onScopeChange,
+  username,
+}: WrappedSummaryProps) {
   const [copied, setCopied] = useState(false);
   const bestScore = stats.bestRated ? formatScore(stats.bestRated) : null;
   const periodLabel = scope === 'all' ? 'Todo tu diario' : `Año ${scope}`;
   const badgeLabel = scope === 'all' ? 'Tu Wrapped · completo' : `Tu Wrapped · ${scope}`;
+  const profileUrl =
+    username && !isAutoUsername(username) ? publicProfileUrl(username) : null;
 
   const share = async () => {
-    const text = buildWrappedShareText(name, scope, stats);
+    const text = buildWrappedShareText(name, scope, stats, profileUrl);
     try {
       if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-        await navigator.share({ title: `Wrapped Ninety · ${periodLabel}`, text });
+        await navigator.share({
+          title: `Wrapped Ninety · ${periodLabel}`,
+          text,
+          ...(profileUrl ? { url: profileUrl } : {}),
+        });
         return;
       }
     } catch (err) {

@@ -118,13 +118,15 @@ describe('wrapped scope helpers', () => {
     assert.equal(parseWrappedScopeParam('nope'), null);
   });
 
-  it('incluye mes pico en el texto de compartir', () => {
+  it('incluye mes pico y enlace de perfil en el texto de compartir', () => {
     const stats = computeCapsuleStats([
       capsule({ id: '1', watched_at: '2025-02-01', home_team_name: 'A', away_team_name: 'B', rating: 5 }),
       capsule({ id: '2', watched_at: '2025-02-10', home_team_name: 'C', away_team_name: 'D' }),
     ]);
-    const text = buildWrappedShareText('Henry', 2025, stats);
+    const text = buildWrappedShareText('Henry', 2025, stats, 'https://ninety.example/u/henry');
     assert.match(text, new RegExp(MONTH_NAMES_ES[1]));
     assert.match(text, /5★: 1/);
+    assert.match(text, /https:\/\/ninety\.example\/u\/henry/);
+    assert.doesNotMatch(text, /ninety\.up\.railway\.app/);
   });
 });

@@ -1,5 +1,5 @@
 /** URL base del sitio (sin barra final). */
-function siteOrigin(): string {
+export function siteUrl(): string {
   if (typeof window !== 'undefined') {
     return window.location.origin;
   }
@@ -7,9 +7,9 @@ function siteOrigin(): string {
 }
 
 export function publicProfileUrl(username: string): string {
-  return `${siteOrigin()}/u/${encodeURIComponent(username)}`;
+  return `${siteUrl()}/u/${encodeURIComponent(username)}`;
 }
 
 export function publicCapsuleUrl(capsuleId: string): string {
-  return `${siteOrigin()}/c/${encodeURIComponent(capsuleId)}`;
+  return `${siteUrl()}/c/${encodeURIComponent(capsuleId)}`;
 }

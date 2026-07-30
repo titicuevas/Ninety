@@ -91,7 +91,7 @@ export function EditCapsulePage() {
           watch_context: payload.watch_context,
         },
         {
-          onSuccess: () => navigate('/capsules', { replace: true }),
+          onSuccess: () => navigate(`/c/${capsule.id}`, { replace: true }),
           onSettled: () => setUploading(false),
         },
       );
