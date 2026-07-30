@@ -1,10 +1,13 @@
-import { useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { CapsuleMemoryForm } from '@/components/CapsuleMemoryForm';
 import { Layout } from '@/components/Layout';
 import { MatchCard } from '@/components/MatchCard';
-import { useCreateCapsule } from '@/hooks/useCapsules';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { useCapsules, useCreateCapsule } from '@/hooks/useCapsules';
 import { useAuth } from '@/hooks/useAuthInit';
+import { ApiError } from '@/lib/api';
 import { uploadCapsulePhotos } from '@/lib/capsulePhoto';
 import { clearDraftMatch, readDraftMatch, saveDraftMatch } from '@/lib/draftMatch';
 import { friendlyApiError } from '@/lib/friendlyErrors';
@@ -30,10 +33,16 @@ export function CreateCapsulePage() {
   const stateMatch = (location.state as LocationState | null)?.match;
   const [match] = useState(() => resolveMatch(stateMatch));
   const createCapsule = useCreateCapsule();
+  const { data: capsulesData } = useCapsules();
   const { user } = useAuth();
   const session = useAuthStore((s) => s.session);
   const [uploading, setUploading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const existingCapsuleId = useMemo(() => {
+    if (!match) return null;
+    return capsulesData?.capsules?.find((capsule) => capsule.match_id === match.id)?.id ?? null;
+  }, [capsulesData?.capsules, match]);
 
   if (!match) {
     return <Navigate to="/search" replace />;
@@ -42,6 +51,11 @@ export function CreateCapsulePage() {
   const leaveWithoutSaving = () => {
     clearDraftMatch();
     navigate(-1);
+  };
+
+  const openExisting = (capsuleId: string) => {
+    clearDraftMatch();
+    navigate(`/c/${capsuleId}`, { replace: true });
   };
 
   const handleSubmit = async (payload: {
@@ -54,6 +68,11 @@ export function CreateCapsulePage() {
   }) => {
     if (!user?.id || !session?.access_token) {
       setSubmitError('Sesión no válida. Vuelve a iniciar sesión.');
+      return;
+    }
+
+    if (existingCapsuleId) {
+      openExisting(existingCapsuleId);
       return;
     }
 
@@ -81,6 +100,13 @@ export function CreateCapsulePage() {
             clearDraftMatch();
             navigate(`/c/${created.id}`, { replace: true });
           },
+          onError: (err) => {
+            if (err instanceof ApiError && err.capsuleId) {
+              openExisting(err.capsuleId);
+              return;
+            }
+            setSubmitError(err instanceof Error ? friendlyApiError(err.message) : 'No se pudo guardar');
+          },
           onSettled: () => setUploading(false),
         },
       );
@@ -98,19 +124,38 @@ export function CreateCapsulePage() {
           <p className="mt-1 text-sm text-muted-foreground">Guarda el partido con fotos y recuerdos</p>
         </section>
 
-        <MatchCard match={match} />
+        <MatchCard match={match} savedCapsuleId={existingCapsuleId} />
 
-        <CapsuleMemoryForm
-          defaultWatchedAt={defaultWatchedAt(match)}
-          submitLabel={uploading ? 'Subiendo fotos…' : 'Guardar Capsule'}
-          isBusy={uploading || createCapsule.isPending}
-          error={
-            submitError ??
-            (createCapsule.error ? friendlyApiError((createCapsule.error as Error).message) : null)
-          }
-          onCancel={leaveWithoutSaving}
-          onSubmit={handleSubmit}
-        />
+        {existingCapsuleId ? (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="space-y-3 p-5">
+              <p className="font-medium">Este partido ya está en tu diario</p>
+              <p className="text-sm text-muted-foreground">
+                Ábrelo para ver o editar tu Capsule en lugar de crear otra.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" onClick={() => openExisting(existingCapsuleId)}>
+                  Ver Capsule
+                </Button>
+                <Button asChild type="button" variant="secondary">
+                  <Link to={`/capsules/${existingCapsuleId}/edit`}>Editar</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <CapsuleMemoryForm
+            defaultWatchedAt={defaultWatchedAt(match)}
+            submitLabel={uploading ? 'Subiendo fotos…' : 'Guardar Capsule'}
+            isBusy={uploading || createCapsule.isPending}
+            error={
+              submitError ??
+              (createCapsule.error ? friendlyApiError((createCapsule.error as Error).message) : null)
+            }
+            onCancel={leaveWithoutSaving}
+            onSubmit={handleSubmit}
+          />
+        )}
       </div>
     </Layout>
   );

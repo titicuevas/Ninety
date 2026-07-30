@@ -49,21 +49,38 @@ function TeamCrest({ team }: { team: FootballMatch['homeTeam'] }) {
 interface MatchCardProps {
   match: FootballMatch;
   onSelect?: () => void;
+  /** Si ya está en el diario, se muestra como “En tu diario”. */
+  savedCapsuleId?: string | null;
   className?: string;
 }
 
-export function MatchCard({ match, onSelect, className }: MatchCardProps) {
+export function MatchCard({ match, onSelect, savedCapsuleId, className }: MatchCardProps) {
   const date = formatMatchDate(match.utcDate);
   const score = formatScore(match);
   const summary = matchSummary(match);
+  const saved = !!savedCapsuleId;
 
   const content = (
-    <Card className={cn('transition-colors', onSelect && 'hover:border-primary/40 active:scale-[0.99]', className)}>
+    <Card
+      className={cn(
+        'transition-colors',
+        onSelect && 'hover:border-primary/40 active:scale-[0.99]',
+        saved && 'border-primary/30 bg-primary/5',
+        className,
+      )}
+    >
       <CardContent className="flex min-h-[4.5rem] items-center gap-3 p-4 sm:min-h-0 sm:gap-4 sm:p-5">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <TeamCrest team={match.homeTeam} />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium sm:text-base">{match.homeTeam.name}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="truncate text-sm font-medium sm:text-base">{match.homeTeam.name}</p>
+              {saved ? (
+                <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                  En tu diario
+                </span>
+              ) : null}
+            </div>
             <p className="truncate text-sm text-muted-foreground sm:text-base">{match.awayTeam.name}</p>
           </div>
           <TeamCrest team={match.awayTeam} />
@@ -91,11 +108,7 @@ export function MatchCard({ match, onSelect, className }: MatchCardProps) {
   );
 
   if (!onSelect) {
-    return (
-      <article aria-label={summary}>
-        {content}
-      </article>
-    );
+    return <article aria-label={summary}>{content}</article>;
   }
 
   return (
@@ -103,7 +116,7 @@ export function MatchCard({ match, onSelect, className }: MatchCardProps) {
       type="button"
       onClick={onSelect}
       className="w-full rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-      aria-label={`Guardar partido: ${summary}`}
+      aria-label={saved ? `Ver Capsule: ${summary}` : `Guardar partido: ${summary}`}
     >
       {content}
     </button>

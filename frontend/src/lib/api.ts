@@ -17,15 +17,34 @@ function resolveApiUrl(): string {
 
 const API_URL = resolveApiUrl();
 
-async function parseError(response: Response): Promise<string> {
-  const body = await response.json().catch(() => ({}));
+export class ApiError extends Error {
+  status: number;
+  capsuleId?: string;
+
+  constructor(message: string, status: number, extras?: { capsuleId?: string }) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.capsuleId = extras?.capsuleId;
+  }
+}
+
+async function parseError(response: Response): Promise<ApiError> {
+  const body = (await response.json().catch(() => ({}))) as {
+    error?: unknown;
+    capsule_id?: unknown;
+  };
+
+  let message = `Error ${response.status}`;
   if (typeof body.error === 'string') {
-    return friendlyApiError(body.error);
+    message = friendlyApiError(body.error);
+  } else if (typeof body.error === 'object' && body.error !== null) {
+    message = 'Datos inválidos. Revisa el formulario.';
   }
-  if (typeof body.error === 'object' && body.error !== null) {
-    return 'Datos inválidos. Revisa el formulario.';
-  }
-  return `Error ${response.status}`;
+
+  return new ApiError(message, response.status, {
+    capsuleId: typeof body.capsule_id === 'string' ? body.capsule_id : undefined,
+  });
 }
 
 export async function apiFetch<T>(path: string, options: RequestInit = {}, token?: string | null): Promise<T> {
@@ -43,11 +62,11 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}, token
     response = await fetch(`${API_URL}${path}`, { ...options, headers });
   } catch (err) {
     const raw = err instanceof Error ? err.message : 'Failed to fetch';
-    throw new Error(friendlyApiError(raw));
+    throw new ApiError(friendlyApiError(raw), 0);
   }
 
   if (!response.ok) {
-    throw new Error(await parseError(response));
+    throw await parseError(response);
   }
 
   if (response.status === 204) {
@@ -76,11 +95,11 @@ export async function apiUpload<T>(
     });
   } catch (err) {
     const raw = err instanceof Error ? err.message : 'Failed to fetch';
-    throw new Error(friendlyApiError(raw));
+    throw new ApiError(friendlyApiError(raw), 0);
   }
 
   if (!response.ok) {
-    throw new Error(await parseError(response));
+    throw await parseError(response);
   }
 
   return response.json();

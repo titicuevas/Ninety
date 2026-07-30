@@ -95,4 +95,38 @@ test.describe('Crítico — creación de capsule con fotos @critical', () => {
     await expect(page.getByText(note)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole('button', { name: /ampliar foto 1 de/i })).toBeVisible();
   });
+
+  test('partido ya guardado abre la Capsule desde Buscar', async ({ page, request }) => {
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const existing = await getJson<{
+      capsules?: Array<{
+        id: string;
+        match_id: number;
+        home_team_name: string;
+        away_team_name: string;
+      }>;
+    }>(`${API_BASE}/api/capsules/me?limit=5&offset=0`, token!, request);
+
+    const capsule = existing.capsules?.[0];
+    test.skip(!capsule, 'La cuenta QA no tiene Capsules para probar duplicados');
+
+    const teamQuery = capsule!.home_team_name.split(/\s+/)[0] || capsule!.home_team_name;
+    await goAppNav(page, /buscar/i);
+    await expect(page).toHaveURL(/\/search/);
+    await page.getByLabel('Equipo o rival').fill(teamQuery);
+
+    const savedButton = page.getByRole('button', {
+      name: new RegExp(
+        `Ver Capsule: ${escapeRegExp(capsule!.home_team_name)}.*${escapeRegExp(capsule!.away_team_name)}`,
+        'i',
+      ),
+    });
+    await expect(savedButton.first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/en tu diario/i).first()).toBeVisible();
+    await savedButton.first().click();
+    await expect(page).toHaveURL(new RegExp(`/c/${capsule!.id}`), { timeout: 15_000 });
+  });
 });

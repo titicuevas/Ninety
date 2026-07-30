@@ -831,7 +831,17 @@ capsulesRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
 
   if (error) {
     if (error.code === '23505') {
-      res.status(409).json({ error: 'Ya guardaste este partido en tu diario' });
+      const { data: existing } = await supabase
+        .from('capsules')
+        .select('id')
+        .eq('user_id', req.userId!)
+        .eq('match_id', parsed.data.match_id)
+        .maybeSingle();
+
+      res.status(409).json({
+        error: 'Ya guardaste este partido en tu diario',
+        ...(existing?.id ? { capsule_id: existing.id } : {}),
+      });
       return;
     }
     if (isMissingPrivacyColumn(error)) {

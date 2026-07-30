@@ -8,10 +8,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useFootballCompetitions } from '@/hooks/useFootballCompetitions';
+import { useCapsules } from '@/hooks/useCapsules';
 import { MIN_QUERY_LENGTH, useMatchSearch } from '@/hooks/useMatchSearch';
 import { useTeamCompetitions } from '@/hooks/useTeamCompetitions';
-import { groupMatchesByCompetition } from '@/lib/groupMatches';
 import { saveDraftMatch } from '@/lib/draftMatch';
+import { groupMatchesByCompetition } from '@/lib/groupMatches';
 import type { CuratedCompetition, FootballMatch } from '@/types/football';
 import { cn } from '@/lib/utils';
 
@@ -104,6 +105,14 @@ export function SearchMatchPage() {
   const matches = data?.matches ?? NO_MATCHES;
   const matchGroups = useMemo(() => groupMatchesByCompetition(matches), [matches]);
   const showGrouped = !activeCompetition && matchGroups.length > 1;
+  const { data: capsulesData } = useCapsules();
+  const savedByMatchId = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const capsule of capsulesData?.capsules ?? []) {
+      map.set(capsule.match_id, capsule.id);
+    }
+    return map;
+  }, [capsulesData?.capsules]);
 
   const canSearch =
     (activeCompetition && !requiresTeamQuery) || debouncedQuery.length >= MIN_QUERY_LENGTH;
@@ -112,6 +121,11 @@ export function SearchMatchPage() {
     !activeCompetition && query.trim().length > 0 && query.trim().length < MIN_QUERY_LENGTH;
 
   const selectMatch = (match: FootballMatch) => {
+    const existingId = savedByMatchId.get(match.id);
+    if (existingId) {
+      navigate(`/c/${existingId}`);
+      return;
+    }
     saveDraftMatch(match);
     navigate('/capsules/new', { state: { match } });
   };
@@ -290,6 +304,7 @@ export function SearchMatchPage() {
                                 <li key={match.id}>
                                   <MatchCard
                                     match={match}
+                                    savedCapsuleId={savedByMatchId.get(match.id)}
                                     onSelect={() => selectMatch(match)}
                                   />
                                 </li>
@@ -303,6 +318,7 @@ export function SearchMatchPage() {
                               <li key={match.id}>
                                 <MatchCard
                                   match={match}
+                                  savedCapsuleId={savedByMatchId.get(match.id)}
                                   onSelect={() => selectMatch(match)}
                                 />
                               </li>
