@@ -6,6 +6,7 @@ import { MatchCard } from '@/components/MatchCard';
 import { useCreateCapsule } from '@/hooks/useCapsules';
 import { useAuth } from '@/hooks/useAuthInit';
 import { uploadCapsulePhotos } from '@/lib/capsulePhoto';
+import { clearDraftMatch, readDraftMatch, saveDraftMatch } from '@/lib/draftMatch';
 import { friendlyApiError } from '@/lib/friendlyErrors';
 import { defaultWatchedAt, footballMatchToCapsuleBase } from '@/lib/matchCapsule';
 import { useAuthStore } from '@/stores/authStore';
@@ -15,10 +16,19 @@ type LocationState = {
   match?: FootballMatch;
 };
 
+function resolveMatch(stateMatch: FootballMatch | undefined): FootballMatch | null {
+  if (stateMatch) {
+    saveDraftMatch(stateMatch);
+    return stateMatch;
+  }
+  return readDraftMatch();
+}
+
 export function CreateCapsulePage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const match = (location.state as LocationState | null)?.match;
+  const stateMatch = (location.state as LocationState | null)?.match;
+  const [match] = useState(() => resolveMatch(stateMatch));
   const createCapsule = useCreateCapsule();
   const { user } = useAuth();
   const session = useAuthStore((s) => s.session);
@@ -28,6 +38,11 @@ export function CreateCapsulePage() {
   if (!match) {
     return <Navigate to="/search" replace />;
   }
+
+  const leaveWithoutSaving = () => {
+    clearDraftMatch();
+    navigate(-1);
+  };
 
   const handleSubmit = async (payload: {
     watched_at: string;
@@ -62,7 +77,10 @@ export function CreateCapsulePage() {
           watch_context: payload.watch_context,
         },
         {
-          onSuccess: () => navigate('/capsules', { replace: true }),
+          onSuccess: (created) => {
+            clearDraftMatch();
+            navigate(`/c/${created.id}`, { replace: true });
+          },
           onSettled: () => setUploading(false),
         },
       );
@@ -90,7 +108,7 @@ export function CreateCapsulePage() {
             submitError ??
             (createCapsule.error ? friendlyApiError((createCapsule.error as Error).message) : null)
           }
-          onCancel={() => navigate(-1)}
+          onCancel={leaveWithoutSaving}
           onSubmit={handleSubmit}
         />
       </div>

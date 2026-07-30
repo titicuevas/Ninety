@@ -11,6 +11,7 @@ import { useFootballCompetitions } from '@/hooks/useFootballCompetitions';
 import { MIN_QUERY_LENGTH, useMatchSearch } from '@/hooks/useMatchSearch';
 import { useTeamCompetitions } from '@/hooks/useTeamCompetitions';
 import { groupMatchesByCompetition } from '@/lib/groupMatches';
+import { saveDraftMatch } from '@/lib/draftMatch';
 import type { CuratedCompetition, FootballMatch } from '@/types/football';
 import { cn } from '@/lib/utils';
 
@@ -109,6 +110,11 @@ export function SearchMatchPage() {
   const isSearching = canSearch && (isLoading || isFetching);
   const showMinLengthHint =
     !activeCompetition && query.trim().length > 0 && query.trim().length < MIN_QUERY_LENGTH;
+
+  const selectMatch = (match: FootballMatch) => {
+    saveDraftMatch(match);
+    navigate('/capsules/new', { state: { match } });
+  };
 
   return (
     <Layout>
@@ -284,7 +290,7 @@ export function SearchMatchPage() {
                                 <li key={match.id}>
                                   <MatchCard
                                     match={match}
-                                    onSelect={() => navigate('/capsules/new', { state: { match } })}
+                                    onSelect={() => selectMatch(match)}
                                   />
                                 </li>
                               ))}
@@ -297,7 +303,7 @@ export function SearchMatchPage() {
                               <li key={match.id}>
                                 <MatchCard
                                   match={match}
-                                  onSelect={() => navigate('/capsules/new', { state: { match } })}
+                                  onSelect={() => selectMatch(match)}
                                 />
                               </li>
                             ))}

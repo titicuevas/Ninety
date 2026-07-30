@@ -63,13 +63,23 @@ test.describe('Crítico — creación de capsule con fotos @critical', () => {
     await page.getByLabel('Equipo o rival').fill(query);
 
     const matchButton = page.getByRole('button', {
-      name: new RegExp(`Guardar partido: ${escapeRegExp(match.homeTeam.name)}.*${escapeRegExp(match.awayTeam.name)}`, 'i'),
+      name: new RegExp(
+        `Guardar partido: ${escapeRegExp(match.homeTeam.name)}.*${escapeRegExp(match.awayTeam.name)}`,
+        'i',
+      ),
     });
     await expect(matchButton.first()).toBeVisible({ timeout: 20_000 });
     await matchButton.first().click();
 
     await expect(page).toHaveURL(/\/capsules\/new/);
     await expect(page.getByRole('heading', { name: /nueva capsule/i })).toBeVisible();
+    await expect(page.getByText(match.homeTeam.name).first()).toBeVisible();
+
+    // Refresh no debe tirar a /search: el partido queda en sessionStorage
+    await page.reload();
+    await expect(page).toHaveURL(/\/capsules\/new/);
+    await expect(page.getByRole('heading', { name: /nueva capsule/i })).toBeVisible();
+    await expect(page.getByText(match.homeTeam.name).first()).toBeVisible();
 
     await page.locator('input[type="file"]').first().setInputFiles([
       { name: 'photo-1.jpg', mimeType: 'image/jpeg', buffer: JPEG_BUFFER },
@@ -81,10 +91,8 @@ test.describe('Crítico — creación de capsule con fotos @critical', () => {
     await page.getByLabel('Nota (opcional)').fill(note);
     await page.getByRole('button', { name: /guardar capsule/i }).click();
 
-    await expect(page).toHaveURL(/\/capsules/);
-
-    const capsuleCard = page.locator('li').filter({ hasText: note }).first();
-    await expect(capsuleCard).toBeVisible({ timeout: 20_000 });
-    await expect(capsuleCard.getByRole('button', { name: /ampliar foto 1 de/i })).toBeVisible();
+    await expect(page).toHaveURL(/\/c\/[0-9a-f-]{8,}/i, { timeout: 30_000 });
+    await expect(page.getByText(note)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('button', { name: /ampliar foto 1 de/i })).toBeVisible();
   });
 });
