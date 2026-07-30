@@ -4,6 +4,7 @@ import { Loader2, Search, UserMinus, UserPlus, Users } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { useToggleFollow } from '@/hooks/useFollowUser';
 import { MIN_PEOPLE_QUERY, useProfileSearch } from '@/hooks/useProfileSearch';
 import { profilePath } from '@/lib/profilePath';
@@ -16,6 +17,10 @@ export function PeopleResultRow({ profile }: { profile: Profile }) {
   const toggle = useToggleFollow(username);
   const name = profile.display_name ?? username;
   const location = [profile.city, profile.country].filter(Boolean).join(', ');
+
+  useEffect(() => {
+    setFollowed(!!profile.followed_by_me);
+  }, [profile.followed_by_me, profile.id]);
 
   return (
     <li className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 sm:p-4">
@@ -88,6 +93,7 @@ export function PeopleResultRow({ profile }: { profile: Profile }) {
 export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string }) {
   const [query, setQuery] = useState(initialQuery);
   const [debounced, setDebounced] = useState(() => initialQuery.trim());
+  const showSuggestions = !query.trim();
 
   useEffect(() => {
     const t = window.setTimeout(() => setDebounced(query.trim()), 350);
@@ -95,7 +101,9 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
   }, [query]);
 
   const { data, isLoading, isFetching, isError, error } = useProfileSearch(debounced);
+  const { data: discoverData, isLoading: discoverLoading } = useDiscoverProfiles(showSuggestions);
   const profiles = data?.profiles ?? [];
+  const suggestions = discoverData?.profiles ?? [];
   const searching = debounced.length >= MIN_PEOPLE_QUERY && (isLoading || isFetching);
 
   return (
@@ -160,15 +168,38 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
         )
       ) : null}
 
-      {!query.trim() ? (
-        <Card className="border-dashed">
-          <CardContent className="p-6 text-center sm:p-8">
-            <p className="font-medium">Encuentra aficionados</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Busca por username o nombre, síguelos y verás sus partidos en tu feed.
-            </p>
-          </CardContent>
-        </Card>
+      {showSuggestions ? (
+        discoverLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground" role="status">
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            Cargando sugerencias…
+          </div>
+        ) : suggestions.length > 0 ? (
+          <section className="max-w-xl space-y-3" aria-label="Aficionados sugeridos">
+            <div>
+              <h2 className="text-sm font-semibold tracking-wide text-primary uppercase">
+                Aficionados sugeridos
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Empieza a seguir gente para llenar tu feed, o busca por username.
+              </p>
+            </div>
+            <ul className="space-y-2">
+              {suggestions.map((profile) => (
+                <PeopleResultRow key={profile.id} profile={profile} />
+              ))}
+            </ul>
+          </section>
+        ) : (
+          <Card className="border-dashed">
+            <CardContent className="p-6 text-center sm:p-8">
+              <p className="font-medium">Encuentra aficionados</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Busca por username o nombre, síguelos y verás sus partidos en tu feed.
+              </p>
+            </CardContent>
+          </Card>
+        )
       ) : null}
     </div>
   );

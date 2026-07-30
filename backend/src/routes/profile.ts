@@ -322,7 +322,32 @@ profileRouter.get('/search', requireAuth, async (req: AuthRequest, res) => {
     .filter((row) => row.username)
     .map((row) => normalizeProfile(row));
 
-  res.json({ profiles, query: parsed.data.q });
+  const ids = profiles.map((profile) => profile.id);
+  let followedSet = new Set<string>();
+  if (ids.length > 0) {
+    const { data: followRows, error: followError } = await supabase
+      .from('user_follows')
+      .select('following_id')
+      .eq('follower_id', req.userId!)
+      .in('following_id', ids);
+
+    if (followError) {
+      if (!isMissingFollowsTable(followError)) {
+        res.status(400).json({ error: followError.message });
+        return;
+      }
+    } else {
+      followedSet = new Set((followRows ?? []).map((row) => row.following_id));
+    }
+  }
+
+  res.json({
+    profiles: profiles.map((profile) => ({
+      ...profile,
+      followed_by_me: followedSet.has(profile.id),
+    })),
+    query: parsed.data.q,
+  });
 });
 
 profileRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {

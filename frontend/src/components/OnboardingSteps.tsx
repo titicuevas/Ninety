@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Check, Search, Camera, Users } from 'lucide-react';
+import { Check, User, Camera, Users } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
@@ -11,28 +11,25 @@ interface OnboardingStepsProps {
 
 const steps = [
   {
-    key: 'search',
-    icon: Search,
-    title: 'Busca un partido',
-    description: 'Encuentra el último partido que viste en directo o por TV.',
-    link: '/search',
-    linkLabel: 'Buscar',
+    key: 'profile',
+    icon: User,
+    title: 'Completa tu perfil',
+    description: 'Nombre y username para que otros te reconozcan en el feed.',
+    link: '/profile',
   },
   {
     key: 'capsule',
     icon: Camera,
     title: 'Crea tu primera cápsula',
-    description: 'Guarda la experiencia: fotos, nota y tu puntuación.',
+    description: 'Busca un partido y guarda la experiencia: fotos, nota y puntuación.',
     link: '/search',
-    linkLabel: 'Crear cápsula',
   },
   {
     key: 'follow',
     icon: Users,
     title: 'Sigue a otros aficionados',
-    description: 'Descubre qué partidos ven tus amigos.',
+    description: 'Descubre sugerencias o busca por username para llenar tu feed.',
     link: '/search?tab=people',
-    linkLabel: 'Buscar personas',
   },
 ] as const;
 
@@ -59,9 +56,7 @@ export function OnboardingSteps({ hasProfile, hasCapsule, hasFollow }: Onboardin
                   to={done ? '#' : step.link}
                   className={cn(
                     'flex items-start gap-3 rounded-lg p-3 transition-colors',
-                    done
-                      ? 'pointer-events-none opacity-60'
-                      : 'hover:bg-secondary/60',
+                    done ? 'pointer-events-none opacity-60' : 'hover:bg-secondary/60',
                   )}
                   aria-disabled={done}
                 >

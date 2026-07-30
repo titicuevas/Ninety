@@ -10,13 +10,20 @@ test.describe('Crítico — búsqueda de aficionados @critical', () => {
 
     await page.getByRole('tab', { name: 'Aficionados' }).click();
     await expect(page).toHaveURL(/tab=people/);
-    await expect(page.getByText(/encuentra aficionados/i)).toBeVisible();
+
+    const suggestions = page.getByRole('heading', { name: /aficionados sugeridos/i });
+    const emptyHint = page.getByText(/encuentra aficionados/i);
+    await expect(suggestions.or(emptyHint)).toBeVisible({ timeout: 15_000 });
+
+    if (await suggestions.isVisible()) {
+      await expect(page.getByRole('button', { name: /^seguir$/i }).first()).toBeVisible();
+    }
 
     await page.getByLabel(/nombre o username/i).fill('zzzninetye2e');
     await expect(page.getByText(/sin resultados/i)).toBeVisible({ timeout: 20_000 });
   });
 
-  test('API search de perfiles no falla con sesión', async ({ page, request }) => {
+  test('API search de perfiles anota followed_by_me', async ({ page, request }) => {
     await page.goto('/home');
     const token = await readAccessToken(page);
     expect(token).toBeTruthy();
@@ -26,7 +33,12 @@ test.describe('Crítico — búsqueda de aficionados @critical', () => {
     });
 
     expect(res.ok()).toBeTruthy();
-    const body = (await res.json()) as { profiles: unknown[] };
+    const body = (await res.json()) as {
+      profiles: Array<{ followed_by_me?: boolean }>;
+    };
     expect(Array.isArray(body.profiles)).toBeTruthy();
+    for (const profile of body.profiles) {
+      expect(typeof profile.followed_by_me).toBe('boolean');
+    }
   });
 });
