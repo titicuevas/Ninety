@@ -10,6 +10,7 @@ import {
   useEnablePush,
   usePushEnabled,
   usePushPublicKey,
+  usePushSupport,
 } from '@/hooks/usePushNotifications';
 import { cn } from '@/lib/utils';
 
@@ -72,12 +73,21 @@ export function NotificationsPage() {
   const { data, isLoading } = useNotifications();
   const markAll = useMarkAllRead();
   const { data: pushKey, isError: pushUnavailable } = usePushPublicKey();
+  const { data: pushSupport } = usePushSupport();
   const { data: pushEnabled = false } = usePushEnabled();
   const enablePush = useEnablePush();
   const disablePush = useDisablePush();
   const notifications = data?.notifications ?? [];
   const unread = data?.unread_count ?? 0;
   const canEnablePush = !!pushKey?.enabled && !pushUnavailable;
+  const pushPermissionLabel =
+    pushSupport?.permission === 'granted'
+      ? 'Permitidas'
+      : pushSupport?.permission === 'denied'
+        ? 'Bloqueadas'
+        : pushSupport?.permission === 'default'
+          ? 'Pendientes'
+          : 'No compatible';
 
   useEffect(() => {
     if (unread > 0) {
@@ -141,6 +151,33 @@ export function NotificationsPage() {
               : 'No se pudieron desactivar las alertas'}
           </p>
         ) : null}
+
+        <Card>
+          <CardContent className="grid gap-3 p-5 sm:grid-cols-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Servidor push
+              </p>
+              <p className="mt-1 text-sm font-medium">
+                {canEnablePush ? 'Configurado' : 'Pendiente en backend/Railway'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Navegador
+              </p>
+              <p className="mt-1 text-sm font-medium">
+                {pushSupport?.supported ? 'Compatible' : 'No compatible'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Permiso
+              </p>
+              <p className="mt-1 text-sm font-medium">{pushPermissionLabel}</p>
+            </div>
+          </CardContent>
+        </Card>
 
         {isLoading ? (
           <div className="flex justify-center py-16">

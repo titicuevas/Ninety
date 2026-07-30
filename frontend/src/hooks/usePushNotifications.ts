@@ -7,6 +7,11 @@ interface PushPublicKeyResponse {
   enabled: boolean;
 }
 
+export interface PushSupportStatus {
+  supported: boolean;
+  permission: NotificationPermission | 'unsupported';
+}
+
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -25,6 +30,20 @@ export function usePushPublicKey() {
     enabled: !!session?.access_token,
     retry: false,
     staleTime: 10 * 60_000,
+  });
+}
+
+export function usePushSupport() {
+  return useQuery({
+    queryKey: ['notifications', 'push-support'],
+    queryFn: async (): Promise<PushSupportStatus> => {
+      if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+        return { supported: false, permission: 'unsupported' };
+      }
+      return { supported: true, permission: Notification.permission };
+    },
+    staleTime: Infinity,
+    initialData: { supported: false, permission: 'unsupported' as const },
   });
 }
 

@@ -50,4 +50,24 @@ test.describe('Smoke — notificaciones @smoke', () => {
       await expect(enabledLabel).toBeVisible();
     }
   });
+
+  test('muestra la tarjeta de estado de push', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page.goto('/notifications');
+    await page.waitForURL(/\/notifications/);
+
+    await expect(page.getByText(/servidor push/i)).toBeVisible();
+    await expect(page.getByText(/navegador/i)).toBeVisible();
+    await expect(page.getByText(/permiso/i)).toBeVisible();
+
+    await expect(
+      page.getByText(/configurado|pendiente en backend\/railway/i),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/compatible|no compatible/i),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/permitidas|bloqueadas|pendientes|no compatible/i),
+    ).toBeVisible();
+  });
 });
