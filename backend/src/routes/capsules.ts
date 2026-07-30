@@ -59,6 +59,28 @@ const meQuerySchema = z.object({
   watch_context: z.enum(['stadium', 'tv', 'pub', 'other']).optional(),
 });
 
+const publicProfileQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).optional(),
+  offset: z.coerce.number().int().min(0).default(0),
+  q: z.string().trim().max(100).optional(),
+  year: z.coerce.number().int().min(1990).max(2100).optional(),
+  rating_min: z.coerce.number().int().min(1).max(5).optional(),
+  watch_context: z.enum(['stadium', 'tv', 'pub', 'other']).optional(),
+});
+
+function sanitizeSearchQ(raw: string | undefined): string {
+  return (raw?.toLowerCase() ?? '').replace(/[%_,.()"]/g, '').trim();
+}
+
+function listYearsFromWatchedAt(rows: { watched_at: string }[]): number[] {
+  const years = new Set<number>();
+  for (const row of rows) {
+    const year = Number(String(row.watched_at).slice(0, 4));
+    if (Number.isInteger(year) && year >= 1990 && year <= 2100) years.add(year);
+  }
+  return [...years].sort((a, b) => b - a);
+}
+
 function getAccessToken(req: AuthRequest): string | null {
   return req.headers.authorization?.replace('Bearer ', '') ?? null;
 }
@@ -201,8 +223,7 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   }
 
   const { limit, offset, year, rating_min, visibility, watch_context } = parsed.data;
-  const rawQ = parsed.data.q?.toLowerCase() ?? '';
-  const safeQ = rawQ.replace(/[%_,.()"]/g, '').trim();
+  const safeQ = sanitizeSearchQ(parsed.data.q);
 
   const supabase = createUserClient(token);
   let query = supabase
@@ -280,13 +301,14 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
     return;
   }
 
-  const limitRaw = typeof req.query.limit === 'string' ? Number(req.query.limit) : undefined;
-  const offsetRaw = typeof req.query.offset === 'string' ? Number(req.query.offset) : 0;
-  const limit =
-    limitRaw != null && Number.isFinite(limitRaw)
-      ? Math.min(Math.max(Math.trunc(limitRaw), 1), 50)
-      : undefined;
-  const offset = Number.isFinite(offsetRaw) ? Math.max(Math.trunc(offsetRaw), 0) : 0;
+  const parsed = publicProfileQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const { limit, offset, year, rating_min, watch_context } = parsed.data;
+  const safeQ = sanitizeSearchQ(parsed.data.q);
 
   let query = reader
     .from('capsules')
@@ -300,6 +322,25 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
     query = query.eq('is_public', true);
   }
 
+  if (year != null) {
+    query = query.gte('watched_at', `${year}-01-01`).lte('watched_at', `${year}-12-31`);
+  }
+
+  if (rating_min != null) {
+    query = query.gte('rating', rating_min);
+  }
+
+  if (watch_context) {
+    query = query.eq('watch_context', watch_context);
+  }
+
+  if (safeQ.length >= 2) {
+    const pattern = `%${safeQ}%`;
+    query = query.or(
+      `home_team_name.ilike."${pattern}",away_team_name.ilike."${pattern}",competition_name.ilike."${pattern}",note.ilike."${pattern}"`,
+    );
+  }
+
   if (limit != null) {
     query = query.range(offset, offset + limit - 1);
   }
@@ -311,11 +352,16 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
       res.status(503).json({ error: privacyMigrationHint() });
       return;
     }
+    if (watch_context && isMissingWatchContextColumn(error)) {
+      res.status(503).json({ error: watchContextMigrationHint() });
+      return;
+    }
     res.status(400).json({ error: error.message });
     return;
   }
 
   let stats = null;
+  let years: number[] | null = null;
   if (offset === 0) {
     let statsQuery = reader
       .from('capsules')
@@ -328,7 +374,9 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
 
     const { data: statsRows, error: statsError } = await statsQuery;
     if (!statsError) {
-      stats = computePublicProfileStats(statsRows ?? []);
+      const rows = statsRows ?? [];
+      stats = computePublicProfileStats(rows);
+      years = listYearsFromWatchedAt(rows);
     }
   }
 
@@ -342,6 +390,7 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
     capsules: capsulesWithLikes,
     total: count ?? capsulesWithLikes.length,
     ...(stats ? { stats } : {}),
+    ...(years ? { years } : {}),
   });
 });
 

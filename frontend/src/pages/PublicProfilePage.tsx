@@ -1,5 +1,6 @@
-import { Link, useParams } from 'react-router-dom';
-import { MapPin, Trophy } from 'lucide-react';
+import { useDeferredValue, useState, type ReactNode } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { MapPin, Trophy, X } from 'lucide-react';
 import { CapsuleComments } from '@/components/CapsuleComments';
 import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
@@ -12,10 +13,18 @@ import { StarRating } from '@/components/StarRating';
 import { WatchContextBadge } from '@/components/WatchContextBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { usePublicProfile } from '@/hooks/usePublicProfile';
 import { useAuth } from '@/hooks/useAuthInit';
 import { formatWatchedDate } from '@/lib/format';
 import { publicProfileUrl } from '@/lib/siteUrl';
+import { cn } from '@/lib/utils';
+import {
+  WATCH_CONTEXTS,
+  WATCH_CONTEXT_LABELS,
+  isWatchContext,
+  type WatchContext,
+} from '@/lib/watchContext';
 import type { Capsule } from '@/types/capsule';
 
 function formatScore(capsule: Capsule) {
@@ -111,9 +120,61 @@ function PublicCapsuleCard({
   );
 }
 
+function parseYear(value: string | null): number | undefined {
+  if (!value) return undefined;
+  const year = Number(value);
+  if (!Number.isInteger(year) || year < 1990 || year > 2100) return undefined;
+  return year;
+}
+
+function parseRatingMin(value: string | null): number | undefined {
+  if (!value) return undefined;
+  const rating = Number(value);
+  if (![3, 4, 5].includes(rating)) return undefined;
+  return rating;
+}
+
+function parseWatchContext(value: string | null): WatchContext | undefined {
+  return isWatchContext(value) ? value : undefined;
+}
+
+function FilterChip({
+  active,
+  children,
+  onClick,
+}: {
+  active: boolean;
+  children: ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'min-h-10 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        active
+          ? 'bg-primary text-primary-foreground'
+          : 'bg-secondary text-muted-foreground hover:text-foreground',
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function PublicProfilePage() {
   const { username } = useParams<{ username: string }>();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [qDraft, setQDraft] = useState(() => searchParams.get('q') ?? '');
+  const deferredQ = useDeferredValue(qDraft.trim());
+
+  const year = parseYear(searchParams.get('year'));
+  const ratingMin = parseRatingMin(searchParams.get('rating'));
+  const watchContext = parseWatchContext(searchParams.get('context'));
+  const q = deferredQ.length >= 2 ? deferredQ : '';
+
   const {
     data,
     isLoading,
@@ -121,14 +182,34 @@ export function PublicProfilePage() {
     error,
     hasNextPage,
     isFetchingNextPage,
+    isFetching,
     fetchNextPage,
-  } = usePublicProfile(username);
+  } = usePublicProfile(username, { q, year, ratingMin, watchContext });
+
   const profile = data?.pages[0]?.profile;
   const capsules = data?.pages.flatMap((page) => page.capsules) ?? [];
   const total = data?.pages[0]?.total ?? capsules.length;
   const stats = data?.pages[0]?.stats;
+  const years = data?.pages[0]?.years ?? [];
   const isOwnProfile = !!user && profile?.id === user.id;
   const Shell = user ? Layout : PublicLayout;
+
+  const hasFilters = q.length >= 2 || year != null || ratingMin != null || watchContext != null;
+  const diaryTotal = stats?.totalMatches ?? (!hasFilters ? total : 0);
+
+  const patchParams = (patch: Record<string, string | null>) => {
+    const next = new URLSearchParams(searchParams);
+    for (const [key, value] of Object.entries(patch)) {
+      if (value == null || value === '') next.delete(key);
+      else next.set(key, value);
+    }
+    setSearchParams(next, { replace: true });
+  };
+
+  const clearFilters = () => {
+    setQDraft('');
+    setSearchParams({}, { replace: true });
+  };
 
   if (isLoading) {
     return (
@@ -158,6 +239,8 @@ export function PublicProfilePage() {
 
   const displayName = profile.display_name ?? profile.username ?? 'Aficionado';
   const location = [profile.city, profile.country].filter(Boolean).join(', ');
+  const diaryEmpty = !hasFilters && diaryTotal === 0 && capsules.length === 0;
+  const filterEmpty = hasFilters && capsules.length === 0;
 
   return (
     <Shell>
@@ -199,7 +282,7 @@ export function PublicProfilePage() {
             ) : null}
 
             <p className="mt-2 text-sm text-muted-foreground">
-              {total === 1 ? '1 partido en su diario' : `${total} partidos en su diario`}
+              {diaryTotal === 1 ? '1 partido en su diario' : `${diaryTotal} partidos en su diario`}
             </p>
 
             {profile.username ? (
@@ -244,9 +327,124 @@ export function PublicProfilePage() {
           <PublicWrappedSummary name={displayName} stats={stats} />
         ) : null}
 
+        {!diaryEmpty ? (
+          <section className="space-y-3" aria-label="Filtros del diario público">
+            <div className="relative">
+              <Input
+                value={qDraft}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setQDraft(value);
+                  const trimmed = value.trim();
+                  patchParams({ q: trimmed.length >= 2 ? trimmed : null });
+                }}
+                placeholder="Buscar equipo, competición o nota…"
+                aria-label="Buscar en el diario público"
+              />
+              {qDraft ? (
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground"
+                  aria-label="Limpiar búsqueda"
+                  onClick={() => {
+                    setQDraft('');
+                    patchParams({ q: null });
+                  }}
+                >
+                  <X className="h-4 w-4" aria-hidden />
+                </button>
+              ) : null}
+            </div>
+
+            {years.length > 0 ? (
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por año">
+                <FilterChip active={year == null} onClick={() => patchParams({ year: null })}>
+                  Todos los años
+                </FilterChip>
+                {years.map((y) => (
+                  <FilterChip
+                    key={y}
+                    active={year === y}
+                    onClick={() => patchParams({ year: year === y ? null : String(y) })}
+                  >
+                    {y}
+                  </FilterChip>
+                ))}
+              </div>
+            ) : null}
+
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por valoración">
+              <FilterChip active={ratingMin == null} onClick={() => patchParams({ rating: null })}>
+                Cualquier ★
+              </FilterChip>
+              {[5, 4, 3].map((min) => (
+                <FilterChip
+                  key={min}
+                  active={ratingMin === min}
+                  onClick={() => patchParams({ rating: ratingMin === min ? null : String(min) })}
+                >
+                  {min}+ ★
+                </FilterChip>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por contexto">
+              <FilterChip
+                active={watchContext == null}
+                onClick={() => patchParams({ context: null })}
+              >
+                Cualquier lugar
+              </FilterChip>
+              {WATCH_CONTEXTS.map((value) => (
+                <FilterChip
+                  key={value}
+                  active={watchContext === value}
+                  onClick={() =>
+                    patchParams({ context: watchContext === value ? null : value })
+                  }
+                >
+                  {WATCH_CONTEXT_LABELS[value]}
+                </FilterChip>
+              ))}
+            </div>
+
+            {hasFilters ? (
+              <div className="flex items-center gap-3">
+                <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
+                  Limpiar filtros
+                </Button>
+                {isFetching && !isFetchingNextPage ? (
+                  <span className="text-xs text-muted-foreground">Actualizando…</span>
+                ) : null}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+
+        {filterEmpty ? (
+          <Card className="border-dashed">
+            <CardContent className="p-6 text-center sm:p-10">
+              <p className="text-lg font-medium">Ningún partido con estos filtros</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Prueba otro año, valoración o limpia la búsqueda.
+              </p>
+              <Button type="button" variant="secondary" className="mt-4" onClick={clearFilters}>
+                Limpiar filtros
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
+
         {capsules.length > 0 ? (
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold">Capsules</h2>
+            <h2 className="text-lg font-semibold">
+              Capsules
+              {hasFilters ? (
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  {total} {total === 1 ? 'partido' : 'partidos'}
+                </span>
+              ) : null}
+            </h2>
             {capsules.map((capsule) => (
               <PublicCapsuleCard key={capsule.id} capsule={capsule} currentUserId={user?.id} />
             ))}
@@ -263,7 +461,9 @@ export function PublicProfilePage() {
               </div>
             ) : null}
           </section>
-        ) : (
+        ) : null}
+
+        {diaryEmpty ? (
           <Card>
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
               {isOwnProfile ? (
@@ -279,7 +479,7 @@ export function PublicProfilePage() {
               )}
             </CardContent>
           </Card>
-        )}
+        ) : null}
 
         {profile.username ? (
           <p className="text-center text-xs text-muted-foreground">

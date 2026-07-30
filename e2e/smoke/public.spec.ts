@@ -28,14 +28,16 @@ test.describe('Smoke — público @smoke', () => {
     // Si el demo tiene Capsules públicas, debe verse el Wrapped público
     if (await wrapped.isVisible().catch(() => false)) {
       await expect(page.getByText(/wrapped público/i)).toBeVisible();
+      await expect(page.getByLabel(/buscar en el diario público/i)).toBeVisible();
+      await expect(page.getByRole('group', { name: /filtrar por valoración/i })).toBeVisible();
     } else {
       await expect(emptyDiary.or(page.locator('main'))).toBeVisible();
     }
   });
 
-  test('API perfil público incluye stats en la primera página', async ({ request }) => {
+  test('API perfil público acepta filtros y stats', async ({ request }) => {
     const res = await request.get(
-      `${API_BASE}/api/capsules/user/${DEMO_USERNAME}?limit=5&offset=0`,
+      `${API_BASE}/api/capsules/user/${DEMO_USERNAME}?limit=5&offset=0&rating_min=4`,
     );
     expect(res.ok()).toBeTruthy();
     const body = (await res.json()) as {
@@ -43,6 +45,7 @@ test.describe('Smoke — público @smoke', () => {
       capsules?: unknown[];
       total?: number;
       stats?: { totalMatches?: number };
+      years?: number[];
     };
     expect(body.profile?.username).toBeTruthy();
     expect(Array.isArray(body.capsules)).toBe(true);
@@ -50,6 +53,7 @@ test.describe('Smoke — público @smoke', () => {
     expect(typeof body.total).toBe('number');
     expect(body.stats).toBeTruthy();
     expect(typeof body.stats?.totalMatches).toBe('number');
+    expect(Array.isArray(body.years)).toBe(true);
   });
 
   test('listas followers/following públicas no 401', async ({ request }) => {
