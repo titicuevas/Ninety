@@ -21,6 +21,7 @@ export type CapsuleMemoryFormValues = z.infer<typeof memorySchema>;
 
 export type CapsuleMemorySubmitPayload = CapsuleMemoryFormValues & {
   rating: number | null;
+  is_public: boolean;
   newFiles: File[];
   keptPhotoUrls: string[];
   removedPhotoUrls: string[];
@@ -32,6 +33,7 @@ interface CapsuleMemoryFormProps {
   defaultWatchedAt: string;
   defaultNote?: string;
   defaultRating?: number | null;
+  defaultIsPublic?: boolean;
   existingPhotoUrls?: string[];
   submitLabel: string;
   isBusy?: boolean;
@@ -44,6 +46,7 @@ export function CapsuleMemoryForm({
   defaultWatchedAt,
   defaultNote = '',
   defaultRating = null,
+  defaultIsPublic = true,
   existingPhotoUrls = NO_PHOTO_URLS,
   submitLabel,
   isBusy = false,
@@ -52,6 +55,7 @@ export function CapsuleMemoryForm({
   onSubmit,
 }: CapsuleMemoryFormProps) {
   const [rating, setRating] = useState<number | null>(defaultRating);
+  const [isPublic, setIsPublic] = useState(defaultIsPublic);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [removedPhotoUrls, setRemovedPhotoUrls] = useState<string[]>([]);
 
@@ -72,6 +76,7 @@ export function CapsuleMemoryForm({
     void onSubmit({
       ...data,
       rating,
+      is_public: isPublic,
       newFiles,
       keptPhotoUrls: existingPhotoUrls.filter((url) => !removed.has(url)),
       removedPhotoUrls,
@@ -134,6 +139,42 @@ export function CapsuleMemoryForm({
             {...register('note')}
           />
         </div>
+
+        <fieldset className="space-y-3">
+          <legend className="text-sm font-medium">Visibilidad</legend>
+          <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Visibilidad de la Capsule">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={isPublic}
+              onClick={() => setIsPublic(true)}
+              className={cn(
+                'rounded-xl border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                isPublic
+                  ? 'border-primary bg-primary/10 text-foreground'
+                  : 'border-border bg-secondary/40 text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <span className="block text-sm font-medium text-foreground">Pública</span>
+              <span className="mt-0.5 block text-xs">Visible en tu perfil y al compartir</span>
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={!isPublic}
+              onClick={() => setIsPublic(false)}
+              className={cn(
+                'rounded-xl border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                !isPublic
+                  ? 'border-primary bg-primary/10 text-foreground'
+                  : 'border-border bg-secondary/40 text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <span className="block text-sm font-medium text-foreground">Solo yo</span>
+              <span className="mt-0.5 block text-xs">Queda en tu diario, sin enlace público</span>
+            </button>
+          </div>
+        </fieldset>
       </div>
 
       {error ? (

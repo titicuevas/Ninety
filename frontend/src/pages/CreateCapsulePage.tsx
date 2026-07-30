@@ -33,6 +33,7 @@ export function CreateCapsulePage() {
     watched_at: string;
     rating: number | null;
     note?: string;
+    is_public: boolean;
     newFiles: File[];
   }) => {
     if (!user?.id || !session?.access_token) {
@@ -56,6 +57,7 @@ export function CreateCapsulePage() {
           rating: payload.rating,
           note: payload.note?.trim() || null,
           photo_urls: uploadedUrls,
+          is_public: payload.is_public,
         },
         {
           onSuccess: () => navigate('/capsules', { replace: true }),

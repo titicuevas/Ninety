@@ -19,6 +19,7 @@ function formatScore(capsule: Capsule) {
 function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: string) => void }) {
   const score = formatScore(capsule);
   const shareTitle = `${capsule.home_team_name} vs ${capsule.away_team_name}`;
+  const isPublic = capsule.is_public !== false;
 
   return (
     <Card>
@@ -31,9 +32,16 @@ function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: s
 
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <Link to={`/c/${capsule.id}`} className="font-medium hover:text-primary hover:underline">
-              {capsule.home_team_name}
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link to={`/c/${capsule.id}`} className="font-medium hover:text-primary hover:underline">
+                {capsule.home_team_name}
+              </Link>
+              {!isPublic ? (
+                <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Privada
+                </span>
+              ) : null}
+            </div>
             <p className="text-muted-foreground">{capsule.away_team_name}</p>
             {capsule.competition_name ? (
               <p className="mt-1 text-xs text-primary">{capsule.competition_name}</p>
@@ -54,7 +62,12 @@ function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: s
         {capsule.note ? <p className="mt-3 text-sm text-muted-foreground">{capsule.note}</p> : null}
 
         <div className="mt-4 flex flex-wrap gap-2">
-          <ShareCapsuleButton capsuleId={capsule.id} title={shareTitle} variant="outline" />
+          <ShareCapsuleButton
+            capsuleId={capsule.id}
+            title={shareTitle}
+            variant="outline"
+            isPublic={isPublic}
+          />
           <Button asChild variant="secondary" size="sm">
             <Link to={`/capsules/${capsule.id}/edit`}>
               <Pencil className="mr-1.5 h-3.5 w-3.5" />

@@ -39,6 +39,7 @@ const createCapsuleSchema = z.object({
   rating: z.number().int().min(1).max(5).optional().nullable(),
   note: z.string().max(2000).optional().nullable(),
   photo_urls: z.array(z.string().url().max(2048)).max(9).optional(),
+  is_public: z.boolean().optional().default(true),
 });
 
 const feedQuerySchema = z.object({
@@ -58,6 +59,29 @@ function getReaderClient(token: string | null) {
   if (token) return createUserClient(token);
   if (supabaseAdmin) return supabaseAdmin;
   return null;
+}
+
+function isMissingPrivacyColumn(error: { message?: string } | null | undefined): boolean {
+  const message = error?.message ?? '';
+  return (
+    message.includes('is_public') &&
+    (message.includes('schema cache') ||
+      message.includes('Could not find') ||
+      message.includes('column') ||
+      message.includes('does not exist'))
+  );
+}
+
+function privacyMigrationHint() {
+  return 'Ejecuta la migración 20250730140000_capsule_privacy.sql en Supabase.';
+}
+
+function canViewCapsule(
+  capsule: { user_id: string; is_public?: boolean | null },
+  viewerId: string | undefined,
+): boolean {
+  if (capsule.is_public !== false) return true;
+  return !!viewerId && viewerId === capsule.user_id;
 }
 
 capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
@@ -80,6 +104,7 @@ capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
   let feedQuery = supabase
     .from('capsules')
     .select('*', { count: 'exact' })
+    .or(`is_public.eq.true,user_id.eq.${req.userId!}`)
     .order('created_at', { ascending: false });
 
   if (followingIds !== null) {
@@ -90,6 +115,10 @@ capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
   const { data: capsules, error, count } = await feedQuery.range(offset, offset + limit - 1);
 
   if (error) {
+    if (isMissingPrivacyColumn(error)) {
+      res.status(503).json({ error: privacyMigrationHint() });
+      return;
+    }
     res.status(400).json({ error: error.message });
     return;
   }
@@ -210,6 +239,11 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
     .order('watched_at', { ascending: false })
     .order('created_at', { ascending: false });
 
+  const viewerId = req.userId ?? '';
+  if (viewerId !== profile.id) {
+    query = query.eq('is_public', true);
+  }
+
   if (limit != null) {
     query = query.range(offset, offset + limit - 1);
   }
@@ -217,11 +251,14 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
   const { data, error, count } = await query;
 
   if (error) {
+    if (isMissingPrivacyColumn(error)) {
+      res.status(503).json({ error: privacyMigrationHint() });
+      return;
+    }
     res.status(400).json({ error: error.message });
     return;
   }
 
-  const viewerId = req.userId ?? '';
   const withLikes = await attachLikeStats(reader, viewerId, data ?? []);
   const capsulesWithLikes = await attachCommentCounts(reader, withLikes);
   const normalizedProfile = normalizeProfile(profile);
@@ -288,6 +325,7 @@ const updateCapsuleSchema = z.object({
   rating: z.number().int().min(1).max(5).optional().nullable(),
   note: z.string().max(2000).optional().nullable(),
   photo_urls: z.array(z.string().url().max(2048)).max(9).optional(),
+  is_public: z.boolean().optional(),
 });
 
 capsulesRouter.post('/:id/like', requireAuth, async (req: AuthRequest, res) => {
@@ -539,6 +577,10 @@ capsulesRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
   const { data, error } = await reader.from('capsules').select('*').eq('id', capsuleId).maybeSingle();
 
   if (error) {
+    if (isMissingPrivacyColumn(error)) {
+      res.status(503).json({ error: privacyMigrationHint() });
+      return;
+    }
     res.status(400).json({ error: error.message });
     return;
   }
@@ -549,6 +591,11 @@ capsulesRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
   }
 
   const viewerId = req.userId ?? '';
+  if (!canViewCapsule(data, viewerId || undefined)) {
+    res.status(404).json({ error: 'Capsule no encontrada' });
+    return;
+  }
+
   const [withLikes] = await attachLikeStats(reader, viewerId, [data]);
   const [withComments] = await attachCommentCounts(reader, [withLikes]);
 
@@ -590,6 +637,7 @@ capsulesRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
       user_id: req.userId!,
       ...parsed.data,
       photo_urls: parsed.data.photo_urls ?? [],
+      is_public: parsed.data.is_public ?? true,
     })
     .select()
     .single();
@@ -597,6 +645,10 @@ capsulesRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
   if (error) {
     if (error.code === '23505') {
       res.status(409).json({ error: 'Ya guardaste este partido en tu diario' });
+      return;
+    }
+    if (isMissingPrivacyColumn(error)) {
+      res.status(503).json({ error: privacyMigrationHint() });
       return;
     }
     if (error.message.includes('schema cache') || error.message.includes('Could not find')) {
@@ -642,7 +694,16 @@ capsulesRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
     .select()
     .single();
 
-  if (error || !data) {
+  if (error) {
+    if (isMissingPrivacyColumn(error)) {
+      res.status(503).json({ error: privacyMigrationHint() });
+      return;
+    }
+    res.status(404).json({ error: 'Capsule no encontrada' });
+    return;
+  }
+
+  if (!data) {
     res.status(404).json({ error: 'Capsule no encontrada' });
     return;
   }

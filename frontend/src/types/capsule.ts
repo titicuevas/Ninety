@@ -14,6 +14,8 @@ export interface Capsule {
   rating: number | null;
   note: string | null;
   photo_urls: string[];
+  /** false = solo el dueño; default true si la columna aún no existe en cache */
+  is_public?: boolean;
   /** @deprecated compatibilidad con datos antiguos */
   photo_url?: string | null;
   created_at: string;
@@ -34,6 +36,7 @@ export interface CreateCapsuleInput {
   rating?: number | null;
   note?: string | null;
   photo_urls?: string[];
+  is_public?: boolean;
 }
 
 export interface UpdateCapsuleInput {
@@ -41,6 +44,7 @@ export interface UpdateCapsuleInput {
   rating?: number | null;
   note?: string | null;
   photo_urls?: string[];
+  is_public?: boolean;
 }
 
 export interface CapsulesResponse {

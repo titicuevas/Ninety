@@ -57,6 +57,7 @@ export function EditCapsulePage() {
     watched_at: string;
     rating: number | null;
     note?: string;
+    is_public: boolean;
     newFiles: File[];
     keptPhotoUrls: string[];
     removedPhotoUrls: string[];
@@ -85,6 +86,7 @@ export function EditCapsulePage() {
           rating: payload.rating,
           note: payload.note?.trim() || null,
           photo_urls: [...payload.keptPhotoUrls, ...uploadedUrls],
+          is_public: payload.is_public,
         },
         {
           onSuccess: () => navigate('/capsules', { replace: true }),
@@ -118,6 +120,7 @@ export function EditCapsulePage() {
           defaultWatchedAt={capsule.watched_at}
           defaultNote={capsule.note ?? ''}
           defaultRating={capsule.rating}
+          defaultIsPublic={capsule.is_public !== false}
           existingPhotoUrls={getCapsulePhotoUrls(capsule)}
           submitLabel={uploading ? 'Subiendo fotos…' : 'Guardar cambios'}
           isBusy={uploading || updateCapsule.isPending}

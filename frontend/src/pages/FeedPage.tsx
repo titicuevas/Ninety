@@ -94,7 +94,11 @@ function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; cur
             commentsCount={capsule.comments_count}
             currentUserId={currentUserId}
           />
-          <ShareCapsuleButton capsuleId={capsule.id} title={shareTitle} />
+          <ShareCapsuleButton
+            capsuleId={capsule.id}
+            title={shareTitle}
+            isPublic={capsule.is_public !== false}
+          />
         </div>
       </CardContent>
     </Card>

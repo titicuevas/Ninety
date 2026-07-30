@@ -141,7 +141,7 @@ async function ogForProfile(username) {
 
   const profile = data.profile;
   const name = profile.display_name || profile.username || username;
-  const count = Array.isArray(data.capsules) ? data.capsules.length : 0;
+  const count = typeof data.total === 'number' ? data.total : Array.isArray(data.capsules) ? data.capsules.length : 0;
   const team = profile.favorite_team ? ` · ${profile.favorite_team}` : '';
   const title = `${name} (@${profile.username || username}) | Ninety`;
   const description = `${count === 1 ? '1 partido' : `${count} partidos`} en su diario futbolero${team}.`.slice(

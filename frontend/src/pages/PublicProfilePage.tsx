@@ -94,7 +94,11 @@ function PublicCapsuleCard({
               </p>
             </>
           )}
-          <ShareCapsuleButton capsuleId={capsule.id} title={shareTitle} />
+          <ShareCapsuleButton
+            capsuleId={capsule.id}
+            title={shareTitle}
+            isPublic={capsule.is_public !== false}
+          />
         </div>
       </CardContent>
     </Card>

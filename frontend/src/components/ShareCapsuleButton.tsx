@@ -10,6 +10,8 @@ type Props = {
   className?: string;
   size?: 'sm' | 'default';
   variant?: 'ghost' | 'outline' | 'secondary';
+  /** Si es false, el botón queda deshabilitado (capsule privada). */
+  isPublic?: boolean;
 };
 
 export function ShareCapsuleButton({
@@ -18,11 +20,14 @@ export function ShareCapsuleButton({
   className,
   size = 'sm',
   variant = 'ghost',
+  isPublic = true,
 }: Props) {
   const [copied, setCopied] = useState(false);
   const url = publicCapsuleUrl(capsuleId);
+  const disabled = !isPublic;
 
   const share = async () => {
+    if (disabled) return;
     try {
       if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
         await navigator.share({ title, url, text: title });
@@ -48,10 +53,18 @@ export function ShareCapsuleButton({
       size={size}
       className={cn(className)}
       onClick={() => void share()}
-      aria-label={copied ? 'Enlace copiado' : 'Compartir Capsule'}
+      disabled={disabled}
+      title={disabled ? 'Hazla pública para compartir el enlace' : undefined}
+      aria-label={
+        disabled
+          ? 'Capsule privada: no se puede compartir'
+          : copied
+            ? 'Enlace copiado'
+            : 'Compartir Capsule'
+      }
     >
       {copied ? <Check className="mr-1.5 h-3.5 w-3.5" aria-hidden /> : <Share2 className="mr-1.5 h-3.5 w-3.5" aria-hidden />}
-      {copied ? 'Copiado' : 'Compartir'}
+      {disabled ? 'Privada' : copied ? 'Copiado' : 'Compartir'}
     </Button>
   );
 }

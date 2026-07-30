@@ -72,7 +72,12 @@ export function PublicCapsulePage() {
             )}
             <p className="text-xs text-muted-foreground">Visto {formatWatchedDate(capsule.watched_at)}</p>
           </div>
-          <ShareCapsuleButton capsuleId={capsule.id} title={shareTitle} variant="outline" />
+          <ShareCapsuleButton
+            capsuleId={capsule.id}
+            title={shareTitle}
+            variant="outline"
+            isPublic={capsule.is_public !== false}
+          />
         </section>
 
         <Card>
