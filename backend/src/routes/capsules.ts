@@ -47,7 +47,17 @@ const createCapsuleSchema = z.object({
 const feedQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
   offset: z.coerce.number().int().min(0).default(0),
+  /** following = tú + seguidos; explore = cápsulas públicas de cualquiera */
+  scope: z.enum(['following', 'explore']).default('following'),
+  sort: z.enum(['recent', 'popular']).default('recent'),
 });
+
+/** Populares: ordenamos en servidor sobre un pool reciente (sin columna denormalizada). */
+const FEED_POPULAR_POOL = 300;
+
+function engagementScore(row: { likes_count?: number; comments_count?: number }): number {
+  return (row.likes_count ?? 0) + (row.comments_count ?? 0);
+}
 
 const meQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).optional(),
@@ -146,35 +156,94 @@ capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  const { limit, offset } = parsed.data;
+  const { limit, offset, scope, sort } = parsed.data;
   const supabase = createUserClient(token);
-  const followingIds = await getFollowingIds(supabase, req.userId!);
+  const userId = req.userId!;
+  const followingIds = await getFollowingIds(supabase, userId);
 
-  let feedQuery = supabase
-    .from('capsules')
-    .select('*', { count: 'exact' })
-    .or(`is_public.eq.true,user_id.eq.${req.userId!}`)
-    .order('created_at', { ascending: false });
+  /** Aplica Siguiendo (tú+seguidos) o Explorar (públicas). */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const applyFeedScope = (query: any) => {
+    if (scope === 'explore') {
+      return query.eq('is_public', true);
+    }
+    let scoped = query.or(`is_public.eq.true,user_id.eq.${userId}`);
+    if (followingIds !== null) {
+      const feedUserIds = [...new Set([userId, ...followingIds])];
+      scoped = scoped.in('user_id', feedUserIds);
+    }
+    return scoped;
+  };
 
-  if (followingIds !== null) {
-    const feedUserIds = [...new Set([req.userId!, ...followingIds])];
-    feedQuery = feedQuery.in('user_id', feedUserIds);
-  }
+  let rows: Array<{ id: string; user_id: string; created_at: string }> = [];
+  let total = 0;
 
-  const { data: capsules, error, count } = await feedQuery.range(offset, offset + limit - 1);
+  if (sort === 'popular') {
+    const { data: candidates, error: poolError } = await applyFeedScope(
+      supabase.from('capsules').select('id, created_at').order('created_at', { ascending: false }),
+    ).range(0, FEED_POPULAR_POOL - 1);
 
-  if (error) {
-    if (isMissingPrivacyColumn(error)) {
-      res.status(503).json({ error: privacyMigrationHint() });
+    if (poolError) {
+      if (isMissingPrivacyColumn(poolError)) {
+        res.status(503).json({ error: privacyMigrationHint() });
+        return;
+      }
+      res.status(400).json({ error: poolError.message });
       return;
     }
-    res.status(400).json({ error: error.message });
-    return;
+
+    const pool = (candidates ?? []) as Array<{ id: string; created_at: string }>;
+    const withLikes = await attachLikeStats(supabase, userId, pool);
+    const withEngagement = await attachCommentCounts(supabase, withLikes);
+    const ranked = [...withEngagement].sort((a, b) => {
+      const scoreDiff = engagementScore(b) - engagementScore(a);
+      if (scoreDiff !== 0) return scoreDiff;
+      return b.created_at.localeCompare(a.created_at);
+    });
+
+    total = ranked.length;
+    const pageIds = ranked.slice(offset, offset + limit).map((row) => row.id);
+
+    if (pageIds.length > 0) {
+      const { data: fullRows, error: fullError } = await supabase
+        .from('capsules')
+        .select('*')
+        .in('id', pageIds);
+
+      if (fullError) {
+        res.status(400).json({ error: fullError.message });
+        return;
+      }
+
+      const byId = new Map((fullRows ?? []).map((row) => [row.id as string, row]));
+      rows = pageIds.map((id) => byId.get(id)).filter(Boolean) as typeof rows;
+    }
+  } else {
+    const { data: capsules, error, count } = await applyFeedScope(
+      supabase
+        .from('capsules')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false }),
+    ).range(offset, offset + limit - 1);
+
+    if (error) {
+      if (isMissingPrivacyColumn(error)) {
+        res.status(503).json({ error: privacyMigrationHint() });
+        return;
+      }
+      res.status(400).json({ error: error.message });
+      return;
+    }
+
+    rows = (capsules ?? []) as typeof rows;
+    total = count ?? 0;
   }
 
-  const rows = capsules ?? [];
   const userIds = [...new Set(rows.map((c) => c.user_id))];
-  const profileMap = new Map<string, { username: string | null; display_name: string | null; avatar_url: string | null }>();
+  const profileMap = new Map<
+    string,
+    { username: string | null; display_name: string | null; avatar_url: string | null }
+  >();
 
   if (userIds.length > 0) {
     const { data: profiles, error: profilesError } = await supabase
@@ -196,7 +265,7 @@ capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
     }
   }
 
-  const withLikes = await attachLikeStats(supabase, req.userId!, rows);
+  const withLikes = await attachLikeStats(supabase, userId, rows);
   const feedRows = await attachCommentCounts(supabase, withLikes);
 
   res.json({
@@ -204,8 +273,10 @@ capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
       ...capsule,
       profiles: profileMap.get(capsule.user_id) ?? null,
     })),
-    total: count ?? 0,
+    total,
     following_count: followingIds?.length ?? undefined,
+    scope,
+    sort,
   });
 });
 

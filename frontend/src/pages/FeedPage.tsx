@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Users } from 'lucide-react';
+import { useState } from 'react';
+import { Compass, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CapsuleComments } from '@/components/CapsuleComments';
 import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
@@ -11,15 +11,13 @@ import { StarRating } from '@/components/StarRating';
 import { WatchContextBadge } from '@/components/WatchContextBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useCapsuleFeed } from '@/hooks/useCapsules';
+import { useCapsuleFeed, type FeedScope, type FeedSort } from '@/hooks/useCapsules';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { useAuth } from '@/hooks/useAuthInit';
 import { formatRelativeTime } from '@/lib/format';
 import { profilePath } from '@/lib/profilePath';
 import { cn } from '@/lib/utils';
 import type { FeedCapsule } from '@/types/capsule';
-
-type FeedSort = 'recent' | 'popular';
 
 function formatScore(capsule: FeedCapsule) {
   if (capsule.home_score == null || capsule.away_score == null) return null;
@@ -110,17 +108,74 @@ function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; cur
   );
 }
 
-function sortCapsules(capsules: FeedCapsule[], sort: FeedSort): FeedCapsule[] {
-  if (sort === 'recent') return capsules;
-  return [...capsules].sort((a, b) => {
-    const scoreA = (a.likes_count ?? 0) + (a.comments_count ?? 0);
-    const scoreB = (b.likes_count ?? 0) + (b.comments_count ?? 0);
-    return scoreB - scoreA || b.created_at.localeCompare(a.created_at);
-  });
+function ScopeTabs({
+  scope,
+  onChange,
+}: {
+  scope: FeedScope;
+  onChange: (next: FeedScope) => void;
+}) {
+  return (
+    <div className="flex gap-2" role="tablist" aria-label="Alcance del feed">
+      {(
+        [
+          ['following', 'Siguiendo'],
+          ['explore', 'Explorar'],
+        ] as const
+      ).map(([key, label]) => (
+        <button
+          key={key}
+          type="button"
+          role="tab"
+          aria-selected={scope === key}
+          onClick={() => onChange(key)}
+          className={cn(
+            'min-h-9 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            scope === key
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-secondary text-muted-foreground hover:text-foreground',
+          )}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SortTabs({ sort, onChange }: { sort: FeedSort; onChange: (next: FeedSort) => void }) {
+  return (
+    <div className="flex gap-2" role="tablist" aria-label="Orden del feed">
+      {(
+        [
+          ['recent', 'Recientes'],
+          ['popular', 'Populares'],
+        ] as const
+      ).map(([key, label]) => (
+        <button
+          key={key}
+          type="button"
+          role="tab"
+          aria-selected={sort === key}
+          onClick={() => onChange(key)}
+          className={cn(
+            'min-h-9 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            sort === key
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-secondary text-muted-foreground hover:text-foreground',
+          )}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export function FeedPage() {
   const { user } = useAuth();
+  const [scope, setScope] = useState<FeedScope>('following');
+  const [sort, setSort] = useState<FeedSort>('recent');
   const {
     data,
     isLoading,
@@ -129,20 +184,18 @@ export function FeedPage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useCapsuleFeed();
-  const [sort, setSort] = useState<FeedSort>('recent');
-  const rawCapsules = useMemo(
-    () => data?.pages.flatMap((page) => page.capsules) ?? [],
-    [data],
-  );
-  const capsules = useMemo(
-    () => sortCapsules(rawCapsules, sort),
-    [rawCapsules, sort],
-  );
+  } = useCapsuleFeed(scope, sort);
+  const capsules = data?.pages.flatMap((page) => page.capsules) ?? [];
   const followingCount = data?.pages[0]?.following_count;
   const isEmpty = !isLoading && !isError && capsules.length === 0;
-  const { data: discoverData } = useDiscoverProfiles(isEmpty);
+  const showDiscover = isEmpty && scope === 'following';
+  const { data: discoverData } = useDiscoverProfiles(showDiscover);
   const suggestions = discoverData?.profiles ?? [];
+
+  const subtitle =
+    scope === 'explore'
+      ? 'Partidos públicos de la comunidad Ninety.'
+      : 'El vestuario digital: partidos de a quien sigues y los tuyos.';
 
   return (
     <Layout>
@@ -150,29 +203,10 @@ export function FeedPage() {
         <section className="space-y-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Feed</h1>
-            <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-              El vestuario digital: partidos de a quien sigues y los tuyos.
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground sm:text-base">{subtitle}</p>
           </div>
-          <div className="flex gap-2" role="tablist" aria-label="Orden del feed">
-            {([['recent', 'Recientes'], ['popular', 'Populares']] as const).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                role="tab"
-                aria-selected={sort === key}
-                onClick={() => setSort(key)}
-                className={cn(
-                  'min-h-9 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                  sort === key
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-secondary text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <ScopeTabs scope={scope} onChange={setScope} />
+          <SortTabs sort={sort} onChange={setSort} />
         </section>
 
         {isLoading ? (
@@ -189,7 +223,7 @@ export function FeedPage() {
           </Card>
         ) : null}
 
-        {!isLoading && !isError && capsules.length === 0 ? (
+        {isEmpty && scope === 'following' ? (
           <div className="space-y-6">
             <Card className="border-dashed">
               <CardContent className="p-6 text-center sm:p-10">
@@ -201,6 +235,9 @@ export function FeedPage() {
                     : 'La gente que sigues aún no ha publicado partidos, o aún no has guardado ninguno.'}
                 </p>
                 <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  <Button type="button" variant="secondary" onClick={() => setScope('explore')}>
+                    Explorar comunidad
+                  </Button>
                   <Button asChild>
                     <Link to="/search?tab=people">Buscar aficionados</Link>
                   </Button>
@@ -224,6 +261,26 @@ export function FeedPage() {
               </section>
             ) : null}
           </div>
+        ) : null}
+
+        {isEmpty && scope === 'explore' ? (
+          <Card className="border-dashed">
+            <CardContent className="p-6 text-center sm:p-10">
+              <Compass className="mx-auto mb-3 h-10 w-10 text-muted-foreground" aria-hidden />
+              <p className="text-lg font-medium">Aún no hay cápsulas públicas</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Cuando la comunidad publique partidos públicos, aparecerán aquí.
+              </p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <Button asChild>
+                  <Link to="/search">Crear tu primera Capsule</Link>
+                </Button>
+                <Button type="button" variant="secondary" onClick={() => setScope('following')}>
+                  Volver a Siguiendo
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         ) : null}
 
         {!isLoading && !isError && capsules.length > 0 ? (

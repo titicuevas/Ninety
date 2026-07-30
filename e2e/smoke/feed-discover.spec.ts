@@ -2,19 +2,46 @@ import { expect, test } from '@playwright/test';
 import { API_BASE, goAppNav, openAuthenticatedHome, readAccessToken } from '../helpers/auth';
 
 test.describe('Smoke — feed y discover @smoke', () => {
-  test('feed accesible con orden o empty state', async ({ page }) => {
+  test('feed con tabs Siguiendo/Explorar y orden', async ({ page }) => {
     await openAuthenticatedHome(page);
     await goAppNav(page, /feed/i);
 
     await expect(page).toHaveURL(/\/feed/);
     await expect(page.getByRole('heading', { name: /^feed$/i })).toBeVisible();
 
+    const followingTab = page.getByRole('tab', { name: /^siguiendo$/i });
+    const exploreTab = page.getByRole('tab', { name: /^explorar$/i });
     const recentTab = page.getByRole('tab', { name: /recientes/i });
+    const popularTab = page.getByRole('tab', { name: /populares/i });
+
+    await expect(followingTab).toBeVisible({ timeout: 15_000 });
+    await expect(exploreTab).toBeVisible();
+    await expect(recentTab).toBeVisible();
+    await expect(popularTab).toBeVisible();
+    await expect(followingTab).toHaveAttribute('aria-selected', 'true');
+
+    await exploreTab.click();
+    await expect(exploreTab).toHaveAttribute('aria-selected', 'true');
+    await expect(
+      page
+        .getByText(/partidos públicos de la comunidad/i)
+        .or(page.getByText(/aún no hay cápsulas públicas/i))
+        .or(page.locator('ul li').first()),
+    ).toBeVisible({ timeout: 15_000 });
+
+    await popularTab.click();
+    await expect(popularTab).toHaveAttribute('aria-selected', 'true');
+
+    await followingTab.click();
+    await expect(followingTab).toHaveAttribute('aria-selected', 'true');
+
     const empty = page.getByText(/tu feed está vacío/i);
+    const listItem = page.locator('ul li').first();
+    await expect(empty.or(listItem).or(recentTab)).toBeVisible({ timeout: 15_000 });
 
-    await expect(recentTab.or(empty)).toBeVisible({ timeout: 15_000 });
-
-    if (await recentTab.isVisible()) {
+    if (await empty.isVisible()) {
+      await expect(page.getByRole('button', { name: /explorar comunidad/i })).toBeVisible();
+    } else {
       const loadMore = page.getByRole('button', { name: /cargar más/i });
       if (await loadMore.isVisible()) {
         await expect(loadMore).toBeEnabled();
@@ -22,25 +49,55 @@ test.describe('Smoke — feed y discover @smoke', () => {
     }
   });
 
-  test('si el feed está vacío, muestra sugerencias o CTA de búsqueda', async ({ page }) => {
+  test('si el feed Siguiendo está vacío, muestra sugerencias o CTA', async ({ page }) => {
     await openAuthenticatedHome(page);
     await goAppNav(page, /feed/i);
     await expect(page).toHaveURL(/\/feed/);
 
-    const empty = page.getByText(/tu feed está vacío/i);
-    const hasContent = page.getByRole('tab', { name: /recientes/i });
+    await page.getByRole('tab', { name: /^siguiendo$/i }).click();
 
-    // Esperar a que cargue uno u otro
+    const empty = page.getByText(/tu feed está vacío/i);
+    const hasContent = page.locator('ul li').first();
+
     await expect(empty.or(hasContent)).toBeVisible({ timeout: 15_000 });
 
     if (await empty.isVisible()) {
       await expect(page.getByRole('link', { name: /buscar aficionados/i })).toBeVisible();
 
       const suggestions = page.getByRole('heading', { name: /aficionados sugeridos/i });
-      // Las sugerencias dependen de que haya otros perfiles; si no hay, solo el CTA
       if (await suggestions.isVisible()) {
         await expect(page.getByRole('button', { name: /^seguir$/i }).first()).toBeVisible();
       }
+    }
+  });
+
+  test('API feed acepta scope y sort', async ({ page, request }) => {
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    for (const [scope, sort] of [
+      ['following', 'recent'],
+      ['following', 'popular'],
+      ['explore', 'recent'],
+      ['explore', 'popular'],
+    ] as const) {
+      const res = await request.get(
+        `${API_BASE}/api/capsules/feed?limit=5&offset=0&scope=${scope}&sort=${sort}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      expect(res.ok(), `${scope}/${sort} → ${res.status()}`).toBeTruthy();
+      const body = (await res.json()) as {
+        capsules?: unknown[];
+        total?: number;
+        scope?: string;
+        sort?: string;
+      };
+      expect(Array.isArray(body.capsules)).toBe(true);
+      expect(body.capsules!.length).toBeLessThanOrEqual(5);
+      expect(typeof body.total).toBe('number');
+      expect(body.scope).toBe(scope);
+      expect(body.sort).toBe(sort);
     }
   });
 

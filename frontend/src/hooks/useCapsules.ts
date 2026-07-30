@@ -82,17 +82,27 @@ export function useCreateCapsule() {
   });
 }
 
-export function useCapsuleFeed() {
+export type FeedScope = 'following' | 'explore';
+export type FeedSort = 'recent' | 'popular';
+
+export function useCapsuleFeed(scope: FeedScope = 'following', sort: FeedSort = 'recent') {
   const session = useAuthStore((s) => s.session);
 
   return useInfiniteQuery({
-    queryKey: ['capsules', 'feed'],
-    queryFn: ({ pageParam }) =>
-      apiFetch<FeedResponse>(
-        `/api/capsules/feed?limit=${FEED_PAGE_SIZE}&offset=${pageParam}`,
+    queryKey: ['capsules', 'feed', scope, sort],
+    queryFn: ({ pageParam }) => {
+      const params = new URLSearchParams({
+        limit: String(FEED_PAGE_SIZE),
+        offset: String(pageParam),
+        scope,
+        sort,
+      });
+      return apiFetch<FeedResponse>(
+        `/api/capsules/feed?${params.toString()}`,
         {},
         session?.access_token,
-      ),
+      );
+    },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       const loaded = allPages.reduce((sum, page) => sum + page.capsules.length, 0);
@@ -117,7 +127,9 @@ export function useToggleCapsuleLike() {
     },
     onMutate: async ({ capsuleId, liked }) => {
       await queryClient.cancelQueries({ queryKey: ['capsules', 'feed'] });
-      const previousFeed = queryClient.getQueryData<InfiniteData<FeedResponse>>(['capsules', 'feed']);
+      const previousFeeds = queryClient.getQueriesData<InfiniteData<FeedResponse>>({
+        queryKey: ['capsules', 'feed'],
+      });
 
       const updateCapsule = <T extends { id: string; likes_count?: number; liked_by_me?: boolean }>(c: T): T =>
         c.id === capsuleId
@@ -128,7 +140,7 @@ export function useToggleCapsuleLike() {
             }
           : c;
 
-      queryClient.setQueryData<InfiniteData<FeedResponse>>(['capsules', 'feed'], (old) =>
+      queryClient.setQueriesData<InfiniteData<FeedResponse>>({ queryKey: ['capsules', 'feed'] }, (old) =>
         old
           ? {
               ...old,
@@ -154,11 +166,13 @@ export function useToggleCapsuleLike() {
             : old,
       );
 
-      return { previousFeed };
+      return { previousFeeds };
     },
     onError: (_err, _vars, context) => {
-      if (context?.previousFeed) {
-        queryClient.setQueryData(['capsules', 'feed'], context.previousFeed);
+      if (context?.previousFeeds) {
+        for (const [key, data] of context.previousFeeds) {
+          queryClient.setQueryData(key, data);
+        }
       }
     },
     onSettled: () => {
