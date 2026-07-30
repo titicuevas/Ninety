@@ -1,5 +1,12 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { z } from 'zod';
+import { validateImageBuffer } from '../lib/contentModeration.js';
+import {
+  deleteAvatarByUrl,
+  isManagedAvatarUrl,
+  uploadAvatarBuffer,
+} from '../lib/ensureStorage.js';
 import { normalizeProfile, profileUpdatePayload } from '../lib/profileNormalize.js';
 import { syncUserProfile } from '../lib/syncUserProfile.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
@@ -9,6 +16,18 @@ import { isMissingFollowsTable, listFollowProfiles, type FollowListKind } from '
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
 export const profileRouter = Router();
+
+const avatarUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    if (['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error('Solo JPG, PNG o WebP.'));
+  },
+});
 
 const updateProfileSchema = z.object({
   display_name: z.string().min(1).max(100).optional(),
@@ -156,6 +175,102 @@ profileRouter.patch('/me', requireAuth, async (req: AuthRequest, res) => {
     }
     res.status(400).json({ error: error.message });
     return;
+  }
+
+  res.json(normalizeProfile(data));
+});
+
+profileRouter.post('/avatar', requireAuth, avatarUpload.single('avatar'), async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const file = req.file;
+  if (!file) {
+    res.status(400).json({ error: 'No se recibió ninguna foto.' });
+    return;
+  }
+
+  const imageError = validateImageBuffer(file.buffer, file.mimetype);
+  if (imageError) {
+    res.status(400).json({ error: imageError });
+    return;
+  }
+
+  const supabase = createUserClient(token);
+  const { data: current, error: currentError } = await supabase
+    .from('profiles')
+    .select('avatar_url')
+    .eq('id', req.userId!)
+    .maybeSingle();
+
+  if (currentError) {
+    res.status(400).json({ error: currentError.message });
+    return;
+  }
+
+  try {
+    const url = await uploadAvatarBuffer(req.userId!, file.buffer, file.mimetype);
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ avatar_url: url, updated_at: new Date().toISOString() })
+      .eq('id', req.userId!)
+      .select()
+      .single();
+
+    if (error || !data) {
+      res.status(400).json({ error: error?.message ?? 'No se pudo guardar el avatar' });
+      return;
+    }
+
+    if (current?.avatar_url && isManagedAvatarUrl(current.avatar_url) && current.avatar_url !== url) {
+      await deleteAvatarByUrl(current.avatar_url);
+    }
+
+    res.json(normalizeProfile(data));
+  } catch (err) {
+    res.status(400).json({
+      error: err instanceof Error ? err.message : 'No se pudo subir el avatar',
+    });
+  }
+});
+
+profileRouter.delete('/avatar', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const supabase = createUserClient(token);
+  const { data: current, error: currentError } = await supabase
+    .from('profiles')
+    .select('avatar_url')
+    .eq('id', req.userId!)
+    .maybeSingle();
+
+  if (currentError) {
+    res.status(400).json({ error: currentError.message });
+    return;
+  }
+
+  const previousUrl = current?.avatar_url ?? null;
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ avatar_url: null, updated_at: new Date().toISOString() })
+    .eq('id', req.userId!)
+    .select()
+    .single();
+
+  if (error || !data) {
+    res.status(400).json({ error: error?.message ?? 'No se pudo quitar el avatar' });
+    return;
+  }
+
+  if (isManagedAvatarUrl(previousUrl)) {
+    await deleteAvatarByUrl(previousUrl!);
   }
 
   res.json(normalizeProfile(data));

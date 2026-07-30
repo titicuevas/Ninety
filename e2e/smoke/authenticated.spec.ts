@@ -46,5 +46,8 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(page).toHaveURL(/\/profile/);
     await expect(page.getByRole('heading', { name: /tu perfil/i })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByLabel(/^bio$/i)).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /subir foto|cambiar foto/i }),
+    ).toBeVisible();
   });
 });

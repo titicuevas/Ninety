@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,6 +14,8 @@ import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useAuthStore } from '@/stores/authStore';
 import { apiFetch } from '@/lib/api';
+import { friendlyApiError } from '@/lib/friendlyErrors';
+import { AVATAR_ACCEPT, removeProfileAvatar, uploadProfileAvatar } from '@/lib/profileAvatar';
 import { isAutoUsername, suggestUsername } from '@/lib/profileHelpers';
 import { profilePath } from '@/lib/profilePath';
 import { publicProfileUrl } from '@/lib/siteUrl';
@@ -41,6 +43,9 @@ export function ProfilePage() {
   const { data: profile, isLoading } = useProfile();
   const [success, setSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -54,12 +59,17 @@ export function ProfilePage() {
   const displayName = watch('display_name');
   const bioValue = watch('bio') ?? '';
 
+  const applyProfile = (data: Profile) => {
+    queryClient.setQueryData(['profile', 'me'], data);
+    void queryClient.invalidateQueries({ queryKey: ['profile', 'public'] });
+    void queryClient.invalidateQueries({ queryKey: ['capsules', 'feed'] });
+  };
+
   const mutation = useMutation({
     mutationFn: (data: UpdateProfileInput) =>
       apiFetch<Profile>('/api/profile/me', { method: 'PATCH', body: JSON.stringify(data) }, session?.access_token),
     onSuccess: (data) => {
-      queryClient.setQueryData(['profile', 'me'], data);
-      void queryClient.invalidateQueries({ queryKey: ['profile', 'public'] });
+      applyProfile(data);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     },
@@ -112,6 +122,35 @@ export function ProfilePage() {
     });
   };
 
+  const onAvatarSelected = async (file: File | undefined) => {
+    if (!file || !session?.access_token) return;
+    setAvatarError(null);
+    setAvatarBusy(true);
+    try {
+      const updated = await uploadProfileAvatar(file, session.access_token);
+      applyProfile(updated);
+    } catch (err) {
+      setAvatarError(err instanceof Error ? friendlyApiError(err.message) : 'No se pudo subir la foto');
+    } finally {
+      setAvatarBusy(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const onRemoveAvatar = async () => {
+    if (!session?.access_token) return;
+    setAvatarError(null);
+    setAvatarBusy(true);
+    try {
+      const updated = await removeProfileAvatar(session.access_token);
+      applyProfile(updated);
+    } catch (err) {
+      setAvatarError(err instanceof Error ? friendlyApiError(err.message) : 'No se pudo quitar la foto');
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <Layout>
@@ -125,6 +164,7 @@ export function ProfilePage() {
   const avatarUrl =
     profile?.avatar_url ??
     (typeof user?.user_metadata?.picture === 'string' ? user.user_metadata.picture : null);
+  const hasCustomAvatar = !!profile?.avatar_url;
 
   return (
     <Layout>
@@ -134,23 +174,54 @@ export function ProfilePage() {
           <CardDescription>Configura tu identidad como aficionado</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-6 flex items-center gap-4">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
             {avatarUrl ? (
               <img
                 src={avatarUrl}
                 alt=""
-                className="h-16 w-16 rounded-full border border-border object-cover"
+                className="h-20 w-20 shrink-0 rounded-full border border-border object-cover"
               />
             ) : (
-              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
+              <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
                 {(profile?.display_name ?? user?.email ?? '?').slice(0, 1).toUpperCase()}
               </span>
             )}
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1 space-y-2">
               <p className="truncate font-medium">{profile?.display_name ?? 'Aficionado'}</p>
               <p className="truncate text-sm text-muted-foreground">{user?.email}</p>
+              <div className="flex flex-wrap gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={AVATAR_ACCEPT}
+                  className="sr-only"
+                  aria-label="Elegir foto de perfil"
+                  onChange={(e) => void onAvatarSelected(e.target.files?.[0])}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  loading={avatarBusy}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {hasCustomAvatar ? 'Cambiar foto' : 'Subir foto'}
+                </Button>
+                {hasCustomAvatar ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={avatarBusy}
+                    onClick={() => void onRemoveAvatar()}
+                  >
+                    Quitar foto
+                  </Button>
+                ) : null}
+              </div>
+              {avatarError ? <p className="text-xs text-destructive">{avatarError}</p> : null}
               {profile?.username && !isAutoUsername(profile.username) ? (
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <Link to={profilePath(profile.username)} className="text-sm text-primary hover:underline">
                     Ver perfil público
                   </Link>
