@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openAuthenticatedHome } from '../helpers/auth';
+import { API_BASE, openAuthenticatedHome, readAccessToken } from '../helpers/auth';
 
 test.describe('Smoke — notificaciones @smoke', () => {
   test('página de notificaciones accesible desde la campanita', async ({ page }) => {
@@ -61,5 +61,31 @@ test.describe('Smoke — notificaciones @smoke', () => {
     if (await diagnostics.isVisible()) {
       await expect(diagnostics).toContainText(/alertas push/i);
     }
+  });
+
+  test('deep link #comments abre el panel en el detalle', async ({ page, request }) => {
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const me = await request.get(`${API_BASE}/api/capsules/me?limit=1&offset=0`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(me.ok()).toBeTruthy();
+    const body = (await me.json()) as { capsules?: Array<{ id: string }> };
+    const capsuleId = body.capsules?.[0]?.id;
+    if (!capsuleId) {
+      test.skip(true, 'La cuenta QA no tiene Capsules para probar #comments');
+      return;
+    }
+
+    await page.goto(`/c/${capsuleId}#comments`);
+    await expect(page).toHaveURL(new RegExp(`/c/${capsuleId}`));
+    await expect(page.getByRole('button', { name: /ocultar comentarios/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(
+      page.getByLabel(/nuevo comentario/i).or(page.getByText(/sé el primero en comentar/i)),
+    ).toBeVisible();
   });
 });

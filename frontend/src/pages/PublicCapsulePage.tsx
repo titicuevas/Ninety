@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { CapsuleComments } from '@/components/CapsuleComments';
 import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
@@ -24,9 +24,11 @@ function formatScore(home: number | null, away: number | null) {
 
 export function PublicCapsulePage() {
   const { id } = useParams<{ id: string }>();
+  const { hash } = useLocation();
   const { user } = useAuth();
   const { data: capsule, isLoading, isError, error } = usePublicCapsule(id);
   const Shell = user ? Layout : PublicLayout;
+  const openComments = hash === '#comments';
 
   if (isLoading) {
     return (
@@ -173,6 +175,7 @@ export function PublicCapsulePage() {
                     commentsCount={capsule.comments_count}
                     currentUserId={user.id}
                     capsuleOwnerId={capsule.user_id}
+                    defaultOpen={openComments}
                   />
                 </>
               ) : (
@@ -181,6 +184,7 @@ export function PublicCapsulePage() {
                     capsuleId={capsule.id}
                     commentsCount={capsule.comments_count}
                     capsuleOwnerId={capsule.user_id}
+                    defaultOpen={openComments}
                   />
                   <p className="w-full pt-2 text-sm text-muted-foreground">
                     {(capsule.likes_count ?? 0) > 0 ? `${capsule.likes_count} me gusta · ` : null}

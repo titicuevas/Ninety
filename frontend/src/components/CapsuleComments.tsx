@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,24 @@ import { formatRelativeTime } from '@/lib/format';
 import { profilePath } from '@/lib/profilePath';
 import { cn } from '@/lib/utils';
 import type { CapsuleComment } from '@/types/comment';
+
+function CommentAvatar({ name, avatarUrl }: { name: string; avatarUrl: string | null | undefined }) {
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt=""
+        className="mt-0.5 h-7 w-7 shrink-0 rounded-full border border-border object-cover"
+      />
+    );
+  }
+
+  return (
+    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-muted-foreground">
+      {name.slice(0, 1).toUpperCase()}
+    </div>
+  );
+}
 
 function CommentItem({
   comment,
@@ -38,9 +56,7 @@ function CommentItem({
 
   return (
     <div className="flex gap-2 text-sm">
-      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-muted-foreground">
-        {name.slice(0, 1).toUpperCase()}
-      </div>
+      <CommentAvatar name={name} avatarUrl={comment.author?.avatar_url} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
           {username && !isOwn ? (
@@ -78,6 +94,8 @@ interface CapsuleCommentsProps {
   commentsCount?: number;
   currentUserId?: string;
   capsuleOwnerId?: string;
+  /** Abrir el panel (p.ej. deep link `#comments`). */
+  defaultOpen?: boolean;
   className?: string;
 }
 
@@ -86,16 +104,41 @@ export function CapsuleComments({
   commentsCount = 0,
   currentUserId,
   capsuleOwnerId,
+  defaultOpen = false,
   className,
 }: CapsuleCommentsProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [draft, setDraft] = useState('');
+  const panelRef = useRef<HTMLDivElement>(null);
   const { data, isLoading, isError } = useCapsuleComments(capsuleId, open);
   const addComment = useAddCapsuleComment(capsuleId);
   const deleteComment = useDeleteCapsuleComment(capsuleId);
 
   const comments = data?.comments ?? [];
   const label = commentsCount > 0 ? `${commentsCount} comentarios` : 'Comentar';
+
+  useEffect(() => {
+    if (defaultOpen) setOpen(true);
+  }, [defaultOpen]);
+
+  useEffect(() => {
+    if (!open || !defaultOpen) return;
+    const id = window.requestAnimationFrame(() => {
+      panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [open, defaultOpen]);
+
+  const handleToggle = () => {
+    setOpen((wasOpen) => {
+      const next = !wasOpen;
+      if (!next && window.location.hash === '#comments') {
+        const path = `${window.location.pathname}${window.location.search}`;
+        window.history.replaceState(null, '', path);
+      }
+      return next;
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,10 +154,10 @@ export function CapsuleComments({
   };
 
   return (
-    <div className={cn(className)}>
+    <div id="comments" ref={panelRef} className={cn(className)}>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleToggle}
         aria-expanded={open}
         className={cn(
           'inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm transition-colors',

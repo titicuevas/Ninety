@@ -83,7 +83,9 @@ function NotificationItem({
     n.type === 'follow' && n.actor?.username
       ? `/u/${n.actor.username}`
       : n.capsule_id
-        ? `/c/${n.capsule_id}`
+        ? n.type === 'comment'
+          ? `/c/${n.capsule_id}#comments`
+          : `/c/${n.capsule_id}`
         : undefined;
   const snippet = n.type === 'comment' && n.body?.trim() ? n.body.trim() : null;
 

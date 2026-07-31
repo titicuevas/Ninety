@@ -82,7 +82,9 @@ export async function notifyUser(params: {
       params.type === 'follow' && actor?.username
         ? `/u/${actor.username}`
         : params.capsuleId
-          ? `/c/${params.capsuleId}`
+          ? params.type === 'comment'
+            ? `/c/${params.capsuleId}#comments`
+            : `/c/${params.capsuleId}`
           : '/notifications';
 
     void sendPushToUser(params.userId, {
