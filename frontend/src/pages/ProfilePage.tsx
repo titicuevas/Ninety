@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Check, Loader2, X } from 'lucide-react';
 import { Layout } from '@/components/Layout';
 import { ShareProfileButton } from '@/components/ShareProfileButton';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { useDirtyLeave } from '@/hooks/useDirtyLeave';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuthInit';
+import {
+  isUsernameFormatValid,
+  useUsernameAvailability,
+} from '@/hooks/useUsernameAvailability';
 import { useAuthStore } from '@/stores/authStore';
 import { apiFetch } from '@/lib/api';
 import { friendlyApiError } from '@/lib/friendlyErrors';
@@ -23,6 +28,7 @@ import { AVATAR_ACCEPT, removeProfileAvatar, uploadProfileAvatar } from '@/lib/p
 import { isAutoUsername, suggestUsername } from '@/lib/profileHelpers';
 import { profilePath } from '@/lib/profilePath';
 import type { Profile, UpdateProfileInput } from '@/types/profile';
+import { cn } from '@/lib/utils';
 
 const profileSchema = z.object({
   display_name: z.string().min(2, 'Mínimo 2 caracteres'),
@@ -80,7 +86,27 @@ export function ProfilePage() {
   } = useForm<ProfileForm>({ resolver: zodResolver(profileSchema) });
 
   const displayName = watch('display_name');
+  const usernameValue = watch('username') ?? '';
   const bioValue = watch('bio') ?? '';
+  const [debouncedUsername, setDebouncedUsername] = useState('');
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedUsername(usernameValue.trim().toLowerCase());
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [usernameValue]);
+
+  const usernameCheck = useUsernameAvailability(debouncedUsername, profile?.username);
+  const usernameFormatOk = isUsernameFormatValid(debouncedUsername);
+  const isCurrentUsername =
+    !!profile?.username &&
+    !isAutoUsername(profile.username) &&
+    profile.username.toLowerCase() === debouncedUsername;
+  const usernameTaken =
+    usernameFormatOk && !isCurrentUsername && usernameCheck.data?.available === false;
+  const usernameFree =
+    usernameFormatOk && (isCurrentUsername || usernameCheck.data?.available === true);
 
   const applyProfile = (data: Profile) => {
     queryClient.setQueryData(['profile', 'me'], data);
@@ -115,6 +141,7 @@ export function ProfilePage() {
   };
 
   const onSubmit = (data: ProfileForm) => {
+    if (usernameTaken) return;
     mutation.mutate({
       display_name: data.display_name,
       username: data.username,
@@ -277,11 +304,20 @@ export function ProfilePage() {
 
             <FormField
               label="Username"
-              error={errors.username?.message}
+              error={
+                errors.username?.message ??
+                (usernameTaken ? 'Ese username ya está en uso' : undefined)
+              }
               hint="Público. Solo minúsculas, números y guiones bajos."
             >
               <div className="flex gap-2">
-                <Input placeholder="henry_madridista" className="flex-1" {...register('username')} />
+                <Input
+                  placeholder="henry_madridista"
+                  className="flex-1"
+                  autoComplete="username"
+                  aria-describedby="username-availability"
+                  {...register('username')}
+                />
                 <Button
                   type="button"
                   variant="secondary"
@@ -293,6 +329,42 @@ export function ProfilePage() {
                 </Button>
               </div>
             </FormField>
+            <p
+              id="username-availability"
+              className={cn(
+                '-mt-2 flex min-h-5 items-center gap-1.5 text-xs',
+                usernameTaken && 'text-destructive',
+                usernameFree && 'text-primary',
+                !usernameTaken && !usernameFree && 'text-muted-foreground',
+              )}
+              role="status"
+              aria-live="polite"
+            >
+              {!debouncedUsername ? (
+                <span>Elige un username único</span>
+              ) : !usernameFormatOk ? (
+                <span>Mínimo 3 caracteres: a-z, 0-9 y _</span>
+              ) : usernameCheck.isFetching ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                  Comprobando disponibilidad…
+                </>
+              ) : usernameTaken ? (
+                <>
+                  <X className="h-3.5 w-3.5" aria-hidden />
+                  No disponible
+                </>
+                ) : usernameFree ? (
+                  <>
+                    <Check className="h-3.5 w-3.5" aria-hidden />
+                    {isCurrentUsername || usernameCheck.data?.own
+                      ? 'Es tu username actual'
+                      : 'Disponible'}
+                  </>
+              ) : usernameCheck.isError ? (
+                <span>No se pudo comprobar ahora</span>
+              ) : null}
+            </p>
 
             <FormField label="Equipo favorito">
               <Input placeholder="Ej: FC Barcelona" {...register('favorite_team')} />
@@ -326,7 +398,12 @@ export function ProfilePage() {
             ) : null}
             {success ? <p className="text-sm text-primary">Perfil actualizado correctamente</p> : null}
 
-            <Button type="submit" loading={mutation.isPending} className="w-full">
+            <Button
+              type="submit"
+              loading={mutation.isPending}
+              className="w-full"
+              disabled={usernameTaken || (usernameFormatOk && usernameCheck.isFetching)}
+            >
               Guardar perfil
             </Button>
           </form>

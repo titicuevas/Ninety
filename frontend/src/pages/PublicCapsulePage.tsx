@@ -29,6 +29,7 @@ function formatScore(home: number | null, away: number | null) {
 type CapsuleLocationState = {
   shareNudge?: boolean;
   savedChanges?: boolean;
+  privateSaved?: boolean;
 };
 
 export function PublicCapsulePage() {
@@ -41,6 +42,9 @@ export function PublicCapsulePage() {
   const locationState = location.state as CapsuleLocationState | null;
   const [showShareNudge, setShowShareNudge] = useState(() => Boolean(locationState?.shareNudge));
   const [showSavedBanner, setShowSavedBanner] = useState(() => Boolean(locationState?.savedChanges));
+  const [showPrivateSaved, setShowPrivateSaved] = useState(() =>
+    Boolean(locationState?.privateSaved),
+  );
 
   if (isLoading) {
     return (
@@ -174,6 +178,33 @@ export function PublicCapsulePage() {
           </Card>
         ) : null}
 
+        {showPrivateSaved && isOwn && capsule.is_public === false ? (
+          <Card
+            className="border-primary/40 bg-primary/5 motion-reveal"
+            data-testid="private-capsule-saved-banner"
+          >
+            <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+              <div className="min-w-0">
+                <p className="font-medium">Guardada en privado</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Solo tú la ves. Puedes hacerla pública cuando quieras para compartirla.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button asChild variant="secondary" size="sm">
+                  <Link to={`/capsules/${capsule.id}/edit`}>Hazla pública</Link>
+                </Button>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/capsules">Ver diario</Link>
+                </Button>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setShowPrivateSaved(false)}>
+                  Cerrar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
+
         {isOwn && capsule.is_public !== false ? <PushActivationBanner context="post_create" /> : null}
 
         <Card>
@@ -256,12 +287,21 @@ export function PublicCapsulePage() {
           </CardContent>
         </Card>
 
-        <p className="text-center text-xs text-muted-foreground">
-          Enlace público ·{' '}
-          <a href={publicCapsuleUrl(capsule.id)} className="text-primary hover:underline">
-            {publicCapsuleUrl(capsule.id).replace(/^https?:\/\//, '')}
-          </a>
-        </p>
+        {isOwn && capsule.is_public === false ? (
+          <p className="text-center text-xs text-muted-foreground">
+            Solo tú puedes ver esta Capsule ·{' '}
+            <Link to={`/capsules/${capsule.id}/edit`} className="text-primary hover:underline">
+              Hazla pública para compartir
+            </Link>
+          </p>
+        ) : (
+          <p className="text-center text-xs text-muted-foreground">
+            Enlace público ·{' '}
+            <a href={publicCapsuleUrl(capsule.id)} className="text-primary hover:underline">
+              {publicCapsuleUrl(capsule.id).replace(/^https?:\/\//, '')}
+            </a>
+          </p>
+        )}
       </div>
     </Shell>
   );

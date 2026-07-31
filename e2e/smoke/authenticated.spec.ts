@@ -218,6 +218,23 @@ test.describe('Smoke — autenticado @smoke', () => {
     });
   });
 
+  test('Perfil comprueba disponibilidad de username', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page
+      .getByRole('navigation', { name: /navegación principal/i })
+      .getByRole('link', { name: /perfil/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/profile/);
+    await expect(page.getByRole('heading', { name: /tu perfil/i })).toBeVisible({ timeout: 20_000 });
+
+    const username = page.getByPlaceholder(/henry_madridista/i);
+    await username.fill(`zzzninety_${Date.now().toString().slice(-6)}`);
+    await expect(page.getByRole('status').filter({ hasText: /disponible|comprobando/i })).toBeVisible({
+      timeout: 10_000,
+    });
+  });
+
   test('Perfil pide confirmación al salir con cambios', async ({ page }) => {
     await openAuthenticatedHome(page);
     await page

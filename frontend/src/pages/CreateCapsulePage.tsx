@@ -108,7 +108,10 @@ export function CreateCapsulePage() {
             }
             navigate(`/c/${created.id}`, {
               replace: true,
-              state: { shareNudge: payload.is_public },
+              state: {
+                shareNudge: payload.is_public,
+                privateSaved: !payload.is_public,
+              },
             });
           },
           onError: (err) => {

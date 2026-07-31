@@ -64,6 +64,11 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/profile/username-available requiere auth', async () => {
+    const res = await request(createApp()).get('/api/profile/username-available?u=demo_user');
+    assert.equal(res.status, 401);
+  });
+
   it('GET /api/capsules/me requiere auth', async () => {
     const res = await request(createApp()).get('/api/capsules/me');
     assert.equal(res.status, 401);

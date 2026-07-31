@@ -180,6 +180,48 @@ profileRouter.patch('/me', requireAuth, async (req: AuthRequest, res) => {
   res.json(normalizeProfile(data));
 });
 
+const usernameAvailableQuerySchema = z.object({
+  u: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(3)
+    .max(30)
+    .regex(/^[a-z0-9_]+$/, 'Solo letras minúsculas, números y guiones bajos'),
+});
+
+profileRouter.get('/username-available', requireAuth, async (req: AuthRequest, res) => {
+  const parsed = usernameAvailableQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ available: false, reason: 'invalid' });
+    return;
+  }
+
+  const username = parsed.data.u;
+  const { data, error } = await supabaseAnon
+    .from('profiles')
+    .select('id')
+    .eq('username', username)
+    .maybeSingle();
+
+  if (error) {
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  if (!data) {
+    res.json({ available: true, username });
+    return;
+  }
+
+  if (data.id === req.userId) {
+    res.json({ available: true, username, own: true });
+    return;
+  }
+
+  res.json({ available: false, username });
+});
+
 profileRouter.post('/avatar', requireAuth, avatarUpload.single('avatar'), async (req: AuthRequest, res) => {
   const token = getAccessToken(req);
   if (!token) {
