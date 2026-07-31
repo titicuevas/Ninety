@@ -9,6 +9,17 @@ test.describe('Smoke — autenticado @smoke', () => {
     ).toBeVisible({ timeout: 20_000 });
   });
 
+  test('home muestra hub Comunidad con atajos', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await expect(page.getByRole('heading', { name: /^comunidad$/i })).toBeVisible({
+      timeout: 20_000,
+    });
+    const shortcuts = page.getByRole('navigation', { name: /atajos sociales/i });
+    await expect(shortcuts.getByRole('link', { name: /^feed$/i })).toBeVisible();
+    await expect(shortcuts.getByRole('link', { name: /aficionados/i })).toBeVisible();
+    await expect(shortcuts.getByRole('link', { name: /notificaciones/i })).toBeVisible();
+  });
+
   test('Wrapped permite cambiar periodo y compartir', async ({ page }) => {
     await openAuthenticatedHome(page);
     const wrappedHeading = page.getByRole('heading', { name: /esto es tu fútbol/i });

@@ -1,5 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { EmptyState } from '@/components/EmptyState';
+import { HomeSocialHub } from '@/components/HomeSocialHub';
 import { Layout } from '@/components/Layout';
 import { WrappedLoadingSkeleton } from '@/components/ListSkeletons';
 import { OnboardingSteps } from '@/components/OnboardingSteps';
@@ -78,6 +79,8 @@ export function HomePage() {
             hasFollow={hasFollow}
           />
         ) : null}
+
+        <HomeSocialHub username={profile?.username} />
 
         {isLoading ? (
           <WrappedLoadingSkeleton />
