@@ -5,6 +5,7 @@ import { CapsuleComments } from '@/components/CapsuleComments';
 import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { EmptyState } from '@/components/EmptyState';
+import { CapsuleListSkeleton } from '@/components/ListSkeletons';
 import { Layout } from '@/components/Layout';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
@@ -210,11 +211,7 @@ export function FeedPage() {
           <SortTabs sort={sort} onChange={setSort} />
         </section>
 
-        {isLoading ? (
-          <div className="flex justify-center py-16">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          </div>
-        ) : null}
+        {isLoading ? <CapsuleListSkeleton withAuthor count={3} /> : null}
 
         {isError ? (
           <Card className="border-destructive/40">

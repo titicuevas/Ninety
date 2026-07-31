@@ -4,6 +4,7 @@ import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { FollowButton } from '@/components/FollowButton';
 import { Layout } from '@/components/Layout';
+import { CapsuleListSkeleton } from '@/components/ListSkeletons';
 import { PublicLayout } from '@/components/PublicLayout';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { StarRating } from '@/components/StarRating';
@@ -33,8 +34,8 @@ export function PublicCapsulePage() {
   if (isLoading) {
     return (
       <Shell>
-        <div className="flex justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <div className="mx-auto max-w-lg">
+          <CapsuleListSkeleton withAuthor count={1} />
         </div>
       </Shell>
     );

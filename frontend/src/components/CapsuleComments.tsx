@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import {
   useAddCapsuleComment,
@@ -212,11 +213,16 @@ export function CapsuleComments({
           )}
 
           {isLoading ? (
-            <div className="flex justify-center py-4" role="status" aria-label="Cargando comentarios">
-              <div
-                className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent"
-                aria-hidden
-              />
+            <div className="space-y-3" role="status" aria-label="Cargando comentarios">
+              {Array.from({ length: 2 }, (_, i) => (
+                <div key={i} className="flex gap-2">
+                  <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : null}
 

@@ -1,6 +1,7 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
+import { WrappedLoadingSkeleton } from '@/components/ListSkeletons';
 import { OnboardingSteps } from '@/components/OnboardingSteps';
 import { WrappedSummary } from '@/components/WrappedSummary';
 import { Button } from '@/components/ui/button';
@@ -79,9 +80,7 @@ export function HomePage() {
         ) : null}
 
         {isLoading ? (
-          <div className="flex justify-center py-16">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          </div>
+          <WrappedLoadingSkeleton />
         ) : capsules.length === 0 ? (
           <EmptyState
             title="Tu Wrapped empieza aquí"

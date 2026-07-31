@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Bell, Heart, UserPlus, MessageCircle } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
+import { NotificationListSkeleton } from '@/components/ListSkeletons';
 import { Button } from '@/components/ui/button';
 import {
   useNotifications,
@@ -266,9 +267,7 @@ export function NotificationsPage() {
         ) : null}
 
         {isLoading ? (
-          <div className="flex justify-center py-16">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          </div>
+          <NotificationListSkeleton count={5} />
         ) : notifications.length === 0 ? (
           <EmptyState
             icon={Bell}

@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { FilterChip } from '@/components/FilterChip';
 import { FollowButton } from '@/components/FollowButton';
 import { Layout } from '@/components/Layout';
+import { ProfileLoadingSkeleton } from '@/components/ListSkeletons';
 import { PublicLayout } from '@/components/PublicLayout';
 import { PublicWrappedSummary } from '@/components/PublicWrappedSummary';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
@@ -192,9 +193,7 @@ export function PublicProfilePage() {
   if (isLoading) {
     return (
       <Shell>
-        <div className="flex justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        </div>
+        <ProfileLoadingSkeleton />
       </Shell>
     );
   }

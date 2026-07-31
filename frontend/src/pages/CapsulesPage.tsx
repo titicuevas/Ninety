@@ -4,6 +4,7 @@ import { Pencil, Trash2, X } from 'lucide-react';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { EmptyState } from '@/components/EmptyState';
 import { FilterChip } from '@/components/FilterChip';
+import { CapsuleListSkeleton } from '@/components/ListSkeletons';
 import { Layout } from '@/components/Layout';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { StarRating } from '@/components/StarRating';
@@ -328,11 +329,7 @@ export function CapsulesPage() {
           ) : null}
         </section>
 
-        {isLoading ? (
-          <div className="flex justify-center py-16">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          </div>
-        ) : null}
+        {isLoading ? <CapsuleListSkeleton count={3} /> : null}
 
         {isError ? (
           <Card className="border-destructive/40">

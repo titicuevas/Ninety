@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { CapsuleMemoryForm } from '@/components/CapsuleMemoryForm';
 import { Layout } from '@/components/Layout';
+import { CapsuleListSkeleton } from '@/components/ListSkeletons';
 import { MatchCard } from '@/components/MatchCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,8 +28,8 @@ export function EditCapsulePage() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="flex justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <div className="mx-auto max-w-lg">
+          <CapsuleListSkeleton count={1} />
         </div>
       </Layout>
     );
