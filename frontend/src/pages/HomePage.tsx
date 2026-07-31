@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from 'react-router-dom';
+import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
 import { OnboardingSteps } from '@/components/OnboardingSteps';
 import { WrappedSummary } from '@/components/WrappedSummary';
@@ -82,17 +83,14 @@ export function HomePage() {
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         ) : capsules.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="p-6 text-center sm:p-8">
-              <p className="text-lg font-medium">Tu Wrapped empieza aquí</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Guarda tu primer partido y verás estadísticas, highlights y tu resumen anual.
-              </p>
-              <Button asChild className="mt-4">
-                <Link to="/search">Buscar partido</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyState
+            title="Tu Wrapped empieza aquí"
+            description="Guarda tu primer partido y verás estadísticas, highlights y tu resumen anual."
+          >
+            <Button asChild>
+              <Link to="/search">Buscar partido</Link>
+            </Button>
+          </EmptyState>
         ) : (
           <WrappedSummary
             name={name}

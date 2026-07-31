@@ -25,6 +25,11 @@ test.describe('Smoke — notificaciones @smoke', () => {
 
     await expect(empty.or(list)).toBeVisible({ timeout: 15_000 });
 
+    if (await empty.isVisible()) {
+      await expect(page.getByRole('link', { name: /ir al feed/i })).toBeVisible();
+      await expect(page.getByRole('link', { name: /buscar aficionados/i })).toBeVisible();
+    }
+
     const loadMore = page.getByRole('button', { name: /cargar más/i });
     if (await loadMore.isVisible()) {
       await expect(loadMore).toBeEnabled();

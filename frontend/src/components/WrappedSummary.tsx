@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Check, Camera, Flame, MapPin, Mountain, Share2, Sparkles, Star, Trophy, Users } from 'lucide-react';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
+import { EmptyState } from '@/components/EmptyState';
 import { StarRating } from '@/components/StarRating';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -364,17 +365,14 @@ export function WrappedSummary({
       </section>
 
       {stats.totalMatches === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="p-6 text-center sm:p-8">
-            <p className="text-lg font-medium">Sin partidos en {periodLabel.toLowerCase()}</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Cambia de año o guarda un partido visto en este periodo.
-            </p>
-            <Button asChild className="mt-4">
-              <Link to="/search">Buscar partido</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <EmptyState
+          title={`Sin partidos en ${periodLabel.toLowerCase()}`}
+          description="Cambia de año o guarda un partido visto en este periodo."
+        >
+          <Button asChild>
+            <Link to="/search">Buscar partido</Link>
+          </Button>
+        </EmptyState>
       ) : (
         <>
           <section className="grid gap-3 sm:grid-cols-2">

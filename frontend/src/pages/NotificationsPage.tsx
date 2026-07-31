@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Bell, Heart, UserPlus, MessageCircle } from 'lucide-react';
+import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   useNotifications,
   useMarkAllRead,
@@ -270,15 +270,18 @@ export function NotificationsPage() {
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         ) : notifications.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="p-6 text-center sm:p-10">
-              <Bell className="mx-auto h-10 w-10 text-muted-foreground/40" aria-hidden />
-              <p className="mt-3 text-lg font-medium">Sin notificaciones</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Cuando alguien te siga o le guste tu cápsula, aparecerá aquí.
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Bell}
+            title="Sin notificaciones"
+            description="Cuando alguien te siga o le guste tu cápsula, aparecerá aquí."
+          >
+            <Button asChild>
+              <Link to="/feed">Ir al feed</Link>
+            </Button>
+            <Button asChild variant="secondary">
+              <Link to="/search?tab=people">Buscar aficionados</Link>
+            </Button>
+          </EmptyState>
         ) : (
           <div className="space-y-3">
             <div className="divide-y divide-border rounded-lg border">

@@ -2,6 +2,7 @@ import { useDeferredValue, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Pencil, Trash2, X } from 'lucide-react';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
+import { EmptyState } from '@/components/EmptyState';
 import { FilterChip } from '@/components/FilterChip';
 import { Layout } from '@/components/Layout';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
@@ -342,31 +343,25 @@ export function CapsulesPage() {
         ) : null}
 
         {diaryEmpty ? (
-          <Card className="border-dashed">
-            <CardContent className="p-6 text-center sm:p-10">
-              <p className="text-lg font-medium">Aún no tienes Capsules</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Busca un partido que hayas visto y guarda tu primer recuerdo.
-              </p>
-              <Button asChild className="mt-4">
-                <Link to="/search">Buscar partido</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyState
+            title="Aún no tienes Capsules"
+            description="Busca un partido que hayas visto y guarda tu primer recuerdo."
+          >
+            <Button asChild>
+              <Link to="/search">Buscar partido</Link>
+            </Button>
+          </EmptyState>
         ) : null}
 
         {filterEmpty ? (
-          <Card className="border-dashed">
-            <CardContent className="p-6 text-center sm:p-10">
-              <p className="text-lg font-medium">Ningún partido con estos filtros</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Prueba otro año, valoración o limpia la búsqueda.
-              </p>
-              <Button type="button" variant="secondary" className="mt-4" onClick={clearFilters}>
-                Limpiar filtros
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyState
+            title="Ningún partido con estos filtros"
+            description="Prueba otro año, valoración o limpia la búsqueda."
+          >
+            <Button type="button" variant="secondary" onClick={clearFilters}>
+              Limpiar filtros
+            </Button>
+          </EmptyState>
         ) : null}
 
         {!isLoading && !isError && capsules.length > 0 ? (

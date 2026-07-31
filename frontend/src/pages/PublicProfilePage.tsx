@@ -4,6 +4,7 @@ import { MapPin, Trophy, X } from 'lucide-react';
 import { CapsuleComments } from '@/components/CapsuleComments';
 import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
+import { EmptyState } from '@/components/EmptyState';
 import { FilterChip } from '@/components/FilterChip';
 import { FollowButton } from '@/components/FollowButton';
 import { Layout } from '@/components/Layout';
@@ -408,17 +409,14 @@ export function PublicProfilePage() {
         ) : null}
 
         {filterEmpty ? (
-          <Card className="border-dashed">
-            <CardContent className="p-6 text-center sm:p-10">
-              <p className="text-lg font-medium">Ningún partido con estos filtros</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Prueba otro año, valoración o limpia la búsqueda.
-              </p>
-              <Button type="button" variant="secondary" className="mt-4" onClick={clearFilters}>
-                Limpiar filtros
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyState
+            title="Ningún partido con estos filtros"
+            description="Prueba otro año, valoración o limpia la búsqueda."
+          >
+            <Button type="button" variant="secondary" onClick={clearFilters}>
+              Limpiar filtros
+            </Button>
+          </EmptyState>
         ) : null}
 
         {capsules.length > 0 ? (
@@ -450,21 +448,20 @@ export function PublicProfilePage() {
         ) : null}
 
         {diaryEmpty ? (
-          <Card>
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              {isOwnProfile ? (
-                <>
-                  Aún no has guardado partidos.{' '}
-                  <Link to="/search" className="text-primary hover:underline">
-                    Busca un partido
-                  </Link>{' '}
-                  para empezar.
-                </>
-              ) : (
-                'Este aficionado aún no ha publicado partidos en su diario.'
-              )}
-            </CardContent>
-          </Card>
+          <EmptyState
+            title={isOwnProfile ? 'Aún no has guardado partidos' : 'Diario vacío'}
+            description={
+              isOwnProfile
+                ? 'Busca un partido que hayas visto y empieza tu diario.'
+                : 'Este aficionado aún no ha publicado partidos en su diario.'
+            }
+          >
+            {isOwnProfile ? (
+              <Button asChild>
+                <Link to="/search">Buscar partido</Link>
+              </Button>
+            ) : null}
+          </EmptyState>
         ) : null}
 
         {profile.username ? (

@@ -1,13 +1,14 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Users } from 'lucide-react';
+import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
 import { Layout } from '@/components/Layout';
 import { PublicLayout } from '@/components/PublicLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useFollowListInfinite, type FollowListKind } from '@/hooks/useFollowList';
+import { useProfile } from '@/hooks/useProfile';
 import { profilePath } from '@/lib/profilePath';
 import type { Profile } from '@/types/profile';
 
@@ -61,6 +62,7 @@ function FollowListRow({
 function FollowListPage({ kind }: { kind: FollowListKind }) {
   const { username } = useParams<{ username: string }>();
   const { user } = useAuth();
+  const { data: me } = useProfile();
   const {
     data,
     isLoading,
@@ -75,6 +77,11 @@ function FollowListPage({ kind }: { kind: FollowListKind }) {
   const title = kind === 'followers' ? 'Seguidores' : 'Siguiendo';
   const emptyCopy =
     kind === 'followers' ? 'Todavía no tiene seguidores.' : 'Todavía no sigue a nadie.';
+  const isOwnList =
+    !!user &&
+    !!username &&
+    !!me?.username &&
+    me.username.toLowerCase() === username.toLowerCase();
 
   const profiles = useMemo(
     () => data?.pages.flatMap((page) => page.profiles) ?? [],
@@ -183,22 +190,33 @@ function FollowListPage({ kind }: { kind: FollowListKind }) {
             ) : null}
           </div>
         ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-              <Users className="h-8 w-8 text-muted-foreground" aria-hidden />
-              <p className="font-medium">{emptyCopy}</p>
-              <p className="text-sm text-muted-foreground">
-                Mira también{' '}
-                <Link
-                  to={`/u/${encodeURIComponent(username)}/${otherKind}`}
-                  className="text-primary hover:underline"
-                >
-                  {otherLabel.toLowerCase()}
-                </Link>
-                .
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Users}
+            title={emptyCopy}
+            description={
+              isOwnList
+                ? kind === 'following'
+                  ? 'Busca aficionados para empezar a seguir partidos de tu gente.'
+                  : 'Comparte tu perfil para que otros te encuentren.'
+                : `Mira también ${otherLabel.toLowerCase()}.`
+            }
+          >
+            {isOwnList && kind === 'following' ? (
+              <Button asChild>
+                <Link to="/search?tab=people">Buscar aficionados</Link>
+              </Button>
+            ) : null}
+            {isOwnList && kind === 'followers' && me?.username ? (
+              <Button asChild variant="secondary">
+                <Link to={profilePath(me.username)}>Ver tu perfil</Link>
+              </Button>
+            ) : null}
+            <Button asChild variant="secondary">
+              <Link to={`/u/${encodeURIComponent(username)}/${otherKind}`}>
+                Ver {otherLabel.toLowerCase()}
+              </Link>
+            </Button>
+          </EmptyState>
         )}
       </div>
     </Shell>

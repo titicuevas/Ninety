@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { CapsuleComments } from '@/components/CapsuleComments';
 import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
+import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
@@ -225,28 +226,25 @@ export function FeedPage() {
 
         {isEmpty && scope === 'following' ? (
           <div className="space-y-6">
-            <Card className="border-dashed">
-              <CardContent className="p-6 text-center sm:p-10">
-                <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground" aria-hidden />
-                <p className="text-lg font-medium">Tu feed está vacío</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {followingCount === 0
-                    ? 'Sigue a otros aficionados para ver sus partidos aquí.'
-                    : 'La gente que sigues aún no ha publicado partidos, o aún no has guardado ninguno.'}
-                </p>
-                <div className="mt-4 flex flex-wrap justify-center gap-2">
-                  <Button type="button" variant="secondary" onClick={() => setScope('explore')}>
-                    Explorar comunidad
-                  </Button>
-                  <Button asChild>
-                    <Link to="/search?tab=people">Buscar aficionados</Link>
-                  </Button>
-                  <Button asChild variant="secondary">
-                    <Link to="/search">Buscar partido</Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={Users}
+              title="Tu feed está vacío"
+              description={
+                followingCount === 0
+                  ? 'Sigue a otros aficionados para ver sus partidos aquí.'
+                  : 'La gente que sigues aún no ha publicado partidos, o aún no has guardado ninguno.'
+              }
+            >
+              <Button type="button" variant="secondary" onClick={() => setScope('explore')}>
+                Explorar comunidad
+              </Button>
+              <Button asChild>
+                <Link to="/search?tab=people">Buscar aficionados</Link>
+              </Button>
+              <Button asChild variant="secondary">
+                <Link to="/search">Buscar partido</Link>
+              </Button>
+            </EmptyState>
 
             {suggestions.length > 0 ? (
               <section className="space-y-3">
@@ -264,23 +262,18 @@ export function FeedPage() {
         ) : null}
 
         {isEmpty && scope === 'explore' ? (
-          <Card className="border-dashed">
-            <CardContent className="p-6 text-center sm:p-10">
-              <Compass className="mx-auto mb-3 h-10 w-10 text-muted-foreground" aria-hidden />
-              <p className="text-lg font-medium">Aún no hay cápsulas públicas</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Cuando la comunidad publique partidos públicos, aparecerán aquí.
-              </p>
-              <div className="mt-4 flex flex-wrap justify-center gap-2">
-                <Button asChild>
-                  <Link to="/search">Crear tu primera Capsule</Link>
-                </Button>
-                <Button type="button" variant="secondary" onClick={() => setScope('following')}>
-                  Volver a Siguiendo
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Compass}
+            title="Aún no hay cápsulas públicas"
+            description="Cuando la comunidad publique partidos públicos, aparecerán aquí."
+          >
+            <Button asChild>
+              <Link to="/search">Crear tu primera Capsule</Link>
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setScope('following')}>
+              Volver a Siguiendo
+            </Button>
+          </EmptyState>
         ) : null}
 
         {!isLoading && !isError && capsules.length > 0 ? (
