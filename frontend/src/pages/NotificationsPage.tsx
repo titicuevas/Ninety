@@ -252,6 +252,13 @@ export function NotificationsPage() {
         {testPush.isSuccess ? (
           <p className="text-sm text-primary">Prueba enviada. Revisa las notificaciones del sistema.</p>
         ) : null}
+        {markAll.isError ? (
+          <p className="text-sm text-destructive">
+            {markAll.error instanceof Error
+              ? markAll.error.message
+              : 'No se pudieron marcar como leídas'}
+          </p>
+        ) : null}
         {clearRead.isError ? (
           <p className="text-sm text-destructive">
             {clearRead.error instanceof Error ? clearRead.error.message : 'No se pudieron limpiar'}

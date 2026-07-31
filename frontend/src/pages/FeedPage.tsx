@@ -186,6 +186,7 @@ export function FeedPage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    isFetching,
   } = useCapsuleFeed(scope, sort);
   const capsules = data?.pages.flatMap((page) => page.capsules) ?? [];
   const followingCount = data?.pages[0]?.following_count;
@@ -208,7 +209,14 @@ export function FeedPage() {
             <p className="mt-1 text-sm text-muted-foreground sm:text-base">{subtitle}</p>
           </div>
           <ScopeTabs scope={scope} onChange={setScope} />
-          <SortTabs sort={sort} onChange={setSort} />
+          <div className="flex flex-wrap items-center gap-3">
+            <SortTabs sort={sort} onChange={setSort} />
+            {isFetching && !isLoading && !isFetchingNextPage ? (
+              <span className="text-xs text-muted-foreground" aria-live="polite">
+                Actualizando…
+              </span>
+            ) : null}
+          </div>
         </section>
 
         {isLoading ? <CapsuleListSkeleton withAuthor count={3} /> : null}

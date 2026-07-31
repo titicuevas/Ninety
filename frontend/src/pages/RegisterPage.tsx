@@ -59,7 +59,7 @@ export function RegisterPage() {
       const result = await registerWithPassword(data.email, data.password, data.display_name);
       if (result.session) {
         setSession(result.session);
-        navigate('/profile');
+        navigate('/home', { replace: true, state: { fromRegister: true } });
       } else {
         setError(result.message ?? 'Revisa tu email para confirmar la cuenta');
       }

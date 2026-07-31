@@ -1,4 +1,5 @@
-import { Link, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { EmptyState } from '@/components/EmptyState';
 import { HomeSocialHub } from '@/components/HomeSocialHub';
 import { Layout } from '@/components/Layout';
@@ -23,12 +24,21 @@ import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuthInit';
 import { isProfileIncomplete } from '@/lib/profileHelpers';
 
+type HomeLocationState = {
+  fromRegister?: boolean;
+};
+
 export function HomePage() {
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { data: profile } = useProfile();
   const { data: capsulesData, isLoading } = useCapsules();
   const { data: followingData } = useFollowList(profile?.username ?? undefined, 'following');
   const [searchParams, setSearchParams] = useSearchParams();
+  const [welcomeOpen, setWelcomeOpen] = useState(
+    () => Boolean((location.state as HomeLocationState | null)?.fromRegister),
+  );
   const profileIncomplete = isProfileIncomplete(profile);
   const hasCapsule = (capsulesData?.capsules?.length ?? 0) > 0;
   const hasFollow = (followingData?.total ?? 0) > 0;
@@ -43,9 +53,8 @@ export function HomePage() {
   const scopeFromUrl = parseWrappedScopeParam(searchParams.get('wrapped'));
   const scopeValid =
     scopeFromUrl === 'all' || (typeof scopeFromUrl === 'number' && years.includes(scopeFromUrl));
-  const activeScope: WrappedScope = scopeValid && scopeFromUrl != null
-    ? scopeFromUrl
-    : defaultWrappedScope(capsules);
+  const activeScope: WrappedScope =
+    scopeValid && scopeFromUrl != null ? scopeFromUrl : defaultWrappedScope(capsules);
   const stats = computeCapsuleStats(filterCapsulesByScope(capsules, activeScope));
 
   const onScopeChange = (next: WrappedScope) => {
@@ -54,10 +63,36 @@ export function HomePage() {
     setSearchParams(nextParams, { replace: true });
   };
 
+  const dismissWelcome = () => {
+    setWelcomeOpen(false);
+    navigate('.', { replace: true, state: {} });
+  };
+
   return (
     <Layout>
       <div className="space-y-8">
-        {profileIncomplete ? (
+        {welcomeOpen ? (
+          <Card className="border-primary/40 bg-primary/5 motion-reveal" data-testid="welcome-register-banner">
+            <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-medium">Bienvenido a Ninety</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Completa tu perfil, guarda un partido y sigue aficionados para llenar tu feed.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild variant="secondary" className="shrink-0">
+                  <Link to="/profile">Completar perfil</Link>
+                </Button>
+                <Button type="button" variant="ghost" size="sm" onClick={dismissWelcome}>
+                  Cerrar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {profileIncomplete && !welcomeOpen ? (
           <Card className="border-primary/40 bg-primary/5">
             <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
