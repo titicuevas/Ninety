@@ -55,6 +55,51 @@ export function CapsuleListSkeleton({
   );
 }
 
+function MatchCardSkeleton() {
+  return (
+    <Card>
+      <CardContent className="flex min-h-[4.5rem] items-center gap-3 p-4 sm:gap-4 sm:p-5">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+          <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-4 w-36 max-w-full" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+        </div>
+        <Skeleton className="h-5 w-10 shrink-0" />
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
+          <div className="min-w-0 flex-1 space-y-2 text-right">
+            <Skeleton className="ml-auto h-4 w-32 max-w-full" />
+            <Skeleton className="ml-auto h-3 w-20" />
+          </div>
+          <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Resultados de búsqueda de partidos. */
+export function MatchListSkeleton({
+  count = 4,
+  className,
+  label = 'Buscando partidos',
+}: {
+  count?: number;
+  className?: string;
+  label?: string;
+}) {
+  return (
+    <ul className={cn('space-y-3', className)} role="status" aria-label={label} aria-live="polite">
+      {Array.from({ length: count }, (_, i) => (
+        <li key={i}>
+          <MatchCardSkeleton />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function NotificationRowSkeleton() {
   return (
     <div className="flex items-start gap-3 p-3">

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Loader2, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { FilterChip } from '@/components/FilterChip';
+import { MatchListSkeleton } from '@/components/ListSkeletons';
 import { MatchCard } from '@/components/MatchCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -283,16 +284,7 @@ export function MatchSearchPanel() {
         </p>
       ) : null}
 
-      {isSearching ? (
-        <div
-          className="flex items-center gap-2 text-sm text-muted-foreground"
-          role="status"
-          aria-live="polite"
-        >
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-          Buscando partidos…
-        </div>
-      ) : null}
+      {isSearching ? <MatchListSkeleton count={4} /> : null}
 
       {isError ? (
         <Card className="border-destructive/40">

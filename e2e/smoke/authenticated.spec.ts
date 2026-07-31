@@ -92,7 +92,7 @@ test.describe('Smoke — autenticado @smoke', () => {
       await expect(page.getByLabel(/equipo o rival/i)).not.toHaveValue('');
       await expect(
         page
-          .getByText(/buscando partidos/i)
+          .getByRole('status', { name: /buscando partidos/i })
           .or(page.locator('ul li').first())
           .or(page.getByText(/sin resultados/i))
           .or(page.getByRole('group', { name: /temporada/i })),
