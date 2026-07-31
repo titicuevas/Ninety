@@ -138,4 +138,34 @@ test.describe('Smoke — autenticado @smoke', () => {
     await dialog.getByRole('button', { name: /^cancelar$/i }).click();
     await expect(dialog).toBeHidden();
   });
+
+  test('Editar Capsule pide confirmación al salir con cambios', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page
+      .getByRole('navigation', { name: /navegación principal/i })
+      .getByRole('link', { name: /capsules/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/capsules/);
+
+    const editLink = page.getByRole('link', { name: /editar/i }).first();
+    const empty = page.getByText(/aún no tienes capsules/i);
+    await expect(editLink.or(empty)).toBeVisible({ timeout: 20_000 });
+    if (await empty.isVisible().catch(() => false)) return;
+
+    await editLink.click();
+    await expect(page).toHaveURL(/\/capsules\/.+\/edit/);
+    await expect(page.getByRole('heading', { name: /editar capsule/i })).toBeVisible();
+
+    const note = page.getByLabel('Nota (opcional)');
+    await note.fill(`Cambio sin guardar ${Date.now()}`);
+    await page.getByRole('button', { name: /^cancelar$/i }).click();
+
+    const dialog = page.getByRole('dialog', { name: /salir sin guardar/i });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText(/perderás los cambios/i)).toBeVisible();
+    await dialog.getByRole('button', { name: /seguir editando/i }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page).toHaveURL(/\/capsules\/.+\/edit/);
+  });
 });

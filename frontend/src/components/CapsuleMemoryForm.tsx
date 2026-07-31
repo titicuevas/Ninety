@@ -82,6 +82,12 @@ export function CapsuleMemoryForm({
   const [removedPhotoUrls, setRemovedPhotoUrls] = useState<string[]>([]);
   const [leaveOpen, setLeaveOpen] = useState(false);
 
+  const initialWatchedAt = draft?.watched_at ?? defaultWatchedAt;
+  const initialNote = draft?.note ?? defaultNote;
+  const initialRating = draft?.rating ?? defaultRating;
+  const initialIsPublic = draft?.is_public ?? defaultIsPublic;
+  const initialWatchContext = draft?.watch_context ?? defaultWatchContext;
+
   const {
     register,
     handleSubmit,
@@ -90,13 +96,22 @@ export function CapsuleMemoryForm({
   } = useForm<CapsuleMemoryFormValues>({
     resolver: zodResolver(memorySchema),
     defaultValues: {
-      watched_at: draft?.watched_at ?? defaultWatchedAt,
-      note: draft?.note ?? defaultNote,
+      watched_at: initialWatchedAt,
+      note: initialNote,
     },
   });
 
   const watchedAt = useWatch({ control, name: 'watched_at' });
   const note = useWatch({ control, name: 'note' });
+
+  const isDirty =
+    (watchedAt || defaultWatchedAt) !== initialWatchedAt ||
+    (note ?? '') !== initialNote ||
+    rating !== initialRating ||
+    isPublic !== initialIsPublic ||
+    watchContext !== initialWatchContext ||
+    newFiles.length > 0 ||
+    removedPhotoUrls.length > 0;
 
   useEffect(() => {
     if (draftMatchId == null) return;
@@ -127,24 +142,16 @@ export function CapsuleMemoryForm({
   };
 
   const handleCancel = () => {
-    if (draftMatchId != null) {
-      const hasMemory =
-        Boolean((note ?? '').trim()) ||
-        rating != null ||
-        watchContext != null ||
-        isPublic !== defaultIsPublic ||
-        (watchedAt && watchedAt !== defaultWatchedAt);
-      if (hasMemory) {
-        setLeaveOpen(true);
-        return;
-      }
-      clearDraftCapsuleMemory();
+    if (isDirty) {
+      setLeaveOpen(true);
+      return;
     }
+    if (draftMatchId != null) clearDraftCapsuleMemory();
     onCancel();
   };
 
   const confirmLeave = () => {
-    clearDraftCapsuleMemory();
+    if (draftMatchId != null) clearDraftCapsuleMemory();
     setLeaveOpen(false);
     onCancel();
   };
@@ -298,7 +305,11 @@ export function CapsuleMemoryForm({
       <ConfirmDialog
         open={leaveOpen}
         title="¿Salir sin guardar?"
-        description="Se perderá el borrador de este partido."
+        description={
+          draftMatchId != null
+            ? 'Se perderá el borrador de este partido.'
+            : 'Perderás los cambios de esta Capsule.'
+        }
         confirmLabel="Salir"
         cancelLabel="Seguir editando"
         tone="default"
