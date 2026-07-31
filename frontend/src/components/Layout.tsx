@@ -6,11 +6,21 @@ import { useAuth } from '@/hooks/useAuthInit';
 import { useUnreadCount } from '@/hooks/useNotifications';
 import { cn } from '@/lib/utils';
 
-const NAV_ITEMS: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
+type NavItem = {
+  to: string;
+  label: string;
+  icon: LucideIcon;
+  end?: boolean;
+  /** Solo tab bar móvil (desktop usa campana en header). */
+  mobileOnly?: boolean;
+};
+
+const NAV_ITEMS: NavItem[] = [
   { to: '/home', label: 'Inicio', icon: Home, end: true },
   { to: '/feed', label: 'Feed', icon: Newspaper },
   { to: '/search', label: 'Buscar', icon: Search },
   { to: '/capsules', label: 'Capsules', icon: Ticket },
+  { to: '/notifications', label: 'Alertas', icon: Bell, mobileOnly: true },
   { to: '/profile', label: 'Perfil', icon: User },
 ];
 
@@ -29,7 +39,7 @@ function desktopNavClass(isActive: boolean) {
 
 function mobileTabClass(isActive: boolean) {
   return cn(
-    'flex min-h-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1.5 text-[10px] font-medium sm:text-xs',
+    'flex min-h-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-0.5 py-1.5 text-[10px] font-medium sm:px-1 sm:text-xs',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
     isActive ? 'text-primary' : 'text-muted-foreground',
   );
@@ -57,8 +67,31 @@ function NotificationBell({ className }: { className?: string }) {
   );
 }
 
+function MobileNavIcon({
+  icon: Icon,
+  isActive,
+  badge,
+}: {
+  icon: LucideIcon;
+  isActive: boolean;
+  badge?: number;
+}) {
+  return (
+    <span className="relative inline-flex">
+      <Icon className={cn('h-5 w-5 sm:h-6 sm:w-6', isActive && 'scale-105')} aria-hidden />
+      {badge != null && badge > 0 ? (
+        <span className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+          {badge > 9 ? '9+' : badge}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const { signOut } = useAuth();
+  const unread = useUnreadCount();
+  const desktopItems = NAV_ITEMS.filter((item) => !item.mobileOnly);
 
   return (
     <div className="app-shell min-h-dvh">
@@ -77,7 +110,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Link>
 
           <nav className="hidden items-center gap-1 lg:flex" aria-label="Navegación principal">
-            {NAV_ITEMS.map((item) => (
+            {desktopItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
@@ -100,7 +133,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-1 lg:hidden">
-            <NotificationBell className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
             <button
               type="button"
               onClick={() => signOut()}
@@ -128,17 +160,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
         className="fixed inset-x-0 bottom-0 z-50 border-t border-border/80 bg-background/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md lg:hidden"
         aria-label="Navegación principal"
       >
-        <ul className="mx-auto flex h-[4.25rem] max-w-2xl list-none items-stretch gap-0.5 px-1 py-0.5 sm:h-16 sm:max-w-3xl sm:px-2">
+        <ul className="mx-auto flex h-[4.25rem] max-w-2xl list-none items-stretch gap-0.5 px-0.5 py-0.5 sm:h-16 sm:max-w-3xl sm:px-2">
           {NAV_ITEMS.map((item) => (
             <li key={item.to} className="flex flex-1">
               <NavLink
                 to={item.to}
                 end={item.end}
                 className={({ isActive }) => mobileTabClass(isActive)}
+                aria-label={
+                  item.to === '/notifications' && unread > 0
+                    ? `Alertas (${unread} sin leer)`
+                    : undefined
+                }
               >
                 {({ isActive }) => (
                   <>
-                    <item.icon className={cn('h-5 w-5 sm:h-6 sm:w-6', isActive && 'scale-105')} aria-hidden />
+                    <MobileNavIcon
+                      icon={item.icon}
+                      isActive={isActive}
+                      badge={item.to === '/notifications' ? unread : undefined}
+                    />
                     <span>{item.label}</span>
                     {isActive ? <span className="sr-only">(página actual)</span> : null}
                   </>

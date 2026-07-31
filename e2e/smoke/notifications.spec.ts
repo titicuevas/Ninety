@@ -2,17 +2,16 @@ import { expect, test } from '@playwright/test';
 import { API_BASE, openAuthenticatedHome, readAccessToken } from '../helpers/auth';
 
 test.describe('Smoke — notificaciones @smoke', () => {
-  test('página de notificaciones accesible desde la campanita', async ({ page }) => {
+  test('página de notificaciones accesible desde la campanita o tab Alertas', async ({ page }) => {
     await openAuthenticatedHome(page);
 
-    const bell = page.getByRole('link', { name: /notificaciones/i }).first();
-    await expect(bell).toBeVisible({ timeout: 10_000 });
-    await bell.click();
+    const nav = page.getByRole('navigation', { name: /navegación principal/i });
+    const entry = nav.getByRole('link', { name: /notificaciones|alertas/i }).first();
+    await expect(entry).toBeVisible({ timeout: 10_000 });
+    await entry.click();
 
     await expect(page).toHaveURL(/\/notifications/);
-    await expect(
-      page.getByRole('heading', { name: /notificaciones/i }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: /notificaciones/i })).toBeVisible();
   });
 
   test('muestra estado vacío o lista de notificaciones', async ({ page }) => {

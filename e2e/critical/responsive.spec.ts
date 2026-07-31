@@ -20,6 +20,7 @@ test.describe('Responsive shell @critical @mobile @tablet', () => {
     expect(viewport).toBeTruthy();
     expect(box!.y + box!.height).toBeGreaterThan((viewport!.height * 3) / 4);
 
+    await expect(navs.getByRole('link', { name: /alertas|notificaciones/i })).toBeVisible();
     await navs.getByRole('link', { name: /buscar/i }).click();
     await expect(page).toHaveURL(/\/search/);
   });

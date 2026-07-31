@@ -25,4 +25,14 @@ test.describe('Crítico — navegación móvil @critical @mobile', () => {
     await page.getByRole('tab', { name: 'Aficionados' }).click();
     await expect(page.getByText(/encuentra aficionados/i)).toBeVisible();
   });
+
+  test('Alertas desde tab bar abre notificaciones', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    const tabBar = page.getByRole('navigation', { name: /navegación principal/i });
+    const alerts = tabBar.getByRole('link', { name: /alertas|notificaciones/i });
+    await expect(alerts).toBeVisible();
+    await alerts.click();
+    await expect(page).toHaveURL(/\/notifications/);
+    await expect(page.getByRole('heading', { name: /notificaciones/i })).toBeVisible();
+  });
 });
