@@ -4,6 +4,7 @@ import { HomeSocialHub } from '@/components/HomeSocialHub';
 import { Layout } from '@/components/Layout';
 import { WrappedLoadingSkeleton } from '@/components/ListSkeletons';
 import { OnboardingSteps } from '@/components/OnboardingSteps';
+import { PushActivationBanner } from '@/components/PushActivationBanner';
 import { WrappedSummary } from '@/components/WrappedSummary';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -78,7 +79,9 @@ export function HomePage() {
             hasCapsule={hasCapsule}
             hasFollow={hasFollow}
           />
-        ) : null}
+        ) : (
+          <PushActivationBanner context="home" />
+        )}
 
         <HomeSocialHub username={profile?.username} />
 

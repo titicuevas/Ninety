@@ -48,7 +48,7 @@ export default defineConfig({
     },
     {
       name: 'chromium',
-      testMatch: /smoke\/(authenticated|notifications|onboarding|feed-discover)\.spec\.ts|critical\/(people-search|follow-lists|capsule-create-photos)\.spec\.ts/,
+      testMatch: /smoke\/(authenticated|notifications|onboarding|feed-discover|push-activation)\.spec\.ts|critical\/(people-search|follow-lists|capsule-create-photos)\.spec\.ts/,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],

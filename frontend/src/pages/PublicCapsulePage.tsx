@@ -8,6 +8,7 @@ import { FormSuccess } from '@/components/FormAlert';
 import { Layout } from '@/components/Layout';
 import { CapsuleListSkeleton } from '@/components/ListSkeletons';
 import { PublicLayout } from '@/components/PublicLayout';
+import { PushActivationBanner } from '@/components/PushActivationBanner';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { StarRating } from '@/components/StarRating';
 import { WatchContextBadge } from '@/components/WatchContextBadge';
@@ -172,6 +173,8 @@ export function PublicCapsulePage() {
             </CardContent>
           </Card>
         ) : null}
+
+        {isOwn && capsule.is_public !== false ? <PushActivationBanner context="post_create" /> : null}
 
         <Card>
           <CardContent className="p-4 sm:p-5">

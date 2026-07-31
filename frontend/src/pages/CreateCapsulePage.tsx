@@ -13,6 +13,7 @@ import { clearDraftCapsuleMemory } from '@/lib/draftCapsuleMemory';
 import { clearDraftMatch, readDraftMatch, saveDraftMatch } from '@/lib/draftMatch';
 import { friendlyApiError } from '@/lib/friendlyErrors';
 import { defaultWatchedAt, footballMatchToCapsuleBase } from '@/lib/matchCapsule';
+import { markPushPromptEligible } from '@/lib/pushPromptMemory';
 import { useAuthStore } from '@/stores/authStore';
 import type { FootballMatch } from '@/types/football';
 
@@ -102,6 +103,9 @@ export function CreateCapsulePage() {
           onSuccess: (created) => {
             clearDraftMatch();
             clearDraftCapsuleMemory();
+            if (payload.is_public && user.id) {
+              markPushPromptEligible(user.id, 'first_public_capsule');
+            }
             navigate(`/c/${created.id}`, {
               replace: true,
               state: { shareNudge: payload.is_public },

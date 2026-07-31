@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
+import { markPushPromptEligible } from '@/lib/pushPromptMemory';
 import { useAuthStore } from '@/stores/authStore';
 import type { FeedResponse } from '@/types/capsule';
 import type { Profile } from '@/types/profile';
@@ -125,6 +126,12 @@ export function useToggleFollow(username: string) {
       context?.previousDiscover?.forEach(([key, data]) => {
         queryClient.setQueryData(key, data);
       });
+    },
+    onSuccess: (_data, { followed }) => {
+      // followed === false → acabamos de seguir
+      if (!followed && session?.user?.id) {
+        markPushPromptEligible(session.user.id, 'first_follow');
+      }
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['profile', 'public', username] });
