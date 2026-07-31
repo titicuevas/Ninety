@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { CapsuleComments } from '@/components/CapsuleComments';
 import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
@@ -23,13 +24,20 @@ function formatScore(home: number | null, away: number | null) {
   return `${home} – ${away}`;
 }
 
+type CapsuleLocationState = {
+  shareNudge?: boolean;
+};
+
 export function PublicCapsulePage() {
   const { id } = useParams<{ id: string }>();
-  const { hash } = useLocation();
+  const location = useLocation();
   const { user } = useAuth();
   const { data: capsule, isLoading, isError, error } = usePublicCapsule(id);
   const Shell = user ? Layout : PublicLayout;
-  const openComments = hash === '#comments';
+  const openComments = location.hash === '#comments';
+  const [showShareNudge, setShowShareNudge] = useState(
+    () => Boolean((location.state as CapsuleLocationState | null)?.shareNudge),
+  );
 
   if (isLoading) {
     return (
@@ -129,6 +137,30 @@ export function PublicCapsulePage() {
             />
           </div>
         </section>
+
+        {showShareNudge && isOwn && capsule.is_public !== false ? (
+          <Card className="border-primary/40 bg-primary/5 motion-reveal">
+            <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+              <div className="min-w-0">
+                <p className="font-medium">Comparte este partido</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Acabas de guardarlo. Envía el enlace para que otros lo vean.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <ShareCapsuleButton
+                  capsuleId={capsule.id}
+                  title={shareTitle}
+                  variant="secondary"
+                  isPublic
+                />
+                <Button type="button" variant="ghost" size="sm" onClick={() => setShowShareNudge(false)}>
+                  Cerrar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
 
         <Card>
           <CardContent className="p-4 sm:p-5">

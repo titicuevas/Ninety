@@ -83,6 +83,26 @@ test.describe('Smoke — público @smoke', () => {
     expect(following.ok()).toBeTruthy();
   });
 
+  test('OG de Capsule pública incluye metas para bots', async ({ request }) => {
+    const body = await requirePublicDemoProfile(request, 'limit=1&offset=0');
+    const capsuleId = body.capsules?.[0]?.id;
+    test.skip(!capsuleId, 'El usuario demo no tiene Capsules públicas');
+
+    const site = (process.env.E2E_SITE_URL ?? process.env.E2E_BASE_URL ?? 'https://ninety.up.railway.app').replace(
+      /\/$/,
+      '',
+    );
+    const res = await request.get(`${site}/c/${capsuleId}`, {
+      headers: { 'User-Agent': 'facebookexternalhit/1.1' },
+    });
+    expect(res.ok()).toBeTruthy();
+    const html = await res.text();
+    expect(html).toMatch(/property="og:title"/i);
+    expect(html).toMatch(/property="og:description"/i);
+    expect(html).toMatch(/property="og:image"/i);
+    expect(html).toMatch(new RegExp(`/c/${capsuleId}`, 'i'));
+  });
+
   test('detalle Capsule pública muestra autor y CTA de seguir', async ({ page, request }) => {
     const body = await requirePublicDemoProfile(request, 'limit=1&offset=0');
     const capsuleId = body.capsules?.[0]?.id;

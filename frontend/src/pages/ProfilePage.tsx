@@ -248,7 +248,11 @@ export function ProfilePage() {
                     variant="outline"
                   />
                 </div>
-              ) : null}
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Elige un username abajo para poder compartir tu perfil público.
+                </p>
+              )}
             </div>
           </div>
 

@@ -98,7 +98,10 @@ export function CreateCapsulePage() {
         {
           onSuccess: (created) => {
             clearDraftMatch();
-            navigate(`/c/${created.id}`, { replace: true });
+            navigate(`/c/${created.id}`, {
+              replace: true,
+              state: { shareNudge: payload.is_public },
+            });
           },
           onError: (err) => {
             if (err instanceof ApiError && err.capsuleId) {
