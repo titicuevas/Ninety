@@ -96,9 +96,17 @@ function PeopleRowSkeleton() {
 }
 
 /** Lista de aficionados (follows / discover). */
-export function PeopleListSkeleton({ count = 5, className }: { count?: number; className?: string }) {
+export function PeopleListSkeleton({
+  count = 5,
+  className,
+  label = 'Cargando',
+}: {
+  count?: number;
+  className?: string;
+  label?: string;
+}) {
   return (
-    <ul className={cn('space-y-2', className)} role="status" aria-label="Cargando">
+    <ul className={cn('space-y-2', className)} role="status" aria-label={label}>
       {Array.from({ length: count }, (_, i) => (
         <li key={i}>
           <PeopleRowSkeleton />

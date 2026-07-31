@@ -99,4 +99,21 @@ test.describe('Smoke — autenticado @smoke', () => {
       ).toBeVisible({ timeout: 20_000 });
     }
   });
+
+  test('Buscar aficionados muestra sugerencias o empty', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page
+      .getByRole('navigation', { name: /navegación principal/i })
+      .getByRole('link', { name: /buscar/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/search/);
+
+    await page.getByRole('tab', { name: 'Aficionados' }).click();
+    await expect(page).toHaveURL(/tab=people/);
+
+    const suggestions = page.getByRole('heading', { name: /aficionados sugeridos/i });
+    const emptyHint = page.getByText(/encuentra aficionados/i);
+    await expect(suggestions.or(emptyHint)).toBeVisible({ timeout: 15_000 });
+  });
 });

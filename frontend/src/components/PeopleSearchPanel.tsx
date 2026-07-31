@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Search, UserMinus, UserPlus, Users } from 'lucide-react';
+import { Search, UserMinus, UserPlus, Users } from 'lucide-react';
+import { EmptyState } from '@/components/EmptyState';
+import { PeopleListSkeleton } from '@/components/ListSkeletons';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -142,10 +144,7 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
       </div>
 
       {searching ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground" role="status">
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-          Buscando aficionados…
-        </div>
+        <PeopleListSkeleton count={3} className="max-w-xl" label="Buscando aficionados" />
       ) : null}
 
       {isError ? (
@@ -167,24 +166,18 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
             ))}
           </ul>
         ) : (
-          <Card className="border-dashed">
-            <CardContent className="p-6 text-center sm:p-8">
-              <Users className="mx-auto mb-3 h-9 w-9 text-muted-foreground" aria-hidden />
-              <p className="font-medium">Sin resultados</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                No hay aficionados para «{debounced}». Prueba otro username o nombre.
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Users}
+            className="max-w-xl"
+            title="Sin resultados"
+            description={`No hay aficionados para «${debounced}». Prueba otro username o nombre.`}
+          />
         )
       ) : null}
 
       {showSuggestions ? (
         discoverLoading ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground" role="status">
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-            Cargando sugerencias…
-          </div>
+          <PeopleListSkeleton count={4} className="max-w-xl" label="Cargando sugerencias" />
         ) : suggestions.length > 0 ? (
           <section className="max-w-xl space-y-3" aria-label="Aficionados sugeridos">
             <div>
@@ -203,14 +196,12 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
             </ul>
           </section>
         ) : (
-          <Card className="border-dashed">
-            <CardContent className="p-6 text-center sm:p-8">
-              <p className="font-medium">Encuentra aficionados</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Busca por username o nombre, síguelos y verás sus partidos en tu feed.
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Users}
+            className="max-w-xl"
+            title="Encuentra aficionados"
+            description="Busca por username o nombre, síguelos y verás sus partidos en tu feed."
+          />
         )
       ) : null}
     </div>
