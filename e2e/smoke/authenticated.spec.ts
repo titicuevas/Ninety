@@ -167,5 +167,14 @@ test.describe('Smoke — autenticado @smoke', () => {
     await dialog.getByRole('button', { name: /seguir editando/i }).click();
     await expect(dialog).toBeHidden();
     await expect(page).toHaveURL(/\/capsules\/.+\/edit/);
+
+    await page
+      .getByRole('navigation', { name: /navegación principal/i })
+      .getByRole('link', { name: /^feed$/i })
+      .first()
+      .click();
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: /seguir editando/i }).click();
+    await expect(page).toHaveURL(/\/capsules\/.+\/edit/);
   });
 });

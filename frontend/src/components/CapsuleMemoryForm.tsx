@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
+import { useBlocker } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Star } from 'lucide-react';
@@ -113,6 +114,33 @@ export function CapsuleMemoryForm({
     newFiles.length > 0 ||
     removedPhotoUrls.length > 0;
 
+  const skipBlockRef = useRef(false);
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      !skipBlockRef.current &&
+      isDirty &&
+      !isBusy &&
+      (currentLocation.pathname !== nextLocation.pathname ||
+        currentLocation.search !== nextLocation.search ||
+        currentLocation.hash !== nextLocation.hash),
+  );
+
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      setLeaveOpen(true);
+    }
+  }, [blocker.state]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [isDirty]);
+
   useEffect(() => {
     if (draftMatchId == null) return;
     const timer = window.setTimeout(() => {
@@ -147,13 +175,26 @@ export function CapsuleMemoryForm({
       return;
     }
     if (draftMatchId != null) clearDraftCapsuleMemory();
+    skipBlockRef.current = true;
     onCancel();
   };
 
   const confirmLeave = () => {
     if (draftMatchId != null) clearDraftCapsuleMemory();
     setLeaveOpen(false);
+    if (blocker.state === 'blocked') {
+      blocker.proceed();
+      return;
+    }
+    skipBlockRef.current = true;
     onCancel();
+  };
+
+  const dismissLeave = () => {
+    setLeaveOpen(false);
+    if (blocker.state === 'blocked') {
+      blocker.reset();
+    }
   };
 
   return (
@@ -314,7 +355,7 @@ export function CapsuleMemoryForm({
         cancelLabel="Seguir editando"
         tone="default"
         onConfirm={confirmLeave}
-        onCancel={() => setLeaveOpen(false)}
+        onCancel={dismissLeave}
       />
     </form>
   );

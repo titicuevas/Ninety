@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute, GuestRoute } from '@/components/ProtectedRoute';
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
 import { CapsulesPage } from '@/pages/CapsulesPage';
@@ -18,36 +18,35 @@ import { NotificationsPage } from '@/pages/NotificationsPage';
 import { SearchMatchPage } from '@/pages/SearchMatchPage';
 import { TermsPage } from '@/pages/TermsPage';
 
-export function AppRoutes() {
-  return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/privacidad" element={<PrivacyPage />} />
-      <Route path="/terminos" element={<TermsPage />} />
-      <Route path="/welcome" element={<Navigate to="/" replace />} />
-      <Route path="/auth/callback" element={<AuthCallbackPage />} />
-      <Route path="/u/:username/followers" element={<FollowersPage />} />
-      <Route path="/u/:username/following" element={<FollowingPage />} />
-      <Route path="/u/:username" element={<PublicProfilePage />} />
-      <Route path="/c/:id" element={<PublicCapsulePage />} />
-
-      <Route element={<GuestRoute />}>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-      </Route>
-
-      <Route element={<ProtectedRoute />}>
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/feed" element={<FeedPage />} />
-        <Route path="/search" element={<SearchMatchPage />} />
-        <Route path="/capsules" element={<CapsulesPage />} />
-        <Route path="/capsules/new" element={<CreateCapsulePage />} />
-        <Route path="/capsules/:id/edit" element={<EditCapsulePage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-      </Route>
-
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
-}
+export const appRouter = createBrowserRouter([
+  { path: '/', element: <LandingPage /> },
+  { path: '/privacidad', element: <PrivacyPage /> },
+  { path: '/terminos', element: <TermsPage /> },
+  { path: '/welcome', element: <Navigate to="/" replace /> },
+  { path: '/auth/callback', element: <AuthCallbackPage /> },
+  { path: '/u/:username/followers', element: <FollowersPage /> },
+  { path: '/u/:username/following', element: <FollowingPage /> },
+  { path: '/u/:username', element: <PublicProfilePage /> },
+  { path: '/c/:id', element: <PublicCapsulePage /> },
+  {
+    element: <GuestRoute />,
+    children: [
+      { path: '/login', element: <LoginPage /> },
+      { path: '/register', element: <RegisterPage /> },
+    ],
+  },
+  {
+    element: <ProtectedRoute />,
+    children: [
+      { path: '/home', element: <HomePage /> },
+      { path: '/feed', element: <FeedPage /> },
+      { path: '/search', element: <SearchMatchPage /> },
+      { path: '/capsules', element: <CapsulesPage /> },
+      { path: '/capsules/new', element: <CreateCapsulePage /> },
+      { path: '/capsules/:id/edit', element: <EditCapsulePage /> },
+      { path: '/notifications', element: <NotificationsPage /> },
+      { path: '/profile', element: <ProfilePage /> },
+    ],
+  },
+  { path: '*', element: <Navigate to="/" replace /> },
+]);
