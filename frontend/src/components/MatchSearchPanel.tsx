@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, Search } from 'lucide-react';
+import { EmptyState } from '@/components/EmptyState';
 import { FilterChip } from '@/components/FilterChip';
 import { MatchCard } from '@/components/MatchCard';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useFootballCompetitions } from '@/hooks/useFootballCompetitions';
 import { useCapsules } from '@/hooks/useCapsules';
 import { MIN_QUERY_LENGTH, useMatchSearch } from '@/hooks/useMatchSearch';
+import { useProfile } from '@/hooks/useProfile';
 import { useTeamCompetitions } from '@/hooks/useTeamCompetitions';
 import { saveDraftMatch } from '@/lib/draftMatch';
 import { groupMatchesByCompetition } from '@/lib/groupMatches';
@@ -50,6 +53,8 @@ const selectClassName = cn(
 export function MatchSearchPanel() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
+  const { data: profile } = useProfile();
+  const favoriteTeam = profile?.favorite_team?.trim() || null;
 
   const [query, setQuery] = useState(() => params.get('q') ?? '');
   const [debouncedQuery, setDebouncedQuery] = useState(() => (params.get('q') ?? '').trim());
@@ -178,6 +183,13 @@ export function MatchSearchPanel() {
     saveDraftMatch(match);
     navigate('/capsules/new', { state: { match } });
   };
+
+  const searchFavoriteTeam = () => {
+    if (!favoriteTeam) return;
+    setQuery(favoriteTeam);
+  };
+
+  const showIdle = !query.trim() && !activeCompetition;
 
   return (
     <div className="space-y-8">
@@ -330,32 +342,40 @@ export function MatchSearchPanel() {
                   )}
             </div>
           ) : (
-            <Card className="border-dashed">
-              <CardContent className="p-6 text-center sm:p-10">
-                <p className="text-lg font-medium">Sin resultados</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {activeCompetition
-                    ? requiresTeamQuery
-                      ? `No hay partidos de «${debouncedQuery}» en ${selectedCompetition?.name ?? 'este torneo'}${activeSeason != null ? ` (${activeSeason})` : ''}. Prueba otro nombre o temporada.`
-                      : `No hay partidos en ${selectedCompetition?.name ?? 'esta competición'}${activeSeason != null ? ` ${activeSeason}` : ''} para «${debouncedQuery || 'tu búsqueda'}».`
-                    : `No encontramos partidos para «${debouncedQuery}»${activeSeason != null ? ` en ${activeSeason}` : ''}. Prueba otra temporada, equipo o competición.`}
-                </p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              title="Sin resultados"
+              description={
+                activeCompetition
+                  ? requiresTeamQuery
+                    ? `No hay partidos de «${debouncedQuery}» en ${selectedCompetition?.name ?? 'este torneo'}${activeSeason != null ? ` (${activeSeason})` : ''}. Prueba otro nombre o temporada.`
+                    : `No hay partidos en ${selectedCompetition?.name ?? 'esta competición'}${activeSeason != null ? ` ${activeSeason}` : ''} para «${debouncedQuery || 'tu búsqueda'}».`
+                  : `No encontramos partidos para «${debouncedQuery}»${activeSeason != null ? ` en ${activeSeason}` : ''}. Prueba otra temporada, equipo o competición.`
+              }
+            />
           )}
         </div>
       ) : null}
 
-      {!query.trim() && !activeCompetition ? (
-        <Card className="border-dashed">
-          <CardContent className="p-6 text-center sm:p-10">
-            <p className="text-lg font-medium">¿Qué partido viste?</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Escribe un apodo o parte del nombre (Betis, Madrid, España…). No hace falta el nombre
-              completo.
-            </p>
-          </CardContent>
-        </Card>
+      {showIdle ? (
+        <EmptyState
+          icon={Search}
+          title="¿Qué partido viste?"
+          description={
+            favoriteTeam
+              ? `Empieza por tu equipo (${favoriteTeam}) o escribe otro rival, selección o apodo.`
+              : 'Escribe un apodo o parte del nombre (Betis, Madrid, España…). No hace falta el nombre completo.'
+          }
+        >
+          {favoriteTeam ? (
+            <Button type="button" onClick={searchFavoriteTeam}>
+              Buscar {favoriteTeam}
+            </Button>
+          ) : (
+            <Button asChild variant="secondary">
+              <Link to="/profile">Añadir equipo favorito</Link>
+            </Button>
+          )}
+        </EmptyState>
       ) : null}
     </div>
   );

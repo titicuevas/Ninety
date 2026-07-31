@@ -68,4 +68,35 @@ test.describe('Smoke — autenticado @smoke', () => {
     await page.getByRole('button', { name: /esta temporada/i }).click();
     await expect(page).toHaveURL(/season=/);
   });
+
+  test('Buscar partidos ofrece atajo de equipo favorito o perfil', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page
+      .getByRole('navigation', { name: /navegación principal/i })
+      .getByRole('link', { name: /buscar/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/search/);
+    await expect(page.getByText(/qué partido viste/i)).toBeVisible({
+      timeout: 15_000,
+    });
+
+    const favoriteShortcut = page.getByRole('button', { name: /^buscar /i });
+    const profileLink = page.getByRole('link', { name: /añadir equipo favorito/i });
+
+    await expect(favoriteShortcut.or(profileLink)).toBeVisible();
+
+    if (await favoriteShortcut.isVisible()) {
+      await favoriteShortcut.click();
+      await expect(page).toHaveURL(/\bq=/);
+      await expect(page.getByLabel(/equipo o rival/i)).not.toHaveValue('');
+      await expect(
+        page
+          .getByText(/buscando partidos/i)
+          .or(page.locator('ul li').first())
+          .or(page.getByText(/sin resultados/i))
+          .or(page.getByRole('group', { name: /temporada/i })),
+      ).toBeVisible({ timeout: 20_000 });
+    }
+  });
 });
