@@ -8,10 +8,12 @@ import { Layout } from '@/components/Layout';
 import { ShareProfileButton } from '@/components/ShareProfileButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { useDirtyLeave } from '@/hooks/useDirtyLeave';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useAuthStore } from '@/stores/authStore';
@@ -37,6 +39,20 @@ const profileSchema = z.object({
 
 type ProfileForm = z.infer<typeof profileSchema>;
 
+function profileToFormValues(
+  data: Profile,
+  metadataName?: string,
+): ProfileForm {
+  return {
+    display_name: data.display_name ?? metadataName ?? '',
+    username: isAutoUsername(data.username) ? '' : (data.username ?? ''),
+    favorite_team: data.favorite_team ?? '',
+    country: data.country ?? '',
+    city: data.city ?? '',
+    bio: data.bio ?? '',
+  };
+}
+
 export function ProfilePage() {
   const { user } = useAuth();
   const session = useAuthStore((s) => s.session);
@@ -47,10 +63,17 @@ export function ProfilePage() {
   const [avatarBusy, setAvatarBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const metadataName =
+    typeof user?.user_metadata?.full_name === 'string'
+      ? user.user_metadata.full_name
+      : typeof user?.user_metadata?.name === 'string'
+        ? user.user_metadata.name
+        : undefined;
+
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
     reset,
     setValue,
     watch,
@@ -70,34 +93,25 @@ export function ProfilePage() {
       apiFetch<Profile>('/api/profile/me', { method: 'PATCH', body: JSON.stringify(data) }, session?.access_token),
     onSuccess: (data) => {
       applyProfile(data);
+      reset(profileToFormValues(data, metadataName));
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     },
   });
 
-  useEffect(() => {
-    if (profile) {
-      const metadataName =
-        typeof user?.user_metadata?.full_name === 'string'
-          ? user.user_metadata.full_name
-          : typeof user?.user_metadata?.name === 'string'
-            ? user.user_metadata.name
-            : undefined;
+  const { leaveOpen, confirmLeave, dismissLeave } = useDirtyLeave({
+    isDirty,
+    isBusy: mutation.isPending,
+  });
 
-      reset({
-        display_name: profile.display_name ?? metadataName ?? '',
-        username: isAutoUsername(profile.username) ? '' : (profile.username ?? ''),
-        favorite_team: profile.favorite_team ?? '',
-        country: profile.country ?? '',
-        city: profile.city ?? '',
-        bio: profile.bio ?? '',
-      });
-    }
-  }, [profile, reset, user]);
+  useEffect(() => {
+    if (!profile || isDirty) return;
+    reset(profileToFormValues(profile, metadataName));
+  }, [profile, reset, metadataName, isDirty]);
 
   const applySuggestedUsername = () => {
     const suggestion = suggestUsername(displayName);
-    if (suggestion) setValue('username', suggestion, { shouldValidate: true });
+    if (suggestion) setValue('username', suggestion, { shouldValidate: true, shouldDirty: true });
   };
 
   const onSubmit = (data: ProfileForm) => {
@@ -318,6 +332,17 @@ export function ProfilePage() {
           </form>
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={leaveOpen}
+        title="¿Salir sin guardar?"
+        description="Perderás los cambios de tu perfil."
+        confirmLabel="Salir"
+        cancelLabel="Seguir editando"
+        tone="default"
+        onConfirm={confirmLeave}
+        onCancel={dismissLeave}
+      />
     </Layout>
   );
 }

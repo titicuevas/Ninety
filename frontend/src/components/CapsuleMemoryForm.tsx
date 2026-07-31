@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { useBlocker } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Star } from 'lucide-react';
@@ -12,6 +11,7 @@ import { FormField } from '@/components/ui/form-field';
 import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useDirtyLeave } from '@/hooks/useDirtyLeave';
 import {
   clearDraftCapsuleMemory,
   readDraftCapsuleMemory,
@@ -81,7 +81,6 @@ export function CapsuleMemoryForm({
   );
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [removedPhotoUrls, setRemovedPhotoUrls] = useState<string[]>([]);
-  const [leaveOpen, setLeaveOpen] = useState(false);
 
   const initialWatchedAt = draft?.watched_at ?? defaultWatchedAt;
   const initialNote = draft?.note ?? defaultNote;
@@ -114,32 +113,14 @@ export function CapsuleMemoryForm({
     newFiles.length > 0 ||
     removedPhotoUrls.length > 0;
 
-  const skipBlockRef = useRef(false);
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      !skipBlockRef.current &&
-      isDirty &&
-      !isBusy &&
-      (currentLocation.pathname !== nextLocation.pathname ||
-        currentLocation.search !== nextLocation.search ||
-        currentLocation.hash !== nextLocation.hash),
-  );
-
-  useEffect(() => {
-    if (blocker.state === 'blocked') {
-      setLeaveOpen(true);
-    }
-  }, [blocker.state]);
-
-  useEffect(() => {
-    if (!isDirty) return;
-    const onBeforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = '';
-    };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [isDirty]);
+  const { leaveOpen, requestLeave, confirmLeave, dismissLeave } = useDirtyLeave({
+    isDirty,
+    isBusy,
+    onAbandon: () => {
+      if (draftMatchId != null) clearDraftCapsuleMemory();
+    },
+    onLeave: onCancel,
+  });
 
   useEffect(() => {
     if (draftMatchId == null) return;
@@ -167,34 +148,6 @@ export function CapsuleMemoryForm({
       keptPhotoUrls: existingPhotoUrls.filter((url) => !removed.has(url)),
       removedPhotoUrls,
     });
-  };
-
-  const handleCancel = () => {
-    if (isDirty) {
-      setLeaveOpen(true);
-      return;
-    }
-    if (draftMatchId != null) clearDraftCapsuleMemory();
-    skipBlockRef.current = true;
-    onCancel();
-  };
-
-  const confirmLeave = () => {
-    if (draftMatchId != null) clearDraftCapsuleMemory();
-    setLeaveOpen(false);
-    if (blocker.state === 'blocked') {
-      blocker.proceed();
-      return;
-    }
-    skipBlockRef.current = true;
-    onCancel();
-  };
-
-  const dismissLeave = () => {
-    setLeaveOpen(false);
-    if (blocker.state === 'blocked') {
-      blocker.reset();
-    }
   };
 
   return (
@@ -338,7 +291,7 @@ export function CapsuleMemoryForm({
         <Button type="submit" loading={isBusy} className="h-12 w-full text-base">
           {submitLabel}
         </Button>
-        <Button type="button" variant="secondary" className="h-12 w-full text-base" onClick={handleCancel}>
+        <Button type="button" variant="secondary" className="h-12 w-full text-base" onClick={requestLeave}>
           Cancelar
         </Button>
       </div>

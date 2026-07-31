@@ -182,4 +182,31 @@ test.describe('Smoke — autenticado @smoke', () => {
     await dialog.getByRole('button', { name: /seguir editando/i }).click();
     await expect(page).toHaveURL(/\/capsules\/.+\/edit/);
   });
+
+  test('Perfil pide confirmación al salir con cambios', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page
+      .getByRole('navigation', { name: /navegación principal/i })
+      .getByRole('link', { name: /perfil/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/profile/);
+    await expect(page.getByRole('heading', { name: /tu perfil/i })).toBeVisible({ timeout: 20_000 });
+
+    const nameInput = page.getByLabel(/^nombre$/i);
+    await nameInput.fill(`Nombre temporal ${Date.now()}`);
+
+    await page
+      .getByRole('navigation', { name: /navegación principal/i })
+      .getByRole('link', { name: /^feed$/i })
+      .first()
+      .click();
+
+    const dialog = page.getByRole('dialog', { name: /salir sin guardar/i });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText(/perderás los cambios de tu perfil/i)).toBeVisible();
+    await dialog.getByRole('button', { name: /seguir editando/i }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page).toHaveURL(/\/profile/);
+  });
 });
