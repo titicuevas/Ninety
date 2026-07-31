@@ -37,9 +37,20 @@ export function PeopleResultRow({ profile }: { profile: Profile }) {
       )}
 
       <div className="min-w-0 flex-1">
-        <Link to={profilePath(username)} className="font-medium text-foreground hover:text-primary hover:underline">
-          {name}
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link to={profilePath(username)} className="font-medium text-foreground hover:text-primary hover:underline">
+            {name}
+          </Link>
+          {profile.match_reason === 'favorite_team' ? (
+            <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+              Mismo equipo
+            </span>
+          ) : profile.match_reason === 'city' ? (
+            <span className="rounded-md bg-secondary px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Cerca
+            </span>
+          ) : null}
+        </div>
         <p className="text-sm text-muted-foreground">@{username}</p>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
           {[profile.favorite_team, location].filter(Boolean).join(' · ') || 'Aficionado Ninety'}
@@ -181,7 +192,8 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
                 Aficionados sugeridos
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Empieza a seguir gente para llenar tu feed, o busca por username.
+                Priorizamos aficionados con tu mismo equipo o cercanos. Empieza a seguir gente para
+                llenar tu feed.
               </p>
             </div>
             <ul className="space-y-2">

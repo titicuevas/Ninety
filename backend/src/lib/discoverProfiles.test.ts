@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { rankDiscoverProfiles } from './discoverProfiles.js';
+import {
+  favoriteTeamIlikePattern,
+  rankDiscoverProfiles,
+  teamsMatch,
+} from './discoverProfiles.js';
 
 const base = {
   avatar_url: null,
@@ -10,6 +14,34 @@ const base = {
   created_at: '2025-01-01T00:00:00Z',
   full_name: null,
 };
+
+describe('teamsMatch', () => {
+  it('empareja Betis con Real Betis', () => {
+    assert.equal(teamsMatch('Betis', 'Real Betis'), true);
+    assert.equal(teamsMatch('Real Betis', 'Betis'), true);
+  });
+
+  it('empareja FC Barcelona con Barcelona', () => {
+    assert.equal(teamsMatch('FC Barcelona', 'Barcelona'), true);
+  });
+
+  it('no empareja equipos distintos', () => {
+    assert.equal(teamsMatch('Betis', 'Sevilla'), false);
+    assert.equal(teamsMatch('Real Madrid', 'Real Betis'), false);
+  });
+
+  it('ignora acentos', () => {
+    assert.equal(teamsMatch('Atlético', 'Atletico'), true);
+  });
+});
+
+describe('favoriteTeamIlikePattern', () => {
+  it('envuelve el equipo y limpia comodines', () => {
+    assert.equal(favoriteTeamIlikePattern('  Betis  '), '%Betis%');
+    assert.equal(favoriteTeamIlikePattern('100%_Betis'), '%100Betis%');
+    assert.equal(favoriteTeamIlikePattern('a'), null);
+  });
+});
 
 describe('rankDiscoverProfiles', () => {
   it('prioriza mismo equipo favorito sobre más recientes', () => {
@@ -25,6 +57,28 @@ describe('rankDiscoverProfiles', () => {
     );
 
     assert.equal(ranked[0]?.username, 'betis_fan');
+    assert.equal(ranked[0]?.match_reason, 'favorite_team');
+  });
+
+  it('prioriza Real Betis cuando el viewer tiene Betis', () => {
+    const ranked = rankDiscoverProfiles(
+      [
+        { ...base, id: '1', username: 'nuevo', favorite_team: 'Sevilla', created_at: '2025-06-01T00:00:00Z' },
+        {
+          ...base,
+          id: '2',
+          username: 'verdiblanco',
+          favorite_team: 'Real Betis',
+          created_at: '2023-01-01T00:00:00Z',
+        },
+      ],
+      { favorite_team: 'Betis' },
+      new Set(),
+      2,
+    );
+
+    assert.equal(ranked[0]?.username, 'verdiblanco');
+    assert.equal(ranked[0]?.match_reason, 'favorite_team');
   });
 
   it('excluye usuarios ya seguidos', () => {
@@ -40,5 +94,20 @@ describe('rankDiscoverProfiles', () => {
 
     assert.equal(ranked.length, 1);
     assert.equal(ranked[0]?.username, 'b');
+  });
+
+  it('marca ciudad cuando no hay match de equipo', () => {
+    const ranked = rankDiscoverProfiles(
+      [
+        { ...base, id: '1', username: 'local', city: 'Sevilla', favorite_team: 'Sevilla' },
+        { ...base, id: '2', username: 'remoto', city: 'Madrid', favorite_team: 'Madrid' },
+      ],
+      { favorite_team: 'Betis', city: 'Sevilla' },
+      new Set(),
+      2,
+    );
+
+    assert.equal(ranked[0]?.username, 'local');
+    assert.equal(ranked[0]?.match_reason, 'city');
   });
 });

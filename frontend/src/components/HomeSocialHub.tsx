@@ -138,6 +138,9 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
           <h3 className="text-sm font-semibold tracking-wide text-primary uppercase">
             Aficionados sugeridos
           </h3>
+          <p className="text-sm text-muted-foreground">
+            Priorizamos gente con tu mismo equipo o cercana.
+          </p>
           <ul className="space-y-2">
             {suggestions.map((profile) => (
               <PeopleResultRow key={profile.id} profile={profile} />

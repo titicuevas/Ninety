@@ -12,6 +12,8 @@ export interface Profile {
   followers_count?: number;
   following_count?: number;
   followed_by_me?: boolean;
+  /** Motivo de sugerencia en discover (si aplica). */
+  match_reason?: 'favorite_team' | 'city' | 'country' | null;
 }
 
 export interface UpdateProfileInput {

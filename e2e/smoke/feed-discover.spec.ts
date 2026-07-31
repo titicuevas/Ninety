@@ -133,4 +133,27 @@ test.describe('Smoke — feed y discover @smoke', () => {
     expect(body.capsules!.length).toBeLessThanOrEqual(5);
     expect(typeof body.total).toBe('number');
   });
+
+  test('API discover prioriza perfiles y puede marcar match_reason', async ({ page, request }) => {
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(`${API_BASE}/api/profile/discover?limit=6`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      profiles?: Array<{ id?: string; username?: string; match_reason?: string | null }>;
+    };
+    expect(Array.isArray(body.profiles)).toBe(true);
+    expect(body.profiles!.length).toBeLessThanOrEqual(6);
+    for (const profile of body.profiles!) {
+      expect(typeof profile.id).toBe('string');
+      expect(typeof profile.username).toBe('string');
+      if (profile.match_reason != null) {
+        expect(['favorite_team', 'city', 'country']).toContain(profile.match_reason);
+      }
+    }
+  });
 });

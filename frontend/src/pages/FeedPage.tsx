@@ -245,9 +245,14 @@ export function FeedPage() {
 
             {suggestions.length > 0 ? (
               <section className="space-y-3">
-                <h2 className="text-sm font-semibold tracking-wide text-primary uppercase">
-                  Aficionados sugeridos
-                </h2>
+                <div>
+                  <h2 className="text-sm font-semibold tracking-wide text-primary uppercase">
+                    Aficionados sugeridos
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Priorizamos gente con tu mismo equipo o cercana.
+                  </p>
+                </div>
                 <ul className="space-y-2">
                   {suggestions.map((profile) => (
                     <PeopleResultRow key={profile.id} profile={profile} />

@@ -11,7 +11,7 @@ import { normalizeProfile, profileUpdatePayload } from '../lib/profileNormalize.
 import { syncUserProfile } from '../lib/syncUserProfile.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
 import { notifyUser } from '../lib/notifyUser.js';
-import { rankDiscoverProfiles } from '../lib/discoverProfiles.js';
+import { rankDiscoverProfiles, favoriteTeamIlikePattern } from '../lib/discoverProfiles.js';
 import { isMissingFollowsTable, listFollowProfiles, type FollowListKind } from '../lib/userFollows.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
@@ -359,6 +359,8 @@ profileRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {
 
   const limit = Math.min(Math.max(Number(req.query.limit) || 6, 1), 12);
   const supabase = createUserClient(token);
+  const profileSelect =
+    'id, username, full_name, avatar_url, favorite_team, country, city, created_at';
 
   const [{ data: me }, { data: followingRows }] = await Promise.all([
     supabase
@@ -370,28 +372,65 @@ profileRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {
   ]);
 
   const followingIds = new Set((followingRows ?? []).map((row) => row.following_id));
+  const teamPattern = me?.favorite_team ? favoriteTeamIlikePattern(me.favorite_team) : null;
 
-  const { data, error } = await supabase
+  type DiscoverRow = {
+    id: string;
+    username: string | null;
+    full_name: string | null;
+    avatar_url: string | null;
+    favorite_team: string | null;
+    country: string | null;
+    city: string | null;
+    created_at: string;
+  };
+
+  const recentQuery = supabase
     .from('profiles')
-    .select('id, username, full_name, avatar_url, favorite_team, country, city, created_at')
+    .select(profileSelect)
     .not('username', 'is', null)
     .neq('id', req.userId!)
     .order('created_at', { ascending: false })
     .limit(Math.max(limit * 8, 40));
 
-  if (error) {
-    res.status(400).json({ error: error.message });
+  const teamQuery = teamPattern
+    ? supabase
+        .from('profiles')
+        .select(profileSelect)
+        .not('username', 'is', null)
+        .neq('id', req.userId!)
+        .ilike('favorite_team', teamPattern)
+        .limit(24)
+    : Promise.resolve({ data: [] as DiscoverRow[], error: null });
+
+  const [recentResult, teamResult] = await Promise.all([recentQuery, teamQuery]);
+
+  if (recentResult.error) {
+    res.status(400).json({ error: recentResult.error.message });
+    return;
+  }
+  if (teamResult.error) {
+    res.status(400).json({ error: teamResult.error.message });
     return;
   }
 
+  const byId = new Map<string, DiscoverRow>();
+  for (const row of [...(teamResult.data ?? []), ...(recentResult.data ?? [])] as DiscoverRow[]) {
+    byId.set(row.id, row);
+  }
+
   const ranked = rankDiscoverProfiles(
-    (data ?? []).filter((row): row is typeof row & { username: string } => !!row.username),
+    [...byId.values()].filter((row): row is DiscoverRow & { username: string } => !!row.username),
     me ?? {},
     followingIds,
     limit,
   );
 
-  const profiles = ranked.map((row) => ({ ...normalizeProfile(row), followed_by_me: false }));
+  const profiles = ranked.map(({ match_reason, ...row }) => ({
+    ...normalizeProfile(row),
+    followed_by_me: false,
+    match_reason,
+  }));
 
   res.json({ profiles });
 });
