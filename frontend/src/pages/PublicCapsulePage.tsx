@@ -171,6 +171,7 @@ export function PublicCapsulePage() {
                     likedByMe={capsule.liked_by_me}
                   />
                   <CapsuleComments
+                    key={openComments ? 'comments-open' : 'comments'}
                     capsuleId={capsule.id}
                     commentsCount={capsule.comments_count}
                     currentUserId={user.id}
@@ -181,6 +182,7 @@ export function PublicCapsulePage() {
               ) : (
                 <>
                   <CapsuleComments
+                    key={openComments ? 'comments-open' : 'comments'}
                     capsuleId={capsule.id}
                     commentsCount={capsule.comments_count}
                     capsuleOwnerId={capsule.user_id}

@@ -94,7 +94,7 @@ interface CapsuleCommentsProps {
   commentsCount?: number;
   currentUserId?: string;
   capsuleOwnerId?: string;
-  /** Abrir el panel (p.ej. deep link `#comments`). */
+  /** Abrir el panel al montar (p.ej. deep link `#comments`). */
   defaultOpen?: boolean;
   className?: string;
 }
@@ -118,16 +118,12 @@ export function CapsuleComments({
   const label = commentsCount > 0 ? `${commentsCount} comentarios` : 'Comentar';
 
   useEffect(() => {
-    if (defaultOpen) setOpen(true);
-  }, [defaultOpen]);
-
-  useEffect(() => {
-    if (!open || !defaultOpen) return;
+    if (!defaultOpen) return;
     const id = window.requestAnimationFrame(() => {
       panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     return () => window.cancelAnimationFrame(id);
-  }, [open, defaultOpen]);
+  }, [defaultOpen]);
 
   const handleToggle = () => {
     setOpen((wasOpen) => {
