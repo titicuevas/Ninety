@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Star } from 'lucide-react';
@@ -10,6 +10,11 @@ import { FormField } from '@/components/ui/form-field';
 import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  clearDraftCapsuleMemory,
+  readDraftCapsuleMemory,
+  saveDraftCapsuleMemory,
+} from '@/lib/draftCapsuleMemory';
 import { cn } from '@/lib/utils';
 import {
   WATCH_CONTEXTS,
@@ -42,6 +47,8 @@ interface CapsuleMemoryFormProps {
   defaultIsPublic?: boolean;
   defaultWatchContext?: WatchContext | null;
   existingPhotoUrls?: string[];
+  /** Si se pasa, persiste nota/rating/contexto/visibilidad en sessionStorage (crear Capsule). */
+  draftMatchId?: number;
   submitLabel: string;
   isBusy?: boolean;
   error?: string | null;
@@ -56,29 +63,53 @@ export function CapsuleMemoryForm({
   defaultIsPublic = true,
   defaultWatchContext = null,
   existingPhotoUrls = NO_PHOTO_URLS,
+  draftMatchId,
   submitLabel,
   isBusy = false,
   error,
   onCancel,
   onSubmit,
 }: CapsuleMemoryFormProps) {
-  const [rating, setRating] = useState<number | null>(defaultRating);
-  const [isPublic, setIsPublic] = useState(defaultIsPublic);
-  const [watchContext, setWatchContext] = useState<WatchContext | null>(defaultWatchContext);
+  const draft = draftMatchId != null ? readDraftCapsuleMemory(draftMatchId) : null;
+
+  const [rating, setRating] = useState<number | null>(draft?.rating ?? defaultRating);
+  const [isPublic, setIsPublic] = useState(draft?.is_public ?? defaultIsPublic);
+  const [watchContext, setWatchContext] = useState<WatchContext | null>(
+    draft?.watch_context ?? defaultWatchContext,
+  );
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [removedPhotoUrls, setRemovedPhotoUrls] = useState<string[]>([]);
 
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<CapsuleMemoryFormValues>({
     resolver: zodResolver(memorySchema),
     defaultValues: {
-      watched_at: defaultWatchedAt,
-      note: defaultNote,
+      watched_at: draft?.watched_at ?? defaultWatchedAt,
+      note: draft?.note ?? defaultNote,
     },
   });
+
+  const watchedAt = useWatch({ control, name: 'watched_at' });
+  const note = useWatch({ control, name: 'note' });
+
+  useEffect(() => {
+    if (draftMatchId == null) return;
+    const timer = window.setTimeout(() => {
+      saveDraftCapsuleMemory({
+        matchId: draftMatchId,
+        watched_at: watchedAt || defaultWatchedAt,
+        note: note ?? '',
+        rating,
+        is_public: isPublic,
+        watch_context: watchContext,
+      });
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [draftMatchId, watchedAt, note, rating, isPublic, watchContext, defaultWatchedAt]);
 
   const handleFormSubmit = (data: CapsuleMemoryFormValues) => {
     const removed = new Set(removedPhotoUrls);
@@ -91,6 +122,23 @@ export function CapsuleMemoryForm({
       keptPhotoUrls: existingPhotoUrls.filter((url) => !removed.has(url)),
       removedPhotoUrls,
     });
+  };
+
+  const handleCancel = () => {
+    if (draftMatchId != null) {
+      const hasMemory =
+        Boolean((note ?? '').trim()) ||
+        rating != null ||
+        watchContext != null ||
+        isPublic !== defaultIsPublic ||
+        (watchedAt && watchedAt !== defaultWatchedAt);
+      if (hasMemory) {
+        const ok = window.confirm('¿Salir sin guardar? Se perderá el borrador de este partido.');
+        if (!ok) return;
+      }
+      clearDraftCapsuleMemory();
+    }
+    onCancel();
   };
 
   return (
@@ -234,7 +282,7 @@ export function CapsuleMemoryForm({
         <Button type="submit" loading={isBusy} className="h-12 w-full text-base">
           {submitLabel}
         </Button>
-        <Button type="button" variant="secondary" className="h-12 w-full text-base" onClick={onCancel}>
+        <Button type="button" variant="secondary" className="h-12 w-full text-base" onClick={handleCancel}>
           Cancelar
         </Button>
       </div>

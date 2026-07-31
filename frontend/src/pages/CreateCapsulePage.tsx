@@ -9,6 +9,7 @@ import { useCapsules, useCreateCapsule } from '@/hooks/useCapsules';
 import { useAuth } from '@/hooks/useAuthInit';
 import { ApiError } from '@/lib/api';
 import { uploadCapsulePhotos } from '@/lib/capsulePhoto';
+import { clearDraftCapsuleMemory } from '@/lib/draftCapsuleMemory';
 import { clearDraftMatch, readDraftMatch, saveDraftMatch } from '@/lib/draftMatch';
 import { friendlyApiError } from '@/lib/friendlyErrors';
 import { defaultWatchedAt, footballMatchToCapsuleBase } from '@/lib/matchCapsule';
@@ -50,11 +51,13 @@ export function CreateCapsulePage() {
 
   const leaveWithoutSaving = () => {
     clearDraftMatch();
+    clearDraftCapsuleMemory();
     navigate(-1);
   };
 
   const openExisting = (capsuleId: string) => {
     clearDraftMatch();
+    clearDraftCapsuleMemory();
     navigate(`/c/${capsuleId}`, { replace: true });
   };
 
@@ -98,6 +101,7 @@ export function CreateCapsulePage() {
         {
           onSuccess: (created) => {
             clearDraftMatch();
+            clearDraftCapsuleMemory();
             navigate(`/c/${created.id}`, {
               replace: true,
               state: { shareNudge: payload.is_public },
@@ -149,6 +153,7 @@ export function CreateCapsulePage() {
         ) : (
           <CapsuleMemoryForm
             defaultWatchedAt={defaultWatchedAt(match)}
+            draftMatchId={match.id}
             submitLabel={uploading ? 'Subiendo fotos…' : 'Guardar Capsule'}
             isBusy={uploading || createCapsule.isPending}
             error={

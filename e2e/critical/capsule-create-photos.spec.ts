@@ -81,6 +81,21 @@ test.describe('Crítico — creación de capsule con fotos @critical', () => {
     await expect(page.getByRole('heading', { name: /nueva capsule/i })).toBeVisible();
     await expect(page.getByText(match.homeTeam.name).first()).toBeVisible();
 
+    const draftNote = `Borrador E2E ${Date.now()}`;
+    await page.getByRole('radio', { name: '3 de 5 estrellas' }).click();
+    await page.getByLabel('Nota (opcional)').fill(draftNote);
+    await page.getByRole('radio', { name: /estadio/i }).click();
+
+    // El borrador de memoria también sobrevive al refresh (fotos no)
+    await page.reload();
+    await expect(page).toHaveURL(/\/capsules\/new/);
+    await expect(page.getByLabel('Nota (opcional)')).toHaveValue(draftNote, { timeout: 10_000 });
+    await expect(page.getByRole('radio', { name: '3 de 5 estrellas' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await expect(page.getByRole('radio', { name: /estadio/i })).toHaveAttribute('aria-checked', 'true');
+
     await page.locator('input[type="file"]').first().setInputFiles([
       { name: 'photo-1.jpg', mimeType: 'image/jpeg', buffer: JPEG_BUFFER },
       { name: 'photo-2.jpg', mimeType: 'image/jpeg', buffer: JPEG_BUFFER },
