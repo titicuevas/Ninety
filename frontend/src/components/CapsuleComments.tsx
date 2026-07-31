@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -110,6 +111,7 @@ export function CapsuleComments({
 }: CapsuleCommentsProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [draft, setDraft] = useState('');
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { data, isLoading, isError } = useCapsuleComments(capsuleId, open);
@@ -238,8 +240,8 @@ export function CapsuleComments({
                     comment={comment}
                     currentUserId={currentUserId}
                     capsuleOwnerId={capsuleOwnerId}
-                    onDelete={(id) => deleteComment.mutate(id)}
-                    deleting={deleteComment.isPending}
+                    onDelete={(id) => setPendingDeleteId(id)}
+                    deleting={deleteComment.isPending && pendingDeleteId === comment.id}
                   />
                 </li>
               ))}
@@ -251,6 +253,23 @@ export function CapsuleComments({
           ) : null}
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={pendingDeleteId != null}
+        title="¿Borrar este comentario?"
+        description="No se puede deshacer."
+        confirmLabel="Borrar"
+        busy={deleteComment.isPending}
+        onConfirm={() => {
+          if (!pendingDeleteId) return;
+          deleteComment.mutate(pendingDeleteId, {
+            onSettled: () => setPendingDeleteId(null),
+          });
+        }}
+        onCancel={() => {
+          if (!deleteComment.isPending) setPendingDeleteId(null);
+        }}
+      />
     </div>
   );
 }

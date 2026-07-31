@@ -116,4 +116,26 @@ test.describe('Smoke — autenticado @smoke', () => {
     const emptyHint = page.getByText(/encuentra aficionados/i);
     await expect(suggestions.or(emptyHint)).toBeVisible({ timeout: 15_000 });
   });
+
+  test('Mis Capsules pide confirmación al eliminar', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page
+      .getByRole('navigation', { name: /navegación principal/i })
+      .getByRole('link', { name: /capsules/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/capsules/);
+
+    const deleteBtn = page.getByRole('button', { name: /^eliminar$/i }).first();
+    const empty = page.getByText(/aún no tienes capsules/i);
+    await expect(deleteBtn.or(empty)).toBeVisible({ timeout: 20_000 });
+    if (await empty.isVisible().catch(() => false)) return;
+
+    await deleteBtn.click();
+    const dialog = page.getByRole('dialog', { name: /eliminar esta capsule/i });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText(/no se puede deshacer/i)).toBeVisible();
+    await dialog.getByRole('button', { name: /^cancelar$/i }).click();
+    await expect(dialog).toBeHidden();
+  });
 });

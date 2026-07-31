@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import { Bell, Heart, UserPlus, MessageCircle } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
 import { NotificationListSkeleton } from '@/components/ListSkeletons';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   useNotifications,
   useMarkAllRead,
@@ -155,6 +157,7 @@ export function NotificationsPage() {
   const enablePush = useEnablePush();
   const disablePush = useDisablePush();
   const testPush = useTestPush();
+  const [clearOpen, setClearOpen] = useState(false);
   const notifications = data?.pages.flatMap((page) => page.notifications) ?? [];
   const unread = data?.pages[0]?.unread_count ?? 0;
   const hasRead = notifications.some((n) => n.read);
@@ -220,7 +223,7 @@ export function NotificationsPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => clearRead.mutate()}
+                onClick={() => setClearOpen(true)}
                 loading={clearRead.isPending}
               >
                 Limpiar leídas
@@ -306,6 +309,22 @@ export function NotificationsPage() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={clearOpen}
+        title="¿Limpiar notificaciones leídas?"
+        description="Se borrarán solo las ya leídas. Las no leídas se mantienen."
+        confirmLabel="Limpiar"
+        busy={clearRead.isPending}
+        onConfirm={() => {
+          clearRead.mutate(undefined, {
+            onSettled: () => setClearOpen(false),
+          });
+        }}
+        onCancel={() => {
+          if (!clearRead.isPending) setClearOpen(false);
+        }}
+      />
     </Layout>
   );
 }

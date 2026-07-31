@@ -6,6 +6,7 @@ import { Star } from 'lucide-react';
 import { CapsulePhotosField } from '@/components/CapsulePhotosField';
 import { FormAlert } from '@/components/FormAlert';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { FormField } from '@/components/ui/form-field';
 import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
@@ -79,6 +80,7 @@ export function CapsuleMemoryForm({
   );
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [removedPhotoUrls, setRemovedPhotoUrls] = useState<string[]>([]);
+  const [leaveOpen, setLeaveOpen] = useState(false);
 
   const {
     register,
@@ -133,11 +135,17 @@ export function CapsuleMemoryForm({
         isPublic !== defaultIsPublic ||
         (watchedAt && watchedAt !== defaultWatchedAt);
       if (hasMemory) {
-        const ok = window.confirm('¿Salir sin guardar? Se perderá el borrador de este partido.');
-        if (!ok) return;
+        setLeaveOpen(true);
+        return;
       }
       clearDraftCapsuleMemory();
     }
+    onCancel();
+  };
+
+  const confirmLeave = () => {
+    clearDraftCapsuleMemory();
+    setLeaveOpen(false);
     onCancel();
   };
 
@@ -286,6 +294,17 @@ export function CapsuleMemoryForm({
           Cancelar
         </Button>
       </div>
+
+      <ConfirmDialog
+        open={leaveOpen}
+        title="¿Salir sin guardar?"
+        description="Se perderá el borrador de este partido."
+        confirmLabel="Salir"
+        cancelLabel="Seguir editando"
+        tone="default"
+        onConfirm={confirmLeave}
+        onCancel={() => setLeaveOpen(false)}
+      />
     </form>
   );
 }

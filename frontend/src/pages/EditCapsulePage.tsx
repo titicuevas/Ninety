@@ -6,6 +6,7 @@ import { CapsuleListSkeleton } from '@/components/ListSkeletons';
 import { MatchCard } from '@/components/MatchCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useCapsule, useDeleteCapsule, useUpdateCapsule } from '@/hooks/useCapsules';
 import { deleteCapsulePhotosByUrls, uploadCapsulePhotos } from '@/lib/capsulePhoto';
 import { friendlyApiError } from '@/lib/friendlyErrors';
@@ -22,6 +23,7 @@ export function EditCapsulePage() {
   const deleteCapsule = useDeleteCapsule();
   const [uploading, setUploading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (!id) return <Navigate to="/capsules" replace />;
 
@@ -103,9 +105,13 @@ export function EditCapsulePage() {
   };
 
   const handleDelete = () => {
-    if (!window.confirm('¿Eliminar esta Capsule? No se puede deshacer.')) return;
+    setDeleteOpen(true);
+  };
+
+  const confirmDelete = () => {
     deleteCapsule.mutate(capsule.id, {
       onSuccess: () => navigate('/capsules', { replace: true }),
+      onSettled: () => setDeleteOpen(false),
     });
   };
 
@@ -154,6 +160,18 @@ export function EditCapsulePage() {
           </CardContent>
         </Card>
       </div>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title="¿Eliminar esta Capsule?"
+        description="Se borrará de tu diario y no se puede deshacer."
+        confirmLabel="Eliminar"
+        busy={deleteCapsule.isPending}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          if (!deleteCapsule.isPending) setDeleteOpen(false);
+        }}
+      />
     </Layout>
   );
 }

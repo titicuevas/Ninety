@@ -11,6 +11,7 @@ import { StarRating } from '@/components/StarRating';
 import { WatchContextBadge } from '@/components/WatchContextBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Input } from '@/components/ui/input';
 import {
   useCapsules,
@@ -134,6 +135,7 @@ function parseWatchContext(value: string | null): WatchContext | undefined {
 export function CapsulesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [qDraft, setQDraft] = useState(() => searchParams.get('q') ?? '');
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const deferredQ = useDeferredValue(qDraft.trim());
 
   const year = parseYear(searchParams.get('year'));
@@ -189,8 +191,15 @@ export function CapsulesPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (!window.confirm('¿Eliminar esta Capsule?')) return;
-    deleteCapsule.mutate(id);
+    setPendingDeleteId(id);
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDeleteId) return;
+    const id = pendingDeleteId;
+    deleteCapsule.mutate(id, {
+      onSettled: () => setPendingDeleteId(null),
+    });
   };
 
   return (
@@ -384,6 +393,18 @@ export function CapsulesPage() {
           </div>
         ) : null}
       </div>
+
+      <ConfirmDialog
+        open={pendingDeleteId != null}
+        title="¿Eliminar esta Capsule?"
+        description="Se borrará de tu diario y no se puede deshacer."
+        confirmLabel="Eliminar"
+        busy={deleteCapsule.isPending}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          if (!deleteCapsule.isPending) setPendingDeleteId(null);
+        }}
+      />
     </Layout>
   );
 }
