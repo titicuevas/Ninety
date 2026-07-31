@@ -13,3 +13,17 @@ export function FormAlert({ children, className }: { children: string; className
     </div>
   );
 }
+
+export function FormSuccess({ children, className }: { children: string; className?: string }) {
+  return (
+    <div
+      role="status"
+      className={cn(
+        'rounded-lg border border-primary/40 bg-primary/10 px-3 py-2.5 text-sm leading-relaxed text-primary',
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}

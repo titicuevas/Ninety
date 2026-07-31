@@ -127,9 +127,20 @@ export function useToggleCapsuleLike() {
     },
     onMutate: async ({ capsuleId, liked }) => {
       await queryClient.cancelQueries({ queryKey: ['capsules', 'feed'] });
+      await queryClient.cancelQueries({ queryKey: ['capsules', 'public', capsuleId] });
+      await queryClient.cancelQueries({ queryKey: ['capsules', capsuleId] });
+      await queryClient.cancelQueries({ queryKey: ['profile', 'public'] });
+
       const previousFeeds = queryClient.getQueriesData<InfiniteData<FeedResponse>>({
         queryKey: ['capsules', 'feed'],
       });
+      const previousPublicProfiles = queryClient.getQueriesData<InfiniteData<{ capsules: FeedCapsule[] }>>({
+        queryKey: ['profile', 'public'],
+      });
+      const previousPublicCapsules = queryClient.getQueriesData({
+        queryKey: ['capsules', 'public', capsuleId],
+      });
+      const previousDetail = queryClient.getQueryData(['capsules', capsuleId]);
 
       const updateCapsule = <T extends { id: string; likes_count?: number; liked_by_me?: boolean }>(c: T): T =>
         c.id === capsuleId
@@ -166,14 +177,38 @@ export function useToggleCapsuleLike() {
             : old,
       );
 
-      return { previousFeeds };
+      queryClient.setQueriesData({ queryKey: ['capsules', 'public', capsuleId] }, (old) =>
+        old && typeof old === 'object' && 'id' in old
+          ? updateCapsule(old as { id: string; likes_count?: number; liked_by_me?: boolean })
+          : old,
+      );
+
+      queryClient.setQueryData(['capsules', capsuleId], (old) =>
+        old && typeof old === 'object' && 'id' in old
+          ? updateCapsule(old as { id: string; likes_count?: number; liked_by_me?: boolean })
+          : old,
+      );
+
+      return {
+        previousFeeds,
+        previousPublicProfiles,
+        previousPublicCapsules,
+        previousDetail,
+        capsuleId,
+      };
     },
     onError: (_err, _vars, context) => {
-      if (context?.previousFeeds) {
-        for (const [key, data] of context.previousFeeds) {
-          queryClient.setQueryData(key, data);
-        }
+      if (!context) return;
+      for (const [key, data] of context.previousFeeds) {
+        queryClient.setQueryData(key, data);
       }
+      for (const [key, data] of context.previousPublicProfiles) {
+        queryClient.setQueryData(key, data);
+      }
+      for (const [key, data] of context.previousPublicCapsules) {
+        queryClient.setQueryData(key, data);
+      }
+      queryClient.setQueryData(['capsules', context.capsuleId], context.previousDetail);
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['capsules'] });

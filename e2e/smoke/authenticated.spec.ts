@@ -183,6 +183,34 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(page).toHaveURL(/\/capsules\/.+\/edit/);
   });
 
+  test('Editar Capsule muestra confirmación al guardar', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page
+      .getByRole('navigation', { name: /navegación principal/i })
+      .getByRole('link', { name: /capsules/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/capsules/);
+
+    const editLink = page.getByRole('link', { name: /editar/i }).first();
+    const empty = page.getByText(/aún no tienes capsules/i);
+    await expect(editLink.or(empty)).toBeVisible({ timeout: 20_000 });
+    if (await empty.isVisible().catch(() => false)) return;
+
+    await editLink.click();
+    await expect(page).toHaveURL(/\/capsules\/.+\/edit/);
+
+    const note = page.getByLabel('Nota (opcional)');
+    const stamp = `Guardado E2E ${Date.now()}`;
+    await note.fill(stamp);
+    await page.getByRole('button', { name: /guardar cambios/i }).click();
+
+    await expect(page).toHaveURL(/\/c\/.+/, { timeout: 30_000 });
+    await expect(page.getByRole('status').filter({ hasText: /cambios guardados/i })).toBeVisible({
+      timeout: 15_000,
+    });
+  });
+
   test('Perfil pide confirmación al salir con cambios', async ({ page }) => {
     await openAuthenticatedHome(page);
     await page

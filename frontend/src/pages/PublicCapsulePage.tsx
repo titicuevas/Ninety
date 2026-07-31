@@ -4,6 +4,7 @@ import { CapsuleComments } from '@/components/CapsuleComments';
 import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { FollowButton } from '@/components/FollowButton';
+import { FormSuccess } from '@/components/FormAlert';
 import { Layout } from '@/components/Layout';
 import { CapsuleListSkeleton } from '@/components/ListSkeletons';
 import { PublicLayout } from '@/components/PublicLayout';
@@ -26,6 +27,7 @@ function formatScore(home: number | null, away: number | null) {
 
 type CapsuleLocationState = {
   shareNudge?: boolean;
+  savedChanges?: boolean;
 };
 
 export function PublicCapsulePage() {
@@ -35,9 +37,9 @@ export function PublicCapsulePage() {
   const { data: capsule, isLoading, isError, error } = usePublicCapsule(id);
   const Shell = user ? Layout : PublicLayout;
   const openComments = location.hash === '#comments';
-  const [showShareNudge, setShowShareNudge] = useState(
-    () => Boolean((location.state as CapsuleLocationState | null)?.shareNudge),
-  );
+  const locationState = location.state as CapsuleLocationState | null;
+  const [showShareNudge, setShowShareNudge] = useState(() => Boolean(locationState?.shareNudge));
+  const [showSavedBanner, setShowSavedBanner] = useState(() => Boolean(locationState?.savedChanges));
 
   if (isLoading) {
     return (
@@ -137,6 +139,15 @@ export function PublicCapsulePage() {
             />
           </div>
         </section>
+
+        {showSavedBanner && isOwn ? (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <FormSuccess className="flex-1">Cambios guardados</FormSuccess>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setShowSavedBanner(false)}>
+              Cerrar
+            </Button>
+          </div>
+        ) : null}
 
         {showShareNudge && isOwn && capsule.is_public !== false ? (
           <Card className="border-primary/40 bg-primary/5 motion-reveal">

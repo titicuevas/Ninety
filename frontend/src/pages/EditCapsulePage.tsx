@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { CapsuleMemoryForm } from '@/components/CapsuleMemoryForm';
+import { FormAlert } from '@/components/FormAlert';
 import { Layout } from '@/components/Layout';
 import { CapsuleListSkeleton } from '@/components/ListSkeletons';
 import { MatchCard } from '@/components/MatchCard';
@@ -23,6 +24,7 @@ export function EditCapsulePage() {
   const deleteCapsule = useDeleteCapsule();
   const [uploading, setUploading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (!id) return <Navigate to="/capsules" replace />;
@@ -94,23 +96,33 @@ export function EditCapsulePage() {
           watch_context: payload.watch_context,
         },
         {
-          onSuccess: () => navigate(`/c/${capsule.id}`, { replace: true }),
+          onSuccess: () =>
+            navigate(`/c/${capsule.id}`, { replace: true, state: { savedChanges: true } }),
           onSettled: () => setUploading(false),
         },
       );
     } catch (err) {
       setUploading(false);
-      setSubmitError(err instanceof Error ? friendlyApiError(err.message) : 'No se pudieron actualizar las fotos');
+      setSubmitError(
+        err instanceof Error ? friendlyApiError(err.message) : 'No se pudieron actualizar las fotos',
+      );
     }
   };
 
   const handleDelete = () => {
+    setDeleteError(null);
     setDeleteOpen(true);
   };
 
   const confirmDelete = () => {
+    setDeleteError(null);
     deleteCapsule.mutate(capsule.id, {
       onSuccess: () => navigate('/capsules', { replace: true }),
+      onError: (err) => {
+        setDeleteError(
+          err instanceof Error ? friendlyApiError(err.message) : 'No se pudo eliminar la Capsule',
+        );
+      },
       onSettled: () => setDeleteOpen(false),
     });
   };
@@ -159,6 +171,8 @@ export function EditCapsulePage() {
             </Button>
           </CardContent>
         </Card>
+
+        {deleteError ? <FormAlert>{deleteError}</FormAlert> : null}
       </div>
 
       <ConfirmDialog
