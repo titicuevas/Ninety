@@ -4,7 +4,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Check, Loader2, X } from 'lucide-react';
+import { Check, Loader2, Settings, X } from 'lucide-react';
+import { FavoriteTeamField } from '@/components/FavoriteTeamField';
 import { Layout } from '@/components/Layout';
 import { ShareProfileButton } from '@/components/ShareProfileButton';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ import { friendlyApiError } from '@/lib/friendlyErrors';
 import { AVATAR_ACCEPT, removeProfileAvatar, uploadProfileAvatar } from '@/lib/profileAvatar';
 import { isAutoUsername, suggestUsername } from '@/lib/profileHelpers';
 import { profilePath } from '@/lib/profilePath';
+import { toast } from '@/lib/toast';
 import type { Profile, UpdateProfileInput } from '@/types/profile';
 import { cn } from '@/lib/utils';
 
@@ -64,7 +66,6 @@ export function ProfilePage() {
   const session = useAuthStore((s) => s.session);
   const queryClient = useQueryClient();
   const { data: profile, isLoading } = useProfile();
-  const [success, setSuccess] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [avatarBusy, setAvatarBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -88,6 +89,7 @@ export function ProfilePage() {
   const displayName = watch('display_name');
   const usernameValue = watch('username') ?? '';
   const bioValue = watch('bio') ?? '';
+  const favoriteTeam = watch('favorite_team') ?? '';
   const [debouncedUsername, setDebouncedUsername] = useState('');
 
   useEffect(() => {
@@ -120,8 +122,7 @@ export function ProfilePage() {
     onSuccess: (data) => {
       applyProfile(data);
       reset(profileToFormValues(data, metadataName));
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      toast.success('Perfil actualizado');
     },
   });
 
@@ -214,9 +215,17 @@ export function ProfilePage() {
   return (
     <Layout>
       <Card className="mx-auto max-w-lg border-border">
-        <CardHeader>
-          <CardTitle>Tu perfil</CardTitle>
-          <CardDescription>Configura tu identidad como aficionado</CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+          <div className="space-y-1.5">
+            <CardTitle>Tu perfil</CardTitle>
+            <CardDescription>Configura tu identidad como aficionado</CardDescription>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/settings">
+              <Settings className="mr-1.5 h-4 w-4" aria-hidden />
+              Ajustes
+            </Link>
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -366,8 +375,14 @@ export function ProfilePage() {
               ) : null}
             </p>
 
-            <FormField label="Equipo favorito">
-              <Input placeholder="Ej: FC Barcelona" {...register('favorite_team')} />
+            <FormField label="Equipo favorito" hint="Escribe y elige una sugerencia, o deja el nombre libre.">
+              <FavoriteTeamField
+                value={favoriteTeam}
+                onChange={(value) =>
+                  setValue('favorite_team', value, { shouldDirty: true, shouldValidate: true })
+                }
+                placeholder="Ej: FC Barcelona"
+              />
             </FormField>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -396,7 +411,6 @@ export function ProfilePage() {
             {mutation.error ? (
               <p className="text-sm text-destructive">{(mutation.error as Error).message}</p>
             ) : null}
-            {success ? <p className="text-sm text-primary">Perfil actualizado correctamente</p> : null}
 
             <Button
               type="submit"

@@ -19,6 +19,21 @@ test.describe('Smoke — público @smoke', () => {
     await expect(page.getByRole('heading', { name: /bienvenido de vuelta/i })).toBeVisible();
     await expect(page.getByLabel('Email')).toBeVisible();
     await expect(page.getByLabel('Contraseña')).toBeVisible();
+    await expect(page.getByRole('link', { name: /olvidaste tu contraseña/i })).toBeVisible();
+  });
+
+  test('recuperar contraseña muestra formulario', async ({ page }) => {
+    await page.goto('/forgot-password');
+    await expect(page.getByRole('heading', { name: /recuperar contraseña/i })).toBeVisible();
+    await expect(page.getByLabel('Email')).toBeVisible();
+    await expect(page.getByRole('button', { name: /enviar enlace/i })).toBeVisible();
+  });
+
+  test('reset password sin token muestra error de enlace', async ({ page }) => {
+    await page.goto('/auth/reset-password');
+    await expect(page.getByRole('heading', { name: /nueva contraseña/i })).toBeVisible();
+    await expect(page.getByText(/enlace inválido o caducado/i)).toBeVisible();
+    await expect(page.getByRole('link', { name: /solicitar nuevo enlace/i })).toBeVisible();
   });
 
   test('perfil público demo responde', async ({ page, request }) => {

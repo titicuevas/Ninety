@@ -266,14 +266,31 @@ export function NotificationsPage() {
         ) : null}
 
         {showPushDiagnostics ? (
-          <p className="text-xs text-muted-foreground" data-testid="push-diagnostics">
-            Alertas push:{' '}
-            {canEnablePush ? 'servidor listo' : 'pendiente en backend/Railway'}
-            {' · '}
-            {pushSupport?.supported ? 'navegador compatible' : 'navegador no compatible'}
-            {' · '}
-            permiso {pushPermissionLabel.toLowerCase()}
-          </p>
+          <div
+            className="space-y-1 rounded-lg border border-border bg-secondary/40 px-3 py-2 text-xs text-muted-foreground"
+            data-testid="push-diagnostics"
+          >
+            <p>
+              Alertas push:{' '}
+              {canEnablePush ? 'servidor listo' : 'pendiente en backend/Railway'}
+              {' · '}
+              {pushSupport?.supported ? 'navegador compatible' : 'navegador no compatible'}
+              {' · '}
+              permiso {pushPermissionLabel.toLowerCase()}
+            </p>
+            {!canEnablePush ? (
+              <p>
+                En producción: configura <code className="text-foreground">VAPID_PUBLIC_KEY</code>,{' '}
+                <code className="text-foreground">VAPID_PRIVATE_KEY</code> y{' '}
+                <code className="text-foreground">VAPID_SUBJECT</code> en Railway (
+                <code className="text-foreground">npm run vapid:set-railway</code>) y aplica la
+                migración de <code className="text-foreground">push_subscriptions</code>.
+              </p>
+            ) : null}
+            {pushSupport?.permission === 'denied' ? (
+              <p>El permiso está bloqueado en el navegador: actívalo en la configuración del sitio.</p>
+            ) : null}
+          </div>
         ) : null}
 
         {isLoading ? (

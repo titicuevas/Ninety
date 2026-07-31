@@ -81,3 +81,18 @@ export async function signOut(accessToken?: string | null) {
   }
   clearSession();
 }
+
+export async function requestPasswordReset(email: string) {
+  return apiFetch<{ message: string }>('/api/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPasswordWithToken(accessToken: string, password: string) {
+  return apiFetch<{ message: string }>(
+    '/api/auth/reset-password',
+    { method: 'POST', body: JSON.stringify({ password }) },
+    accessToken,
+  );
+}

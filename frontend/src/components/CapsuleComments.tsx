@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, Trash2 } from 'lucide-react';
+import { MessageCircle, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -9,9 +9,11 @@ import {
   useAddCapsuleComment,
   useCapsuleComments,
   useDeleteCapsuleComment,
+  useUpdateCapsuleComment,
 } from '@/hooks/useCapsuleComments';
 import { formatRelativeTime } from '@/lib/format';
 import { profilePath } from '@/lib/profilePath';
+import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import type { CapsuleComment } from '@/types/comment';
 
@@ -39,12 +41,16 @@ function CommentItem({
   capsuleOwnerId,
   onDelete,
   deleting,
+  onSaveEdit,
+  editingBusy,
 }: {
   comment: CapsuleComment;
   currentUserId?: string;
   capsuleOwnerId?: string;
   onDelete: (id: string) => void;
   deleting: boolean;
+  onSaveEdit: (id: string, body: string) => Promise<void>;
+  editingBusy: boolean;
 }) {
   const name = comment.author?.display_name ?? comment.author?.username ?? 'Aficionado';
   const username = comment.author?.username;
@@ -55,6 +61,29 @@ function CommentItem({
     isOwn || !capsuleOwnerId || currentUserId !== capsuleOwnerId
       ? 'Borrar comentario'
       : 'Eliminar comentario (moderación)';
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(comment.body);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!editing) setDraft(comment.body);
+  }, [comment.body, editing]);
+
+  const saveEdit = async () => {
+    const text = draft.trim();
+    if (!text || text === comment.body) {
+      setEditing(false);
+      return;
+    }
+    setEditError(null);
+    try {
+      await onSaveEdit(comment.id, text);
+      setEditing(false);
+      toast.success('Comentario actualizado');
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : 'No se pudo editar');
+    }
+  };
 
   return (
     <div className="flex gap-2 text-sm">
@@ -72,20 +101,75 @@ function CommentItem({
             {formatRelativeTime(comment.created_at)}
           </time>
         </div>
-        <p className="mt-0.5 whitespace-pre-wrap break-words text-muted-foreground">{comment.body}</p>
+        {editing ? (
+          <div className="mt-1.5 space-y-2">
+            <Textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              maxLength={500}
+              rows={2}
+              className="min-h-[64px] resize-none text-sm"
+              aria-label="Editar comentario"
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                loading={editingBusy}
+                disabled={!draft.trim()}
+                onClick={() => void saveEdit()}
+              >
+                Guardar
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                disabled={editingBusy}
+                onClick={() => {
+                  setEditing(false);
+                  setDraft(comment.body);
+                  setEditError(null);
+                }}
+              >
+                Cancelar
+              </Button>
+            </div>
+            {editError ? <p className="text-xs text-destructive">{editError}</p> : null}
+          </div>
+        ) : (
+          <p className="mt-0.5 whitespace-pre-wrap break-words text-muted-foreground">{comment.body}</p>
+        )}
       </div>
-      {canDelete ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 shrink-0 p-0 text-muted-foreground hover:text-destructive"
-          aria-label={deleteLabel}
-          disabled={deleting}
-          onClick={() => onDelete(comment.id)}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
+      {!editing && (isOwn || canDelete) ? (
+        <div className="flex shrink-0 gap-0.5">
+          {isOwn ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+              aria-label="Editar comentario"
+              disabled={deleting || editingBusy}
+              onClick={() => setEditing(true)}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+          ) : null}
+          {canDelete ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+              aria-label={deleteLabel}
+              disabled={deleting || editingBusy}
+              onClick={() => onDelete(comment.id)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
@@ -112,11 +196,13 @@ export function CapsuleComments({
   const [open, setOpen] = useState(defaultOpen);
   const [draft, setDraft] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { data, isLoading, isError } = useCapsuleComments(capsuleId, open);
   const addComment = useAddCapsuleComment(capsuleId);
   const deleteComment = useDeleteCapsuleComment(capsuleId);
+  const updateComment = useUpdateCapsuleComment(capsuleId);
 
   const comments = data?.comments ?? [];
   const label = commentsCount > 0 ? `${commentsCount} comentarios` : 'Comentar';
@@ -157,6 +243,7 @@ export function CapsuleComments({
     try {
       await addComment.mutateAsync(text);
       setDraft('');
+      toast.success('Comentario publicado');
     } catch {
       // error shown via mutation state if needed
     }
@@ -242,6 +329,15 @@ export function CapsuleComments({
                     capsuleOwnerId={capsuleOwnerId}
                     onDelete={(id) => setPendingDeleteId(id)}
                     deleting={deleteComment.isPending && pendingDeleteId === comment.id}
+                    editingBusy={updateComment.isPending && editingId === comment.id}
+                    onSaveEdit={async (id, body) => {
+                      setEditingId(id);
+                      try {
+                        await updateComment.mutateAsync({ commentId: id, body });
+                      } finally {
+                        setEditingId(null);
+                      }
+                    }}
                   />
                 </li>
               ))}

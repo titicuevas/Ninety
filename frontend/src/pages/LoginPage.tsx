@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,10 +22,13 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const setSession = useAuthStore((s) => s.setSession);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const passwordResetOk =
+    (location.state as { passwordReset?: boolean } | null)?.passwordReset === true;
 
   const handleGoogleSignIn = async () => {
     setError(null);
@@ -77,6 +80,17 @@ export function LoginPage() {
           <Input type="password" autoComplete="current-password" placeholder="••••••••" {...register('password')} />
         </FormField>
 
+        <p className="-mt-2 text-right text-sm">
+          <Link to="/forgot-password" className="text-primary hover:underline">
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </p>
+
+        {passwordResetOk ? (
+          <p className="text-sm text-primary" role="status">
+            Contraseña actualizada. Ya puedes iniciar sesión.
+          </p>
+        ) : null}
         {error ? <FormAlert>{error}</FormAlert> : null}
 
         <Button type="submit" loading={loading} className="w-full">

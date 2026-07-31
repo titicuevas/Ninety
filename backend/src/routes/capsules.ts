@@ -731,6 +731,100 @@ capsulesRouter.post('/:id/comments', requireAuth, async (req: AuthRequest, res) 
   });
 });
 
+capsulesRouter.patch('/:id/comments/:commentId', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const parsed = commentBodySchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const moderationError = validateCommentBody(parsed.data.body);
+  if (moderationError) {
+    res.status(400).json({ error: moderationError });
+    return;
+  }
+
+  const capsuleId = routeParam(req.params.id);
+  const commentId = routeParam(req.params.commentId);
+  const supabase = createUserClient(token);
+
+  const { data: existing, error: existingError } = await supabase
+    .from('capsule_comments')
+    .select('id, user_id, capsule_id')
+    .eq('id', commentId)
+    .eq('capsule_id', capsuleId)
+    .maybeSingle();
+
+  if (existingError) {
+    if (isMissingCommentsTable(existingError)) {
+      res.status(503).json({
+        error: 'Ejecuta la migración 20250711210000_capsule_comments.sql en Supabase.',
+      });
+      return;
+    }
+    res.status(400).json({ error: existingError.message });
+    return;
+  }
+
+  if (!existing) {
+    res.status(404).json({ error: 'Comentario no encontrado' });
+    return;
+  }
+
+  if (existing.user_id !== req.userId) {
+    res.status(403).json({ error: 'Solo puedes editar tus comentarios' });
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from('capsule_comments')
+    .update({ body: parsed.data.body })
+    .eq('id', commentId)
+    .eq('capsule_id', capsuleId)
+    .eq('user_id', req.userId!)
+    .select('id, capsule_id, user_id, body, created_at')
+    .maybeSingle();
+
+  if (error) {
+    if (isMissingCommentsTable(error)) {
+      res.status(503).json({
+        error: 'Ejecuta la migración 20250801120000_capsule_comments_update.sql en Supabase.',
+      });
+      return;
+    }
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  if (!data) {
+    res.status(404).json({ error: 'Comentario no encontrado' });
+    return;
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('username, full_name, avatar_url')
+    .eq('id', req.userId!)
+    .maybeSingle();
+
+  res.json({
+    ...data,
+    author: profile
+      ? {
+          username: profile.username,
+          display_name: profile.full_name ?? null,
+          avatar_url: profile.avatar_url,
+        }
+      : null,
+  });
+});
+
 capsulesRouter.delete('/:id/comments/:commentId', requireAuth, async (req: AuthRequest, res) => {
   const token = getAccessToken(req);
   if (!token) {

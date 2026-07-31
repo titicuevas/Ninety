@@ -97,3 +97,43 @@ export function useDeleteCapsuleComment(capsuleId: string) {
     },
   });
 }
+
+export function useUpdateCapsuleComment(capsuleId: string) {
+  const session = useAuthStore((s) => s.session);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ commentId, body }: { commentId: string; body: string }) =>
+      apiFetch<CapsuleComment>(
+        `/api/capsules/${capsuleId}/comments/${commentId}`,
+        { method: 'PATCH', body: JSON.stringify({ body }) },
+        session?.access_token,
+      ),
+    onMutate: async ({ commentId, body }) => {
+      await queryClient.cancelQueries({ queryKey: ['capsules', capsuleId, 'comments'] });
+      const previousComments = queryClient.getQueriesData<CapsuleCommentsResponse>({
+        queryKey: ['capsules', capsuleId, 'comments'],
+      });
+
+      queryClient.setQueriesData<CapsuleCommentsResponse>(
+        { queryKey: ['capsules', capsuleId, 'comments'] },
+        (old) =>
+          old
+            ? {
+                comments: old.comments.map((c) => (c.id === commentId ? { ...c, body } : c)),
+              }
+            : old,
+      );
+
+      return { previousComments };
+    },
+    onError: (_err, _vars, context) => {
+      context?.previousComments?.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ['capsules', capsuleId, 'comments'] });
+    },
+  });
+}

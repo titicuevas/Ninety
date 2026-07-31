@@ -261,4 +261,23 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(dialog).toBeHidden();
     await expect(page).toHaveURL(/\/profile/);
   });
+
+  test('Ajustes accesible desde perfil', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page
+      .getByRole('navigation', { name: /navegación principal/i })
+      .getByRole('link', { name: /perfil/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/profile/);
+    await expect(page.getByRole('heading', { name: /tu perfil/i })).toBeVisible({ timeout: 20_000 });
+
+    await page.getByRole('link', { name: /^ajustes$/i }).click();
+    await expect(page).toHaveURL(/\/settings/);
+    await expect(page.getByRole('heading', { name: /^ajustes$/i })).toBeVisible();
+    await expect(page.getByLabel(/^email$/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /guardar contraseña/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /ir a notificaciones/i })).toBeVisible();
+    await expect(page.locator('main').getByRole('button', { name: /^cerrar sesión$/i })).toBeVisible();
+  });
 });

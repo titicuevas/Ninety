@@ -5,6 +5,7 @@ import { env } from '../config/loadEnv.js';
 import { createPkceStorage, removePkceStorage } from '../lib/pkceStorage.js';
 import { syncUserProfile } from '../lib/syncUserProfile.js';
 import { createServiceClient, createUserClient, supabaseAnon } from '../lib/supabase.js';
+import { requireAuth, type AuthRequest } from '../middleware/auth.js';
 
 export const authRouter = Router();
 
@@ -28,6 +29,17 @@ const refreshSchema = z.object({
   refresh_token: z.string().min(1),
 });
 
+const emailSchema = z.object({
+  email: z.string().email(),
+});
+
+const passwordSchema = z.object({
+  password: z.string().min(6).max(72),
+});
+
+function getBearerToken(req: { headers: { authorization?: string } }) {
+  return req.headers.authorization?.replace(/^Bearer\s+/i, '') || null;
+}
 function createPkceClient(sessionId: string) {
   return createServiceClient(env.SUPABASE_ANON_KEY, {
     auth: {
@@ -226,4 +238,80 @@ authRouter.post('/oauth/exchange', async (req, res) => {
   }
 
   res.json({ session: await finalizeAuthSession(data.session) });
+});
+
+/** Solicitud de recuperación — siempre 200 para no filtrar emails. */
+authRouter.post('/forgot-password', async (req, res) => {
+  const parsed = emailSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const { error } = await supabaseAnon.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: `${env.CLIENT_URL}/auth/reset-password`,
+  });
+
+  if (error) {
+    console.error('[auth/forgot-password]', error.message);
+  }
+
+  res.json({
+    message: 'Si existe una cuenta con ese email, te enviamos un enlace para restablecer la contraseña.',
+  });
+});
+
+/** Cambio de contraseña con sesión activa (Ajustes). */
+authRouter.post('/change-password', requireAuth, async (req: AuthRequest, res) => {
+  const token = getBearerToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const parsed = passwordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const { error } = await createUserClient(token).auth.updateUser({
+    password: parsed.data.password,
+  });
+
+  if (error) {
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  res.json({ message: 'Contraseña actualizada' });
+});
+
+/**
+ * Restablecer tras el email de recovery.
+ * Acepta Bearer del token de recovery (hash) o sesión ya establecida.
+ */
+authRouter.post('/reset-password', async (req, res) => {
+  const parsed = passwordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const token = getBearerToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Enlace de recuperación inválido o caducado' });
+    return;
+  }
+
+  const { error } = await createUserClient(token).auth.updateUser({
+    password: parsed.data.password,
+  });
+
+  if (error) {
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  res.json({ message: 'Contraseña actualizada. Ya puedes iniciar sesión.' });
 });

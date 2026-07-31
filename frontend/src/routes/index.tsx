@@ -5,6 +5,7 @@ import { CapsulesPage } from '@/pages/CapsulesPage';
 import { CreateCapsulePage } from '@/pages/CreateCapsulePage';
 import { EditCapsulePage } from '@/pages/EditCapsulePage';
 import { FeedPage } from '@/pages/FeedPage';
+import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { HomePage } from '@/pages/HomePage';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/LoginPage';
@@ -14,8 +15,10 @@ import { PublicCapsulePage } from '@/pages/PublicCapsulePage';
 import { PublicProfilePage } from '@/pages/PublicProfilePage';
 import { PrivacyPage } from '@/pages/PrivacyPage';
 import { RegisterPage } from '@/pages/RegisterPage';
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
 import { SearchMatchPage } from '@/pages/SearchMatchPage';
+import { SettingsPage } from '@/pages/SettingsPage';
 import { TermsPage } from '@/pages/TermsPage';
 
 export const appRouter = createBrowserRouter([
@@ -24,6 +27,7 @@ export const appRouter = createBrowserRouter([
   { path: '/terminos', element: <TermsPage /> },
   { path: '/welcome', element: <Navigate to="/" replace /> },
   { path: '/auth/callback', element: <AuthCallbackPage /> },
+  { path: '/auth/reset-password', element: <ResetPasswordPage /> },
   { path: '/u/:username/followers', element: <FollowersPage /> },
   { path: '/u/:username/following', element: <FollowingPage /> },
   { path: '/u/:username', element: <PublicProfilePage /> },
@@ -33,6 +37,7 @@ export const appRouter = createBrowserRouter([
     children: [
       { path: '/login', element: <LoginPage /> },
       { path: '/register', element: <RegisterPage /> },
+      { path: '/forgot-password', element: <ForgotPasswordPage /> },
     ],
   },
   {
@@ -46,6 +51,7 @@ export const appRouter = createBrowserRouter([
       { path: '/capsules/:id/edit', element: <EditCapsulePage /> },
       { path: '/notifications', element: <NotificationsPage /> },
       { path: '/profile', element: <ProfilePage /> },
+      { path: '/settings', element: <SettingsPage /> },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },
