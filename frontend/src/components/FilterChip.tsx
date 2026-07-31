@@ -15,8 +15,10 @@ export function FilterChip({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={cn(
-        'min-h-10 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'min-h-10 rounded-full px-3 py-1.5 text-sm font-medium transition-[color,background-color,transform]',
+        'active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         active
           ? 'bg-primary text-primary-foreground'
           : 'bg-secondary text-muted-foreground hover:text-foreground',

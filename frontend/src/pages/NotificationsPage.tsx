@@ -272,7 +272,7 @@ export function NotificationsPage() {
         ) : notifications.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="p-6 text-center sm:p-10">
-              <Bell className="mx-auto h-10 w-10 text-muted-foreground/40" />
+              <Bell className="mx-auto h-10 w-10 text-muted-foreground/40" aria-hidden />
               <p className="mt-3 text-lg font-medium">Sin notificaciones</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Cuando alguien te siga o le guste tu cápsula, aparecerá aquí.

@@ -37,9 +37,10 @@ export function Button({
       className={cn(buttonVariants({ variant, size, className }))}
       ref={ref}
       disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...props}
     >
-      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
       {children}
     </button>
   );

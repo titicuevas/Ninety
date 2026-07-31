@@ -14,6 +14,15 @@ test.describe('A11y — páginas públicas @a11y', () => {
     await expectNoA11yViolations(page, 'landing');
   });
 
+  test('landing: skip link alcanzable con Tab', async ({ page }) => {
+    await page.goto('/');
+    await page.keyboard.press('Tab');
+    const skip = page.getByRole('link', { name: /saltar al contenido/i });
+    await expect(skip).toBeFocused();
+    await skip.press('Enter');
+    await expect(page.locator('#main-content')).toBeVisible();
+  });
+
   test('login sin violaciones graves', async ({ page }) => {
     await page.goto('/login');
     await expect(page.getByRole('heading', { name: /bienvenido de vuelta/i })).toBeVisible();

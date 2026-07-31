@@ -110,12 +110,14 @@ export function CapsuleComments({
   const [open, setOpen] = useState(defaultOpen);
   const [draft, setDraft] = useState('');
   const panelRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { data, isLoading, isError } = useCapsuleComments(capsuleId, open);
   const addComment = useAddCapsuleComment(capsuleId);
   const deleteComment = useDeleteCapsuleComment(capsuleId);
 
   const comments = data?.comments ?? [];
   const label = commentsCount > 0 ? `${commentsCount} comentarios` : 'Comentar';
+  const panelId = `comments-panel-${capsuleId}`;
 
   useEffect(() => {
     if (!defaultOpen) return;
@@ -124,6 +126,14 @@ export function CapsuleComments({
     });
     return () => window.cancelAnimationFrame(id);
   }, [defaultOpen]);
+
+  useEffect(() => {
+    if (!open || !currentUserId) return;
+    const id = window.requestAnimationFrame(() => {
+      textareaRef.current?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [open, currentUserId]);
 
   const handleToggle = () => {
     setOpen((wasOpen) => {
@@ -155,6 +165,7 @@ export function CapsuleComments({
         type="button"
         onClick={handleToggle}
         aria-expanded={open}
+        aria-controls={panelId}
         className={cn(
           'inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm transition-colors',
           'hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
@@ -166,10 +177,11 @@ export function CapsuleComments({
       </button>
 
       {open ? (
-        <div className="mt-3 space-y-3 border-t border-border pt-3">
+        <div id={panelId} className="motion-reveal mt-3 space-y-3 border-t border-border pt-3">
           {currentUserId ? (
             <form onSubmit={(e) => void handleSubmit(e)} className="space-y-2">
               <Textarea
+                ref={textareaRef}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder="Escribe un comentario…"
@@ -200,8 +212,11 @@ export function CapsuleComments({
           )}
 
           {isLoading ? (
-            <div className="flex justify-center py-4">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <div className="flex justify-center py-4" role="status" aria-label="Cargando comentarios">
+              <div
+                className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent"
+                aria-hidden
+              />
             </div>
           ) : null}
 
