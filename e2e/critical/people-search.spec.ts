@@ -16,7 +16,11 @@ test.describe('Crítico — búsqueda de aficionados @critical', () => {
     await expect(suggestions.or(emptyHint)).toBeVisible({ timeout: 15_000 });
 
     if (await suggestions.isVisible()) {
-      await expect(page.getByRole('button', { name: /^seguir$/i }).first()).toBeVisible();
+      const followBtn = page.getByRole('button', { name: /^seguir$/i }).first();
+      await expect(followBtn).toBeVisible();
+      await followBtn.click();
+      const followingBtn = page.getByRole('button', { name: /dejar de seguir/i }).first();
+      await expect(followingBtn).toHaveAttribute('aria-pressed', 'true');
     }
 
     await page.getByLabel(/nombre o username/i).fill('zzzninetye2e');

@@ -12,15 +12,30 @@ interface PublicProfilePage {
 
 type PublicProfileInfinite = InfiniteData<PublicProfilePage>;
 
-function updateProfileFollow(
-  profile: Profile,
-  followed: boolean,
-): Profile {
+type ProfilesListResponse = {
+  profiles: Profile[];
+};
+
+function updateProfileFollow(profile: Profile, followed: boolean): Profile {
   const delta = followed ? -1 : 1;
   return {
     ...profile,
     followed_by_me: !followed,
     followers_count: Math.max(0, (profile.followers_count ?? 0) + delta),
+  };
+}
+
+function patchProfilesList(
+  old: ProfilesListResponse | undefined,
+  username: string,
+  followed: boolean,
+): ProfilesListResponse | undefined {
+  if (!old) return old;
+  return {
+    ...old,
+    profiles: old.profiles.map((profile) =>
+      profile.username === username ? updateProfileFollow(profile, followed) : profile,
+    ),
   };
 }
 
@@ -55,11 +70,19 @@ export function useToggleFollow(username: string) {
     onMutate: async ({ followed }) => {
       await queryClient.cancelQueries({ queryKey: ['profile', 'public', username] });
       await queryClient.cancelQueries({ queryKey: ['capsules', 'feed'] });
+      await queryClient.cancelQueries({ queryKey: ['profile', 'search'] });
+      await queryClient.cancelQueries({ queryKey: ['profile', 'discover'] });
 
       const previousProfiles = queryClient.getQueriesData<PublicProfileInfinite>({
         queryKey: ['profile', 'public', username],
       });
       const previousFeed = queryClient.getQueryData<InfiniteData<FeedResponse>>(['capsules', 'feed']);
+      const previousSearch = queryClient.getQueriesData<ProfilesListResponse>({
+        queryKey: ['profile', 'search'],
+      });
+      const previousDiscover = queryClient.getQueriesData<ProfilesListResponse>({
+        queryKey: ['profile', 'discover'],
+      });
 
       queryClient.setQueriesData<PublicProfileInfinite>(
         { queryKey: ['profile', 'public', username] },
@@ -79,7 +102,15 @@ export function useToggleFollow(username: string) {
         bumpFeedFollowingCount(old, followed ? -1 : 1),
       );
 
-      return { previousProfiles, previousFeed };
+      queryClient.setQueriesData<ProfilesListResponse>({ queryKey: ['profile', 'search'] }, (old) =>
+        patchProfilesList(old, username, followed),
+      );
+
+      queryClient.setQueriesData<ProfilesListResponse>({ queryKey: ['profile', 'discover'] }, (old) =>
+        patchProfilesList(old, username, followed),
+      );
+
+      return { previousProfiles, previousFeed, previousSearch, previousDiscover };
     },
     onError: (_err, _vars, context) => {
       context?.previousProfiles?.forEach(([key, data]) => {
@@ -88,6 +119,12 @@ export function useToggleFollow(username: string) {
       if (context?.previousFeed) {
         queryClient.setQueryData(['capsules', 'feed'], context.previousFeed);
       }
+      context?.previousSearch?.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
+      context?.previousDiscover?.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['profile', 'public', username] });

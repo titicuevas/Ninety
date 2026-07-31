@@ -1,28 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, UserMinus, UserPlus, Users } from 'lucide-react';
+import { Search, Users } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
+import { FollowButton } from '@/components/FollowButton';
 import { PeopleListSkeleton } from '@/components/ListSkeletons';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
-import { useToggleFollow } from '@/hooks/useFollowUser';
 import { MIN_PEOPLE_QUERY, useProfileSearch } from '@/hooks/useProfileSearch';
 import { profilePath } from '@/lib/profilePath';
-import { cn } from '@/lib/utils';
 import type { Profile } from '@/types/profile';
 
 export function PeopleResultRow({ profile }: { profile: Profile }) {
   const username = profile.username!;
-  const [followed, setFollowed] = useState(() => !!profile.followed_by_me);
-  const toggle = useToggleFollow(username);
   const name = profile.display_name ?? username;
   const location = [profile.city, profile.country].filter(Boolean).join(', ');
-
-  useEffect(() => {
-    setFollowed(!!profile.followed_by_me);
-  }, [profile.followed_by_me, profile.id]);
 
   return (
     <li className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 sm:p-4">
@@ -59,46 +52,7 @@ export function PeopleResultRow({ profile }: { profile: Profile }) {
         </p>
       </div>
 
-      <div className="flex flex-col items-end gap-1">
-        <button
-          type="button"
-          disabled={toggle.isPending}
-          aria-pressed={followed}
-          aria-label={followed ? 'Dejar de seguir' : 'Seguir'}
-          onClick={() =>
-            toggle.mutate(
-              { followed },
-              {
-                onSuccess: () => setFollowed((v) => !v),
-              },
-            )
-          }
-          className={cn(
-            'inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-            followed
-              ? 'bg-secondary text-foreground hover:bg-secondary/80'
-              : 'bg-primary text-primary-foreground hover:bg-primary/90',
-          )}
-        >
-          {followed ? (
-            <>
-              <UserMinus className="h-4 w-4" aria-hidden />
-              Siguiendo
-            </>
-          ) : (
-            <>
-              <UserPlus className="h-4 w-4" aria-hidden />
-              Seguir
-            </>
-          )}
-        </button>
-        {toggle.isError ? (
-          <p className="max-w-[10rem] text-right text-xs text-destructive">
-            {toggle.error instanceof Error ? toggle.error.message : 'Error'}
-          </p>
-        ) : null}
-      </div>
+      <FollowButton username={username} followedByMe={!!profile.followed_by_me} size="compact" />
     </li>
   );
 }
