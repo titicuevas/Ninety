@@ -15,6 +15,7 @@ import {
 } from '@/lib/capsuleStats';
 import { formatWatchedDate } from '@/lib/format';
 import { isAutoUsername } from '@/lib/profileHelpers';
+import { shareOrCopyLink } from '@/lib/shareLink';
 import { publicProfileUrl } from '@/lib/siteUrl';
 import type { Capsule } from '@/types/capsule';
 import { cn } from '@/lib/utils';
@@ -206,6 +207,7 @@ export function WrappedSummary({
   username,
 }: WrappedSummaryProps) {
   const [copied, setCopied] = useState(false);
+  const [manualText, setManualText] = useState<string | null>(null);
   const bestScore = stats.bestRated ? formatScore(stats.bestRated) : null;
   const periodLabel = scope === 'all' ? 'Todo tu diario' : `Año ${scope}`;
   const badgeLabel = scope === 'all' ? 'Tu Wrapped · completo' : `Tu Wrapped · ${scope}`;
@@ -213,26 +215,23 @@ export function WrappedSummary({
     username && !isAutoUsername(username) ? publicProfileUrl(username) : null;
 
   const share = async () => {
+    setManualText(null);
     const text = buildWrappedShareText(name, scope, stats, profileUrl);
-    try {
-      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-        await navigator.share({
-          title: `Wrapped Ninety · ${periodLabel}`,
-          text,
-          ...(profileUrl ? { url: profileUrl } : {}),
-        });
-        return;
-      }
-    } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') return;
-    }
+    const result = await shareOrCopyLink({
+      title: `Wrapped Ninety · ${periodLabel}`,
+      text,
+      ...(profileUrl ? { url: profileUrl } : {}),
+      clipboardText: text,
+    });
 
-    try {
-      await navigator.clipboard.writeText(text);
+    if (result === 'copied') {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* clipboard no disponible */
+      return;
+    }
+
+    if (result === 'manual_needed') {
+      setManualText(text);
     }
   };
 
@@ -293,20 +292,36 @@ export function WrappedSummary({
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
               {badgeLabel}
             </p>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="bg-black/30 text-emerald-50 hover:bg-black/45"
-              onClick={() => void share()}
-            >
-              {copied ? (
-                <Check className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-              ) : (
-                <Share2 className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-              )}
-              {copied ? 'Copiado' : 'Compartir'}
-            </Button>
+            <div className="flex max-w-full flex-col items-end gap-1">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="bg-black/30 text-emerald-50 hover:bg-black/45"
+                onClick={() => void share()}
+                aria-label={copied ? 'Resumen copiado' : 'Compartir Wrapped'}
+              >
+                {copied ? (
+                  <Check className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                ) : (
+                  <Share2 className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                )}
+                {copied ? 'Copiado' : 'Compartir'}
+              </Button>
+              {manualText ? (
+                <label className="block w-full max-w-xs text-left">
+                  <span className="sr-only">Copia tu Wrapped</span>
+                  <textarea
+                    readOnly
+                    rows={4}
+                    value={manualText}
+                    onFocus={(e) => e.currentTarget.select()}
+                    className="w-full resize-none rounded-md border border-white/20 bg-black/40 px-2 py-1.5 text-xs text-emerald-50"
+                    aria-label="Texto del Wrapped para copiar"
+                  />
+                </label>
+              ) : null}
+            </div>
           </div>
 
           <h2 id="wrapped-heading" className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">

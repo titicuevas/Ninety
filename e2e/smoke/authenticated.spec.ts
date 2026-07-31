@@ -33,10 +33,15 @@ test.describe('Smoke — autenticado @smoke', () => {
     const allTab = tabs.getByRole('tab', { name: /^todo$/i });
     await allTab.click();
     await expect(page).toHaveURL(/wrapped=all/);
-    await expect(page.getByRole('button', { name: /compartir|copiado/i })).toBeVisible();
-    await page.getByRole('button', { name: /compartir|copiado/i }).click();
-    // Sin Web Share en Chromium headless suele copiar al clipboard; el botón no debe romper
-    await expect(page.getByRole('button', { name: /compartir|copiado/i })).toBeVisible();
+    const shareBtn = page.getByRole('button', { name: /compartir wrapped|compartir|copiado|resumen copiado/i });
+    await expect(shareBtn).toBeVisible();
+    await shareBtn.click();
+    // Web Share / clipboard / fallback manual: el CTA no debe romper
+    await expect(
+      page
+        .getByRole('button', { name: /compartir wrapped|compartir|copiado|resumen copiado/i })
+        .or(page.getByLabel(/texto del wrapped para copiar/i)),
+    ).toBeVisible();
   });
 
   test('feed accesible desde la app', async ({ page }) => {
