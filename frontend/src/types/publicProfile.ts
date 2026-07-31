@@ -6,4 +6,13 @@ export interface PublicProfileStats {
   peakMonth: { month: number; label: string; count: number } | null;
   fiveStarCount: number;
   topWatchContext: { name: string; count: number } | null;
+  stadiumVisits: number;
+  photosCount: number;
+  photoCollageUrls: string[];
+  matchesByMonth: number[];
+  bestRated: {
+    home_team_name: string;
+    away_team_name: string;
+    rating: number;
+  } | null;
 }

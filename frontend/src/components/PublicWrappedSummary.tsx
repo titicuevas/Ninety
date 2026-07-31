@@ -1,4 +1,7 @@
-import { Sparkles } from 'lucide-react';
+import { Landmark, Sparkles, Star } from 'lucide-react';
+import { MatchesByMonthChart } from '@/components/MatchesByMonthChart';
+import { StarRating } from '@/components/StarRating';
+import { WrappedPhotoCollage } from '@/components/WrappedPhotoCollage';
 import { formatRating } from '@/lib/capsuleStats';
 import type { PublicProfileStats } from '@/types/publicProfile';
 
@@ -11,6 +14,11 @@ export function PublicWrappedSummary({
 }) {
   if (stats.totalMatches <= 0) return null;
 
+  const stadiumVisits = stats.stadiumVisits ?? 0;
+  const photosCount = stats.photosCount ?? 0;
+  const photoCollageUrls = stats.photoCollageUrls ?? [];
+  const matchesByMonth = stats.matchesByMonth ?? Array.from({ length: 12 }, () => 0);
+
   const chips = [
     {
       value: formatRating(stats.averageRating),
@@ -18,6 +26,18 @@ export function PublicWrappedSummary({
     },
     stats.fiveStarCount > 0
       ? { value: String(stats.fiveStarCount), label: 'con 5★' }
+      : null,
+    stadiumVisits > 0
+      ? {
+          value: String(stadiumVisits),
+          label: 'en estadio',
+        }
+      : null,
+    photosCount > 0
+      ? {
+          value: String(photosCount),
+          label: photosCount === 1 ? 'foto' : 'fotos',
+        }
       : null,
     stats.topTeam
       ? { value: stats.topTeam.name, label: 'equipo top', wide: true }
@@ -45,7 +65,7 @@ export function PublicWrappedSummary({
         className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/20 blur-3xl"
         aria-hidden="true"
       />
-      <div className="relative space-y-4">
+      <div className="relative space-y-5">
         <p className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/20 px-3 py-1 text-xs font-medium text-emerald-100">
           <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
           Wrapped público
@@ -59,6 +79,11 @@ export function PublicWrappedSummary({
             {stats.totalMatches === 1 ? 'partido' : 'partidos'}
           </p>
         </div>
+
+        {photoCollageUrls.length > 0 ? (
+          <WrappedPhotoCollage urls={photoCollageUrls} label={`Fotos del diario de ${name}`} />
+        ) : null}
+
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {chips.map((chip) => (
             <div
@@ -70,6 +95,38 @@ export function PublicWrappedSummary({
             </div>
           ))}
         </div>
+
+        {stats.bestRated ? (
+          <div className="rounded-xl border border-white/10 bg-black/25 px-4 py-3 backdrop-blur-sm">
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-100/90">
+              <Star className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
+              Mejor valorado
+            </div>
+            <p className="mt-1.5 font-semibold">
+              {stats.bestRated.home_team_name} vs {stats.bestRated.away_team_name}
+            </p>
+            <div className="mt-2">
+              <StarRating rating={stats.bestRated.rating} size="sm" />
+            </div>
+          </div>
+        ) : null}
+
+        {stadiumVisits > 0 ? (
+          <p className="inline-flex items-center gap-1.5 text-sm text-emerald-100/90">
+            <Landmark className="h-4 w-4" aria-hidden="true" />
+            {stadiumVisits} {stadiumVisits === 1 ? 'partido en estadio' : 'partidos en estadio'}
+          </p>
+        ) : null}
+
+        <MatchesByMonthChart
+          matchesByMonth={matchesByMonth}
+          peakMonth={
+            stats.peakMonth
+              ? { month: stats.peakMonth.month, count: stats.peakMonth.count }
+              : null
+          }
+          variant="embedded"
+        />
       </div>
     </section>
   );

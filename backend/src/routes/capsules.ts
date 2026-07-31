@@ -436,7 +436,7 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
   if (offset === 0) {
     let statsQuery = reader
       .from('capsules')
-      .select('watched_at, rating, home_team_name, away_team_name, competition_name, watch_context')
+      .select('watched_at, rating, home_team_name, away_team_name, competition_name, watch_context, photo_urls, photo_url')
       .eq('user_id', profile.id);
 
     if (viewerId !== profile.id) {

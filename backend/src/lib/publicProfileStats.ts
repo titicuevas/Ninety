@@ -27,6 +27,8 @@ export type PublicProfileStatsRow = {
   away_team_name: string;
   competition_name: string | null;
   watch_context?: string | null;
+  photo_urls?: string[] | null;
+  photo_url?: string | null;
 };
 
 export type PublicProfileStats = {
@@ -37,6 +39,15 @@ export type PublicProfileStats = {
   peakMonth: { month: number; label: string; count: number } | null;
   fiveStarCount: number;
   topWatchContext: { name: string; count: number } | null;
+  stadiumVisits: number;
+  photosCount: number;
+  photoCollageUrls: string[];
+  matchesByMonth: number[];
+  bestRated: {
+    home_team_name: string;
+    away_team_name: string;
+    rating: number;
+  } | null;
 };
 
 function topEntry(counts: Map<string, number>): { name: string; count: number } | null {
@@ -48,6 +59,33 @@ function topEntry(counts: Map<string, number>): { name: string; count: number } 
   return best;
 }
 
+function rowPhotoUrls(row: PublicProfileStatsRow): string[] {
+  if (Array.isArray(row.photo_urls) && row.photo_urls.length > 0) {
+    return row.photo_urls.filter((url): url is string => typeof url === 'string' && url.length > 0);
+  }
+  if (typeof row.photo_url === 'string' && row.photo_url.length > 0) return [row.photo_url];
+  return [];
+}
+
+function pickPhotoCollage(rows: PublicProfileStatsRow[], limit = 6): string[] {
+  const sorted = [...rows].sort((a, b) => {
+    const ratingDiff = (b.rating ?? 0) - (a.rating ?? 0);
+    if (ratingDiff !== 0) return ratingDiff;
+    return b.watched_at.localeCompare(a.watched_at);
+  });
+  const urls: string[] = [];
+  const seen = new Set<string>();
+  for (const row of sorted) {
+    for (const url of rowPhotoUrls(row)) {
+      if (seen.has(url)) continue;
+      seen.add(url);
+      urls.push(url);
+      if (urls.length >= limit) return urls;
+    }
+  }
+  return urls;
+}
+
 export function computePublicProfileStats(rows: PublicProfileStatsRow[]): PublicProfileStats {
   const ratings = rows.map((r) => r.rating).filter((r): r is number => r != null);
   const averageRating =
@@ -57,6 +95,9 @@ export function computePublicProfileStats(rows: PublicProfileStatsRow[]): Public
   const competitions = new Map<string, number>();
   const months = new Array<number>(12).fill(0);
   const contexts = new Map<string, number>();
+  let stadiumVisits = 0;
+  let photosCount = 0;
+  let bestRated: PublicProfileStats['bestRated'] = null;
 
   for (const row of rows) {
     for (const team of [row.home_team_name, row.away_team_name]) {
@@ -73,6 +114,15 @@ export function computePublicProfileStats(rows: PublicProfileStatsRow[]): Public
     const contextLabel = row.watch_context ? WATCH_CONTEXT_LABELS[row.watch_context] : null;
     if (contextLabel) {
       contexts.set(contextLabel, (contexts.get(contextLabel) ?? 0) + 1);
+    }
+    if (row.watch_context === 'stadium') stadiumVisits++;
+    photosCount += rowPhotoUrls(row).length;
+    if (row.rating != null && (!bestRated || row.rating > bestRated.rating)) {
+      bestRated = {
+        home_team_name: row.home_team_name,
+        away_team_name: row.away_team_name,
+        rating: row.rating,
+      };
     }
   }
 
@@ -93,5 +143,10 @@ export function computePublicProfileStats(rows: PublicProfileStatsRow[]): Public
     peakMonth,
     fiveStarCount: ratings.filter((r) => r >= 5).length,
     topWatchContext: topEntry(contexts),
+    stadiumVisits,
+    photosCount,
+    photoCollageUrls: pickPhotoCollage(rows, 6),
+    matchesByMonth: months,
+    bestRated,
   };
 }

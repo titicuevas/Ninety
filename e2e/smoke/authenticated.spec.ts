@@ -42,6 +42,13 @@ test.describe('Smoke — autenticado @smoke', () => {
         .getByRole('button', { name: /compartir wrapped|compartir|copiado|resumen copiado/i })
         .or(page.getByLabel(/texto del wrapped para copiar/i)),
     ).toBeVisible();
+
+    // Collage, estadio o gráfico mensual si hay datos; el hero siempre tiene media ★
+    await expect(page.getByText(/^media ⭐$/i).first()).toBeVisible();
+    const collage = page.getByRole('img', { name: /fotos de tus partidos/i });
+    const stadiumChip = page.getByText(/^en estadio$/i);
+    const monthChart = page.getByLabel(/gráfico de partidos por mes/i);
+    await expect(collage.or(stadiumChip).or(monthChart).or(page.getByText(/media ⭐/i).first())).toBeVisible();
   });
 
   test('feed accesible desde la app', async ({ page }) => {

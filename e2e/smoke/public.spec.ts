@@ -37,6 +37,9 @@ test.describe('Smoke — público @smoke', () => {
     const emptyDiary = page.getByText(/aún no ha publicado partidos/i);
     if (await wrapped.isVisible().catch(() => false)) {
       await expect(page.getByText(/wrapped público/i)).toBeVisible();
+      const monthChart = page.getByLabel(/gráfico de partidos por mes/i);
+      const bestRated = page.getByText(/mejor valorado/i);
+      await expect(monthChart.or(bestRated).or(page.getByText(/media ★/i).first())).toBeVisible();
       await expect(page.getByLabel(/buscar en el diario público/i)).toBeVisible();
       await expect(page.getByRole('group', { name: /filtrar por valoración/i })).toBeVisible();
     } else {

@@ -109,6 +109,40 @@ describe('computeCapsuleStats', () => {
     assert.equal(stats.topCompetitions[0]?.name, 'LaLiga');
     assert.equal(stats.topCompetitions[0]?.count, 3);
   });
+  it('cuenta visitas al estadio y collage de fotos', () => {
+    const stats = computeCapsuleStats([
+      capsule({
+        id: '1',
+        watched_at: '2025-02-01',
+        home_team_name: 'A',
+        away_team_name: 'B',
+        rating: 5,
+        watch_context: 'stadium',
+        photo_urls: ['https://cdn.example/1.jpg', 'https://cdn.example/2.jpg'],
+      }),
+      capsule({
+        id: '2',
+        watched_at: '2025-02-10',
+        home_team_name: 'C',
+        away_team_name: 'D',
+        rating: 3,
+        watch_context: 'tv',
+        photo_urls: ['https://cdn.example/3.jpg'],
+      }),
+      capsule({
+        id: '3',
+        watched_at: '2025-03-01',
+        home_team_name: 'E',
+        away_team_name: 'F',
+        watch_context: 'stadium',
+      }),
+    ]);
+
+    assert.equal(stats.stadiumVisits, 2);
+    assert.equal(stats.photosCount, 3);
+    assert.equal(stats.photoCollageUrls.length, 3);
+    assert.equal(stats.photoCollageUrls[0], 'https://cdn.example/1.jpg');
+  });
 });
 
 describe('wrapped scope helpers', () => {
@@ -118,14 +152,24 @@ describe('wrapped scope helpers', () => {
     assert.equal(parseWrappedScopeParam('nope'), null);
   });
 
-  it('incluye mes pico y enlace de perfil en el texto de compartir', () => {
+  it('incluye mes pico, estadio y enlace de perfil en el texto de compartir', () => {
     const stats = computeCapsuleStats([
-      capsule({ id: '1', watched_at: '2025-02-01', home_team_name: 'A', away_team_name: 'B', rating: 5 }),
+      capsule({
+        id: '1',
+        watched_at: '2025-02-01',
+        home_team_name: 'A',
+        away_team_name: 'B',
+        rating: 5,
+        watch_context: 'stadium',
+        photo_urls: ['https://cdn.example/x.jpg'],
+      }),
       capsule({ id: '2', watched_at: '2025-02-10', home_team_name: 'C', away_team_name: 'D' }),
     ]);
     const text = buildWrappedShareText('Henry', 2025, stats, 'https://ninety.example/u/henry');
     assert.match(text, new RegExp(MONTH_NAMES_ES[1]));
     assert.match(text, /5★: 1/);
+    assert.match(text, /En el estadio: 1 partido/);
+    assert.match(text, /1 foto en el diario/);
     assert.match(text, /https:\/\/ninety\.example\/u\/henry/);
     assert.doesNotMatch(text, /ninety\.up\.railway\.app/);
   });

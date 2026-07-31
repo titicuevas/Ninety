@@ -1,4 +1,5 @@
 import type { Capsule } from '@/types/capsule';
+import { getCapsulePhotoUrls } from '@/lib/capsulePhotos';
 import { WATCH_CONTEXT_LABELS, isWatchContext } from '@/lib/watchContext';
 import { siteUrl } from '@/lib/siteUrl';
 
@@ -8,6 +9,10 @@ export interface CapsuleStats {
   ratedCount: number;
   notesCount: number;
   photosCount: number;
+  /** Partidos vistos en estadio */
+  stadiumVisits: number;
+  /** Hasta 6 fotos del periodo (mejor valoradas / recientes) */
+  photoCollageUrls: string[];
   topCompetition: { name: string; count: number } | null;
   topTeam: { name: string; count: number } | null;
   lastWatched: Capsule | null;
@@ -116,6 +121,34 @@ function computePeakMonth(matchesByMonth: number[]): { month: number; count: num
   return peak;
 }
 
+/** Fotos del periodo priorizando mejor valoración y fecha reciente. */
+export function pickWrappedPhotoUrls(
+  capsules: Array<{
+    watched_at: string;
+    rating?: number | null;
+    photo_urls?: string[] | null;
+    photo_url?: string | null;
+  }>,
+  limit = 6,
+): string[] {
+  const sorted = [...capsules].sort((a, b) => {
+    const ratingDiff = (b.rating ?? 0) - (a.rating ?? 0);
+    if (ratingDiff !== 0) return ratingDiff;
+    return b.watched_at.localeCompare(a.watched_at);
+  });
+  const urls: string[] = [];
+  const seen = new Set<string>();
+  for (const capsule of sorted) {
+    for (const url of getCapsulePhotoUrls(capsule)) {
+      if (seen.has(url)) continue;
+      seen.add(url);
+      urls.push(url);
+      if (urls.length >= limit) return urls;
+    }
+  }
+  return urls;
+}
+
 export const MONTH_NAMES_ES = [
   'enero',
   'febrero',
@@ -192,6 +225,9 @@ export function computeCapsuleStats(capsules: Capsule[]): CapsuleStats {
     return sum + urls;
   }, 0);
 
+  const stadiumVisits = capsules.filter((c) => c.watch_context === 'stadium').length;
+  const photoCollageUrls = pickWrappedPhotoUrls(capsules, 6);
+
   const matchesByMonth = computeMatchesByMonth(capsules);
   const competitions = competitionCounts(capsules);
 
@@ -208,6 +244,8 @@ export function computeCapsuleStats(capsules: Capsule[]): CapsuleStats {
     ratedCount: ratings.length,
     notesCount: capsules.filter((c) => c.note?.trim()).length,
     photosCount,
+    stadiumVisits,
+    photoCollageUrls,
     topCompetition: topEntry(competitions),
     topTeam: topEntry(teamCounts(capsules)),
     lastWatched: sortedByWatched[0] ?? null,
@@ -252,6 +290,14 @@ export function buildWrappedShareText(
   }
   if (stats.topWatchContext) {
     lines.push(`Lo ves más: ${stats.topWatchContext.name}`);
+  }
+  if (stats.stadiumVisits > 0) {
+    lines.push(
+      `En el estadio: ${stats.stadiumVisits} partido${stats.stadiumVisits === 1 ? '' : 's'}`,
+    );
+  }
+  if (stats.photosCount > 0) {
+    lines.push(`${stats.photosCount} foto${stats.photosCount === 1 ? '' : 's'} en el diario`);
   }
   if (stats.fiveStarCount > 0) {
     lines.push(`5★: ${stats.fiveStarCount}`);

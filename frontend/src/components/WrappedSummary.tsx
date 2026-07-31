@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Check, Camera, Flame, MapPin, Mountain, Share2, Sparkles, Star, Trophy, Users } from 'lucide-react';
+import { Calendar, Check, Camera, Flame, Landmark, MapPin, Mountain, Share2, Sparkles, Star, Trophy, Users } from 'lucide-react';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { EmptyState } from '@/components/EmptyState';
+import { MatchesByMonthChart } from '@/components/MatchesByMonthChart';
 import { StarRating } from '@/components/StarRating';
+import { WrappedPhotoCollage } from '@/components/WrappedPhotoCollage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -132,57 +134,6 @@ function TopCompetitionsCard({ competitions }: { competitions: Array<{ name: str
             </li>
           ))}
         </ol>
-      </CardContent>
-    </Card>
-  );
-}
-
-const MONTH_LABELS = ['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'] as const;
-
-function MatchesByMonthChart({
-  matchesByMonth,
-  peakMonth,
-}: {
-  matchesByMonth: number[];
-  peakMonth: { month: number; count: number } | null;
-}) {
-  if (!matchesByMonth.some((v) => v > 0)) return null;
-
-  const max = Math.max(...matchesByMonth, 1);
-
-  return (
-    <Card>
-      <CardContent className="p-5 sm:p-6">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">
-          Partidos por mes
-        </p>
-        <div className="flex h-24 items-end gap-1" aria-label="Gráfico de partidos por mes">
-          {matchesByMonth.map((count, i) => {
-            const height = count > 0 ? Math.max((count / max) * 100, 8) : 4;
-            const monthKey = `month-${i + 1}`;
-            const isPeak = peakMonth?.month === i + 1;
-            return (
-              <div key={monthKey} className="flex flex-1 flex-col items-center gap-1">
-                <div
-                  className={cn(
-                    'w-full rounded-sm transition-all',
-                    count > 0 ? (isPeak ? 'bg-primary' : 'bg-primary/70') : 'bg-secondary',
-                  )}
-                  style={{ height: `${height}%` }}
-                  title={`${MONTH_NAMES_ES[i]}: ${count}`}
-                />
-                <span
-                  className={cn(
-                    'text-[9px]',
-                    isPeak ? 'font-semibold text-primary' : 'text-muted-foreground',
-                  )}
-                >
-                  {MONTH_LABELS[i]}
-                </span>
-              </div>
-            );
-          })}
-        </div>
       </CardContent>
     </Card>
   );
@@ -334,6 +285,14 @@ export function WrappedSummary({
               : `Tu resumen anual: partidos, valoraciones y highlights de ${scope}.`}
           </p>
 
+          {stats.photoCollageUrls.length > 0 ? (
+            <WrappedPhotoCollage
+              urls={stats.photoCollageUrls}
+              className="mt-6 motion-reveal"
+              label={`Fotos de tus partidos${scope !== 'all' ? ` en ${scope}` : ''}`}
+            />
+          ) : null}
+
           <div className="mt-8 space-y-4">
             <div>
               <p className="text-5xl font-bold tabular-nums tracking-tight sm:text-6xl">
@@ -366,6 +325,14 @@ export function WrappedSummary({
                 <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
                   <p className="text-2xl font-bold tabular-nums">{stats.photosCount}</p>
                   <p className="text-xs text-white/70">fotos</p>
+                </div>
+              ) : null}
+              {stats.stadiumVisits > 0 ? (
+                <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
+                  <p className="text-2xl font-bold tabular-nums">{stats.stadiumVisits}</p>
+                  <p className="text-xs text-white/70">
+                    {stats.stadiumVisits === 1 ? 'en estadio' : 'en estadio'}
+                  </p>
                 </div>
               ) : null}
               {stats.fiveStarCount > 0 ? (
@@ -421,6 +388,14 @@ export function WrappedSummary({
                 title={stats.topWatchContext.name}
                 subtitle={`${stats.topWatchContext.count} ${stats.topWatchContext.count === 1 ? 'partido' : 'partidos'}`}
                 icon={MapPin}
+              />
+            ) : null}
+            {stats.stadiumVisits > 0 ? (
+              <HighlightCard
+                label="En el estadio"
+                title={`${stats.stadiumVisits} partido${stats.stadiumVisits === 1 ? '' : 's'}`}
+                subtitle="Vividos desde la grada"
+                icon={Landmark}
               />
             ) : null}
             {stats.firstWatched ? (
