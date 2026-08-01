@@ -4,6 +4,7 @@ import { Search, Users } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
 import { PeopleListSkeleton } from '@/components/ListSkeletons';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -67,7 +68,8 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
     return () => window.clearTimeout(t);
   }, [query]);
 
-  const { data, isLoading, isFetching, isError, error } = useProfileSearch(debounced);
+  const { data, isLoading, isFetching, isError, error, refetch, isRefetching } =
+    useProfileSearch(debounced);
   const { data: discoverData, isLoading: discoverLoading } = useDiscoverProfiles(showSuggestions);
   const profiles = data?.profiles ?? [];
   const suggestions = discoverData?.profiles ?? [];
@@ -102,9 +104,20 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
       ) : null}
 
       {isError ? (
-        <Card className="border-destructive/40">
-          <CardContent className="p-5 text-sm text-destructive">
-            {error instanceof Error ? error.message : 'No se pudo buscar usuarios'}
+        <Card className="max-w-xl border-destructive/40">
+          <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-destructive">
+              {error instanceof Error ? error.message : 'No se pudo buscar usuarios'}
+            </p>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              loading={isRefetching}
+              onClick={() => void refetch()}
+            >
+              Reintentar
+            </Button>
           </CardContent>
         </Card>
       ) : null}

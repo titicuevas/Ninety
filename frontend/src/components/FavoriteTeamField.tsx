@@ -23,14 +23,26 @@ export function FavoriteTeamField({
 }: Props) {
   const listId = useId();
   const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [debounced, setDebounced] = useState(value.trim());
   const { data, isFetching } = useTeamSearch(debounced);
   const teams = data?.teams ?? [];
+  const showList = open && debounced.length >= 2;
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebounced(value.trim()), 300);
     return () => window.clearTimeout(timer);
   }, [value]);
+
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [debounced, teams.length]);
+
+  const pick = (name: string) => {
+    onChange(name);
+    setOpen(false);
+    setActiveIndex(-1);
+  };
 
   return (
     <div className={cn('relative', className)}>
@@ -41,7 +53,10 @@ export function FavoriteTeamField({
         autoComplete="off"
         aria-autocomplete="list"
         aria-controls={listId}
-        aria-expanded={open && teams.length > 0}
+        aria-expanded={showList && teams.length > 0}
+        aria-activedescendant={
+          showList && activeIndex >= 0 ? `${listId}-opt-${activeIndex}` : undefined
+        }
         role="combobox"
         {...a11y}
         onChange={(e) => {
@@ -50,10 +65,40 @@ export function FavoriteTeamField({
         }}
         onFocus={() => setOpen(true)}
         onBlur={() => {
-          window.setTimeout(() => setOpen(false), 150);
+          window.setTimeout(() => {
+            setOpen(false);
+            setActiveIndex(-1);
+          }, 150);
+        }}
+        onKeyDown={(e) => {
+          if (!showList || teams.length === 0) {
+            if (e.key === 'Escape') setOpen(false);
+            return;
+          }
+
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setActiveIndex((i) => (i + 1) % teams.length);
+            return;
+          }
+          if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setActiveIndex((i) => (i <= 0 ? teams.length - 1 : i - 1));
+            return;
+          }
+          if (e.key === 'Enter' && activeIndex >= 0) {
+            e.preventDefault();
+            pick(teams[activeIndex]!.name);
+            return;
+          }
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            setOpen(false);
+            setActiveIndex(-1);
+          }
         }}
       />
-      {open && debounced.length >= 2 ? (
+      {showList ? (
         <ul
           id={listId}
           role="listbox"
@@ -67,16 +112,22 @@ export function FavoriteTeamField({
               Sin sugerencias — puedes dejar el nombre escrito.
             </li>
           ) : null}
-          {teams.map((team) => (
-            <li key={`${team.id ?? team.name}-${team.name}`} role="option">
+          {teams.map((team, index) => (
+            <li
+              key={`${team.id ?? team.name}-${team.name}`}
+              id={`${listId}-opt-${index}`}
+              role="option"
+              aria-selected={index === activeIndex}
+            >
               <button
                 type="button"
-                className="flex w-full rounded-md px-3 py-2 text-left text-sm hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className={cn(
+                  'flex w-full rounded-md px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  index === activeIndex ? 'bg-secondary' : 'hover:bg-secondary',
+                )}
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  onChange(team.name);
-                  setOpen(false);
-                }}
+                onMouseEnter={() => setActiveIndex(index)}
+                onClick={() => pick(team.name)}
               >
                 <span className="truncate font-medium">{team.name}</span>
                 {team.shortName ? (

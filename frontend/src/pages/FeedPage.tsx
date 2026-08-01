@@ -187,6 +187,8 @@ export function FeedPage() {
     hasNextPage,
     isFetchingNextPage,
     isFetching,
+    refetch,
+    isRefetching,
   } = useCapsuleFeed(scope, sort);
   const capsules = data?.pages.flatMap((page) => page.capsules) ?? [];
   const followingCount = data?.pages[0]?.following_count;
@@ -223,8 +225,19 @@ export function FeedPage() {
 
         {isError ? (
           <Card className="border-destructive/40">
-            <CardContent className="p-5 text-sm text-destructive">
-              {error instanceof Error ? error.message : 'No se pudo cargar el feed'}
+            <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-destructive">
+                {error instanceof Error ? error.message : 'No se pudo cargar el feed'}
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                loading={isRefetching}
+                onClick={() => void refetch()}
+              >
+                Reintentar
+              </Button>
             </CardContent>
           </Card>
         ) : null}
