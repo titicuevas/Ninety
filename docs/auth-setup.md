@@ -22,8 +22,10 @@
    - **Redirect URLs:**
      ```
    http://localhost:5173/auth/callback
+   http://localhost:5173/auth/reset-password
    http://localhost:5173/**
    https://ninety.up.railway.app/auth/callback
+   https://ninety.up.railway.app/auth/reset-password
    https://ninety.up.railway.app/**
      ```
 
