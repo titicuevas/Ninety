@@ -166,11 +166,28 @@ export function SettingsPage() {
       <ConfirmDialog
         open={deleteOpen}
         title="Eliminar cuenta"
-        description="Todavía no hay borrado automático. Escríbenos a hello@ninety.app desde el email de tu cuenta y lo gestionamos a mano."
-        confirmLabel="Entendido"
+        description="Todavía no hay borrado automático. Te abrimos un email a hello@ninety.app; envíalo desde el correo de tu cuenta y lo gestionamos a mano."
+        confirmLabel="Escribir email"
         cancelLabel="Cerrar"
         tone="default"
-        onConfirm={() => setDeleteOpen(false)}
+        onConfirm={() => {
+          const email = user?.email ?? '';
+          const subject = encodeURIComponent('Solicitud de eliminación de cuenta — Ninety');
+          const body = encodeURIComponent(
+            [
+              'Hola,',
+              '',
+              'Quiero eliminar mi cuenta de Ninety.',
+              email ? `Email de la cuenta: ${email}` : '',
+              '',
+              'Gracias.',
+            ]
+              .filter(Boolean)
+              .join('\n'),
+          );
+          window.location.href = `mailto:hello@ninety.app?subject=${subject}&body=${body}`;
+          setDeleteOpen(false);
+        }}
         onCancel={() => setDeleteOpen(false)}
       />
     </Layout>

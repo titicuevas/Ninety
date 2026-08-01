@@ -5,6 +5,7 @@ import {
   type InfiniteData,
 } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 
 export interface NotificationActor {
@@ -77,6 +78,10 @@ export function useMarkAllRead() {
       apiFetch<{ ok: boolean }>('/api/notifications/read-all', { method: 'POST' }, session?.access_token),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: QUERY_KEY });
+      toast.success('Todas marcadas como leídas');
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'No se pudieron marcar como leídas');
     },
   });
 }
@@ -157,6 +162,10 @@ export function useClearReadNotifications() {
     },
     onError: (_err, _vars, context) => {
       if (context?.previous) qc.setQueryData(QUERY_KEY, context.previous);
+      toast.error('No se pudieron limpiar las leídas');
+    },
+    onSuccess: () => {
+      toast.success('Notificaciones leídas eliminadas');
     },
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: QUERY_KEY });

@@ -232,19 +232,6 @@ export function NotificationsPage() {
           </div>
         </div>
 
-        {markAll.isError ? (
-          <p className="text-sm text-destructive">
-            {markAll.error instanceof Error
-              ? markAll.error.message
-              : 'No se pudieron marcar como leídas'}
-          </p>
-        ) : null}
-        {clearRead.isError ? (
-          <p className="text-sm text-destructive">
-            {clearRead.error instanceof Error ? clearRead.error.message : 'No se pudieron limpiar'}
-          </p>
-        ) : null}
-
         {showPushDiagnostics ? (
           <div
             className="space-y-1 rounded-lg border border-border bg-secondary/40 px-3 py-2 text-xs text-muted-foreground"
