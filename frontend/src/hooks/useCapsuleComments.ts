@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 import type { CapsuleComment, CapsuleCommentsResponse } from '@/types/comment';
 import type { FeedResponse } from '@/types/capsule';
@@ -50,6 +51,9 @@ export function useAddCapsuleComment(capsuleId: string) {
       void queryClient.invalidateQueries({ queryKey: ['capsules', 'feed'] });
       void queryClient.invalidateQueries({ queryKey: ['profile', 'public'] });
     },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'No se pudo publicar el comentario');
+    },
   });
 }
 
@@ -89,6 +93,10 @@ export function useDeleteCapsuleComment(capsuleId: string) {
       if (context?.previousFeed) {
         queryClient.setQueryData(['capsules', 'feed'], context.previousFeed);
       }
+      toast.error('No se pudo borrar el comentario');
+    },
+    onSuccess: () => {
+      toast.success('Comentario borrado');
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['capsules', capsuleId, 'comments'] });
@@ -131,6 +139,7 @@ export function useUpdateCapsuleComment(capsuleId: string) {
       context?.previousComments?.forEach(([key, data]) => {
         queryClient.setQueryData(key, data);
       });
+      toast.error('No se pudo editar el comentario');
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['capsules', capsuleId, 'comments'] });

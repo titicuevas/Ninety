@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api';
+import { ApiError, apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 import type { Capsule, CapsulesResponse, CreateCapsuleInput, FeedCapsule, FeedResponse, UpdateCapsuleInput } from '@/types/capsule';
@@ -79,6 +79,11 @@ export function useCreateCapsule() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['capsules', 'me'] });
       void queryClient.invalidateQueries({ queryKey: ['capsules', 'feed'] });
+      toast.success('Capsule guardada');
+    },
+    onError: (err) => {
+      if (err instanceof ApiError && err.capsuleId) return;
+      toast.error(err instanceof Error ? err.message : 'No se pudo guardar la Capsule');
     },
   });
 }
@@ -242,6 +247,10 @@ export function useUpdateCapsule(id: string) {
       apiFetch<Capsule>(`/api/capsules/${id}`, { method: 'PATCH', body: JSON.stringify(input) }, session?.access_token),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['capsules'] });
+      toast.success('Cambios guardados');
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'No se pudieron guardar los cambios');
     },
   });
 }

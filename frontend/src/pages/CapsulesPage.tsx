@@ -4,7 +4,6 @@ import { Pencil, Trash2, X } from 'lucide-react';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { EmptyState } from '@/components/EmptyState';
 import { FilterChip } from '@/components/FilterChip';
-import { FormAlert } from '@/components/FormAlert';
 import { CapsuleListSkeleton } from '@/components/ListSkeletons';
 import { Layout } from '@/components/Layout';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
@@ -21,7 +20,6 @@ import {
   type MyCapsulesVisibility,
 } from '@/hooks/useCapsules';
 import { listCapsuleYears } from '@/lib/capsuleStats';
-import { friendlyApiError } from '@/lib/friendlyErrors';
 import { formatWatchedDate } from '@/lib/format';
 import {
   WATCH_CONTEXTS,
@@ -163,7 +161,6 @@ export function CapsulesPage() {
     isFetching,
   } = useMyCapsulesInfinite({ q, year, ratingMin, visibility, watchContext });
   const deleteCapsule = useDeleteCapsule();
-  const [deleteError, setDeleteError] = useState<string | null>(null);
   const capsules = useMemo(
     () => data?.pages.flatMap((page) => page.capsules) ?? [],
     [data],
@@ -194,20 +191,13 @@ export function CapsulesPage() {
   };
 
   const handleDelete = (id: string) => {
-    setDeleteError(null);
     setPendingDeleteId(id);
   };
 
   const confirmDelete = () => {
     if (!pendingDeleteId) return;
     const id = pendingDeleteId;
-    setDeleteError(null);
     deleteCapsule.mutate(id, {
-      onError: (err) => {
-        setDeleteError(
-          err instanceof Error ? friendlyApiError(err.message) : 'No se pudo eliminar la Capsule',
-        );
-      },
       onSettled: () => setPendingDeleteId(null),
     });
   };
@@ -349,8 +339,6 @@ export function CapsulesPage() {
         </section>
 
         {isLoading ? <CapsuleListSkeleton count={3} /> : null}
-
-        {deleteError ? <FormAlert>{deleteError}</FormAlert> : null}
 
         {isError ? (
           <Card className="border-destructive/40">
