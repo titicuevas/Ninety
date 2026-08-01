@@ -1,24 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { AuthLayout } from '@/components/AuthLayout';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { FormAlert } from '@/components/FormAlert';
+import { PasswordField } from '@/components/PasswordField';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { loginWithGoogle, loginWithPassword } from '@/lib/auth';
+import { loginSchema, type LoginForm } from '@/lib/authSchemas';
 import { useAuthStore } from '@/stores/authStore';
-
-const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
-});
-
-type LoginForm = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -27,8 +21,15 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const passwordResetOk =
-    (location.state as { passwordReset?: boolean } | null)?.passwordReset === true;
+  const [passwordResetOk] = useState(
+    () => (location.state as { passwordReset?: boolean } | null)?.passwordReset === true,
+  );
+
+  useEffect(() => {
+    if ((location.state as { passwordReset?: boolean } | null)?.passwordReset) {
+      navigate('.', { replace: true, state: {} });
+    }
+  }, [location.state, navigate]);
 
   const handleGoogleSignIn = async () => {
     setError(null);
@@ -77,7 +78,11 @@ export function LoginPage() {
           <Input type="email" autoComplete="email" placeholder="tu@email.com" {...register('email')} />
         </FormField>
         <FormField label="Contraseña" error={errors.password?.message}>
-          <Input type="password" autoComplete="current-password" placeholder="••••••••" {...register('password')} />
+          <PasswordField
+            autoComplete="current-password"
+            placeholder="••••••••"
+            {...register('password')}
+          />
         </FormField>
 
         <p className="-mt-2 text-right text-sm">

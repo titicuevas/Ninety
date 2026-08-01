@@ -36,6 +36,13 @@ test.describe('Smoke — público @smoke', () => {
     await expect(page.getByRole('link', { name: /solicitar nuevo enlace/i })).toBeVisible();
   });
 
+  test('reset password con error de Supabase muestra mensaje', async ({ page }) => {
+    await page.goto('/auth/reset-password?error=access_denied&error_description=Link%20expired');
+    await expect(page.getByRole('heading', { name: /nueva contraseña/i })).toBeVisible();
+    await expect(page.getByText(/link expired/i)).toBeVisible();
+    await expect(page.getByRole('link', { name: /solicitar nuevo enlace/i })).toBeVisible();
+  });
+
   test('perfil público demo responde', async ({ page, request }) => {
     const data = await requirePublicDemoProfile(request);
     const name = demoDisplayName(data);

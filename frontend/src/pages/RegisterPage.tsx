@@ -2,30 +2,17 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { AuthLayout } from '@/components/AuthLayout';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { FormAlert } from '@/components/FormAlert';
+import { PasswordField } from '@/components/PasswordField';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { loginWithGoogle, registerWithPassword } from '@/lib/auth';
+import { registerSchema, type RegisterForm } from '@/lib/authSchemas';
 import { useAuthStore } from '@/stores/authStore';
-
-const registerSchema = z
-  .object({
-    display_name: z.string().min(2, 'Mínimo 2 caracteres'),
-    email: z.string().email('Email inválido'),
-    password: z.string().min(6, 'Mínimo 6 caracteres'),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Las contraseñas no coinciden',
-    path: ['confirmPassword'],
-  });
-
-type RegisterForm = z.infer<typeof registerSchema>;
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -88,10 +75,18 @@ export function RegisterPage() {
           <Input type="email" autoComplete="email" placeholder="tu@email.com" {...register('email')} />
         </FormField>
         <FormField label="Contraseña" error={errors.password?.message}>
-          <Input type="password" autoComplete="new-password" placeholder="Mínimo 6 caracteres" {...register('password')} />
+          <PasswordField
+            autoComplete="new-password"
+            placeholder="Mínimo 6 caracteres"
+            {...register('password')}
+          />
         </FormField>
         <FormField label="Confirmar contraseña" error={errors.confirmPassword?.message}>
-          <Input type="password" autoComplete="new-password" placeholder="Repite la contraseña" {...register('confirmPassword')} />
+          <PasswordField
+            autoComplete="new-password"
+            placeholder="Repite la contraseña"
+            {...register('confirmPassword')}
+          />
         </FormField>
 
         {error ? <FormAlert>{error}</FormAlert> : null}

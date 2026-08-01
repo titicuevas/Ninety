@@ -2,38 +2,16 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { AuthLayout } from '@/components/AuthLayout';
 import { FormAlert } from '@/components/FormAlert';
+import { PasswordField } from '@/components/PasswordField';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
-import { Input } from '@/components/ui/input';
 import { resetPasswordWithToken } from '@/lib/auth';
+import { passwordConfirmSchema, type PasswordConfirmForm } from '@/lib/authSchemas';
+import { clearRecoveryUrl, parseRecoveryParams } from '@/lib/recoveryToken';
 import { clearSession } from '@/lib/session';
 import { useAuthStore } from '@/stores/authStore';
-
-const schema = z
-  .object({
-    password: z.string().min(6, 'Mínimo 6 caracteres'),
-    confirm: z.string().min(6, 'Mínimo 6 caracteres'),
-  })
-  .refine((v) => v.password === v.confirm, {
-    message: 'Las contraseñas no coinciden',
-    path: ['confirm'],
-  });
-
-type Form = z.infer<typeof schema>;
-
-function parseRecoveryFromHash(): string | null {
-  const hash = window.location.hash.replace(/^#/, '');
-  if (!hash) return null;
-  const params = new URLSearchParams(hash);
-  const type = params.get('type');
-  const access_token = params.get('access_token');
-  if (!access_token) return null;
-  if (type && type !== 'recovery') return null;
-  return access_token;
-}
 
 export function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -44,24 +22,22 @@ export function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const accessToken = parseRecoveryFromHash();
-    if (!accessToken) {
-      setLinkError(
-        'Enlace inválido o caducado. Solicita uno nuevo desde “¿Olvidaste tu contraseña?”.',
-      );
+    const parsed = parseRecoveryParams(window.location.search, window.location.hash);
+    clearRecoveryUrl();
+    if (!parsed.ok) {
+      setLinkError(parsed.error);
       return;
     }
-    setToken(accessToken);
-    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    setToken(parsed.accessToken);
   }, []);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<Form>({ resolver: zodResolver(schema) });
+  } = useForm<PasswordConfirmForm>({ resolver: zodResolver(passwordConfirmSchema) });
 
-  const onSubmit = async (data: Form) => {
+  const onSubmit = async (data: PasswordConfirmForm) => {
     if (!token) return;
     setError(null);
     setLoading(true);
@@ -91,16 +67,14 @@ export function ResetPasswordPage() {
       ) : (
         <form onSubmit={handleSubmit((d) => void onSubmit(d))} className="space-y-4">
           <FormField label="Nueva contraseña" error={errors.password?.message}>
-            <Input
-              type="password"
+            <PasswordField
               autoComplete="new-password"
               placeholder="••••••••"
               {...register('password')}
             />
           </FormField>
           <FormField label="Confirmar" error={errors.confirm?.message}>
-            <Input
-              type="password"
+            <PasswordField
               autoComplete="new-password"
               placeholder="••••••••"
               {...register('confirm')}

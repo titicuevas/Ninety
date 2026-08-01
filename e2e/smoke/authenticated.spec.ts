@@ -296,7 +296,15 @@ test.describe('Smoke — autenticado @smoke', () => {
     const dialog = page.getByRole('dialog', { name: /eliminar cuenta/i });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByText(/hello@ninety\.app/i)).toBeVisible();
-    await expect(dialog.getByRole('button', { name: /escribir email/i })).toBeVisible();
+
+    const confirmEmail = dialog.getByLabel(/confirmar email para eliminar cuenta/i);
+    await expect(confirmEmail).toBeVisible();
+    await expect(dialog.getByRole('button', { name: /escribir email/i })).toBeDisabled();
+
+    const emailValue = await page.locator('main input[type="email"][disabled]').inputValue();
+    await confirmEmail.fill(emailValue || 'test@example.com');
+    await expect(dialog.getByRole('button', { name: /escribir email/i })).toBeEnabled();
+
     await dialog.getByRole('button', { name: /^cerrar$/i }).click();
     await expect(dialog).toBeHidden();
   });

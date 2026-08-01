@@ -2,31 +2,21 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Bell, LogOut, Settings } from 'lucide-react';
-import { Layout } from '@/components/Layout';
+import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
 import { FormAlert } from '@/components/FormAlert';
+import { Layout } from '@/components/Layout';
+import { PasswordField } from '@/components/PasswordField';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuthInit';
+import { useDirtyLeave } from '@/hooks/useDirtyLeave';
 import { apiFetch } from '@/lib/api';
+import { passwordConfirmSchema, type PasswordConfirmForm } from '@/lib/authSchemas';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
-
-const passwordSchema = z
-  .object({
-    password: z.string().min(6, 'Mínimo 6 caracteres'),
-    confirm: z.string().min(6, 'Mínimo 6 caracteres'),
-  })
-  .refine((v) => v.password === v.confirm, {
-    message: 'Las contraseñas no coinciden',
-    path: ['confirm'],
-  });
-
-type PasswordForm = z.infer<typeof passwordSchema>;
 
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -36,15 +26,28 @@ export function SettingsPage() {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [signOutBusy, setSignOutBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
 
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
-  } = useForm<PasswordForm>({ resolver: zodResolver(passwordSchema) });
+    formState: { errors, isDirty },
+  } = useForm<PasswordConfirmForm>({
+    resolver: zodResolver(passwordConfirmSchema),
+    defaultValues: { password: '', confirm: '' },
+  });
 
-  const onChangePassword = async (data: PasswordForm) => {
+  const { leaveOpen, confirmLeave, dismissLeave } = useDirtyLeave({
+    isDirty,
+    isBusy: passwordLoading,
+  });
+
+  const accountEmail = (user?.email ?? '').trim().toLowerCase();
+  const deleteReady =
+    !!accountEmail && deleteConfirm.trim().toLowerCase() === accountEmail;
+
+  const onChangePassword = async (data: PasswordConfirmForm) => {
     if (!session?.access_token) return;
     setPasswordError(null);
     setPasswordLoading(true);
@@ -73,6 +76,27 @@ export function SettingsPage() {
     }
   };
 
+  const openDeleteMailto = () => {
+    if (!deleteReady) return;
+    const email = user?.email ?? '';
+    const subject = encodeURIComponent('Solicitud de eliminación de cuenta — Ninety');
+    const body = encodeURIComponent(
+      [
+        'Hola,',
+        '',
+        'Quiero eliminar mi cuenta de Ninety.',
+        email ? `Email de la cuenta: ${email}` : '',
+        '',
+        'Gracias.',
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    );
+    window.location.href = `mailto:hello@ninety.app?subject=${subject}&body=${body}`;
+    setDeleteOpen(false);
+    setDeleteConfirm('');
+  };
+
   return (
     <Layout>
       <div className="mx-auto max-w-lg space-y-6">
@@ -99,21 +123,21 @@ export function SettingsPage() {
         <Card className="border-border">
           <CardHeader>
             <CardTitle className="text-base">Cambiar contraseña</CardTitle>
-            <CardDescription>Si entraste con Google, configura una contraseña solo si usas email.</CardDescription>
+            <CardDescription>
+              Si entraste con Google, configura una contraseña solo si usas email.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit((d) => void onChangePassword(d))} className="space-y-4">
               <FormField label="Nueva contraseña" error={errors.password?.message}>
-                <Input
-                  type="password"
+                <PasswordField
                   autoComplete="new-password"
                   placeholder="••••••••"
                   {...register('password')}
                 />
               </FormField>
               <FormField label="Confirmar" error={errors.confirm?.message}>
-                <Input
-                  type="password"
+                <PasswordField
                   autoComplete="new-password"
                   placeholder="••••••••"
                   {...register('confirm')}
@@ -156,39 +180,78 @@ export function SettingsPage() {
               <LogOut className="mr-2 h-4 w-4" aria-hidden />
               Cerrar sesión
             </Button>
-            <Button type="button" variant="outline" className="text-destructive" onClick={() => setDeleteOpen(true)}>
+            <Button
+              type="button"
+              variant="outline"
+              className="text-destructive"
+              onClick={() => {
+                setDeleteConfirm('');
+                setDeleteOpen(true);
+              }}
+            >
               Eliminar cuenta
             </Button>
           </CardContent>
         </Card>
       </div>
 
-      <ConfirmDialog
-        open={deleteOpen}
-        title="Eliminar cuenta"
-        description="Todavía no hay borrado automático. Te abrimos un email a hello@ninety.app; envíalo desde el correo de tu cuenta y lo gestionamos a mano."
-        confirmLabel="Escribir email"
-        cancelLabel="Cerrar"
-        tone="default"
-        onConfirm={() => {
-          const email = user?.email ?? '';
-          const subject = encodeURIComponent('Solicitud de eliminación de cuenta — Ninety');
-          const body = encodeURIComponent(
-            [
-              'Hola,',
-              '',
-              'Quiero eliminar mi cuenta de Ninety.',
-              email ? `Email de la cuenta: ${email}` : '',
-              '',
-              'Gracias.',
-            ]
-              .filter(Boolean)
-              .join('\n'),
-          );
-          window.location.href = `mailto:hello@ninety.app?subject=${subject}&body=${body}`;
-          setDeleteOpen(false);
-        }}
-        onCancel={() => setDeleteOpen(false)}
+      {deleteOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-account-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => {
+            setDeleteOpen(false);
+            setDeleteConfirm('');
+          }}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="delete-account-title" className="text-lg font-semibold">
+              Eliminar cuenta
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Todavía no hay borrado automático. Para abrir el email a{' '}
+              <span className="text-foreground">hello@ninety.app</span>, escribe tu email de cuenta
+              debajo.
+            </p>
+            <FormField label="Escribe tu email para confirmar" className="mt-4">
+              <Input
+                type="email"
+                autoComplete="off"
+                placeholder={user?.email ?? 'tu@email.com'}
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                aria-label="Confirmar email para eliminar cuenta"
+              />
+            </FormField>
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setDeleteOpen(false);
+                  setDeleteConfirm('');
+                }}
+              >
+                Cerrar
+              </Button>
+              <Button type="button" disabled={!deleteReady} onClick={openDeleteMailto}>
+                Escribir email
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <DirtyLeaveDialog
+        open={leaveOpen}
+        description="Perderás la contraseña nueva que estabas escribiendo."
+        onConfirm={confirmLeave}
+        onCancel={dismissLeave}
       />
     </Layout>
   );

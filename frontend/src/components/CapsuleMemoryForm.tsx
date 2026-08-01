@@ -5,8 +5,8 @@ import { z } from 'zod';
 import { Star } from 'lucide-react';
 import { CapsulePhotosField } from '@/components/CapsulePhotosField';
 import { FormAlert } from '@/components/FormAlert';
+import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
 import { Button } from '@/components/ui/button';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { FormField } from '@/components/ui/form-field';
 import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
@@ -296,17 +296,13 @@ export function CapsuleMemoryForm({
         </Button>
       </div>
 
-      <ConfirmDialog
+      <DirtyLeaveDialog
         open={leaveOpen}
-        title="¿Salir sin guardar?"
         description={
           draftMatchId != null
             ? 'Se perderá el borrador de este partido.'
             : 'Perderás los cambios de esta Capsule.'
         }
-        confirmLabel="Salir"
-        cancelLabel="Seguir editando"
-        tone="default"
         onConfirm={confirmLeave}
         onCancel={dismissLeave}
       />

@@ -5,12 +5,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Check, Loader2, Settings, X } from 'lucide-react';
+import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
 import { FavoriteTeamField } from '@/components/FavoriteTeamField';
 import { Layout } from '@/components/Layout';
 import { ShareProfileButton } from '@/components/ShareProfileButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -430,13 +430,9 @@ export function ProfilePage() {
         </CardContent>
       </Card>
 
-      <ConfirmDialog
+      <DirtyLeaveDialog
         open={leaveOpen}
-        title="¿Salir sin guardar?"
         description="Perderás los cambios de tu perfil."
-        confirmLabel="Salir"
-        cancelLabel="Seguir editando"
-        tone="default"
         onConfirm={confirmLeave}
         onCancel={dismissLeave}
       />
