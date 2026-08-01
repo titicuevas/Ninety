@@ -288,9 +288,6 @@ export function CapsuleComments({
                   Publicar
                 </Button>
               </div>
-              {addComment.error ? (
-                <p className="text-xs text-destructive">{(addComment.error as Error).message}</p>
-              ) : null}
             </form>
           ) : (
             <p className="text-sm text-muted-foreground">

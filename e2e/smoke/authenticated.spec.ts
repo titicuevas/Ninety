@@ -280,4 +280,24 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(page.getByRole('link', { name: /ir a notificaciones/i })).toBeVisible();
     await expect(page.locator('main').getByRole('button', { name: /^cerrar sesión$/i })).toBeVisible();
   });
+
+  test('Ajustes ofrece eliminar cuenta por email', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page
+      .getByRole('navigation', { name: /navegación principal/i })
+      .getByRole('link', { name: /perfil/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/profile/);
+    await page.getByRole('link', { name: /^ajustes$/i }).click();
+    await expect(page).toHaveURL(/\/settings/);
+
+    await page.getByRole('button', { name: /eliminar cuenta/i }).click();
+    const dialog = page.getByRole('dialog', { name: /eliminar cuenta/i });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText(/hello@ninety\.app/i)).toBeVisible();
+    await expect(dialog.getByRole('button', { name: /escribir email/i })).toBeVisible();
+    await dialog.getByRole('button', { name: /^cerrar$/i }).click();
+    await expect(dialog).toBeHidden();
+  });
 });

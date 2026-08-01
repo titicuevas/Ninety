@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Heart } from 'lucide-react';
 import { useToggleCapsuleLike } from '@/hooks/useCapsules';
-import { friendlyApiError } from '@/lib/friendlyErrors';
 import { cn } from '@/lib/utils';
 
 interface CapsuleLikeButtonProps {
@@ -29,37 +28,29 @@ export function CapsuleLikeButton({
   };
 
   return (
-    <div className={cn('inline-flex flex-col items-start gap-1', className)}>
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={toggle.isPending}
-        aria-pressed={likedByMe}
-        aria-busy={toggle.isPending || undefined}
-        aria-label={likedByMe ? 'Quitar me gusta' : 'Me gusta'}
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={toggle.isPending}
+      aria-pressed={likedByMe}
+      aria-busy={toggle.isPending || undefined}
+      aria-label={likedByMe ? 'Quitar me gusta' : 'Me gusta'}
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm transition-colors',
+        'hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        likedByMe ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+        className,
+      )}
+    >
+      <Heart
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm transition-colors',
-          'hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-          likedByMe ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+          'h-4 w-4 shrink-0 transition-colors',
+          likedByMe && 'fill-primary text-primary',
+          pop && 'motion-pop',
         )}
-      >
-        <Heart
-          className={cn(
-            'h-4 w-4 shrink-0 transition-colors',
-            likedByMe && 'fill-primary text-primary',
-            pop && 'motion-pop',
-          )}
-          aria-hidden="true"
-        />
-        <span className="tabular-nums">{likesCount > 0 ? likesCount : 'Me gusta'}</span>
-      </button>
-      {toggle.isError ? (
-        <p className="max-w-[10rem] text-xs text-destructive">
-          {toggle.error instanceof Error
-            ? friendlyApiError(toggle.error.message)
-            : 'No se pudo actualizar'}
-        </p>
-      ) : null}
-    </div>
+        aria-hidden="true"
+      />
+      <span className="tabular-nums">{likesCount > 0 ? likesCount : 'Me gusta'}</span>
+    </button>
   );
 }
