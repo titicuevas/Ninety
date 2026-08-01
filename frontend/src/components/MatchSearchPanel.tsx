@@ -5,8 +5,8 @@ import { EmptyState } from '@/components/EmptyState';
 import { FilterChip } from '@/components/FilterChip';
 import { MatchListSkeleton } from '@/components/ListSkeletons';
 import { MatchCard } from '@/components/MatchCard';
+import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useFootballCompetitions } from '@/hooks/useFootballCompetitions';
@@ -145,7 +145,9 @@ export function MatchSearchPanel() {
     return () => window.clearTimeout(timer);
   }, [query, setParams]);
 
-  const { data, isLoading, isFetching, isError, error } = useMatchSearch(debouncedQuery, {
+  const { data, isLoading, isFetching, isError, error, refetch, isRefetching } = useMatchSearch(
+    debouncedQuery,
+    {
     competition: activeCompetition || undefined,
     season: activeSeason,
   });
@@ -287,13 +289,11 @@ export function MatchSearchPanel() {
       {isSearching ? <MatchListSkeleton count={4} /> : null}
 
       {isError ? (
-        <Card className="border-destructive/40">
-          <CardContent className="p-5">
-            <p role="alert" className="text-sm text-destructive">
-              {error instanceof Error ? error.message : 'No se pudo buscar partidos'}
-            </p>
-          </CardContent>
-        </Card>
+        <QueryErrorCard
+          message={error instanceof Error ? error.message : 'No se pudo buscar partidos'}
+          loading={isRefetching}
+          onRetry={() => void refetch()}
+        />
       ) : null}
 
       {!isSearching && canSearch && !isError ? (

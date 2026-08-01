@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { FilterChip } from '@/components/FilterChip';
 import { CapsuleListSkeleton } from '@/components/ListSkeletons';
 import { Layout } from '@/components/Layout';
+import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { StarRating } from '@/components/StarRating';
 import { WatchContextBadge } from '@/components/WatchContextBadge';
@@ -159,6 +160,8 @@ export function CapsulesPage() {
     hasNextPage,
     isFetchingNextPage,
     isFetching,
+    refetch,
+    isRefetching,
   } = useMyCapsulesInfinite({ q, year, ratingMin, visibility, watchContext });
   const deleteCapsule = useDeleteCapsule();
   const capsules = useMemo(
@@ -341,11 +344,11 @@ export function CapsulesPage() {
         {isLoading ? <CapsuleListSkeleton count={3} /> : null}
 
         {isError ? (
-          <Card className="border-destructive/40">
-            <CardContent className="p-5 text-sm text-destructive">
-              {error instanceof Error ? error.message : 'No se pudieron cargar tus Capsules'}
-            </CardContent>
-          </Card>
+          <QueryErrorCard
+            message={error instanceof Error ? error.message : 'No se pudieron cargar tus Capsules'}
+            loading={isRefetching}
+            onRetry={() => void refetch()}
+          />
         ) : null}
 
         {diaryEmpty ? (

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { QueryErrorCard } from '@/components/QueryErrorCard';
 import {
   useAddCapsuleComment,
   useCapsuleComments,
@@ -199,7 +200,10 @@ export function CapsuleComments({
   const [editingId, setEditingId] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { data, isLoading, isError } = useCapsuleComments(capsuleId, open);
+  const { data, isLoading, isError, isFetching, refetch, isRefetching } = useCapsuleComments(
+    capsuleId,
+    open,
+  );
   const addComment = useAddCapsuleComment(capsuleId);
   const deleteComment = useDeleteCapsuleComment(capsuleId);
   const updateComment = useUpdateCapsuleComment(capsuleId);
@@ -313,7 +317,11 @@ export function CapsuleComments({
           ) : null}
 
           {isError ? (
-            <p className="text-xs text-destructive">No se pudieron cargar los comentarios.</p>
+            <QueryErrorCard
+              message="No se pudieron cargar los comentarios."
+              loading={isRefetching || isFetching}
+              onRetry={() => void refetch()}
+            />
           ) : null}
 
           {!isLoading && comments.length > 0 ? (

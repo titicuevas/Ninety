@@ -4,8 +4,7 @@ import { Search, Users } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
 import { PeopleListSkeleton } from '@/components/ListSkeletons';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
@@ -104,22 +103,12 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
       ) : null}
 
       {isError ? (
-        <Card className="max-w-xl border-destructive/40">
-          <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-destructive">
-              {error instanceof Error ? error.message : 'No se pudo buscar usuarios'}
-            </p>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              loading={isRefetching}
-              onClick={() => void refetch()}
-            >
-              Reintentar
-            </Button>
-          </CardContent>
-        </Card>
+        <QueryErrorCard
+          className="max-w-xl"
+          message={error instanceof Error ? error.message : 'No se pudo buscar usuarios'}
+          loading={isRefetching}
+          onRetry={() => void refetch()}
+        />
       ) : null}
 
       {!searching && debounced.length >= MIN_PEOPLE_QUERY && !isError ? (

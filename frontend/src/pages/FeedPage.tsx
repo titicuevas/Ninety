@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { CapsuleListSkeleton } from '@/components/ListSkeletons';
 import { Layout } from '@/components/Layout';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
+import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { StarRating } from '@/components/StarRating';
 import { WatchContextBadge } from '@/components/WatchContextBadge';
@@ -224,22 +225,11 @@ export function FeedPage() {
         {isLoading ? <CapsuleListSkeleton withAuthor count={3} /> : null}
 
         {isError ? (
-          <Card className="border-destructive/40">
-            <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-destructive">
-                {error instanceof Error ? error.message : 'No se pudo cargar el feed'}
-              </p>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                loading={isRefetching}
-                onClick={() => void refetch()}
-              >
-                Reintentar
-              </Button>
-            </CardContent>
-          </Card>
+          <QueryErrorCard
+            message={error instanceof Error ? error.message : 'No se pudo cargar el feed'}
+            loading={isRefetching}
+            onRetry={() => void refetch()}
+          />
         ) : null}
 
         {isEmpty && scope === 'following' ? (
