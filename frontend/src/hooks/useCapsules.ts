@@ -255,6 +255,10 @@ export function useDeleteCapsule() {
       apiFetch<void>(`/api/capsules/${id}`, { method: 'DELETE' }, session?.access_token),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['capsules'] });
+      toast.success('Capsule eliminada');
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'No se pudo eliminar la Capsule');
     },
   });
 }

@@ -4,6 +4,7 @@ import { Check, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { shareOrCopyLink } from '@/lib/shareLink';
 import { publicCapsuleUrl } from '@/lib/siteUrl';
+import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -48,12 +49,19 @@ export function ShareCapsuleButton({
 
     if (result === 'copied') {
       setCopied(true);
+      toast.success('Enlace de la Capsule copiado');
       window.setTimeout(() => setCopied(false), 2000);
+      return;
+    }
+
+    if (result === 'shared') {
+      toast.success('Capsule compartida');
       return;
     }
 
     if (result === 'manual_needed') {
       setManualUrl(url);
+      toast.error('No se pudo copiar — selecciona el enlace');
     }
   };
 

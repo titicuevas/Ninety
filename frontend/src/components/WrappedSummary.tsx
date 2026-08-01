@@ -19,6 +19,7 @@ import { formatWatchedDate } from '@/lib/format';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { shareOrCopyLink } from '@/lib/shareLink';
 import { publicProfileUrl } from '@/lib/siteUrl';
+import { toast } from '@/lib/toast';
 import type { Capsule } from '@/types/capsule';
 import { cn } from '@/lib/utils';
 
@@ -177,12 +178,19 @@ export function WrappedSummary({
 
     if (result === 'copied') {
       setCopied(true);
+      toast.success('Resumen del Wrapped copiado');
       window.setTimeout(() => setCopied(false), 2000);
+      return;
+    }
+
+    if (result === 'shared') {
+      toast.success('Wrapped compartido');
       return;
     }
 
     if (result === 'manual_needed') {
       setManualText(text);
+      toast.error('No se pudo copiar — selecciona el texto');
     }
   };
 

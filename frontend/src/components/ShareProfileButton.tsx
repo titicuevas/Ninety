@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { shareOrCopyLink } from '@/lib/shareLink';
 import { publicProfileUrl } from '@/lib/siteUrl';
+import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -46,12 +47,19 @@ export function ShareProfileButton({
 
     if (result === 'copied') {
       setCopied(true);
+      toast.success('Enlace del perfil copiado');
       window.setTimeout(() => setCopied(false), 2000);
+      return;
+    }
+
+    if (result === 'shared') {
+      toast.success('Perfil compartido');
       return;
     }
 
     if (result === 'manual_needed') {
       setManualUrl(url);
+      toast.error('No se pudo copiar — selecciona el enlace');
     }
   };
 

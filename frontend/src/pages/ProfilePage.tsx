@@ -25,10 +25,10 @@ import {
 import { useAuthStore } from '@/stores/authStore';
 import { apiFetch } from '@/lib/api';
 import { friendlyApiError } from '@/lib/friendlyErrors';
+import { toast } from '@/lib/toast';
 import { AVATAR_ACCEPT, removeProfileAvatar, uploadProfileAvatar } from '@/lib/profileAvatar';
 import { isAutoUsername, suggestUsername } from '@/lib/profileHelpers';
 import { profilePath } from '@/lib/profilePath';
-import { toast } from '@/lib/toast';
 import type { Profile, UpdateProfileInput } from '@/types/profile';
 import { cn } from '@/lib/utils';
 
@@ -160,8 +160,11 @@ export function ProfilePage() {
     try {
       const updated = await uploadProfileAvatar(file, session.access_token);
       applyProfile(updated);
+      toast.success('Foto de perfil actualizada');
     } catch (err) {
-      setAvatarError(err instanceof Error ? friendlyApiError(err.message) : 'No se pudo subir la foto');
+      const message = err instanceof Error ? friendlyApiError(err.message) : 'No se pudo subir la foto';
+      setAvatarError(message);
+      toast.error(message);
     } finally {
       setAvatarBusy(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -175,8 +178,11 @@ export function ProfilePage() {
     try {
       const updated = await removeProfileAvatar(session.access_token);
       applyProfile(updated);
+      toast.success('Foto de perfil eliminada');
     } catch (err) {
-      setAvatarError(err instanceof Error ? friendlyApiError(err.message) : 'No se pudo quitar la foto');
+      const message = err instanceof Error ? friendlyApiError(err.message) : 'No se pudo quitar la foto';
+      setAvatarError(message);
+      toast.error(message);
     } finally {
       setAvatarBusy(false);
     }
