@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import { markPushPromptEligible } from '@/lib/pushPromptMemory';
+import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 import type { FeedResponse } from '@/types/capsule';
 import type { Profile } from '@/types/profile';
@@ -126,9 +127,11 @@ export function useToggleFollow(username: string) {
       context?.previousDiscover?.forEach(([key, data]) => {
         queryClient.setQueryData(key, data);
       });
+      toast.error('No se pudo actualizar el seguimiento');
     },
     onSuccess: (_data, { followed }) => {
       // followed === false → acabamos de seguir
+      toast.success(followed ? `Ya no sigues a @${username}` : `Ahora sigues a @${username}`);
       if (!followed && session?.user?.id) {
         markPushPromptEligible(session.user.id, 'first_follow');
       }

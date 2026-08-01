@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 
 interface PushPublicKeyResponse {
@@ -109,6 +110,10 @@ export function useEnablePush() {
       queryClient.setQueryData(['notifications', 'push-enabled'], true);
       void queryClient.invalidateQueries({ queryKey: ['notifications', 'push-public-key'] });
       void queryClient.invalidateQueries({ queryKey: ['notifications', 'push-support'] });
+      toast.success('Alertas push activadas');
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'No se pudieron activar las alertas');
     },
   });
 }
@@ -143,6 +148,10 @@ export function useDisablePush() {
       queryClient.setQueryData(['notifications', 'push-enabled'], false);
       void queryClient.invalidateQueries({ queryKey: ['notifications', 'push-public-key'] });
       void queryClient.invalidateQueries({ queryKey: ['notifications', 'push-support'] });
+      toast.success('Alertas push desactivadas');
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'No se pudieron desactivar las alertas');
     },
   });
 }
@@ -153,5 +162,11 @@ export function useTestPush() {
   return useMutation({
     mutationFn: () =>
       apiFetch<{ ok: boolean; sent: number }>('/api/notifications/push/test', { method: 'POST' }, session?.access_token),
+    onSuccess: () => {
+      toast.success('Prueba enviada — revisa las notificaciones del sistema');
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'No se pudo enviar la prueba');
+    },
   });
 }

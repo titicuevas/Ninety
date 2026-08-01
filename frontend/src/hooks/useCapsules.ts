@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 import type { Capsule, CapsulesResponse, CreateCapsuleInput, FeedCapsule, FeedResponse, UpdateCapsuleInput } from '@/types/capsule';
 
@@ -209,6 +210,11 @@ export function useToggleCapsuleLike() {
         queryClient.setQueryData(key, data);
       }
       queryClient.setQueryData(['capsules', context.capsuleId], context.previousDetail);
+      toast.error('No se pudo actualizar el me gusta');
+    },
+    onSuccess: (_data, { liked }) => {
+      // liked === false → acabamos de dar like
+      if (!liked) toast.success('Me gusta añadido');
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['capsules'] });

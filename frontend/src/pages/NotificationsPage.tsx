@@ -232,26 +232,6 @@ export function NotificationsPage() {
           </div>
         </div>
 
-        {enablePush.isError ? (
-          <p className="text-sm text-destructive">
-            {enablePush.error instanceof Error ? enablePush.error.message : 'No se pudieron activar las alertas'}
-          </p>
-        ) : null}
-        {disablePush.isError ? (
-          <p className="text-sm text-destructive">
-            {disablePush.error instanceof Error
-              ? disablePush.error.message
-              : 'No se pudieron desactivar las alertas'}
-          </p>
-        ) : null}
-        {testPush.isError ? (
-          <p className="text-sm text-destructive">
-            {testPush.error instanceof Error ? testPush.error.message : 'No se pudo enviar la prueba'}
-          </p>
-        ) : null}
-        {testPush.isSuccess ? (
-          <p className="text-sm text-primary">Prueba enviada. Revisa las notificaciones del sistema.</p>
-        ) : null}
         {markAll.isError ? (
           <p className="text-sm text-destructive">
             {markAll.error instanceof Error
