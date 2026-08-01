@@ -3,17 +3,14 @@ import { Compass, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CapsuleComments } from '@/components/CapsuleComments';
 import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
-import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
+import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { CapsuleListSkeleton } from '@/components/ListSkeletons';
 import { Layout } from '@/components/Layout';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
-import { StarRating } from '@/components/StarRating';
-import { WatchContextBadge } from '@/components/WatchContextBadge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { useCapsuleFeed, type FeedScope, type FeedSort } from '@/hooks/useCapsules';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { useAuth } from '@/hooks/useAuthInit';
@@ -21,11 +18,6 @@ import { formatRelativeTime } from '@/lib/format';
 import { profilePath } from '@/lib/profilePath';
 import { cn } from '@/lib/utils';
 import type { FeedCapsule } from '@/types/capsule';
-
-function formatScore(capsule: FeedCapsule) {
-  if (capsule.home_score == null || capsule.away_score == null) return null;
-  return `${capsule.home_score} – ${capsule.away_score}`;
-}
 
 function AuthorName({ capsule, currentUserId }: { capsule: FeedCapsule; currentUserId?: string }) {
   const name = capsule.profiles?.display_name ?? capsule.profiles?.username ?? 'Aficionado';
@@ -45,50 +37,24 @@ function AuthorName({ capsule, currentUserId }: { capsule: FeedCapsule; currentU
 }
 
 function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; currentUserId?: string }) {
-  const score = formatScore(capsule);
   const shareTitle = `${capsule.home_team_name} vs ${capsule.away_team_name}`;
 
   return (
-    <Card>
-      <CardContent className="p-4 sm:p-5">
+    <CapsuleListCard
+      capsule={capsule}
+      competitionTone="muted"
+      photoClassName="mb-3"
+      footerBordered
+      header={
         <div className="mb-3 flex items-center justify-between gap-2">
           <AuthorName capsule={capsule} currentUserId={currentUserId} />
           <time className="shrink-0 text-xs text-muted-foreground" dateTime={capsule.created_at}>
             {formatRelativeTime(capsule.created_at)}
           </time>
         </div>
-
-        <CapsulePhotoGallery
-          capsule={capsule}
-          alt={`Foto del partido ${capsule.home_team_name} vs ${capsule.away_team_name}`}
-          className="mb-3"
-        />
-
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <Link to={`/c/${capsule.id}`} className="font-medium hover:text-primary hover:underline">
-                {capsule.home_team_name}
-              </Link>
-              <WatchContextBadge context={capsule.watch_context} />
-            </div>
-            <p className="text-muted-foreground">{capsule.away_team_name}</p>
-            {capsule.competition_name ? (
-              <p className="mt-1 text-xs text-muted-foreground">{capsule.competition_name}</p>
-            ) : null}
-          </div>
-          {score ? <p className="shrink-0 font-semibold tabular-nums">{score}</p> : null}
-        </div>
-
-        {capsule.rating ? (
-          <div className="mt-3">
-            <StarRating rating={capsule.rating} />
-          </div>
-        ) : null}
-
-        {capsule.note ? <p className="mt-3 text-sm text-muted-foreground">{capsule.note}</p> : null}
-
-        <div className="mt-4 flex flex-wrap items-start gap-1 border-t border-border pt-3">
+      }
+      footer={
+        <>
           <CapsuleLikeButton
             capsuleId={capsule.id}
             likesCount={capsule.likes_count}
@@ -105,9 +71,9 @@ function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; cur
             title={shareTitle}
             isPublic={capsule.is_public !== false}
           />
-        </div>
-      </CardContent>
-    </Card>
+        </>
+      }
+    />
   );
 }
 

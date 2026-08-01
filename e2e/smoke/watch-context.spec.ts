@@ -30,4 +30,17 @@ test.describe('Smoke — contexto de visionado @smoke', () => {
     await page.getByRole('button', { name: /^tv$/i }).click();
     await expect(page).toHaveURL(/context=tv/);
   });
+
+  test('Mis Capsules: chip ★4+ actualiza URL y Limpiar la resetea', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page.goto('/capsules');
+    await expect(page.getByRole('heading', { name: /mis capsules/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole('group', { name: /filtrar por valoración/i })).toBeVisible();
+    await page.getByRole('button', { name: /4\+\s*★/i }).click();
+    await expect(page).toHaveURL(/rating=4/);
+    await page.getByRole('button', { name: /limpiar filtros/i }).click();
+    await expect(page).not.toHaveURL(/rating=/);
+  });
 });

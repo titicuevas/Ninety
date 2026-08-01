@@ -16,15 +16,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuthInit';
 import { usePublicCapsule } from '@/hooks/usePublicCapsule';
-import { formatWatchedDate } from '@/lib/format';
+import { formatCapsuleScore, formatWatchedDate } from '@/lib/format';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { profilePath } from '@/lib/profilePath';
 import { publicCapsuleUrl } from '@/lib/siteUrl';
-
-function formatScore(home: number | null, away: number | null) {
-  if (home == null || away == null) return null;
-  return `${home} – ${away}`;
-}
 
 type CapsuleLocationState = {
   shareNudge?: boolean;
@@ -72,7 +67,7 @@ export function PublicCapsulePage() {
     );
   }
 
-  const score = formatScore(capsule.home_score, capsule.away_score);
+  const score = formatCapsuleScore(capsule.home_score, capsule.away_score);
   const authorName = capsule.profiles?.display_name ?? capsule.profiles?.username ?? 'Aficionado';
   const username = capsule.profiles?.username;
   const avatarUrl = capsule.profiles?.avatar_url;

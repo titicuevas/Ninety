@@ -13,6 +13,15 @@ export function formatWatchedDate(date: string) {
   return watchedDateFormatter.format(new Date(`${date}T12:00:00`));
 }
 
+/** Marcador de Capsule; null si falta algún lado. */
+export function formatCapsuleScore(
+  home: number | null | undefined,
+  away: number | null | undefined,
+): string | null {
+  if (home == null || away == null) return null;
+  return `${home} – ${away}`;
+}
+
 export function formatMatchDate(utcDate?: string) {
   if (!utcDate) return null;
   return watchedDateFormatter.format(new Date(utcDate));

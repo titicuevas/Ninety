@@ -1,11 +1,10 @@
-import { useDeferredValue, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { MapPin, Trophy, X } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
+import { MapPin, Trophy } from 'lucide-react';
 import { CapsuleComments } from '@/components/CapsuleComments';
+import { CapsuleDiaryFilters } from '@/components/CapsuleDiaryFilters';
 import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
-import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
+import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
-import { FilterChip } from '@/components/FilterChip';
 import { FollowButton } from '@/components/FollowButton';
 import { Layout } from '@/components/Layout';
 import { ProfileLoadingSkeleton } from '@/components/ListSkeletons';
@@ -13,28 +12,13 @@ import { PublicLayout } from '@/components/PublicLayout';
 import { PublicWrappedSummary } from '@/components/PublicWrappedSummary';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { ShareProfileButton } from '@/components/ShareProfileButton';
-import { StarRating } from '@/components/StarRating';
-import { WatchContextBadge } from '@/components/WatchContextBadge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { usePublicProfile } from '@/hooks/usePublicProfile';
 import { useAuth } from '@/hooks/useAuthInit';
-import { formatWatchedDate } from '@/lib/format';
+import { useDiaryFilterParams } from '@/hooks/useDiaryFilterParams';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { publicProfileUrl } from '@/lib/siteUrl';
-import {
-  WATCH_CONTEXTS,
-  WATCH_CONTEXT_LABELS,
-  isWatchContext,
-  type WatchContext,
-} from '@/lib/watchContext';
 import type { Capsule } from '@/types/capsule';
-
-function formatScore(capsule: Capsule) {
-  if (capsule.home_score == null || capsule.away_score == null) return null;
-  return `${capsule.home_score} – ${capsule.away_score}`;
-}
 
 function PublicCapsuleCard({
   capsule,
@@ -43,48 +27,17 @@ function PublicCapsuleCard({
   capsule: Capsule & { likes_count?: number; liked_by_me?: boolean; comments_count?: number };
   currentUserId?: string;
 }) {
-  const score = formatScore(capsule);
   const likesCount = capsule.likes_count ?? 0;
   const commentsCount = capsule.comments_count ?? 0;
   const shareTitle = `${capsule.home_team_name} vs ${capsule.away_team_name}`;
 
   return (
-    <Card>
-      <CardContent className="p-4 sm:p-5">
-        <CapsulePhotoGallery
-          capsule={capsule}
-          alt={`Foto del partido ${capsule.home_team_name} vs ${capsule.away_team_name}`}
-          className="mb-4"
-        />
-
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <Link to={`/c/${capsule.id}`} className="font-medium hover:text-primary hover:underline">
-                {capsule.home_team_name}
-              </Link>
-              <WatchContextBadge context={capsule.watch_context} />
-            </div>
-            <p className="text-muted-foreground">{capsule.away_team_name}</p>
-            {capsule.competition_name ? (
-              <p className="mt-1 text-xs text-primary">{capsule.competition_name}</p>
-            ) : null}
-          </div>
-          <div className="shrink-0 text-right">
-            {score ? <p className="font-semibold tabular-nums">{score}</p> : null}
-            <p className="mt-0.5 text-xs text-muted-foreground">Visto {formatWatchedDate(capsule.watched_at)}</p>
-          </div>
-        </div>
-
-        {capsule.rating ? (
-          <div className="mt-3">
-            <StarRating rating={capsule.rating} />
-          </div>
-        ) : null}
-
-        {capsule.note ? <p className="mt-3 text-sm text-muted-foreground">{capsule.note}</p> : null}
-
-        <div className="mt-4 flex flex-wrap items-start gap-1 border-t border-border pt-3">
+    <CapsuleListCard
+      capsule={capsule}
+      showWatchedDate
+      footerBordered
+      footer={
+        <>
           {currentUserId ? (
             <>
               <CapsuleLikeButton
@@ -118,41 +71,26 @@ function PublicCapsuleCard({
             title={shareTitle}
             isPublic={capsule.is_public !== false}
           />
-        </div>
-      </CardContent>
-    </Card>
+        </>
+      }
+    />
   );
-}
-
-function parseYear(value: string | null): number | undefined {
-  if (!value) return undefined;
-  const year = Number(value);
-  if (!Number.isInteger(year) || year < 1990 || year > 2100) return undefined;
-  return year;
-}
-
-function parseRatingMin(value: string | null): number | undefined {
-  if (!value) return undefined;
-  const rating = Number(value);
-  if (![3, 4, 5].includes(rating)) return undefined;
-  return rating;
-}
-
-function parseWatchContext(value: string | null): WatchContext | undefined {
-  return isWatchContext(value) ? value : undefined;
 }
 
 export function PublicProfilePage() {
   const { username } = useParams<{ username: string }>();
   const { user } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [qDraft, setQDraft] = useState(() => searchParams.get('q') ?? '');
-  const deferredQ = useDeferredValue(qDraft.trim());
-
-  const year = parseYear(searchParams.get('year'));
-  const ratingMin = parseRatingMin(searchParams.get('rating'));
-  const watchContext = parseWatchContext(searchParams.get('context'));
-  const q = deferredQ.length >= 2 ? deferredQ : '';
+  const {
+    q,
+    qDraft,
+    setQDraft,
+    year,
+    ratingMin,
+    watchContext,
+    hasFilters,
+    patchParams,
+    clearFilters,
+  } = useDiaryFilterParams();
 
   const {
     data,
@@ -173,22 +111,7 @@ export function PublicProfilePage() {
   const isOwnProfile = !!user && profile?.id === user.id;
   const Shell = user ? Layout : PublicLayout;
 
-  const hasFilters = q.length >= 2 || year != null || ratingMin != null || watchContext != null;
   const diaryTotal = stats?.totalMatches ?? (!hasFilters ? total : 0);
-
-  const patchParams = (patch: Record<string, string | null>) => {
-    const next = new URLSearchParams(searchParams);
-    for (const [key, value] of Object.entries(patch)) {
-      if (value == null || value === '') next.delete(key);
-      else next.set(key, value);
-    }
-    setSearchParams(next, { replace: true });
-  };
-
-  const clearFilters = () => {
-    setQDraft('');
-    setSearchParams({}, { replace: true });
-  };
 
   if (isLoading) {
     return (
@@ -314,97 +237,20 @@ export function PublicProfilePage() {
         ) : null}
 
         {!diaryEmpty ? (
-          <section className="space-y-3" aria-label="Filtros del diario público">
-            <div className="relative">
-              <Input
-                value={qDraft}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setQDraft(value);
-                  const trimmed = value.trim();
-                  patchParams({ q: trimmed.length >= 2 ? trimmed : null });
-                }}
-                placeholder="Buscar equipo, competición o nota…"
-                aria-label="Buscar en el diario público"
-              />
-              {qDraft ? (
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground"
-                  aria-label="Limpiar búsqueda"
-                  onClick={() => {
-                    setQDraft('');
-                    patchParams({ q: null });
-                  }}
-                >
-                  <X className="h-4 w-4" aria-hidden />
-                </button>
-              ) : null}
-            </div>
-
-            {years.length > 0 ? (
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por año">
-                <FilterChip active={year == null} onClick={() => patchParams({ year: null })}>
-                  Todos los años
-                </FilterChip>
-                {years.map((y) => (
-                  <FilterChip
-                    key={y}
-                    active={year === y}
-                    onClick={() => patchParams({ year: year === y ? null : String(y) })}
-                  >
-                    {y}
-                  </FilterChip>
-                ))}
-              </div>
-            ) : null}
-
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por valoración">
-              <FilterChip active={ratingMin == null} onClick={() => patchParams({ rating: null })}>
-                Cualquier ★
-              </FilterChip>
-              {[5, 4, 3].map((min) => (
-                <FilterChip
-                  key={min}
-                  active={ratingMin === min}
-                  onClick={() => patchParams({ rating: ratingMin === min ? null : String(min) })}
-                >
-                  {min}+ ★
-                </FilterChip>
-              ))}
-            </div>
-
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por contexto">
-              <FilterChip
-                active={watchContext == null}
-                onClick={() => patchParams({ context: null })}
-              >
-                Cualquier lugar
-              </FilterChip>
-              {WATCH_CONTEXTS.map((value) => (
-                <FilterChip
-                  key={value}
-                  active={watchContext === value}
-                  onClick={() =>
-                    patchParams({ context: watchContext === value ? null : value })
-                  }
-                >
-                  {WATCH_CONTEXT_LABELS[value]}
-                </FilterChip>
-              ))}
-            </div>
-
-            {hasFilters ? (
-              <div className="flex items-center gap-3">
-                <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
-                  Limpiar filtros
-                </Button>
-                {isFetching && !isFetchingNextPage ? (
-                  <span className="text-xs text-muted-foreground">Actualizando…</span>
-                ) : null}
-              </div>
-            ) : null}
-          </section>
+          <CapsuleDiaryFilters
+            years={years}
+            searchAriaLabel="Buscar en el diario público"
+            ariaLabel="Filtros del diario público"
+            qDraft={qDraft}
+            year={year}
+            ratingMin={ratingMin}
+            watchContext={watchContext}
+            hasFilters={hasFilters}
+            isUpdating={isFetching && !isFetchingNextPage}
+            onQDraftChange={setQDraft}
+            patchParams={patchParams}
+            clearFilters={clearFilters}
+          />
         ) : null}
 
         {filterEmpty ? (

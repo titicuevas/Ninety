@@ -15,18 +15,13 @@ import {
   type CapsuleStats,
   type WrappedScope,
 } from '@/lib/capsuleStats';
-import { formatWatchedDate } from '@/lib/format';
+import { formatCapsuleScore, formatWatchedDate } from '@/lib/format';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { shareOrCopyLink } from '@/lib/shareLink';
 import { publicProfileUrl } from '@/lib/siteUrl';
 import { toast } from '@/lib/toast';
 import type { Capsule } from '@/types/capsule';
 import { cn } from '@/lib/utils';
-
-function formatScore(capsule: Capsule) {
-  if (capsule.home_score == null || capsule.away_score == null) return null;
-  return `${capsule.home_score} – ${capsule.away_score}`;
-}
 
 function HighlightCard({
   label,
@@ -59,7 +54,7 @@ function HighlightCard({
 }
 
 function RecentCapsuleRow({ capsule }: { capsule: Capsule }) {
-  const score = formatScore(capsule);
+  const score = formatCapsuleScore(capsule.home_score, capsule.away_score);
 
   return (
     <Link
@@ -160,7 +155,9 @@ export function WrappedSummary({
 }: WrappedSummaryProps) {
   const [copied, setCopied] = useState(false);
   const [manualText, setManualText] = useState<string | null>(null);
-  const bestScore = stats.bestRated ? formatScore(stats.bestRated) : null;
+  const bestScore = stats.bestRated
+    ? formatCapsuleScore(stats.bestRated.home_score, stats.bestRated.away_score)
+    : null;
   const periodLabel = scope === 'all' ? 'Todo tu diario' : `Año ${scope}`;
   const badgeLabel = scope === 'all' ? 'Tu Wrapped · completo' : `Tu Wrapped · ${scope}`;
   const profileUrl =
