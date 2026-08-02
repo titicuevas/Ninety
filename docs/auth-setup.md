@@ -86,8 +86,8 @@ https://ninety.up.railway.app/**
 1. **Authentication → Providers → Email**: confirmación ON/OFF según quieras registro con click
 2. **SMTP**: built-in vale para **una prueba**; prod fiable = SMTP custom (Resend/Postmark/SES/Mailtrap). **No asumir que SMTP ya está** — verificar en Dashboard
 3. Plantillas Confirm signup / Reset password: enlace debe usar Site URL / Redirect URLs de arriba
-4. **Mientras www dé 502**: prueba en `https://ninety.up.railway.app/register` y `/forgot-password` (Site URL temporal = Railway si hace falta)
-5. **Cuando `/health` en www = ok**: registro + recovery en `https://www.getninety.app`
+4. **www live** (`/health` = ok): registro + recovery en `https://www.getninety.app` (fallback Railway solo si www vuelve a fallar)
+5. SMTP built-in = una prueba; prod = SMTP custom verificado en Dashboard
 
 ### 1. DNS (detalle)
 
