@@ -11,95 +11,122 @@
 
 Checklist para apuntar el dominio comprado al frontend en Railway **sin romper** `ninety.up.railway.app` durante la transición.
 
-### 1. DNS (registrador del dominio)
+### Ops AHORA (orden fijo)
 
-En el panel DNS de `getninety.app`:
+Canónico **mientras el cutover**: `https://www.getninety.app` (CNAME activo). Apex `getninety.app` suele no resolver si Namecheap solo tiene MX / URL Redirect.
 
-| Tipo | Nombre / Host | Valor | TTL |
-|------|---------------|-------|-----|
-| **CNAME** | `@` o raíz* | el target CNAME que muestra Railway (p. ej. `xxxxx.up.railway.app`) | 300–3600 |
-| **CNAME** | `www` | el mismo target de Railway | 300–3600 |
+#### A) Railway frontend — puerto y dominio
 
-\*Si el registrador no permite CNAME en apex (`@`), usa el registro **ALIAS / ANAME** que ofrezca, o el flujo «Custom Domain» de Railway (te indica registros exactos).
+1. Abre el servicio **frontend** (`ninety` / `ninety-frontend`), **no** el API
+2. **Deployments → latest → Logs** → busca exactamente: `Ninety frontend listening on http://0.0.0.0:N`
+3. Anota **N** (Railway suele inyectar `8080`; **no** uses `4173` a ciegas)
+4. **Settings → Networking → Custom Domain** → `www.getninety.app` (y apex si lo añadiste) → **Target Port = N**
+5. Start Command = `node serve.mjs` (no `vite preview` salvo que sepas lo que haces)
+6. Prueba: `curl -sS https://www.getninety.app/health` → `{"status":"ok"}`  
+   Fallback sano: `curl -sS https://ninety.up.railway.app/health` → debe ser `ok` ya
 
-En **Railway → servicio frontend (`ninety-frontend` / `ninety`) → Settings → Networking / Custom Domain**:
+#### B) Namecheap DNS
 
-1. Añade `getninety.app` y `www.getninety.app` **en el servicio del frontend**, no en el API
-2. Copia los registros DNS que indique el panel
-3. Espera el certificado TLS (Let's Encrypt) hasta estado **Active** / DNS verificado en verde
-4. **Target Port:** debe ser el mismo puerto en el que escucha la app (ver logs: `listening on http://0.0.0.0:XXXX`). Railway inyecta `PORT` (a menudo `8080`); **no** asumas `4173` salvo que hayas fijado `PORT=4173` en Variables
+1. **Domain List → getninety.app → Advanced DNS**
+2. Si existe **URL Redirect** / **Redirect** en `@` (apex) o `www` hacia parking u otra URL → **bórralo** (rompe o compite con Railway)
+3. Mantén **CNAME** `www` → target que muestra Railway (p. ej. `xxxxx.up.railway.app` o el hostname del panel)
+4. **Apex opcional** (solo si quieres `https://getninety.app` sin www):
+   - Namecheap no permite CNAME real en `@`. Opciones: **ALIAS / ANAME** si el plan lo ofrece, o el registro exacto que indique Railway al añadir `getninety.app`
+   - Sin A/ALIAS/CNAME de Railway en `@`, el apex **no resolverá** (solo MX de eforward = normal para email del registrador)
+5. Espera propagación; en Railway el dominio debe quedar **Active** (TLS verde)
 
-#### Si ves «Application failed to respond» (502)
+#### C) Variables Railway
 
-Causa habitual: el dominio apunta a un puerto (p. ej. `4173`) distinto del `PORT` real del contenedor.
-
-1. Deploy logs del frontend → busca `Ninety frontend listening on http://0.0.0.0:N`
-2. Settings → Networking → edita el dominio → **Target Port = N** (el mismo)
-3. Opcional y más estable: Variables → `PORT=8080` (o `4173`) **y** Target Port idéntico
-4. Confirma Start Command = `node serve.mjs` (no `vite preview` a menos que `preview.host` sea `0.0.0.0`)
-5. Prueba `/health` en el dominio: debe devolver `{"status":"ok"}`
-
-La API puede seguir en `https://ninety-api.up.railway.app` (no hace falta dominio custom en el API para este corte).
-
-### 2. Variables de entorno (Railway)
-
-**Frontend** (`ninety`):
+**Frontend** (`ninety`) — tras cambiar `VITE_*` hace falta **Rebuild/Redeploy**:
 
 ```env
 VITE_API_URL=https://ninety-api.up.railway.app
 API_URL=https://ninety-api.up.railway.app
-SITE_URL=https://getninety.app
-VITE_SITE_URL=https://getninety.app
+SITE_URL=https://www.getninety.app
+VITE_SITE_URL=https://www.getninety.app
 ```
 
-> `API_URL` / `SITE_URL` las usa `serve.mjs` (Open Graph, previews).
-> Tras cambiar `VITE_*`, hace falta **redeploy** del frontend (se inyectan en el build).
-
-**Backend** (`ninety-api`):
+**Backend** (`ninety-api`) — sin rebuild de imagen Vite, pero redeploy si el panel lo pide:
 
 ```env
 NODE_ENV=production
-CLIENT_URL=https://getninety.app
+CLIENT_URL=https://www.getninety.app
+CORS_ORIGINS=https://getninety.app,https://ninety.up.railway.app
 ```
 
-Opcional (orígenes extra, separados por coma), si sirves apex + www a la vez o mantienes el subdominio Railway:
+> CORS ya incluye por defecto apex, www y Railway. `CORS_ORIGINS` refuerza extras. Cuando el apex esté vivo y quieras canónico sin www, cambia `SITE_URL` / `VITE_SITE_URL` / `CLIENT_URL` a `https://getninety.app` y vuelve a rebuild del front.
 
-```env
-CORS_ORIGINS=https://www.getninety.app,https://ninety.up.railway.app
-```
+#### D) Supabase → Authentication → URL Configuration
 
-El backend ya permite por defecto `CLIENT_URL`, localhost (dev), `https://ninety.up.railway.app`, `https://getninety.app` y `https://www.getninety.app`.
-
-### 3. Supabase → Authentication → URL Configuration
-
-**Site URL** (producción):
+**Site URL** (mientras canónico = www):
 
 ```
-https://getninety.app
+https://www.getninety.app
 ```
 
-**Redirect URLs** (mantén Railway mientras dure la transición):
+**Redirect URLs** (copy-paste; mantén Railway de fallback):
 
 ```
 http://localhost:5173/auth/callback
 http://localhost:5173/auth/reset-password
 http://localhost:5173/**
-https://getninety.app/auth/callback
-https://getninety.app/auth/reset-password
-https://getninety.app/**
 https://www.getninety.app/auth/callback
 https://www.getninety.app/auth/reset-password
 https://www.getninety.app/**
+https://getninety.app/auth/callback
+https://getninety.app/auth/reset-password
+https://getninety.app/**
 https://ninety.up.railway.app/auth/callback
 https://ninety.up.railway.app/auth/reset-password
 https://ninety.up.railway.app/**
 ```
 
+#### E) Email Auth (ops; no magic link)
+
+1. **Authentication → Providers → Email**: confirmación ON/OFF según quieras registro con click
+2. **SMTP**: built-in vale para **una prueba**; prod fiable = SMTP custom (Resend/Postmark/SES/Mailtrap). **No asumir que SMTP ya está** — verificar en Dashboard
+3. Plantillas Confirm signup / Reset password: enlace debe usar Site URL / Redirect URLs de arriba
+4. **Mientras www dé 502**: prueba en `https://ninety.up.railway.app/register` y `/forgot-password` (Site URL temporal = Railway si hace falta)
+5. **Cuando `/health` en www = ok**: registro + recovery en `https://www.getninety.app`
+
+### 1. DNS (detalle)
+
+| Tipo | Nombre / Host | Valor | TTL |
+|------|---------------|-------|-----|
+| **CNAME** | `www` | target CNAME de Railway | 300–3600 |
+| **ALIAS/ANAME** o lo que diga Railway | `@` | solo si quieres apex sin www* | 300–3600 |
+
+\*Namecheap: sin ALIAS, el apex no puede ser CNAME clásico. Quítalo el **URL Redirect** del `@` si interfiere.
+
+En **Railway → servicio frontend → Settings → Networking / Custom Domain**:
+
+1. Dominios solo en el **frontend**, no en el API
+2. TLS **Active** / DNS verde no basta si Target Port ≠ `PORT`
+3. API puede seguir en `https://ninety-api.up.railway.app`
+
+#### Si ves «Application failed to respond» (502)
+
+Causa habitual: Target Port (p. ej. `4173`) ≠ `PORT` del contenedor.
+
+1. Logs → `Ninety frontend listening on http://0.0.0.0:N`
+2. Target Port = **N**
+3. Opcional: Variables `PORT=8080` **y** Target Port `8080`
+4. Start Command = `node serve.mjs`
+5. `curl -sS https://www.getninety.app/health` → `{"status":"ok"}`
+
+### 2. Variables de entorno (Railway) — resumen
+
+Ver **Ops AHORA → C**. `API_URL` / `SITE_URL` las usa `serve.mjs` (Open Graph). El backend permite por defecto `CLIENT_URL`, localhost, `https://ninety.up.railway.app`, `https://getninety.app` y `https://www.getninety.app`.
+
+### 3. Supabase URL Configuration — resumen
+
+Ver **Ops AHORA → D** (lista completa).
+
 ### 4. Google OAuth (si usas Google)
 
 En [Google Cloud Console](https://console.cloud.google.com/) → Credentials → tu OAuth Client:
 
-- **Authorized JavaScript origins:** `https://getninety.app`, `https://www.getninety.app` (y Railway si aún lo usas)
+- **Authorized JavaScript origins:** `https://www.getninety.app`, `https://getninety.app`, `https://ninety.up.railway.app`
 - **Authorized redirect URIs** de Google siguen siendo las de Supabase:
   ```
   https://TU-PROYECTO.supabase.co/auth/v1/callback
@@ -108,13 +135,12 @@ En [Google Cloud Console](https://console.cloud.google.com/) → Credentials →
 
 ### 5. Verificación rápida
 
-1. `https://getninety.app` carga la app (TLS OK)
-2. Login email + Google (si aplica) → vuelve a `/auth/callback` en el dominio nuevo
+1. `https://www.getninety.app/health` → `{"status":"ok"}` (y apex si lo configuraste)
+2. Login email + Google (si aplica) → `/auth/callback` en el dominio canónico
 3. Reset password → `/auth/reset-password`
 4. CORS: crear/listar capsules desde el dominio nuevo (sin error en consola)
 5. Compartir un perfil `/u/...`, capsule `/c/...`, colección `/u/.../lists/...` o cara a cara `/u/.../vs` (preview OG usa `SITE_URL`)
 6. PWA: manifest + PNG 192/512 (y maskable) + apple-touch-icon en el origen nuevo
-
 ---
 
 ## Email Auth — código vs ops
@@ -136,24 +162,24 @@ El producto **no** envía correos desde el backend propio: signup, confirmación
 
 ### Checklist ops (faltante típico en prod)
 
-1. Supabase → Authentication → **URL Configuration**: Site URL = origen real del frontend (`https://ninety.up.railway.app` y/o `https://getninety.app` cuando el dominio deje de dar 502).
-2. **Redirect URLs** con `/auth/callback`, `/auth/reset-password` y `/**` para cada origen (ver lista arriba).
+1. Supabase → Authentication → **URL Configuration**: Site URL = canónico actual (`https://www.getninety.app` cuando `/health` esté ok; si no, `https://ninety.up.railway.app`).
+2. **Redirect URLs** con `/auth/callback`, `/auth/reset-password` y `/**` para cada origen (ver **Ops AHORA → D**).
 3. `CLIENT_URL` en Railway API alineado con ese origen (recovery `redirectTo`).
 4. SMTP custom (o aceptar límites built-in) + remitente verificado en el dominio.
 5. Revisar plantillas Confirm signup / Reset password (enlace y branding).
 6. Probar: registro nuevo → email llega; forgot-password → enlace abre `/auth/reset-password` y cambia password.
 
-Hasta completar 1–5 en el proyecto Supabase / Railway, los flujos de email están **parciales** (código OK, entrega/redirects = responsabilidad ops).
+Hasta completar 1–5 en el proyecto Supabase / Railway, los flujos de email quedan **parciales** (código OK, entrega/redirects = responsabilidad ops).
 
 ### Probar email AHORA (checklist)
 
-Usar el frontend Railway (`https://ninety.up.railway.app`), **no** `getninety.app` mientras dé 502.
+Usar `https://ninety.up.railway.app` **mientras** `www.getninety.app/health` dé 502.
 
-1. **Supabase → Authentication → URL Configuration:** Site URL = `https://ninety.up.railway.app`. Redirect URLs deben incluir `/auth/callback`, `/auth/reset-password` y `/**` de ese origen (y localhost si pruebas en local).
-2. **Supabase → Authentication → Emails / SMTP:** built-in vale para una prueba; si no llega nada, activa SMTP custom (Mailtrap/Resend/etc.) o mira rate limit del built-in.
-3. **Registro:** abre `https://ninety.up.railway.app/register` → email real → bandeja/spam → click confirmar → login.
-4. **Recovery:** `/forgot-password` → mismo email → enlace → `/auth/reset-password` → nueva contraseña → login.
-5. **Si falla:** sin email → SMTP / rate limit / carpeta spam. Link roto o va a otro dominio → Redirect URLs o `CLIENT_URL` / Site URL no alineados con Railway.
+1. **Supabase → Authentication → URL Configuration:** Site URL = `https://ninety.up.railway.app` (temporal). Redirect URLs: lista de **Ops AHORA → D**.
+2. **SMTP:** built-in vale para una prueba; si no llega nada → SMTP custom o rate limit. No asumir SMTP configurado.
+3. **Registro:** `https://ninety.up.railway.app/register` → email → confirmar → login.
+4. **Recovery:** `/forgot-password` → enlace → `/auth/reset-password` → nueva password → login.
+5. Tras fix 502: misma prueba en `https://www.getninety.app` con Site URL / `CLIENT_URL` / `VITE_SITE_URL` en www.
 
 > No inventes que SMTP/Redirects ya estén en prod: hay que verificarlos en el Dashboard. El código de signup/recovery/callback ya está listo.
 

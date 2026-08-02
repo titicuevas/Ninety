@@ -130,23 +130,25 @@ npm run dev
 
 | Servicio | URL | Estado |
 |----------|-----|--------|
-| **Frontend (canónico)** | [getninety.app](https://getninety.app) | Dominio custom (tras DNS + TLS) |
-| **Frontend (legacy)** | [ninety.up.railway.app](https://ninety.up.railway.app) | App React (mantener durante transición) |
+| **Frontend (canónico cutover)** | [www.getninety.app](https://www.getninety.app) | CNAME → Railway (arreglar Target Port si 502) |
+| **Frontend (apex)** | [getninety.app](https://getninety.app) | Solo si hay ALIAS/A de Railway (Namecheap: quitar URL Redirect) |
+| **Frontend (legacy)** | [ninety.up.railway.app](https://ninety.up.railway.app) | Mantener durante transición |
 | **API** | [ninety-api.up.railway.app](https://ninety-api.up.railway.app) | Express |
-| **Health** | [/api/health](https://ninety-api.up.railway.app/api/health) | ✅ Online |
+| **Health front** | [/health](https://ninety.up.railway.app/health) | `{"status":"ok"}` |
+| **Health API** | [/api/health](https://ninety-api.up.railway.app/api/health) | ✅ Online |
 
-> Checklist DNS + env + Supabase Redirect URLs: [docs/auth-setup.md](docs/auth-setup.md#dominio-custom-getninetyapp--railway).
-> Si el frontend muestra error 403 en preview Vite, redeploy tras actualizar `frontend/vite.config.ts` (`preview.allowedHosts`).
-> Si Railway muestra **Application failed to respond**: el Target Port del dominio debe coincidir con `PORT` del contenedor (logs: `listening on http://0.0.0.0:N`). No uses `4173` a ciegas.
+> Checklist ops A→E (puerto, Namecheap, vars, Supabase, email): [docs/auth-setup.md](docs/auth-setup.md#ops-ahora-orden-fijo).
+> Si Railway muestra **Application failed to respond**: Target Port del dominio = `PORT` del contenedor (logs: `listening on http://0.0.0.0:N`). No uses `4173` a ciegas.
+> Si preview Vite da 403: `frontend/vite.config.ts` → `preview.allowedHosts` (ya incluye www/apex).
 
 ### Variables en Railway
 
-**Frontend** (`ninety`):
+**Frontend** (`ninety`) — rebuild tras cambiar `VITE_*`:
 ```env
 VITE_API_URL=https://ninety-api.up.railway.app
 API_URL=https://ninety-api.up.railway.app
-SITE_URL=https://getninety.app
-VITE_SITE_URL=https://getninety.app
+SITE_URL=https://www.getninety.app
+VITE_SITE_URL=https://www.getninety.app
 ```
 
 > `API_URL` / `SITE_URL` las usa `serve.mjs` para previews Open Graph (WhatsApp, X, Telegram) en `/c/:id`, `/u/:username`, `/u/:username/lists/:slug` y `/u/:username/vs`.
@@ -155,20 +157,25 @@ VITE_SITE_URL=https://getninety.app
 **Backend** (`ninety-api`):
 ```env
 NODE_ENV=production
-CLIENT_URL=https://getninety.app
-# Opcional durante la transición:
-# CORS_ORIGINS=https://www.getninety.app,https://ninety.up.railway.app
+CLIENT_URL=https://www.getninety.app
+# Opcional (apex + Railway de fallback); CORS ya permite www/apex/Railway por defecto:
+# CORS_ORIGINS=https://getninety.app,https://ninety.up.railway.app
 SUPABASE_URL=https://tu-proyecto.supabase.co
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 SUPABASE_SECRET_KEY=sb_secret_...
 FOOTBALL_DATA_API_KEY=tu-api-key
 ```
 
-En **Supabase → Authentication → URL Configuration** añade (y mantén Railway mientras dure el cutover):
+En **Supabase → Authentication → URL Configuration** (Site URL = canónico www; mantén Railway):
 ```
+https://www.getninety.app/auth/callback
+https://www.getninety.app/auth/reset-password
+https://www.getninety.app/**
 https://getninety.app/auth/callback
+https://getninety.app/auth/reset-password
 https://getninety.app/**
 https://ninety.up.railway.app/auth/callback
+https://ninety.up.railway.app/auth/reset-password
 https://ninety.up.railway.app/**
 ```
 
