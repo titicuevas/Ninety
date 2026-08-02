@@ -263,11 +263,19 @@ export function PublicProfilePage() {
         ) : null}
 
         {(collectionsData?.collections.length ?? 0) > 0 ? (
-          <section className="space-y-3">
-            <h2 className="flex items-center gap-2 text-lg font-semibold">
-              <Library className="h-5 w-5 text-primary" aria-hidden />
-              Colecciones
-            </h2>
+          <section className="space-y-3" aria-labelledby="public-collections-heading">
+            <div>
+              <h2
+                id="public-collections-heading"
+                className="flex items-center gap-2 text-lg font-semibold"
+              >
+                <Library className="h-5 w-5 text-primary" aria-hidden />
+                Colecciones
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Listas curadas del diario — clásicos, viajes, noches grandes.
+              </p>
+            </div>
             <ul className="grid gap-2 sm:grid-cols-2">
               {collectionsData!.collections.map((col) => (
                 <li key={col.id}>
@@ -291,11 +299,23 @@ export function PublicProfilePage() {
             ) : null}
           </section>
         ) : isOwnProfile ? (
-          <section>
+          <section className="space-y-3" aria-labelledby="public-collections-empty-heading">
+            <div>
+              <h2
+                id="public-collections-empty-heading"
+                className="flex items-center gap-2 text-lg font-semibold"
+              >
+                <Library className="h-5 w-5 text-primary" aria-hidden />
+                Colecciones
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Agrupa Capsules en listas compartibles (estilo Letterboxd) y enlázalas desde tu perfil.
+              </p>
+            </div>
             <Button asChild variant="secondary" size="sm">
               <Link to="/collections">
                 <Library className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                Crear colecciones
+                Crear tu primera colección
               </Link>
             </Button>
           </section>

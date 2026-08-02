@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Library, Lock, Plus } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
@@ -13,9 +13,11 @@ import { useCreateCollection, useMyCollections } from '@/hooks/useCollections';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useProfile } from '@/hooks/useProfile';
 import { slugifyCollectionName } from '@/lib/collectionSlug';
+import { toast } from '@/lib/toast';
 
 export function CollectionsPage() {
   useDocumentTitle('Colecciones');
+  const navigate = useNavigate();
   const { data, isLoading, isError, error, refetch, isRefetching } = useMyCollections();
   const { data: profile } = useProfile();
   const createCollection = useCreateCollection();
@@ -39,11 +41,13 @@ export function CollectionsPage() {
       is_public: isPublic,
       slug: slugifyCollectionName(trimmed),
     }, {
-      onSuccess: () => {
+      onSuccess: (result) => {
         setName('');
         setDescription('');
         setIsPublic(true);
         setFormOpen(false);
+        toast.success('Colección creada');
+        navigate(`/collections/${result.collection.id}`);
       },
     });
   };

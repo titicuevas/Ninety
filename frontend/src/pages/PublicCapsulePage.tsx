@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
+import { AddToCollectionButton } from '@/components/AddToCollectionButton';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { FollowButton } from '@/components/FollowButton';
@@ -259,7 +260,8 @@ export function PublicCapsulePage() {
             />
 
             {isOwn ? (
-              <div className="mt-4">
+              <div className="mt-4 flex flex-wrap gap-2">
+                <AddToCollectionButton capsuleId={capsule.id} variant="secondary" />
                 <Button asChild variant="secondary" size="sm">
                   <Link to={`/capsules/${capsule.id}/edit`}>Editar Capsule</Link>
                 </Button>

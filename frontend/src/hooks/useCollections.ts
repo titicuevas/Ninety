@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api';
+import { ApiError, apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 import type {
@@ -18,6 +18,22 @@ export function useMyCollections() {
     queryKey: ['collections', 'me'],
     queryFn: () => apiFetch<CollectionsListResponse>('/api/collections/me', {}, session?.access_token),
     enabled: !!session,
+  });
+}
+
+/** Colecciones propias que ya contienen una Capsule concreta. */
+export function useCollectionMemberships(capsuleId: string | undefined, enabled = true) {
+  const session = useAuthStore((s) => s.session);
+
+  return useQuery({
+    queryKey: ['collections', 'containing', capsuleId],
+    queryFn: () =>
+      apiFetch<{ collection_ids: string[] }>(
+        `/api/collections/me/containing/${encodeURIComponent(capsuleId!)}`,
+        {},
+        session?.access_token,
+      ),
+    enabled: !!session && !!capsuleId && enabled,
   });
 }
 
@@ -75,7 +91,6 @@ export function useCreateCollection() {
       ),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['collections'] });
-      toast.success('Colección creada');
     },
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : 'No se pudo crear la colección');
@@ -142,6 +157,32 @@ export function useAddCollectionItem(collectionId: string) {
   });
 }
 
+/** Añadir Capsule a cualquier colección (p. ej. desde el diario). 409 = ya estaba. */
+export function useAddCapsuleToCollection() {
+  const session = useAuthStore((s) => s.session);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ collectionId, capsuleId }: { collectionId: string; capsuleId: string }) =>
+      apiFetch(
+        `/api/collections/${collectionId}/items`,
+        { method: 'POST', body: JSON.stringify({ capsule_id: capsuleId }) },
+        session?.access_token,
+      ),
+    onSuccess: (_data, vars) => {
+      void queryClient.invalidateQueries({ queryKey: ['collections'] });
+      void queryClient.invalidateQueries({
+        queryKey: ['collections', 'containing', vars.capsuleId],
+      });
+      toast.success('Añadida a la colección');
+    },
+    onError: (err) => {
+      if (err instanceof ApiError && err.status === 409) return;
+      toast.error(err instanceof Error ? err.message : 'No se pudo añadir');
+    },
+  });
+}
+
 export function useRemoveCollectionItem(collectionId: string) {
   const session = useAuthStore((s) => s.session);
   const queryClient = useQueryClient();
@@ -156,6 +197,30 @@ export function useRemoveCollectionItem(collectionId: string) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['collections'] });
       toast.success('Capsule quitada');
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'No se pudo quitar');
+    },
+  });
+}
+
+export function useRemoveCapsuleFromCollection() {
+  const session = useAuthStore((s) => s.session);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ collectionId, capsuleId }: { collectionId: string; capsuleId: string }) =>
+      apiFetch<void>(
+        `/api/collections/${collectionId}/items/${capsuleId}`,
+        { method: 'DELETE' },
+        session?.access_token,
+      ),
+    onSuccess: (_data, vars) => {
+      void queryClient.invalidateQueries({ queryKey: ['collections'] });
+      void queryClient.invalidateQueries({
+        queryKey: ['collections', 'containing', vars.capsuleId],
+      });
+      toast.success('Quitada de la colección');
     },
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : 'No se pudo quitar');

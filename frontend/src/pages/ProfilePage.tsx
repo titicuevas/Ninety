@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Check, Loader2, Settings, X } from 'lucide-react';
+import { Check, Library, Loader2, Settings, X } from 'lucide-react';
 import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
 import { FavoriteTeamField } from '@/components/FavoriteTeamField';
 import { Layout } from '@/components/Layout';
@@ -288,6 +288,13 @@ export function ProfilePage() {
                     Ver perfil público
                   </Link>
                   <Link
+                    to="/collections"
+                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                  >
+                    <Library className="h-3.5 w-3.5" aria-hidden />
+                    Colecciones
+                  </Link>
+                  <Link
                     to={`/u/${encodeURIComponent(profile.username)}/followers`}
                     className="text-sm text-muted-foreground hover:text-foreground"
                   >
@@ -307,9 +314,18 @@ export function ProfilePage() {
                   />
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  Elige un username abajo para poder compartir tu perfil público.
-                </p>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Elige un username abajo para poder compartir tu perfil público.
+                  </p>
+                  <Link
+                    to="/collections"
+                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                  >
+                    <Library className="h-3.5 w-3.5" aria-hidden />
+                    Colecciones
+                  </Link>
+                </div>
               )}
             </div>
           </div>

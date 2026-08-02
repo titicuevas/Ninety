@@ -212,6 +212,62 @@ collectionsRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   });
 });
 
+/** GET /api/collections/me/containing/:capsuleId — ids de colecciones propias con esa Capsule */
+collectionsRouter.get('/me/containing/:capsuleId', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const capsuleId = routeParam(req.params.capsuleId);
+  if (!capsuleId) {
+    res.status(400).json({ error: 'capsuleId requerido' });
+    return;
+  }
+
+  const supabase = createUserClient(token);
+
+  const { data: ownCollections, error: collectionsError } = await supabase
+    .from('collections')
+    .select('id')
+    .eq('user_id', req.userId!);
+
+  if (collectionsError) {
+    if (isMissingCollectionsTable(collectionsError)) {
+      res.status(503).json({ error: collectionsMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: collectionsError.message });
+    return;
+  }
+
+  const collectionIds = (ownCollections ?? []).map((row) => row.id as string);
+  if (collectionIds.length === 0) {
+    res.json({ collection_ids: [] as string[] });
+    return;
+  }
+
+  const { data: items, error: itemsError } = await supabase
+    .from('collection_items')
+    .select('collection_id')
+    .eq('capsule_id', capsuleId)
+    .in('collection_id', collectionIds);
+
+  if (itemsError) {
+    if (isMissingCollectionsTable(itemsError)) {
+      res.status(503).json({ error: collectionsMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: itemsError.message });
+    return;
+  }
+
+  res.json({
+    collection_ids: (items ?? []).map((row) => row.collection_id as string),
+  });
+});
+
 /** POST /api/collections */
 collectionsRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
   const token = getAccessToken(req);

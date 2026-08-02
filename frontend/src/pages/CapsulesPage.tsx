@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Library, Pencil, Trash2 } from 'lucide-react';
+import { AddToCollectionButton } from '@/components/AddToCollectionButton';
 import { CapsuleDiaryFilters } from '@/components/CapsuleDiaryFilters';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
@@ -34,6 +35,7 @@ function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: s
       }
       footer={
         <>
+          <AddToCollectionButton capsuleId={capsule.id} />
           <ShareCapsuleButton
             capsuleId={capsule.id}
             title={shareTitle}
@@ -139,7 +141,10 @@ export function CapsulesPage() {
           </div>
           <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
             <Button asChild variant="secondary">
-              <Link to="/collections">Colecciones</Link>
+              <Link to="/collections">
+                <Library className="mr-1.5 h-4 w-4" aria-hidden />
+                Colecciones
+              </Link>
             </Button>
             <Button asChild>
               <Link to="/search">Buscar partido</Link>

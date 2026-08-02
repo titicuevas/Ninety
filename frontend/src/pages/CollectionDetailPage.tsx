@@ -223,8 +223,23 @@ export function CollectionDetailPage() {
           {data.capsules.length === 0 ? (
             <EmptyState
               title="Lista vacía"
-              description="Añade Capsules de tu diario a esta colección."
-            />
+              description={
+                candidates.length > 0
+                  ? 'Elige un partido arriba o ábrelo en el diario y usa «Añadir a colección».'
+                  : 'Aún no tienes Capsules. Busca un partido y guárdalo en tu diario.'
+              }
+            >
+              {candidates.length === 0 ? (
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button asChild>
+                    <Link to="/search">Buscar partido</Link>
+                  </Button>
+                  <Button asChild variant="secondary">
+                    <Link to="/capsules">Mis Capsules</Link>
+                  </Button>
+                </div>
+              ) : null}
+            </EmptyState>
           ) : (
             <ul className="space-y-3">
               {data.capsules.map((capsule) => (

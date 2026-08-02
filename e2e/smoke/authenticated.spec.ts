@@ -294,6 +294,10 @@ test.describe('Smoke — autenticado @smoke', () => {
     ).toBeVisible({ timeout: 15_000 });
 
     await expect(page.getByRole('link', { name: /ver centro de alertas/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /exportar mi diario/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /descargar json/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /descargar csv/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /instalar ninety/i })).toBeVisible();
     await expect(page.locator('main').getByRole('button', { name: /^cerrar sesión$/i })).toBeVisible();
   });
 

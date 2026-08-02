@@ -84,6 +84,13 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/collections/me/containing/:capsuleId requiere auth', async () => {
+    const res = await request(createApp()).get(
+      '/api/collections/me/containing/00000000-0000-4000-8000-000000000001',
+    );
+    assert.equal(res.status, 401);
+  });
+
   it('POST /api/collections requiere auth', async () => {
     const res = await request(createApp()).post('/api/collections').send({ name: 'Clásicos' });
     assert.equal(res.status, 401);
