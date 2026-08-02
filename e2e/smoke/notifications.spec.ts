@@ -61,7 +61,7 @@ test.describe('Smoke — notificaciones @smoke', () => {
       /no soporta alertas push|aún no están disponibles|permiso está bloqueado/i,
     );
 
-    await expect(enable.or(disable).or(diagnostics).or(unsupportedCopy)).toBeVisible({
+    await expect(enable.or(disable).or(diagnostics).or(unsupportedCopy).first()).toBeVisible({
       timeout: 15_000,
     });
 

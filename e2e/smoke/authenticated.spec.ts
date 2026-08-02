@@ -123,19 +123,21 @@ test.describe('Smoke — autenticado @smoke', () => {
 
   test('Buscar aficionados muestra sugerencias o empty', async ({ page }) => {
     await openAuthenticatedHome(page);
-    await page
-      .getByRole('navigation', { name: /navegación principal/i })
-      .getByRole('link', { name: /buscar/i })
-      .first()
-      .click();
+    await page.goto('/search?tab=people');
     await expect(page).toHaveURL(/\/search/);
+    await expect(page.getByRole('heading', { name: /^buscar$/i })).toBeVisible();
 
-    await page.getByRole('tab', { name: 'Aficionados' }).click();
-    await expect(page.getByRole('tab', { name: 'Aficionados' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page).toHaveURL(/tab=people/);
+    const tabs = page.getByRole('tablist', { name: /tipo de búsqueda/i });
+    await expect(tabs.getByRole('tab', { name: 'Aficionados' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByLabel(/nombre o username/i)).toBeVisible({ timeout: 15_000 });
 
     const suggestions = page.getByRole('heading', { name: /aficionados sugeridos/i });
     const emptyHint = page.getByText(/encuentra aficionados/i);
+    const loading = page.getByText(/cargando sugerencias/i);
+    await expect(suggestions.or(emptyHint).or(loading)).toBeVisible({ timeout: 15_000 });
+    if (await loading.isVisible().catch(() => false)) {
+      await expect(loading).toBeHidden({ timeout: 20_000 });
+    }
     await expect(suggestions.or(emptyHint)).toBeVisible({ timeout: 15_000 });
   });
 

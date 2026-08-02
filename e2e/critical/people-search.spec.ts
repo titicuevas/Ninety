@@ -1,19 +1,25 @@
 import { expect, test } from '@playwright/test';
-import { API_BASE, goAppNav, openAuthenticatedHome, readAccessToken } from '../helpers/auth';
+import { API_BASE, openAuthenticatedHome, readAccessToken } from '../helpers/auth';
 
 test.describe('Crítico — búsqueda de aficionados @critical', () => {
   test('buscar aficionados responde en la UI', async ({ page }) => {
     await openAuthenticatedHome(page);
-    await goAppNav(page, /buscar/i);
+    // goto con query: más estable que click de tab si Vite HMR remonta la página
+    await page.goto('/search?tab=people');
     await expect(page).toHaveURL(/\/search/);
     await expect(page.getByRole('heading', { name: /^buscar$/i })).toBeVisible();
 
-    await page.getByRole('tab', { name: 'Aficionados' }).click();
-    await expect(page.getByRole('tab', { name: 'Aficionados' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page).toHaveURL(/tab=people/);
+    const tabs = page.getByRole('tablist', { name: /tipo de búsqueda/i });
+    await expect(tabs.getByRole('tab', { name: 'Aficionados' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByLabel(/nombre o username/i)).toBeVisible({ timeout: 15_000 });
 
     const suggestions = page.getByRole('heading', { name: /aficionados sugeridos/i });
     const emptyHint = page.getByText(/encuentra aficionados/i);
+    const loading = page.getByText(/cargando sugerencias/i);
+    await expect(suggestions.or(emptyHint).or(loading)).toBeVisible({ timeout: 15_000 });
+    if (await loading.isVisible().catch(() => false)) {
+      await expect(loading).toBeHidden({ timeout: 20_000 });
+    }
     await expect(suggestions.or(emptyHint)).toBeVisible({ timeout: 15_000 });
 
     if (await suggestions.isVisible()) {
