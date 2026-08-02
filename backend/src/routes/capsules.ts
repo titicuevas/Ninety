@@ -2,6 +2,11 @@ import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
 import { deleteCapsulePhotoByUrl, deleteCapsulePhotosByUrls, uploadCapsulePhotoBuffer } from '../lib/ensureStorage.js';
+import {
+  buildDiaryExportCsv,
+  buildDiaryExportJson,
+  toExportCapsule,
+} from '../lib/diaryExport.js';
 import { validateCommentBody, validateImageBuffer } from '../lib/contentModeration.js';
 import { attachCommentCounts, fetchCommentsWithAuthors, isMissingCommentsTable } from '../lib/capsuleComments.js';
 import { attachLikeStats, fetchLikesWithProfiles, isMissingLikesTable } from '../lib/capsuleLikes.js';
@@ -349,6 +354,80 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   }
 
   res.json({ capsules: data ?? [], total: count ?? data?.length ?? 0 });
+});
+
+const exportQuerySchema = z.object({
+  format: z.enum(['json', 'csv']).default('json'),
+});
+
+/** GET /api/capsules/me/export — backup GDPR (solo datos del usuario autenticado). */
+capsulesRouter.get('/me/export', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const parsed = exportQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Formato inválido. Usa json o csv.' });
+    return;
+  }
+
+  const supabase = createUserClient(token);
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('username, full_name')
+    .eq('id', req.userId!)
+    .maybeSingle();
+
+  const { data, error } = await supabase
+    .from('capsules')
+    .select(
+      'id, match_id, match_played_at, home_team_name, away_team_name, home_team_crest, away_team_crest, competition_name, home_score, away_score, watched_at, rating, note, photo_urls, is_public, watch_context, created_at, updated_at',
+    )
+    .eq('user_id', req.userId!)
+    .order('watched_at', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  const capsules = (data ?? []).map((row) => toExportCapsule(row as Record<string, unknown>));
+  const stamp = new Date().toISOString().slice(0, 10);
+  const username = (profile?.username as string | null) ?? 'ninety';
+
+  if (parsed.data.format === 'csv') {
+    const body = buildDiaryExportCsv(capsules);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="ninety-diario-${username}-${stamp}.csv"`,
+    );
+    res.send(body);
+    return;
+  }
+
+  const payload = {
+    exported_at: new Date().toISOString(),
+    format_version: 1 as const,
+    profile: {
+      username: (profile?.username as string | null) ?? null,
+      display_name: (profile?.full_name as string | null) ?? null,
+    },
+    capsules,
+  };
+
+  const body = buildDiaryExportJson(payload);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename="ninety-diario-${username}-${stamp}.json"`,
+  );
+  res.send(body);
 });
 
 capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res) => {

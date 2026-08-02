@@ -2,12 +2,13 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Bell, LogOut, Settings } from 'lucide-react';
+import { Bell, Download, LogOut, Settings } from 'lucide-react';
 import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
 import { FormAlert } from '@/components/FormAlert';
 import { Layout } from '@/components/Layout';
 import { PasswordField } from '@/components/PasswordField';
 import { PushAlertsPanel } from '@/components/PushAlertsPanel';
+import { InstallAppPanel } from '@/components/InstallAppPanel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField } from '@/components/ui/form-field';
@@ -17,6 +18,7 @@ import { useDirtyLeave } from '@/hooks/useDirtyLeave';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { apiFetch } from '@/lib/api';
 import { passwordConfirmSchema, type PasswordConfirmForm } from '@/lib/authSchemas';
+import { downloadDiaryExport, type DiaryExportFormat } from '@/lib/diaryExport';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -28,6 +30,7 @@ export function SettingsPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [signOutBusy, setSignOutBusy] = useState(false);
+  const [exportBusy, setExportBusy] = useState<DiaryExportFormat | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const deleteDialogRef = useRef<HTMLDialogElement>(null);
@@ -94,6 +97,19 @@ export function SettingsPage() {
       navigate('/login', { replace: true });
     } finally {
       setSignOutBusy(false);
+    }
+  };
+
+  const onExport = async (format: DiaryExportFormat) => {
+    if (!session?.access_token) return;
+    setExportBusy(format);
+    try {
+      await downloadDiaryExport(format, session.access_token);
+      toast.success(format === 'csv' ? 'CSV descargado' : 'JSON descargado');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'No se pudo exportar el diario');
+    } finally {
+      setExportBusy(null);
     }
   };
 
@@ -171,6 +187,8 @@ export function SettingsPage() {
           </CardContent>
         </Card>
 
+        <InstallAppPanel />
+
         <Card className="border-border">
           <CardHeader>
             <CardTitle className="text-base">Notificaciones</CardTitle>
@@ -186,6 +204,38 @@ export function SettingsPage() {
                 <Bell className="mr-2 h-4 w-4" aria-hidden />
                 Ver centro de alertas
               </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="text-base">Exportar mi diario</CardTitle>
+            <CardDescription>
+              Descarga tus Capsules en JSON o CSV (backup y portabilidad). Solo tus datos; sin
+              contraseñas ni tokens.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 sm:flex-row">
+            <Button
+              type="button"
+              variant="secondary"
+              loading={exportBusy === 'json'}
+              disabled={exportBusy != null}
+              onClick={() => void onExport('json')}
+            >
+              <Download className="mr-2 h-4 w-4" aria-hidden />
+              Descargar JSON
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              loading={exportBusy === 'csv'}
+              disabled={exportBusy != null}
+              onClick={() => void onExport('csv')}
+            >
+              <Download className="mr-2 h-4 w-4" aria-hidden />
+              Descargar CSV
             </Button>
           </CardContent>
         </Card>
