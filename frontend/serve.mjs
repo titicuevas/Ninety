@@ -196,6 +196,93 @@ async function ogForProfile(username) {
   });
 }
 
+async function ogForCollection(username, slug) {
+  const data = await fetchJson(
+    `/api/collections/user/${encodeURIComponent(username)}/${encodeURIComponent(slug)}`,
+  );
+  if (!data?.collection) return null;
+
+  const collection = data.collection;
+  const profile = data.profile ?? {};
+  const authorName =
+    profile.display_name ||
+    (profile.username ? `@${profile.username}` : null) ||
+    `@${username}`;
+  const handle = profile.username || username;
+  const count =
+    typeof collection.items_count === 'number'
+      ? collection.items_count
+      : Array.isArray(data.capsules)
+        ? data.capsules.length
+        : 0;
+  const desc =
+    typeof collection.description === 'string' && collection.description.trim()
+      ? collection.description.trim()
+      : null;
+
+  const title = `${collection.name} | Ninety`;
+  const description = [
+    `Colección de ${authorName}`,
+    `${count === 1 ? '1 partido' : `${count} partidos`}`,
+    desc,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+    .slice(0, 180);
+
+  const firstCapsule = Array.isArray(data.capsules) ? data.capsules[0] : null;
+  const photos = Array.isArray(firstCapsule?.photo_urls) ? firstCapsule.photo_urls : [];
+  const image =
+    photos[0] || firstCapsule?.photo_url || profile.avatar_url || defaultImage();
+
+  return renderOgHtml({
+    title,
+    description: description || `Lista pública de @${handle} en Ninety.`,
+    url: `${SITE_URL}/u/${encodeURIComponent(username)}/lists/${encodeURIComponent(slug)}`,
+    image,
+    type: 'website',
+  });
+}
+
+async function ogForCompare(username) {
+  const data = await fetchJson(`/api/capsules/user/${encodeURIComponent(username)}`);
+  if (!data?.profile) return null;
+
+  const profile = data.profile;
+  const name = profile.display_name || profile.username || username;
+  const handle = profile.username || username;
+  const count =
+    typeof data.stats?.totalMatches === 'number'
+      ? data.stats.totalMatches
+      : typeof data.total === 'number'
+        ? data.total
+        : Array.isArray(data.capsules)
+          ? data.capsules.length
+          : 0;
+  const topTeam =
+    data.stats?.topTeam?.name && typeof data.stats.topTeam.name === 'string'
+      ? data.stats.topTeam.name
+      : null;
+
+  const title = `Cara a cara con ${name} | Ninety`;
+  const description = [
+    `Compara tu diario futbolero con @${handle}`,
+    `${count === 1 ? '1 partido' : `${count} partidos`} en su diario`,
+    topTeam ? `Más visto: ${topTeam}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+    .slice(0, 180);
+
+  return renderOgHtml({
+    title,
+    description: description || `Cara a cara vs @${handle} en Ninety.`,
+    url: `${SITE_URL}/u/${encodeURIComponent(username)}/vs`,
+    image: profile.avatar_url || defaultImage(),
+    type: 'website',
+  });
+}
+
 const SECURITY_HEADERS = {
   'X-Frame-Options': 'SAMEORIGIN',
   'X-Content-Type-Options': 'nosniff',
@@ -305,6 +392,24 @@ const server = http.createServer(async (req, res) => {
     const capsuleMatch = pathname.match(/^\/c\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
     if (capsuleMatch) {
       const html = await ogForCapsule(capsuleMatch[1]);
+      if (html) {
+        sendCompressed(req, res, 200, Buffer.from(html), { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' });
+        return;
+      }
+    }
+
+    const collectionMatch = pathname.match(/^\/u\/([a-z0-9_]+)\/lists\/([a-z0-9]+(?:-[a-z0-9]+)*)$/i);
+    if (collectionMatch) {
+      const html = await ogForCollection(collectionMatch[1], collectionMatch[2]);
+      if (html) {
+        sendCompressed(req, res, 200, Buffer.from(html), { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' });
+        return;
+      }
+    }
+
+    const compareMatch = pathname.match(/^\/u\/([a-z0-9_]+)\/vs$/i);
+    if (compareMatch) {
+      const html = await ogForCompare(compareMatch[1]);
       if (html) {
         sendCompressed(req, res, 200, Buffer.from(html), { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' });
         return;

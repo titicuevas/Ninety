@@ -112,8 +112,8 @@ En [Google Cloud Console](https://console.cloud.google.com/) → Credentials →
 2. Login email + Google (si aplica) → vuelve a `/auth/callback` en el dominio nuevo
 3. Reset password → `/auth/reset-password`
 4. CORS: crear/listar capsules desde el dominio nuevo (sin error en consola)
-5. Compartir un perfil `/u/...` o capsule `/c/...` (preview OG usa `SITE_URL`)
-6. PWA: manifest e iconos en el origen nuevo
+5. Compartir un perfil `/u/...`, capsule `/c/...`, colección `/u/.../lists/...` o cara a cara `/u/.../vs` (preview OG usa `SITE_URL`)
+6. PWA: manifest + PNG 192/512 (y maskable) + apple-touch-icon en el origen nuevo
 
 ---
 

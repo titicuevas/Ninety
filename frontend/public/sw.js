@@ -1,5 +1,12 @@
-const CACHE_NAME = 'ninety-v3';
-const PRECACHE = ['/', '/offline.html', '/manifest.json', '/favicon.svg'];
+const CACHE_NAME = 'ninety-v4';
+const PRECACHE = [
+  '/',
+  '/offline.html',
+  '/manifest.json',
+  '/favicon.svg',
+  '/icon-192.png',
+  '/apple-touch-icon.png',
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

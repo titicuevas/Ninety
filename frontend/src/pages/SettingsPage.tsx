@@ -215,7 +215,8 @@ export function SettingsPage() {
             <CardTitle className="text-base">Exportar mi diario</CardTitle>
             <CardDescription>
               Descarga tus Capsules en JSON o CSV (backup y portabilidad). Solo tus datos; sin
-              contraseñas ni tokens.
+              contraseñas ni tokens. Las colecciones no se incluyen en el export (solo Capsules del
+              diario).
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3 sm:flex-row">

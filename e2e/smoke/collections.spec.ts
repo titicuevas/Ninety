@@ -29,6 +29,18 @@ test.describe('Smoke — colecciones @smoke', () => {
     await expect(page).toHaveURL(/\/collections\/[0-9a-f-]+/i, { timeout: 20_000 });
     await expect(page.getByRole('heading', { name: /editar colección/i })).toBeVisible();
     await expect(page.getByDisplayValue(uniqueName)).toBeVisible();
+
+    const publicLink = page.getByRole('link', { name: /ver pública/i });
+    await expect(publicLink).toBeVisible({ timeout: 10_000 });
+    const href = await publicLink.getAttribute('href');
+    expect(href).toMatch(/\/u\/[^/]+\/lists\/[^/]+/);
+
+    await publicLink.click();
+    await expect(page).toHaveURL(/\/u\/[^/]+\/lists\/[^/]+/, { timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: new RegExp(uniqueName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByRole('button', { name: /compartir/i })).toBeVisible();
   });
 
   test('Perfil enlaza a Colecciones', async ({ page }) => {

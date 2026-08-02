@@ -149,7 +149,7 @@ SITE_URL=https://getninety.app
 VITE_SITE_URL=https://getninety.app
 ```
 
-> `API_URL` / `SITE_URL` las usa `serve.mjs` para previews Open Graph (WhatsApp, X, Telegram) en `/c/:id` y `/u/:username`.
+> `API_URL` / `SITE_URL` las usa `serve.mjs` para previews Open Graph (WhatsApp, X, Telegram) en `/c/:id`, `/u/:username`, `/u/:username/lists/:slug` y `/u/:username/vs`.
 > El frontend ya no incluye el SDK de Supabase: la auth va por `/api/auth/*` en el backend.
 
 **Backend** (`ninety-api`):
@@ -399,8 +399,9 @@ Ninety/
 ### ✅ v4 — Diario social & portabilidad
 - [x] Comparar diarios (cara a cara) — partidos, media, estadio y overlap de equipos vs otro aficionado (`/u/:username/vs`)
 - [x] Colecciones del diario — listas curadas de Capsules (“Clásicos”, “Viajes”, “Noches de Champions”) compartibles al estilo Letterboxd (`/collections`, `/u/:username/lists/:slug`; migración `20250802120000_collections.sql`)
-- [x] Exportar mi diario — descarga JSON/CSV desde Ajustes (backup y portabilidad GDPR)
-- [x] Instalar Ninety (PWA) — añadir a pantalla de inicio desde Ajustes + shell offline ligero (`manifest.json`, `sw.js`, `/offline.html`)
+- [x] Exportar mi diario — descarga JSON/CSV desde Ajustes (backup y portabilidad GDPR; Capsules del diario, sin colecciones)
+- [x] Instalar Ninety (PWA) — añadir a pantalla de inicio desde Ajustes + shell offline ligero (`manifest.json` con PNG 192/512 + maskable, `apple-touch-icon`, `sw.js`, `/offline.html`)
+- [x] Previews Open Graph en colecciones públicas y cara a cara (`serve.mjs`)
 
 ### 🚧 v5 — Activación & retención
 - [x] Colecciones descubribles — CTAs en Perfil / Mis Capsules / perfil público, «Añadir a colección» desde Capsule, empty states y humo e2e
