@@ -11,10 +11,12 @@ import { WrappedLoadingSkeleton } from '@/components/ListSkeletons';
 import { OnboardingSteps } from '@/components/OnboardingSteps';
 import { PushActivationBanner } from '@/components/PushActivationBanner';
 import { StadiumMapSection } from '@/components/StadiumMapSection';
+import { ValueOnboardingCard } from '@/components/ValueOnboardingCard';
 import { WrappedSummary } from '@/components/WrappedSummary';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCapsules } from '@/hooks/useCapsules';
+import { useMyCollections } from '@/hooks/useCollections';
 import { useFollowList } from '@/hooks/useFollowList';
 import {
   achievementsInputFromStats,
@@ -50,6 +52,7 @@ export function HomePage() {
   const { data: capsulesData, isLoading } = useCapsules();
   const { data: followingData } = useFollowList(profile?.username ?? undefined, 'following');
   const { data: followersData } = useFollowList(profile?.username ?? undefined, 'followers');
+  const { data: collectionsData } = useMyCollections();
   const [searchParams, setSearchParams] = useSearchParams();
   const [welcomeOpen, setWelcomeOpen] = useState(
     () => Boolean((location.state as HomeLocationState | null)?.fromRegister),
@@ -58,6 +61,9 @@ export function HomePage() {
   const hasCapsule = (capsulesData?.capsules?.length ?? 0) > 0;
   const hasFollow = (followingData?.total ?? 0) > 0;
   const showOnboarding = !isLoading && (!hasCapsule || !hasFollow || profileIncomplete);
+  const hasCollection = (collectionsData?.collections?.length ?? 0) > 0;
+  const compareTargetUsername =
+    followingData?.profiles?.find((p) => p.username)?.username ?? null;
 
   const metadataName =
     typeof user?.user_metadata?.display_name === 'string' ? user.user_metadata.display_name : undefined;
@@ -144,7 +150,13 @@ export function HomePage() {
             profileClaimInline={profileIncomplete}
           />
         ) : (
-          <PushActivationBanner context="home" />
+          <>
+            <ValueOnboardingCard
+              hasCollection={hasCollection}
+              compareTargetUsername={compareTargetUsername}
+            />
+            <PushActivationBanner context="home" />
+          </>
         )}
 
         <HomeSocialHub username={profile?.username} />

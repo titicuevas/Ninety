@@ -406,7 +406,7 @@ Ninety/
 - [x] Colecciones descubribles — CTAs en Perfil / Mis Capsules / perfil público, «Añadir a colección» desde Capsule, empty states y humo e2e
 - [ ] Cara a cara más visual (avatares, proporciones, equipos en común vacíos)
 - [ ] Digest / recordatorios ligeros para volver al diario
-- [ ] Onboarding de valor (primera colección, primer compare)
+- [x] Onboarding de valor (primera colección, primer compare)
 
 ## 🎨 Identidad visual
 

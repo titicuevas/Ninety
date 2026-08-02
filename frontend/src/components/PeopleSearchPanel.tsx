@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Users } from 'lucide-react';
+import { Search, Swords, Users } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
 import { PeopleListSkeleton } from '@/components/ListSkeletons';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { MIN_PEOPLE_QUERY, useProfileSearch } from '@/hooks/useProfileSearch';
+import { isAutoUsername } from '@/lib/profileHelpers';
 import { profilePath } from '@/lib/profilePath';
 import type { Profile } from '@/types/profile';
 
@@ -16,6 +18,7 @@ export function PeopleResultRow({ profile }: { profile: Profile }) {
   const username = profile.username!;
   const name = profile.display_name ?? username;
   const location = [profile.city, profile.country].filter(Boolean).join(', ');
+  const canCompare = !isAutoUsername(username);
 
   return (
     <li className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 sm:p-4">
@@ -52,7 +55,20 @@ export function PeopleResultRow({ profile }: { profile: Profile }) {
         </p>
       </div>
 
-      <FollowButton username={username} followedByMe={!!profile.followed_by_me} size="compact" />
+      <div className="flex shrink-0 items-center gap-1">
+        {canCompare ? (
+          <Button asChild variant="ghost" size="sm" className="px-2 text-muted-foreground">
+            <Link
+              to={`/u/${encodeURIComponent(username)}/vs`}
+              aria-label={`Cara a cara con @${username}`}
+            >
+              <Swords className="h-4 w-4" aria-hidden />
+              <span className="ml-1.5 hidden sm:inline">vs</span>
+            </Link>
+          </Button>
+        ) : null}
+        <FollowButton username={username} followedByMe={!!profile.followed_by_me} size="compact" />
+      </div>
     </li>
   );
 }

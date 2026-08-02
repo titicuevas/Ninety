@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Library, Lock, Plus } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
@@ -18,6 +18,7 @@ import { toast } from '@/lib/toast';
 export function CollectionsPage() {
   useDocumentTitle('Colecciones');
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data, isLoading, isError, error, refetch, isRefetching } = useMyCollections();
   const { data: profile } = useProfile();
   const createCollection = useCreateCollection();
@@ -25,10 +26,20 @@ export function CollectionsPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(true);
-  const [formOpen, setFormOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(() => searchParams.get('new') === '1');
 
   const collections = data?.collections ?? [];
   const username = profile?.username;
+
+  const openForm = (open: boolean) => {
+    setFormOpen(open);
+    if (open && searchParams.get('new') === '1') return;
+    if (!open && searchParams.has('new')) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('new');
+      setSearchParams(next, { replace: true });
+    }
+  };
 
   const onCreate = (event: FormEvent) => {
     event.preventDefault();
@@ -45,7 +56,7 @@ export function CollectionsPage() {
         setName('');
         setDescription('');
         setIsPublic(true);
-        setFormOpen(false);
+        openForm(false);
         toast.success('Colección creada');
         navigate(`/collections/${result.collection.id}`);
       },
@@ -68,7 +79,7 @@ export function CollectionsPage() {
           <Button
             type="button"
             className="shrink-0"
-            onClick={() => setFormOpen((open) => !open)}
+            onClick={() => openForm(!formOpen)}
           >
             <Plus className="mr-1.5 h-4 w-4" aria-hidden />
             Nueva colección
@@ -127,7 +138,7 @@ export function CollectionsPage() {
                   <Button
                     type="button"
                     variant="secondary"
-                    onClick={() => setFormOpen(false)}
+                    onClick={() => openForm(false)}
                     disabled={createCollection.isPending}
                   >
                     Cancelar
@@ -156,7 +167,7 @@ export function CollectionsPage() {
             title="Aún no tienes colecciones"
             description="Agrupa Capsules en listas como Clásicos o Viajes y compártelas."
           >
-            <Button type="button" onClick={() => setFormOpen(true)}>
+            <Button type="button" onClick={() => openForm(true)}>
               Crear la primera
             </Button>
           </EmptyState>

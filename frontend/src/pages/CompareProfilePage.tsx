@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeftRight, Check, Share2, Swords } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
@@ -21,6 +21,7 @@ import {
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { shareOrCopyLink } from '@/lib/shareLink';
 import { toast } from '@/lib/toast';
+import { markCompareVisited } from '@/lib/valueOnboardingMemory';
 import { cn } from '@/lib/utils';
 
 function metricTone(metric: CompareMetric, side: 'me' | 'them') {
@@ -109,6 +110,19 @@ export function CompareProfilePage() {
 
   const Shell = user ? Layout : PublicLayout;
   const isOwnProfile = !!user && themProfile?.id === user.id;
+  const compareReady =
+    !!user &&
+    !!themProfile &&
+    !isOwnProfile &&
+    !!meUsername &&
+    !isAutoUsername(meUsername) &&
+    !meQuery.isLoading &&
+    !meQuery.isError;
+
+  useEffect(() => {
+    if (!compareReady || !user?.id) return;
+    markCompareVisited(user.id);
+  }, [compareReady, user?.id]);
 
   if (themQuery.isLoading || (user && meLoading)) {
     return (
@@ -246,6 +260,7 @@ export function CompareProfilePage() {
     stats: themStats ?? emptyStats,
   };
   const compare = buildProfileCompare(meSide, themSide);
+  const myMatches = meSide.stats.totalMatches;
 
   return (
     <Shell>
@@ -259,9 +274,25 @@ export function CompareProfilePage() {
           </Link>
         </div>
 
+        {myMatches === 0 ? (
+          <div
+            className="rounded-xl border border-primary/25 bg-primary/5 px-4 py-3 text-sm"
+            data-testid="compare-empty-diary-hint"
+          >
+            <p className="font-medium">Tu diario aún está vacío</p>
+            <p className="mt-1 text-muted-foreground">
+              Guarda partidos para que el cara a cara tenga más sustancia.{' '}
+              <Link to="/search" className="text-primary hover:underline">
+                Buscar partido
+              </Link>
+            </p>
+          </div>
+        ) : null}
+
         <section
           className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-emerald-600/25 via-emerald-900/15 to-background p-5 sm:p-6"
           aria-labelledby="compare-heading"
+          data-testid="compare-face-off"
         >
           <div
             className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/20 blur-3xl"

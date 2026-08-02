@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Bell, Compass, Newspaper, Users } from 'lucide-react';
+import { Bell, Compass, Library, Newspaper, Users } from 'lucide-react';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -105,6 +105,12 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
           <Link to="/search?tab=people">
             <Users className="mr-1.5 h-3.5 w-3.5" aria-hidden />
             Aficionados
+          </Link>
+        </Button>
+        <Button asChild variant="secondary" size="sm">
+          <Link to="/collections">
+            <Library className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+            Colecciones
           </Link>
         </Button>
         <Button asChild variant="secondary" size="sm">
