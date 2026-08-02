@@ -198,6 +198,7 @@ export function CapsuleComments({
   const [draft, setDraft] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [displayCount, setDisplayCount] = useState(commentsCount);
   const panelRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { data, isLoading, isError, isFetching, refetch, isRefetching } = useCapsuleComments(
@@ -209,8 +210,13 @@ export function CapsuleComments({
   const updateComment = useUpdateCapsuleComment(capsuleId);
 
   const comments = data?.comments ?? [];
-  const label = commentsCount > 0 ? `${commentsCount} comentarios` : 'Comentar';
+  const label = displayCount > 0 ? `${displayCount} comentarios` : 'Comentar';
+  const rootId = `comments-${capsuleId}`;
   const panelId = `comments-panel-${capsuleId}`;
+
+  useEffect(() => {
+    setDisplayCount(commentsCount);
+  }, [commentsCount]);
 
   useEffect(() => {
     if (!defaultOpen) return;
@@ -231,7 +237,7 @@ export function CapsuleComments({
   const handleToggle = () => {
     setOpen((wasOpen) => {
       const next = !wasOpen;
-      if (!next && window.location.hash === '#comments') {
+      if (!next && (window.location.hash === '#comments' || window.location.hash === `#${rootId}`)) {
         const path = `${window.location.pathname}${window.location.search}`;
         window.history.replaceState(null, '', path);
       }
@@ -247,14 +253,15 @@ export function CapsuleComments({
     try {
       await addComment.mutateAsync(text);
       setDraft('');
+      setDisplayCount((n) => n + 1);
       toast.success('Comentario publicado');
     } catch {
-      // error shown via mutation state if needed
+      // toast via mutation onError
     }
   };
 
   return (
-    <div id="comments" ref={panelRef} className={cn(className)}>
+    <div id={rootId} ref={panelRef} className={cn(className)}>
       <button
         type="button"
         onClick={handleToggle}
@@ -364,6 +371,7 @@ export function CapsuleComments({
         onConfirm={() => {
           if (!pendingDeleteId) return;
           deleteComment.mutate(pendingDeleteId, {
+            onSuccess: () => setDisplayCount((n) => Math.max(0, n - 1)),
             onSettled: () => setPendingDeleteId(null),
           });
         }}

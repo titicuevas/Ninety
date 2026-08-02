@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import { Compass, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { CapsuleComments } from '@/components/CapsuleComments';
-import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
+import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { CapsuleListSkeleton } from '@/components/ListSkeletons';
 import { Layout } from '@/components/Layout';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
-import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { Button } from '@/components/ui/button';
 import { useCapsuleFeed, type FeedScope, type FeedSort } from '@/hooks/useCapsules';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
@@ -54,24 +52,18 @@ function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; cur
         </div>
       }
       footer={
-        <>
-          <CapsuleLikeButton
-            capsuleId={capsule.id}
-            likesCount={capsule.likes_count}
-            likedByMe={capsule.liked_by_me}
-          />
-          <CapsuleComments
-            capsuleId={capsule.id}
-            commentsCount={capsule.comments_count}
-            currentUserId={currentUserId}
-            capsuleOwnerId={capsule.user_id}
-          />
-          <ShareCapsuleButton
-            capsuleId={capsule.id}
-            title={shareTitle}
-            isPublic={capsule.is_public !== false}
-          />
-        </>
+        <CapsuleEngagementBar
+          bordered={false}
+          className="mt-0"
+          capsuleId={capsule.id}
+          shareTitle={shareTitle}
+          likesCount={capsule.likes_count}
+          likedByMe={capsule.liked_by_me}
+          commentsCount={capsule.comments_count}
+          currentUserId={currentUserId}
+          capsuleOwnerId={capsule.user_id}
+          isPublic={capsule.is_public !== false}
+        />
       }
     />
   );

@@ -47,8 +47,12 @@ export function useAddCapsuleComment(capsuleId: string) {
         session?.access_token,
       ),
     onSuccess: () => {
+      queryClient.setQueryData<InfiniteData<FeedResponse>>(['capsules', 'feed'], (old) =>
+        bumpFeedCommentCount(old, capsuleId, 1),
+      );
       void queryClient.invalidateQueries({ queryKey: ['capsules', capsuleId, 'comments'] });
       void queryClient.invalidateQueries({ queryKey: ['capsules', 'feed'] });
+      void queryClient.invalidateQueries({ queryKey: ['capsules', capsuleId] });
       void queryClient.invalidateQueries({ queryKey: ['profile', 'public'] });
     },
     onError: (err) => {

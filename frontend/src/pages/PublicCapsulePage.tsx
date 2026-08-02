@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { CapsuleComments } from '@/components/CapsuleComments';
-import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
+import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { FollowButton } from '@/components/FollowButton';
 import { FormSuccess } from '@/components/FormAlert';
@@ -235,42 +234,19 @@ export function PublicCapsulePage() {
 
             {capsule.note ? <p className="mt-4 text-sm text-muted-foreground">{capsule.note}</p> : null}
 
-            <div className="mt-5 flex flex-wrap items-start gap-1 border-t border-border pt-3">
-              {user ? (
-                <>
-                  <CapsuleLikeButton
-                    capsuleId={capsule.id}
-                    likesCount={capsule.likes_count}
-                    likedByMe={capsule.liked_by_me}
-                  />
-                  <CapsuleComments
-                    key={openComments ? 'comments-open' : 'comments'}
-                    capsuleId={capsule.id}
-                    commentsCount={capsule.comments_count}
-                    currentUserId={user.id}
-                    capsuleOwnerId={capsule.user_id}
-                    defaultOpen={openComments}
-                  />
-                </>
-              ) : (
-                <>
-                  <CapsuleComments
-                    key={openComments ? 'comments-open' : 'comments'}
-                    capsuleId={capsule.id}
-                    commentsCount={capsule.comments_count}
-                    capsuleOwnerId={capsule.user_id}
-                    defaultOpen={openComments}
-                  />
-                  <p className="w-full pt-2 text-sm text-muted-foreground">
-                    {(capsule.likes_count ?? 0) > 0 ? `${capsule.likes_count} me gusta · ` : null}
-                    <Link to="/login" className="text-primary hover:underline">
-                      Inicia sesión
-                    </Link>{' '}
-                    para dar like.
-                  </p>
-                </>
-              )}
-            </div>
+            <CapsuleEngagementBar
+              className="mt-5"
+              capsuleId={capsule.id}
+              shareTitle={shareTitle}
+              likesCount={capsule.likes_count}
+              likedByMe={capsule.liked_by_me}
+              commentsCount={capsule.comments_count}
+              currentUserId={user?.id}
+              capsuleOwnerId={capsule.user_id}
+              isPublic={capsule.is_public !== false}
+              defaultOpenComments={openComments}
+              showShare={false}
+            />
 
             {isOwn ? (
               <div className="mt-4">

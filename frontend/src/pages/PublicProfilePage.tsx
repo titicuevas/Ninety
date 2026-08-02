@@ -1,8 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { MapPin, Trophy } from 'lucide-react';
-import { CapsuleComments } from '@/components/CapsuleComments';
 import { CapsuleDiaryFilters } from '@/components/CapsuleDiaryFilters';
-import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
+import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
@@ -10,7 +9,6 @@ import { Layout } from '@/components/Layout';
 import { ProfileLoadingSkeleton } from '@/components/ListSkeletons';
 import { PublicLayout } from '@/components/PublicLayout';
 import { PublicWrappedSummary } from '@/components/PublicWrappedSummary';
-import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { ShareProfileButton } from '@/components/ShareProfileButton';
 import { Button } from '@/components/ui/button';
 import { usePublicProfile } from '@/hooks/usePublicProfile';
@@ -27,8 +25,6 @@ function PublicCapsuleCard({
   capsule: Capsule & { likes_count?: number; liked_by_me?: boolean; comments_count?: number };
   currentUserId?: string;
 }) {
-  const likesCount = capsule.likes_count ?? 0;
-  const commentsCount = capsule.comments_count ?? 0;
   const shareTitle = `${capsule.home_team_name} vs ${capsule.away_team_name}`;
 
   return (
@@ -37,41 +33,18 @@ function PublicCapsuleCard({
       showWatchedDate
       footerBordered
       footer={
-        <>
-          {currentUserId ? (
-            <>
-              <CapsuleLikeButton
-                capsuleId={capsule.id}
-                likesCount={likesCount}
-                likedByMe={capsule.liked_by_me}
-              />
-              <CapsuleComments
-                capsuleId={capsule.id}
-                commentsCount={commentsCount}
-                currentUserId={currentUserId}
-                capsuleOwnerId={capsule.user_id}
-              />
-            </>
-          ) : (
-            <>
-              <CapsuleComments capsuleId={capsule.id} commentsCount={commentsCount} />
-              <p className="w-full text-sm text-muted-foreground">
-                {likesCount > 0 ? `${likesCount} me gusta` : null}
-                {likesCount > 0 && commentsCount > 0 ? ' · ' : null}
-                {commentsCount > 0 ? `${commentsCount} comentarios` : null}
-                {(likesCount > 0 || commentsCount > 0) && ' · '}
-                <Link to="/login" className="text-primary hover:underline">
-                  Inicia sesión para interactuar
-                </Link>
-              </p>
-            </>
-          )}
-          <ShareCapsuleButton
-            capsuleId={capsule.id}
-            title={shareTitle}
-            isPublic={capsule.is_public !== false}
-          />
-        </>
+        <CapsuleEngagementBar
+          bordered={false}
+          className="mt-0"
+          capsuleId={capsule.id}
+          shareTitle={shareTitle}
+          likesCount={capsule.likes_count}
+          likedByMe={capsule.liked_by_me}
+          commentsCount={capsule.comments_count}
+          currentUserId={currentUserId}
+          capsuleOwnerId={capsule.user_id}
+          isPublic={capsule.is_public !== false}
+        />
       }
     />
   );

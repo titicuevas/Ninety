@@ -18,39 +18,58 @@ export function CapsuleLikeButton({
 }: CapsuleLikeButtonProps) {
   const toggle = useToggleCapsuleLike();
   const [pop, setPop] = useState(false);
+  const [announce, setAnnounce] = useState('');
 
   const handleClick = () => {
-    if (!likedByMe) {
+    const nextLiked = !likedByMe;
+    const nextCount = Math.max(0, likesCount + (nextLiked ? 1 : -1));
+    if (nextLiked) {
       setPop(true);
       window.setTimeout(() => setPop(false), 200);
     }
+    setAnnounce(
+      nextLiked
+        ? `Te gusta${nextCount > 0 ? `. ${nextCount}` : ''}`
+        : `Quitaste el me gusta${nextCount > 0 ? `. Quedan ${nextCount}` : ''}`,
+    );
     toggle.mutate({ capsuleId, liked: likedByMe });
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={toggle.isPending}
-      aria-pressed={likedByMe}
-      aria-busy={toggle.isPending || undefined}
-      aria-label={likedByMe ? 'Quitar me gusta' : 'Me gusta'}
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm transition-colors',
-        'hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        likedByMe ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
-        className,
-      )}
-    >
-      <Heart
+    <>
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={toggle.isPending}
+        aria-pressed={likedByMe}
+        aria-busy={toggle.isPending || undefined}
+        aria-label={
+          likedByMe
+            ? `Quitar me gusta${likesCount > 0 ? ` (${likesCount})` : ''}`
+            : `Me gusta${likesCount > 0 ? ` (${likesCount})` : ''}`
+        }
         className={cn(
-          'h-4 w-4 shrink-0 transition-colors',
-          likedByMe && 'fill-primary text-primary',
-          pop && 'motion-pop',
+          'inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm transition-colors',
+          'hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          likedByMe ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+          className,
         )}
-        aria-hidden="true"
-      />
-      <span className="tabular-nums">{likesCount > 0 ? likesCount : 'Me gusta'}</span>
-    </button>
+      >
+        <Heart
+          className={cn(
+            'h-4 w-4 shrink-0 transition-colors',
+            likedByMe && 'fill-primary text-primary',
+            pop && 'motion-pop',
+          )}
+          aria-hidden="true"
+        />
+        <span className="tabular-nums" aria-hidden="true">
+          {likesCount > 0 ? likesCount : 'Me gusta'}
+        </span>
+      </button>
+      <span className="sr-only" aria-live="polite">
+        {announce}
+      </span>
+    </>
   );
 }
