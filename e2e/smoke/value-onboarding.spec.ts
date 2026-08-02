@@ -159,6 +159,10 @@ test.describe('Smoke — onboarding de valor @smoke', () => {
 
     await page.goto(`/u/${encodeURIComponent(targetUsername)}/vs`);
     await expect(page.getByTestId('compare-face-off')).toBeVisible({ timeout: 25_000 });
+    await expect(page.getByTestId('compare-bar-matches')).toBeVisible();
+    await expect(
+      page.getByTestId('compare-shared-teams').or(page.getByTestId('compare-shared-teams-empty')),
+    ).toBeVisible();
 
     const userId = await readSessionUserId(page);
     expect(userId).toBeTruthy();

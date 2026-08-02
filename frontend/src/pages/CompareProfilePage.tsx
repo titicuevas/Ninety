@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeftRight, Check, Share2, Swords } from 'lucide-react';
+import { ArrowLeftRight, Check, Share2, Swords, Users } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
 import { ProfileLoadingSkeleton } from '@/components/ListSkeletons';
@@ -15,6 +15,7 @@ import { usePublicProfile } from '@/hooks/usePublicProfile';
 import {
   buildCompareShareText,
   buildProfileCompare,
+  metricBarPercents,
   type CompareMetric,
   type CompareSide,
 } from '@/lib/compareProfiles';
@@ -24,10 +25,82 @@ import { toast } from '@/lib/toast';
 import { markCompareVisited } from '@/lib/valueOnboardingMemory';
 import { cn } from '@/lib/utils';
 
+function CompareAvatar({
+  name,
+  avatarUrl,
+  size = 'lg',
+}: {
+  name: string;
+  avatarUrl?: string | null;
+  size?: 'md' | 'lg';
+}) {
+  const dim = size === 'lg' ? 'h-16 w-16 sm:h-20 sm:w-20 text-xl sm:text-2xl' : 'h-10 w-10 text-sm';
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt=""
+        className={cn('shrink-0 rounded-full border-2 border-white/25 object-cover shadow-lg', dim)}
+      />
+    );
+  }
+  return (
+    <span
+      className={cn(
+        'flex shrink-0 items-center justify-center rounded-full border-2 border-white/20 bg-primary font-bold text-primary-foreground shadow-lg',
+        dim,
+      )}
+      aria-hidden
+    >
+      {name.slice(0, 1).toUpperCase()}
+    </span>
+  );
+}
+
 function metricTone(metric: CompareMetric, side: 'me' | 'them') {
   if (metric.winner === 'na' || metric.winner === 'tie') return 'text-foreground';
   if (metric.winner === side) return 'text-emerald-300';
   return 'text-muted-foreground';
+}
+
+function MetricProportionBar({ metric }: { metric: CompareMetric }) {
+  if (metric.winner === 'na') {
+    return (
+      <div
+        className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"
+        aria-hidden
+        data-testid={`compare-bar-${metric.id}`}
+      />
+    );
+  }
+
+  const { mePct, themPct } = metricBarPercents(metric.meValue, metric.themValue);
+  const meWins = metric.winner === 'me';
+  const themWins = metric.winner === 'them';
+
+  return (
+    <div
+      className="mt-2 flex h-2 overflow-hidden rounded-full bg-black/40"
+      role="img"
+      aria-label={`Proporción ${metric.label}: tú ${metric.meDisplay}, rival ${metric.themDisplay}`}
+      data-testid={`compare-bar-${metric.id}`}
+    >
+      <span
+        className={cn(
+          'h-full transition-[width] duration-500 ease-out',
+          meWins ? 'bg-emerald-400' : metric.winner === 'tie' ? 'bg-emerald-400/70' : 'bg-emerald-400/35',
+        )}
+        style={{ width: `${mePct}%` }}
+      />
+      <span
+        className={cn(
+          'h-full transition-[width] duration-500 ease-out',
+          themWins ? 'bg-white/85' : metric.winner === 'tie' ? 'bg-white/55' : 'bg-white/30',
+        )}
+        style={{ width: `${themPct}%` }}
+      />
+    </div>
+  );
 }
 
 function CompareShareButton({
@@ -93,6 +166,7 @@ export function CompareProfilePage() {
 
   const themProfile = themQuery.data?.pages[0]?.profile;
   const themStats = themQuery.data?.pages[0]?.stats;
+  const mePublicProfile = meQuery.data?.pages[0]?.profile;
   const meStats = meQuery.data?.pages[0]?.stats;
 
   const themDisplay =
@@ -249,15 +323,20 @@ export function CompareProfilePage() {
     bestRated: null,
   };
 
+  const meAvatarUrl = mePublicProfile?.avatar_url ?? meProfile?.avatar_url ?? null;
+  const themAvatarUrl = themProfile.avatar_url ?? null;
+
   const meSide: CompareSide = {
     username: meUsername,
     displayName: meDisplay,
     stats: meStats ?? emptyStats,
+    avatarUrl: meAvatarUrl,
   };
   const themSide: CompareSide = {
     username: themProfile.username!,
     displayName: themDisplay,
     stats: themStats ?? emptyStats,
+    avatarUrl: themAvatarUrl,
   };
   const compare = buildProfileCompare(meSide, themSide);
   const myMatches = meSide.stats.totalMatches;
@@ -298,27 +377,51 @@ export function CompareProfilePage() {
             className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/20 blur-3xl"
             aria-hidden
           />
-          <div className="relative space-y-5">
+          <div
+            className="pointer-events-none absolute -bottom-10 -left-6 h-28 w-28 rounded-full bg-emerald-400/10 blur-3xl"
+            aria-hidden
+          />
+          <div className="relative space-y-6">
             <p className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/20 px-3 py-1 text-xs font-medium text-emerald-100">
               <Swords className="h-3.5 w-3.5" aria-hidden />
               Cara a cara
             </p>
 
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <h1 id="compare-heading" className="text-xl font-bold tracking-tight sm:text-2xl">
-                  {meDisplay}{' '}
-                  <span className="text-emerald-200/80">vs</span> {themDisplay}
-                </h1>
-                <p className="mt-1 text-sm text-white/70">{compare.headline}</p>
+            <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex w-full items-center justify-center gap-3 sm:w-auto sm:justify-start">
+                <div className="flex flex-col items-center gap-1.5">
+                  <CompareAvatar name={meDisplay} avatarUrl={meAvatarUrl} />
+                  <p className="max-w-[6.5rem] truncate text-center text-xs font-medium text-emerald-100">
+                    Tú
+                  </p>
+                </div>
+                <div className="flex flex-col items-center gap-1 px-1">
+                  <span className="rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-100/90">
+                    vs
+                  </span>
+                  <p
+                    className="font-mono text-lg font-bold tabular-nums text-white"
+                    aria-label={`Marcador ${compare.scoreLabel}`}
+                  >
+                    {compare.scoreLabel}
+                  </p>
+                </div>
+                <div className="flex flex-col items-center gap-1.5">
+                  <CompareAvatar name={themDisplay} avatarUrl={themAvatarUrl} />
+                  <p className="max-w-[6.5rem] truncate text-center text-xs font-medium text-white/80">
+                    @{themProfile.username}
+                  </p>
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <p
-                  className="rounded-xl bg-black/30 px-3 py-2 font-mono text-lg font-semibold tabular-nums"
-                  aria-label={`Marcador ${compare.scoreLabel}`}
-                >
-                  {compare.scoreLabel}
-                </p>
+
+              <div className="flex w-full flex-col items-center gap-3 text-center sm:w-auto sm:items-end sm:text-right">
+                <div>
+                  <h1 id="compare-heading" className="text-xl font-bold tracking-tight sm:text-2xl">
+                    {meDisplay}{' '}
+                    <span className="text-emerald-200/80">vs</span> {themDisplay}
+                  </h1>
+                  <p className="mt-1 max-w-sm text-sm text-white/70">{compare.headline}</p>
+                </div>
                 <CompareShareButton me={meSide} them={themSide} />
               </div>
             </div>
@@ -333,27 +436,35 @@ export function CompareProfilePage() {
               {compare.metrics.map((metric) => (
                 <li
                   key={metric.id}
-                  className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-xl bg-black/25 px-3 py-3 backdrop-blur-sm"
+                  className="rounded-xl bg-black/25 px-3 py-3 backdrop-blur-sm"
                 >
-                  <p className={cn('truncate text-left text-sm font-semibold', metricTone(metric, 'me'))}>
-                    {metric.meDisplay}
-                  </p>
-                  <div className="min-w-[5.5rem] text-center">
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-white/55">
-                      {metric.label}
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                    <p
+                      className={cn(
+                        'truncate text-left text-sm font-semibold',
+                        metricTone(metric, 'me'),
+                      )}
+                    >
+                      {metric.meDisplay}
                     </p>
-                    {metric.deltaLabel ? (
-                      <p className="text-[10px] text-emerald-200/70">{metric.deltaLabel}</p>
-                    ) : null}
+                    <div className="min-w-[5.5rem] text-center">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-white/55">
+                        {metric.label}
+                      </p>
+                      {metric.deltaLabel ? (
+                        <p className="text-[10px] text-emerald-200/70">{metric.deltaLabel}</p>
+                      ) : null}
+                    </div>
+                    <p
+                      className={cn(
+                        'truncate text-right text-sm font-semibold',
+                        metricTone(metric, 'them'),
+                      )}
+                    >
+                      {metric.themDisplay}
+                    </p>
                   </div>
-                  <p
-                    className={cn(
-                      'truncate text-right text-sm font-semibold',
-                      metricTone(metric, 'them'),
-                    )}
-                  >
-                    {metric.themDisplay}
-                  </p>
+                  <MetricProportionBar metric={metric} />
                 </li>
               ))}
             </ul>
@@ -388,11 +499,30 @@ export function CompareProfilePage() {
             </div>
 
             {compare.sharedTeams.length > 0 ? (
-              <p className="text-sm text-emerald-100/90">
-                En común:{' '}
-                <span className="font-medium text-white">{compare.sharedTeams.join(' · ')}</span>
-              </p>
-            ) : null}
+              <div
+                className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3"
+                data-testid="compare-shared-teams"
+              >
+                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-100/90">
+                  <Users className="h-3.5 w-3.5" aria-hidden />
+                  En común
+                </p>
+                <p className="mt-1 text-sm font-medium text-white">
+                  {compare.sharedTeams.join(' · ')}
+                </p>
+              </div>
+            ) : (
+              <div
+                className="rounded-xl border border-dashed border-white/15 bg-black/20 px-4 py-3"
+                data-testid="compare-shared-teams-empty"
+              >
+                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/55">
+                  <Users className="h-3.5 w-3.5" aria-hidden />
+                  Equipos en común
+                </p>
+                <p className="mt-1 text-sm text-white/65">{compare.sharedTeamsEmpty}</p>
+              </div>
+            )}
           </div>
         </section>
 

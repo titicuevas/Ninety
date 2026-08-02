@@ -117,6 +117,36 @@ En [Google Cloud Console](https://console.cloud.google.com/) → Credentials →
 
 ---
 
+## Email Auth — código vs ops
+
+El producto **no** envía correos desde el backend propio: signup, confirmación y recovery pasan por **Supabase Auth**.
+
+| Flujo | Código | Ops (Supabase / DNS) |
+|-------|--------|----------------------|
+| Crear usuario (`POST /api/auth/register` → `signUp`) | Listo | Confirmación email según Auth → Providers → Email; SMTP o built-in |
+| Recovery (`/forgot-password` → `resetPasswordForEmail` → `/auth/reset-password`) | Listo | Redirect URL `{CLIENT_URL}/auth/reset-password`; plantilla Recovery |
+| Magic link / OTP | **No implementado** | N/A hasta producto |
+| Google OAuth | Listo | Provider Google + Redirect URLs |
+
+### Built-in vs SMTP custom
+
+- **Built-in (Supabase):** vale para pruebas; límites de tasa y remitente `supabase.io`. En prod suele ser insuficiente.
+- **SMTP custom:** obligatorio para entrega fiable (p. ej. Resend, Postmark, SES, o Mailtrap solo en sandbox). Config en Supabase → Project Settings → Authentication → SMTP. **Resend no está cableado en el repo**; si lo usas, es solo SMTP en el dashboard.
+- Docs de prueba local: sección Mailtrap más abajo.
+
+### Checklist ops (faltante típico en prod)
+
+1. Supabase → Authentication → **URL Configuration**: Site URL = origen real del frontend (`https://ninety.up.railway.app` y/o `https://getninety.app` cuando el dominio deje de dar 502).
+2. **Redirect URLs** con `/auth/callback`, `/auth/reset-password` y `/**` para cada origen (ver lista arriba).
+3. `CLIENT_URL` en Railway API alineado con ese origen (recovery `redirectTo`).
+4. SMTP custom (o aceptar límites built-in) + remitente verificado en el dominio.
+5. Revisar plantillas Confirm signup / Reset password (enlace y branding).
+6. Probar: registro nuevo → email llega; forgot-password → enlace abre `/auth/reset-password` y cambia password.
+
+Hasta completar 1–5 en el proyecto Supabase / Railway, los flujos de email están **parciales** (código OK, entrega/redirects = responsabilidad ops).
+
+---
+
 ## Google OAuth (Supabase) — setup inicial
 
 1. [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials

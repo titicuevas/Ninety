@@ -6,6 +6,7 @@ export type CompareSide = {
   username: string;
   displayName: string;
   stats: PublicProfileStats;
+  avatarUrl?: string | null;
 };
 
 export type CompareMetricId =
@@ -22,6 +23,9 @@ export type CompareMetric = {
   label: string;
   meDisplay: string;
   themDisplay: string;
+  /** Valor numérico para barras de proporción (0 si no aplica / na). */
+  meValue: number;
+  themValue: number;
   winner: CompareWinner;
   /** Texto corto del delta cuando hay ganador numérico. */
   deltaLabel: string | null;
@@ -30,11 +34,26 @@ export type CompareMetric = {
 export type ProfileCompareResult = {
   metrics: CompareMetric[];
   sharedTeams: string[];
+  /** Copy cuando no hay solape de equipos (UI empty state). */
+  sharedTeamsEmpty: string;
   headline: string;
   meWins: number;
   themWins: number;
   scoreLabel: string;
 };
+
+/** Porcentajes 0–100 para una barra compartida me | them. Empate visual si ambos son 0. */
+export function metricBarPercents(meValue: number, themValue: number): {
+  mePct: number;
+  themPct: number;
+} {
+  const me = Math.max(0, meValue);
+  const them = Math.max(0, themValue);
+  const total = me + them;
+  if (total <= 0) return { mePct: 50, themPct: 50 };
+  const mePct = Math.round((me / total) * 1000) / 10;
+  return { mePct, themPct: Math.round((100 - mePct) * 10) / 10 };
+}
 
 function teamNames(stats: PublicProfileStats): string[] {
   if (stats.topTeams && stats.topTeams.length > 0) {
@@ -60,7 +79,7 @@ function compareNumbers(
   me: number,
   them: number,
   opts?: { higherWins?: boolean; format?: (n: number) => string; decimals?: number },
-): Pick<CompareMetric, 'winner' | 'deltaLabel' | 'meDisplay' | 'themDisplay'> {
+): Pick<CompareMetric, 'winner' | 'deltaLabel' | 'meDisplay' | 'themDisplay' | 'meValue' | 'themValue'> {
   const higherWins = opts?.higherWins !== false;
   const fmt = opts?.format ?? ((n: number) => String(n));
   const decimals = opts?.decimals;
@@ -81,6 +100,8 @@ function compareNumbers(
   return {
     meDisplay: fmt(me),
     themDisplay: fmt(them),
+    meValue: me,
+    themValue: them,
     winner,
     deltaLabel,
   };
@@ -89,14 +110,23 @@ function compareNumbers(
 function compareOptionalRatings(
   me: number | null,
   them: number | null,
-): Pick<CompareMetric, 'winner' | 'deltaLabel' | 'meDisplay' | 'themDisplay'> {
+): Pick<CompareMetric, 'winner' | 'deltaLabel' | 'meDisplay' | 'themDisplay' | 'meValue' | 'themValue'> {
   if (me == null && them == null) {
-    return { meDisplay: '—', themDisplay: '—', winner: 'na', deltaLabel: null };
+    return {
+      meDisplay: '—',
+      themDisplay: '—',
+      meValue: 0,
+      themValue: 0,
+      winner: 'na',
+      deltaLabel: null,
+    };
   }
   if (me == null) {
     return {
       meDisplay: '—',
       themDisplay: formatRating(them),
+      meValue: 0,
+      themValue: them ?? 0,
       winner: 'them',
       deltaLabel: null,
     };
@@ -105,6 +135,8 @@ function compareOptionalRatings(
     return {
       meDisplay: formatRating(me),
       themDisplay: '—',
+      meValue: me,
+      themValue: 0,
       winner: 'me',
       deltaLabel: null,
     };
@@ -148,6 +180,15 @@ export function buildProfileCompare(me: CompareSide, them: CompareSide): Profile
   const themWins = metrics.filter((m) => m.winner === 'them').length;
   const sharedTeams = sharedTeamNames(me.stats, them.stats);
 
+  let sharedTeamsEmpty: string;
+  if (me.stats.totalMatches === 0 && them.stats.totalMatches === 0) {
+    sharedTeamsEmpty = 'Cuando guardéis partidos, aquí veréis equipos en común.';
+  } else if (me.stats.totalMatches === 0 || them.stats.totalMatches === 0) {
+    sharedTeamsEmpty = 'Falta diario en un lado para cruzar equipos.';
+  } else {
+    sharedTeamsEmpty = 'Sin equipos en común en vuestros tops — gustos distintos.';
+  }
+
   let headline: string;
   if (me.stats.totalMatches === 0 && them.stats.totalMatches === 0) {
     headline = 'Los dos diarios están vacíos — hora de guardar un partido.';
@@ -173,7 +214,15 @@ export function buildProfileCompare(me: CompareSide, them: CompareSide): Profile
 
   const scoreLabel = `${meWins}–${themWins}`;
 
-  return { metrics, sharedTeams, headline, meWins, themWins, scoreLabel };
+  return {
+    metrics,
+    sharedTeams,
+    sharedTeamsEmpty,
+    headline,
+    meWins,
+    themWins,
+    scoreLabel,
+  };
 }
 
 export function buildCompareShareText(
@@ -196,6 +245,8 @@ export function buildCompareShareText(
 
   if (result.sharedTeams.length > 0) {
     lines.push(`Equipos en común: ${result.sharedTeams.join(', ')}`);
+  } else {
+    lines.push(`Equipos en común: ${result.sharedTeamsEmpty}`);
   }
 
   if (me.stats.topTeam || them.stats.topTeam) {

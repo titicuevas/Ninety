@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   buildCompareShareText,
   buildProfileCompare,
+  metricBarPercents,
   type CompareSide,
 } from './compareProfiles.ts';
 import type { PublicProfileStats } from '../types/publicProfile.ts';
@@ -33,6 +34,17 @@ function side(
 ): CompareSide {
   return { username, displayName, stats: s };
 }
+
+describe('metricBarPercents', () => {
+  it('reparte 50/50 si ambos son 0', () => {
+    assert.deepEqual(metricBarPercents(0, 0), { mePct: 50, themPct: 50 });
+  });
+
+  it('proporciona barras según valores', () => {
+    assert.deepEqual(metricBarPercents(3, 1), { mePct: 75, themPct: 25 });
+    assert.deepEqual(metricBarPercents(1, 3), { mePct: 25, themPct: 75 });
+  });
+});
 
 describe('buildProfileCompare', () => {
   it('marca victoria por métrica y calcula equipos compartidos', () => {
@@ -75,6 +87,8 @@ describe('buildProfileCompare', () => {
     assert.equal(result.metrics.find((m) => m.id === 'stadium')?.winner, 'me');
     assert.equal(result.metrics.find((m) => m.id === 'fiveStar')?.winner, 'them');
     assert.equal(result.metrics.find((m) => m.id === 'photos')?.winner, 'me');
+    assert.equal(result.metrics.find((m) => m.id === 'matches')?.meValue, 12);
+    assert.equal(result.metrics.find((m) => m.id === 'matches')?.themValue, 8);
     assert.deepEqual(result.sharedTeams, ['Betis']);
     assert.equal(result.meWins, 3);
     assert.equal(result.themWins, 2);
@@ -82,7 +96,7 @@ describe('buildProfileCompare', () => {
     assert.match(result.headline, /Betis/);
   });
 
-  it('empate técnico sin shared teams', () => {
+  it('empate técnico sin shared teams expone empty copy', () => {
     const me = side('a', 'A', stats({ totalMatches: 2, averageRating: 4 }));
     const them = side('b', 'B', stats({ totalMatches: 2, averageRating: 4 }));
     const result = buildProfileCompare(me, them);
@@ -90,6 +104,7 @@ describe('buildProfileCompare', () => {
     assert.equal(result.themWins, 0);
     assert.match(result.headline, /Empate técnico/);
     assert.deepEqual(result.sharedTeams, []);
+    assert.match(result.sharedTeamsEmpty, /Sin equipos en común/);
   });
 
   it('usa topTeam si no hay topTeams', () => {
@@ -117,5 +132,6 @@ describe('buildCompareShareText', () => {
     assert.match(text, /Henry vs Ana/);
     assert.match(text, /Marcador:/);
     assert.match(text, /\/u\/ana\/vs/);
+    assert.match(text, /Equipos en común:/);
   });
 });
