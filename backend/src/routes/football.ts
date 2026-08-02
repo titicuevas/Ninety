@@ -2,6 +2,7 @@ import { Router, type NextFunction, type Request, type Response } from 'express'
 import { FootballApiError, fetchFootballApi } from '../lib/footballApi.js';
 import { getCuratedCompetitions } from '../lib/footballCompetitions.js';
 import { searchMatches, type FootballMatch } from '../lib/footballSearch.js';
+import { parseMonth } from '../lib/matchDateRange.js';
 import { loadTeamsForSearch } from '../lib/footballTeamCatalog.js';
 import { getTeamCompetitionsForQuery } from '../lib/footballTeamCompetitions.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -62,13 +63,14 @@ footballRouter.get('/matches/search', requireAuth, async (req, res, next) => {
     const query = String(req.query.q ?? '').trim();
     const competition = String(req.query.competition ?? '').trim() || undefined;
     const season = parseSeason(req.query.season);
+    const month = parseMonth(req.query.month);
 
     if (!query && !competition) {
       res.status(400).json({ error: 'Escribe un equipo o elige una competición' });
       return;
     }
 
-    const matches = await searchMatches({ query, competition, season });
+    const matches = await searchMatches({ query, competition, season, month });
     res.json({ matches: matches.map(serializeMatch) });
   } catch (err) {
     if (err instanceof FootballApiError) {

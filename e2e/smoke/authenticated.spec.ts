@@ -62,7 +62,7 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(page.getByRole('heading', { name: /^feed$/i })).toBeVisible();
   });
 
-  test('Buscar partidos muestra chips de temporada', async ({ page }) => {
+  test('Buscar partidos muestra chips de temporada y mes', async ({ page }) => {
     await openAuthenticatedHome(page);
     await page
       .getByRole('navigation', { name: /navegación principal/i })
@@ -76,9 +76,15 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(page.getByRole('group', { name: /temporada/i })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('button', { name: /^cualquiera$/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /esta temporada/i })).toBeVisible();
+    await expect(page.getByRole('group', { name: /^mes$/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^cualquier mes$/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^mar$/i })).toBeVisible();
 
     await page.getByRole('button', { name: /esta temporada/i }).click();
     await expect(page).toHaveURL(/season=/);
+
+    await page.getByRole('button', { name: /^mar$/i }).click();
+    await expect(page).toHaveURL(/month=3/);
   });
 
   test('Buscar partidos ofrece atajo de equipo favorito o perfil', async ({ page }) => {

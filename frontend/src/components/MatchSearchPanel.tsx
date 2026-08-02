@@ -17,11 +17,13 @@ import { useTeamCompetitions } from '@/hooks/useTeamCompetitions';
 import { saveDraftMatch } from '@/lib/draftMatch';
 import { groupMatchesByCompetition } from '@/lib/groupMatches';
 import { seasonChipOptions } from '@/lib/seasonChips';
+import { monthChipOptions, monthHintLabel, parseMonthParam } from '@/lib/monthChips';
 import type { CuratedCompetition, FootballMatch } from '@/types/football';
 import { cn } from '@/lib/utils';
 
 const NO_COMPETITIONS: CuratedCompetition[] = [];
 const NO_MATCHES: FootballMatch[] = [];
+const MONTH_CHIPS = monthChipOptions();
 
 function groupCompetitionsByLabel(competitions: CuratedCompetition[]) {
   const groups = new Map<string, CuratedCompetition[]>();
@@ -61,10 +63,12 @@ export function MatchSearchPanel() {
   const [debouncedQuery, setDebouncedQuery] = useState(() => (params.get('q') ?? '').trim());
   const [competition, setCompetition] = useState(() => params.get('competition') ?? '');
   const [season, setSeason] = useState<number | undefined>(() => parseSeasonParam(params.get('season')));
+  const [month, setMonth] = useState<number | undefined>(() => parseMonthParam(params.get('month')));
 
   const patchMatchParams = (patch: {
     competition?: string | null;
     season?: number | null;
+    month?: number | null;
   }) => {
     setParams(
       (prev) => {
@@ -76,6 +80,10 @@ export function MatchSearchPanel() {
         if (patch.season !== undefined) {
           if (patch.season != null) next.set('season', String(patch.season));
           else next.delete('season');
+        }
+        if (patch.month !== undefined) {
+          if (patch.month != null) next.set('month', String(patch.month));
+          else next.delete('month');
         }
         return next;
       },
@@ -103,6 +111,7 @@ export function MatchSearchPanel() {
     competitions.some((item) => item.code === competition);
   const activeCompetition = competitionIsValid ? competition : '';
   const activeSeason = season;
+  const activeMonth = month;
 
   const selectedCompetition = useMemo(
     () => competitions.find((item) => item.code === activeCompetition),
@@ -115,6 +124,7 @@ export function MatchSearchPanel() {
   );
   const showSeasonChips =
     Boolean(activeCompetition) || debouncedQuery.length >= MIN_QUERY_LENGTH;
+  const showMonthChips = showSeasonChips;
 
   const handleCompetitionChange = (code: string) => {
     setCompetition(code);
@@ -126,6 +136,11 @@ export function MatchSearchPanel() {
   const handleSeasonChange = (next: number | undefined) => {
     setSeason(next);
     patchMatchParams({ season: next ?? null });
+  };
+
+  const handleMonthChange = (next: number | undefined) => {
+    setMonth(next);
+    patchMatchParams({ month: next ?? null });
   };
 
   useEffect(() => {
@@ -150,6 +165,7 @@ export function MatchSearchPanel() {
     {
     competition: activeCompetition || undefined,
     season: activeSeason,
+    month: activeMonth,
   });
 
   const matches = data?.matches ?? NO_MATCHES;
@@ -176,6 +192,10 @@ export function MatchSearchPanel() {
       : selectedCompetition?.seasons?.length
         ? ' Cualquier edición.'
         : '';
+  const monthHint =
+    activeMonth != null
+      ? ` Mes: ${monthHintLabel(activeMonth, activeSeason, selectedCompetition ?? null)}.`
+      : '';
 
   const selectMatch = (match: FootballMatch) => {
     const existingId = savedByMatchId.get(match.id);
@@ -263,6 +283,23 @@ export function MatchSearchPanel() {
             </div>
           </div>
         ) : null}
+
+        {showMonthChips ? (
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label id="month-filter-label">Mes</Label>
+            <div className="flex flex-wrap gap-2" role="group" aria-labelledby="month-filter-label">
+              {MONTH_CHIPS.map((chip) => (
+                <FilterChip
+                  key={chip.value ?? 'any-month'}
+                  active={activeMonth === chip.value}
+                  onClick={() => handleMonthChange(chip.value)}
+                >
+                  {chip.label}
+                </FilterChip>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </section>
 
       {showMinLengthHint ? (
@@ -276,6 +313,7 @@ export function MatchSearchPanel() {
         <p className="text-sm text-muted-foreground">
           Para {selectedCompetition?.name ?? 'este torneo'} escribe una selección o equipo — por
           ejemplo España, Argentina, Betis…{seasonHint}
+          {monthHint}
         </p>
       ) : null}
 
@@ -283,6 +321,7 @@ export function MatchSearchPanel() {
         <p className="text-sm text-muted-foreground">
           Mostrando partidos recientes de {selectedCompetition?.name ?? 'esta competición'}.
           {seasonHint}
+          {monthHint}
         </p>
       ) : null}
 
@@ -339,9 +378,9 @@ export function MatchSearchPanel() {
               description={
                 activeCompetition
                   ? requiresTeamQuery
-                    ? `No hay partidos de «${debouncedQuery}» en ${selectedCompetition?.name ?? 'este torneo'}${activeSeason != null ? ` (${activeSeason})` : ''}. Prueba otro nombre o temporada.`
-                    : `No hay partidos en ${selectedCompetition?.name ?? 'esta competición'}${activeSeason != null ? ` ${activeSeason}` : ''} para «${debouncedQuery || 'tu búsqueda'}».`
-                  : `No encontramos partidos para «${debouncedQuery}»${activeSeason != null ? ` en ${activeSeason}` : ''}. Prueba otra temporada, equipo o competición.`
+                    ? `No hay partidos de «${debouncedQuery}» en ${selectedCompetition?.name ?? 'este torneo'}${activeSeason != null ? ` (${activeSeason})` : ''}${activeMonth != null ? ` · ${monthHintLabel(activeMonth, activeSeason, selectedCompetition)}` : ''}. Prueba otro nombre, temporada o mes.`
+                    : `No hay partidos en ${selectedCompetition?.name ?? 'esta competición'}${activeSeason != null ? ` ${activeSeason}` : ''}${activeMonth != null ? ` · ${monthHintLabel(activeMonth, activeSeason, selectedCompetition)}` : ''} para «${debouncedQuery || 'tu búsqueda'}». Prueba otro mes o temporada.`
+                  : `No encontramos partidos para «${debouncedQuery}»${activeSeason != null ? ` en ${activeSeason}` : ''}${activeMonth != null ? ` · ${monthHintLabel(activeMonth, activeSeason, selectedCompetition)}` : ''}. Prueba otra temporada, mes, equipo o competición.`
               }
             />
           )}
