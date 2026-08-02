@@ -374,8 +374,8 @@ Ninety/
 - [x] Previews Open Graph al compartir
 - [x] Wrapped anual
 
-### 🚀 v3 — Avanzado
-- [ ] IA (resúmenes, recomendaciones)
+### ✅ v3 — Avanzado
+- [x] IA (resúmenes, recomendaciones)
 - [x] Gamificación (insignias, logros)
 - [x] Mapa de estadios
 - [x] Estadísticas avanzadas

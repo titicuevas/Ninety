@@ -5,6 +5,7 @@ import { AdvancedStatsSection } from '@/components/AdvancedStatsSection';
 import { ClaimProfileCard } from '@/components/ClaimProfileCard';
 import { EmptyState } from '@/components/EmptyState';
 import { HomeSocialHub } from '@/components/HomeSocialHub';
+import { InsightsSection } from '@/components/InsightsSection';
 import { Layout } from '@/components/Layout';
 import { WrappedLoadingSkeleton } from '@/components/ListSkeletons';
 import { OnboardingSteps } from '@/components/OnboardingSteps';
@@ -29,6 +30,7 @@ import {
   wrappedScopeToParam,
   type WrappedScope,
 } from '@/lib/capsuleStats';
+import { computeInsights } from '@/lib/insights';
 import { computeStadiumMap } from '@/lib/stadiumMap';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuthInit';
@@ -82,6 +84,16 @@ export function HomePage() {
       followersCount: followersData?.total,
     }),
   );
+  const insights = computeInsights({
+    name,
+    scope: activeScope,
+    stats,
+    advanced: advancedStats,
+    stadiumMap,
+    capsules: scopedCapsules,
+    favoriteTeam: profile?.favorite_team,
+    followingCount: followingData?.total,
+  });
 
   const onScopeChange = (next: WrappedScope) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -151,6 +163,7 @@ export function HomePage() {
         ) : (
           <>
             <AchievementsSection achievements={achievements} />
+            <InsightsSection insights={insights} />
             <WrappedSummary
               name={name}
               stats={stats}
