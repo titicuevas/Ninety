@@ -42,11 +42,20 @@ export function createApp() {
           return;
         }
 
+        const fromEnv = (process.env.CORS_ORIGINS ?? '')
+          .split(',')
+          .map((value) => value.trim().replace(/\/$/, ''))
+          .filter(Boolean);
+
         const allowed = new Set([
-          env.CLIENT_URL,
+          env.CLIENT_URL.replace(/\/$/, ''),
           'http://localhost:5173',
           'http://127.0.0.1:5173',
+          // Producción legacy + dominio custom (transición)
           'https://ninety.up.railway.app',
+          'https://getninety.app',
+          'https://www.getninety.app',
+          ...fromEnv,
         ]);
 
         if (allowed.has(origin)) {

@@ -15,6 +15,24 @@ const SITE_URL = (process.env.SITE_URL || process.env.VITE_SITE_URL || 'https://
   /\/$/,
   '',
 );
+/** Origen legacy embebido en index.html (build); se reescribe al servir según Host/SITE_URL. */
+const LEGACY_SITE_URL = 'https://ninety.up.railway.app';
+
+function requestOrigin(req) {
+  const forwardedHost = req.headers['x-forwarded-host'];
+  const hostHeader = typeof forwardedHost === 'string' && forwardedHost.trim()
+    ? forwardedHost.split(',')[0].trim()
+    : req.headers.host;
+  if (!hostHeader) return SITE_URL;
+  const protoHeader = req.headers['x-forwarded-proto'];
+  const proto =
+    typeof protoHeader === 'string' && protoHeader.trim()
+      ? protoHeader.split(',')[0].trim()
+      : hostHeader.includes('localhost') || hostHeader.startsWith('127.')
+        ? 'http'
+        : 'https';
+  return `${proto}://${hostHeader}`.replace(/\/$/, '');
+}
 
 const BOT_UA =
   /bot|crawl|slurp|spider|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|discordbot|skypeuripreview|applebot|embedly|redditbot|pinterest|vkshare|quora link preview|outbrain|semrushbot|ia_archiver|bingpreview|google-inspectiontool/i;
@@ -246,7 +264,24 @@ function serveFile(req, res, filePath) {
 }
 
 function serveSpa(req, res) {
-  serveFile(req, res, path.join(DIST, 'index.html'));
+  const indexPath = path.join(DIST, 'index.html');
+  fs.readFile(indexPath, (err, data) => {
+    if (err) {
+      send(res, 404, 'Not found', { 'Content-Type': 'text/plain; charset=utf-8' });
+      return;
+    }
+    const origin = requestOrigin(req) || SITE_URL;
+    // Preferir el Host actual; si aún entran por Railway pero SITE_URL ya es el dominio custom, usar SITE_URL.
+    const canonical = origin !== LEGACY_SITE_URL ? origin : SITE_URL;
+    let html = data.toString('utf8');
+    if (canonical !== LEGACY_SITE_URL) {
+      html = html.replaceAll(LEGACY_SITE_URL, canonical);
+    }
+    sendCompressed(req, res, 200, Buffer.from(html), {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-cache',
+    });
+  });
 }
 
 const server = http.createServer(async (req, res) => {

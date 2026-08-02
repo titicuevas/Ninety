@@ -10,7 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://ninety.up.railway.app" target="_blank">🌐 Demo</a> •
+  <a href="https://getninety.app" target="_blank">🌐 getninety.app</a> •
+  <a href="https://ninety.up.railway.app" target="_blank">Demo Railway</a> •
   <a href="https://ninety-api.up.railway.app/api/health" target="_blank">API</a> •
   <a href="#concepto">Concepto</a> •
   <a href="#stack">Stack</a> •
@@ -129,11 +130,13 @@ npm run dev
 
 | Servicio | URL | Estado |
 |----------|-----|--------|
-| **Frontend** | [ninety.up.railway.app](https://ninety.up.railway.app) | App React |
+| **Frontend (canónico)** | [getninety.app](https://getninety.app) | Dominio custom (tras DNS + TLS) |
+| **Frontend (legacy)** | [ninety.up.railway.app](https://ninety.up.railway.app) | App React (mantener durante transición) |
 | **API** | [ninety-api.up.railway.app](https://ninety-api.up.railway.app) | Express |
 | **Health** | [/api/health](https://ninety-api.up.railway.app/api/health) | ✅ Online |
 
-> Si el frontend muestra error 403, redeploy tras actualizar `frontend/vite.config.ts` (`preview.allowedHosts`).
+> Checklist DNS + env + Supabase Redirect URLs: [docs/auth-setup.md](docs/auth-setup.md#dominio-custom-getninetyapp--railway).
+> Si el frontend muestra error 403 en preview Vite, redeploy tras actualizar `frontend/vite.config.ts` (`preview.allowedHosts`).
 
 ### Variables en Railway
 
@@ -141,7 +144,8 @@ npm run dev
 ```env
 VITE_API_URL=https://ninety-api.up.railway.app
 API_URL=https://ninety-api.up.railway.app
-SITE_URL=https://ninety.up.railway.app
+SITE_URL=https://getninety.app
+VITE_SITE_URL=https://getninety.app
 ```
 
 > `API_URL` / `SITE_URL` las usa `serve.mjs` para previews Open Graph (WhatsApp, X, Telegram) en `/c/:id` y `/u/:username`.
@@ -150,20 +154,24 @@ SITE_URL=https://ninety.up.railway.app
 **Backend** (`ninety-api`):
 ```env
 NODE_ENV=production
-CLIENT_URL=https://ninety.up.railway.app
+CLIENT_URL=https://getninety.app
+# Opcional durante la transición:
+# CORS_ORIGINS=https://www.getninety.app,https://ninety.up.railway.app
 SUPABASE_URL=https://tu-proyecto.supabase.co
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 SUPABASE_SECRET_KEY=sb_secret_...
 FOOTBALL_DATA_API_KEY=tu-api-key
 ```
 
-En **Supabase → Authentication → URL Configuration** añade:
+En **Supabase → Authentication → URL Configuration** añade (y mantén Railway mientras dure el cutover):
 ```
+https://getninety.app/auth/callback
+https://getninety.app/**
 https://ninety.up.railway.app/auth/callback
 https://ninety.up.railway.app/**
 ```
 
-Guía completa de auth: [docs/auth-setup.md](docs/auth-setup.md)
+Guía completa de auth + dominio: [docs/auth-setup.md](docs/auth-setup.md)
 
 ## 🧪 Probar v1 con la cuenta demo
 
@@ -173,7 +181,7 @@ Cuenta de prueba (seed en Supabase):
 |-------|-------|
 | Email | `demo@ninety.app` |
 | Username | `@aficionado_demo` |
-| Perfil público | [/u/aficionado_demo](https://ninety.up.railway.app/u/aficionado_demo) |
+| Perfil público | [/u/aficionado_demo](https://getninety.app/u/aficionado_demo) (o [Railway](https://ninety.up.railway.app/u/aficionado_demo)) |
 
 ### 1. Credenciales locales
 

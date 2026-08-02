@@ -1,3 +1,6 @@
+/** Fallback de producción legacy (Railway). Preferir VITE_SITE_URL / window.location. */
+export const DEFAULT_SITE_URL = 'https://ninety.up.railway.app';
+
 /** URL base del sitio (sin barra final). */
 export function siteUrl(): string {
   if (typeof window !== 'undefined') {
@@ -9,7 +12,7 @@ export function siteUrl(): string {
   } catch {
     // Node tests / entornos sin Vite env
   }
-  return 'https://ninety.up.railway.app';
+  return DEFAULT_SITE_URL;
 }
 
 export function publicProfileUrl(username: string): string {
