@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { Bell, Heart, UserPlus, MessageCircle } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
+import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { Layout } from '@/components/Layout';
 import { NotificationListSkeleton } from '@/components/ListSkeletons';
 import { PushAlertsPanel } from '@/components/PushAlertsPanel';
@@ -208,17 +209,12 @@ export function NotificationsPage() {
                 />
               ))}
             </div>
-            {hasNextPage ? (
-              <div className="flex justify-center pt-1">
-                <Button
-                  variant="secondary"
-                  loading={isFetchingNextPage}
-                  onClick={() => void fetchNextPage()}
-                >
-                  Cargar más
-                </Button>
-              </div>
-            ) : null}
+            <InfiniteScrollSentinel
+              className="pt-1"
+              hasNextPage={Boolean(hasNextPage)}
+              isFetchingNextPage={isFetchingNextPage}
+              fetchNextPage={fetchNextPage}
+            />
           </div>
         )}
       </div>

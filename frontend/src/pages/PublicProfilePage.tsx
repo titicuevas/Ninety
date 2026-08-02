@@ -5,6 +5,7 @@ import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
+import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { Layout } from '@/components/Layout';
 import { ProfileLoadingSkeleton } from '@/components/ListSkeletons';
 import { PublicLayout } from '@/components/PublicLayout';
@@ -258,18 +259,11 @@ export function PublicProfilePage() {
             {capsules.map((capsule) => (
               <PublicCapsuleCard key={capsule.id} capsule={capsule} currentUserId={user?.id} />
             ))}
-            {hasNextPage ? (
-              <div className="flex justify-center pt-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={isFetchingNextPage}
-                  onClick={() => void fetchNextPage()}
-                >
-                  {isFetchingNextPage ? 'Cargando…' : 'Cargar más'}
-                </Button>
-              </div>
-            ) : null}
+            <InfiniteScrollSentinel
+              hasNextPage={Boolean(hasNextPage)}
+              isFetchingNextPage={isFetchingNextPage}
+              fetchNextPage={fetchNextPage}
+            />
           </section>
         ) : null}
 

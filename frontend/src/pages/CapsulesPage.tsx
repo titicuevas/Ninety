@@ -4,6 +4,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { CapsuleDiaryFilters } from '@/components/CapsuleDiaryFilters';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
+import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { CapsuleListSkeleton } from '@/components/ListSkeletons';
 import { Layout } from '@/components/Layout';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
@@ -198,17 +199,11 @@ export function CapsulesPage() {
                 </li>
               ))}
             </ul>
-            {hasNextPage ? (
-              <div className="flex justify-center pt-2">
-                <Button
-                  variant="secondary"
-                  loading={isFetchingNextPage}
-                  onClick={() => void fetchNextPage()}
-                >
-                  Cargar más
-                </Button>
-              </div>
-            ) : null}
+            <InfiniteScrollSentinel
+              hasNextPage={Boolean(hasNextPage)}
+              isFetchingNextPage={isFetchingNextPage}
+              fetchNextPage={fetchNextPage}
+            />
           </div>
         ) : null}
       </div>

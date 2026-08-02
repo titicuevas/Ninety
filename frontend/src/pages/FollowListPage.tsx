@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Users } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
+import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { Layout } from '@/components/Layout';
 import { PeopleListSkeleton } from '@/components/ListSkeletons';
 import { PublicLayout } from '@/components/PublicLayout';
@@ -181,18 +182,11 @@ function FollowListPage({ kind }: { kind: FollowListKind }) {
                 <FollowListRow key={profile.id} profile={profile} currentUserId={user?.id} />
               ))}
             </ul>
-            {hasNextPage ? (
-              <div className="flex justify-center pt-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  loading={isFetchingNextPage}
-                  onClick={() => void fetchNextPage()}
-                >
-                  Cargar más
-                </Button>
-              </div>
-            ) : null}
+            <InfiniteScrollSentinel
+              hasNextPage={Boolean(hasNextPage)}
+              isFetchingNextPage={isFetchingNextPage}
+              fetchNextPage={fetchNextPage}
+            />
           </div>
         ) : (
           <EmptyState
