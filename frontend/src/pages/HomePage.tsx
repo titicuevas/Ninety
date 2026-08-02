@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { AchievementsSection } from '@/components/AchievementsSection';
 import { ClaimProfileCard } from '@/components/ClaimProfileCard';
 import { EmptyState } from '@/components/EmptyState';
 import { HomeSocialHub } from '@/components/HomeSocialHub';
@@ -12,6 +13,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCapsules } from '@/hooks/useCapsules';
 import { useFollowList } from '@/hooks/useFollowList';
+import {
+  achievementsInputFromStats,
+  computeAchievements,
+} from '@/lib/achievements';
 import {
   computeCapsuleStats,
   defaultWrappedScope,
@@ -38,6 +43,7 @@ export function HomePage() {
   const { data: profile } = useProfile();
   const { data: capsulesData, isLoading } = useCapsules();
   const { data: followingData } = useFollowList(profile?.username ?? undefined, 'following');
+  const { data: followersData } = useFollowList(profile?.username ?? undefined, 'followers');
   const [searchParams, setSearchParams] = useSearchParams();
   const [welcomeOpen, setWelcomeOpen] = useState(
     () => Boolean((location.state as HomeLocationState | null)?.fromRegister),
@@ -59,6 +65,14 @@ export function HomePage() {
   const activeScope: WrappedScope =
     scopeValid && scopeFromUrl != null ? scopeFromUrl : defaultWrappedScope(capsules);
   const stats = computeCapsuleStats(filterCapsulesByScope(capsules, activeScope));
+  const lifetimeStats = computeCapsuleStats(capsules);
+  const achievements = computeAchievements(
+    achievementsInputFromStats(lifetimeStats, {
+      capsules,
+      followingCount: followingData?.total,
+      followersCount: followersData?.total,
+    }),
+  );
 
   const onScopeChange = (next: WrappedScope) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -126,14 +140,17 @@ export function HomePage() {
             </Button>
           </EmptyState>
         ) : (
-          <WrappedSummary
-            name={name}
-            stats={stats}
-            scope={activeScope}
-            years={years}
-            onScopeChange={onScopeChange}
-            username={profile?.username}
-          />
+          <>
+            <AchievementsSection achievements={achievements} />
+            <WrappedSummary
+              name={name}
+              stats={stats}
+              scope={activeScope}
+              years={years}
+              onScopeChange={onScopeChange}
+              username={profile?.username}
+            />
+          </>
         )}
       </div>
     </Layout>

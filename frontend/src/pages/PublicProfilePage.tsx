@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { MapPin, Trophy } from 'lucide-react';
+import { AchievementsSection } from '@/components/AchievementsSection';
 import { CapsuleDiaryFilters } from '@/components/CapsuleDiaryFilters';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
@@ -17,6 +18,11 @@ import { useAuth } from '@/hooks/useAuthInit';
 import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { useDiaryFilterParams } from '@/hooks/useDiaryFilterParams';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import {
+  achievementsInputFromPublicStats,
+  computeAchievements,
+  countUnlockedAchievements,
+} from '@/lib/achievements';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { publicProfileUrl } from '@/lib/siteUrl';
 import type { Capsule } from '@/types/capsule';
@@ -125,6 +131,16 @@ export function PublicProfilePage() {
   const location = [profile.city, profile.country].filter(Boolean).join(', ');
   const diaryEmpty = !hasFilters && diaryTotal === 0 && capsules.length === 0;
   const filterEmpty = hasFilters && capsules.length === 0;
+  const achievements =
+    stats && stats.totalMatches > 0
+      ? computeAchievements(
+          achievementsInputFromPublicStats(stats, {
+            followingCount: profile.following_count,
+            followersCount: profile.followers_count,
+          }),
+        )
+      : [];
+  const unlockedAchievements = countUnlockedAchievements(achievements);
 
   return (
     <Shell>
@@ -167,6 +183,9 @@ export function PublicProfilePage() {
 
             <p className="mt-2 text-sm text-muted-foreground">
               {diaryTotal === 1 ? '1 partido en su diario' : `${diaryTotal} partidos en su diario`}
+              {unlockedAchievements > 0
+                ? ` · ${unlockedAchievements} ${unlockedAchievements === 1 ? 'logro' : 'logros'}`
+                : null}
             </p>
 
             {profile.username ? (
@@ -218,6 +237,18 @@ export function PublicProfilePage() {
 
         {stats && stats.totalMatches > 0 ? (
           <PublicWrappedSummary name={displayName} stats={stats} />
+        ) : null}
+
+        {achievements.length > 0 ? (
+          <AchievementsSection
+            achievements={achievements}
+            title="Logros"
+            subtitle={
+              unlockedAchievements === 0
+                ? undefined
+                : `${unlockedAchievements} de ${achievements.length} desbloqueados`
+            }
+          />
         ) : null}
 
         {!diaryEmpty ? (
