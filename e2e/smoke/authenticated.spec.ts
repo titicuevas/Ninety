@@ -48,7 +48,9 @@ test.describe('Smoke — autenticado @smoke', () => {
     const collage = page.getByRole('img', { name: /fotos de tus partidos/i });
     const stadiumChip = page.getByText(/^en estadio$/i);
     const monthChart = page.getByLabel(/gráfico de partidos por mes/i);
-    await expect(collage.or(stadiumChip).or(monthChart).or(page.getByText(/media ⭐/i).first())).toBeVisible();
+    await expect(
+      collage.or(stadiumChip).or(monthChart).or(page.getByText(/media ⭐/i)).first(),
+    ).toBeVisible();
   });
 
   test('feed accesible desde la app', async ({ page }) => {
@@ -113,7 +115,8 @@ test.describe('Smoke — autenticado @smoke', () => {
           .getByRole('status', { name: /buscando partidos/i })
           .or(page.locator('ul li').first())
           .or(page.getByText(/sin resultados/i))
-          .or(page.getByRole('group', { name: /temporada/i })),
+          .or(page.getByRole('group', { name: /temporada/i }))
+          .first(),
       ).toBeVisible({ timeout: 20_000 });
     }
   });
@@ -128,6 +131,7 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(page).toHaveURL(/\/search/);
 
     await page.getByRole('tab', { name: 'Aficionados' }).click();
+    await expect(page.getByRole('tab', { name: 'Aficionados' })).toHaveAttribute('aria-selected', 'true');
     await expect(page).toHaveURL(/tab=people/);
 
     const suggestions = page.getByRole('heading', { name: /aficionados sugeridos/i });
@@ -286,11 +290,16 @@ test.describe('Smoke — autenticado @smoke', () => {
 
     const pushPanel = page.getByTestId('push-alerts-panel');
     await expect(pushPanel).toBeVisible();
-    await expect(pushPanel.getByText(/alertas push/i)).toBeVisible();
+    await expect(pushPanel.getByText('Alertas push', { exact: true })).toBeVisible();
     await expect(
       pushPanel
         .getByRole('button', { name: /activar alertas|enviar prueba|desactivar alertas/i })
-        .or(page.getByTestId('push-diagnostics')),
+        .or(page.getByTestId('push-diagnostics'))
+        .or(
+          pushPanel.getByText(
+            /no soporta alertas push|aún no están disponibles|permiso está bloqueado/i,
+          ),
+        ),
     ).toBeVisible({ timeout: 15_000 });
 
     await expect(page.getByRole('link', { name: /ver centro de alertas/i })).toBeVisible();

@@ -93,14 +93,19 @@ export default defineConfig({
         {
           command: 'npm run dev --prefix backend',
           url: 'http://localhost:3001/api/health',
+          // Local: reutilizar evita matar Vite mid-suite; CI siempre arranca limpio
           reuseExistingServer: !process.env.CI,
-          timeout: 120_000,
+          timeout: 180_000,
+          stdout: 'pipe',
+          stderr: 'pipe',
         },
         {
           command: 'npm run dev --prefix frontend',
           url: 'http://localhost:5173',
           reuseExistingServer: !process.env.CI,
-          timeout: 120_000,
+          timeout: 180_000,
+          stdout: 'pipe',
+          stderr: 'pipe',
         },
       ],
 });

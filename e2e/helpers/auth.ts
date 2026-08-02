@@ -1,4 +1,6 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { mkdirSync } from 'node:fs';
+import path from 'node:path';
 
 export function requireDemoCredentials() {
   const email = process.env.TEST_USER_EMAIL ?? 'beta@ninety.app';
@@ -12,30 +14,125 @@ export function requireDemoCredentials() {
   return { email, password };
 }
 
-/** Login por UI (útil en setup y tests sin storageState). */
-export async function loginAsDemo(page: Page) {
-  const { email, password } = requireDemoCredentials();
-  await page.goto('/login');
-  await expect(page.getByRole('heading', { name: /bienvenido de vuelta/i })).toBeVisible();
-  await page.getByLabel('Email', { exact: true }).fill(email);
-  await page.getByLabel('Contraseña', { exact: true }).fill(password);
-  await page.getByRole('button', { name: /iniciar sesión/i }).click();
-  await expect(page).toHaveURL(/\/home/, { timeout: 20_000 });
+/** Alineado con seed:demo / README (`aficionado_demo`). */
+export const DEMO_USERNAME =
+  process.env.TEST_USER_USERNAME ?? process.env.DEMO_USERNAME ?? 'aficionado_demo';
+export const API_BASE = process.env.E2E_API_URL ?? 'http://localhost:3001';
+
+const SESSION_KEY = 'ninety.session:v1';
+const LEGACY_SESSION_KEY = 'ninety.session';
+const LOGIN_ATTEMPTS = 3;
+const AUTH_FILE = path.join('e2e', '.auth', 'user.json');
+
+type AuthApiSession = {
+  access_token: string;
+  refresh_token: string;
+  expires_at?: number;
+  user: { id: string; email?: string; user_metadata?: Record<string, unknown> };
+};
+
+async function loginViaApi(
+  request: APIRequestContext,
+  credentials = requireDemoCredentials(),
+): Promise<AuthApiSession> {
+  let lastError: Error | undefined;
+
+  for (let attempt = 1; attempt <= LOGIN_ATTEMPTS; attempt++) {
+    try {
+      const res = await request.post(`${API_BASE}/api/auth/login`, {
+        data: credentials,
+        timeout: 30_000,
+      });
+      const bodyText = await res.text();
+      if (!res.ok()) {
+        throw new Error(`API login ${res.status()}: ${bodyText.slice(0, 200)}`);
+      }
+      const body = JSON.parse(bodyText) as { session?: AuthApiSession };
+      if (!body.session?.access_token || !body.session.refresh_token) {
+        throw new Error('API login sin session válida');
+      }
+      return body.session;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt < LOGIN_ATTEMPTS) {
+        await new Promise((r) => setTimeout(r, 1_500 * attempt));
+      }
+    }
+  }
+
+  throw lastError ?? new Error('API login falló');
+}
+
+const homeHeading = (page: Page) =>
+  page.getByRole('heading', { name: /esto es tu fútbol|tu wrapped empieza/i });
+const loginHeading = (page: Page) =>
+  page.getByRole('heading', { name: /bienvenido de vuelta/i });
+
+async function persistAuthState(page: Page) {
+  mkdirSync(path.dirname(AUTH_FILE), { recursive: true });
+  await page.context().storageState({ path: AUTH_FILE });
 }
 
 /**
- * Abre Home con storageState si sigue siendo válido; si no, rehace login por UI.
- * Evita flakes cuando el refresh token del auth.setup ya se ha quedado viejo.
+ * Login fiable: POST /api/auth/login + seed localStorage vía addInitScript
+ * (antes de que la app lea storageState muerto / rote refresh).
  */
-export async function openAuthenticatedHome(page: Page) {
-  await page.goto('/home');
-  await page.waitForURL(/\/(home|login)/, { timeout: 20_000 });
+export async function establishAuthenticatedSession(page: Page) {
+  const session = await loginViaApi(page.request);
 
-  if (page.url().includes('/login')) {
+  await page.context().addInitScript(
+    ({ key, legacyKey, session: sess }) => {
+      window.localStorage.setItem(key, JSON.stringify(sess));
+      window.localStorage.removeItem(legacyKey);
+    },
+    { key: SESSION_KEY, legacyKey: LEGACY_SESSION_KEY, session },
+  );
+
+  await page.goto('/home');
+  // Esperar bootstrap real (spinner → Home o Login), no solo la URL intermedia
+  await expect(homeHeading(page).or(loginHeading(page))).toBeVisible({ timeout: 25_000 });
+
+  if (page.url().includes('/login') || (await loginHeading(page).isVisible().catch(() => false))) {
     await loginAsDemo(page);
   }
 
   await expect(page).toHaveURL(/\/home/, { timeout: 20_000 });
+  await expect(homeHeading(page)).toBeVisible({ timeout: 20_000 });
+  await persistAuthState(page);
+}
+
+/** Login por UI (útil en tests que ejercitan el formulario). */
+export async function loginAsDemo(page: Page) {
+  const { email, password } = requireDemoCredentials();
+  await page.goto('/login');
+  await expect(loginHeading(page)).toBeVisible();
+  await page.getByLabel('Email', { exact: true }).fill(email);
+  await page.getByLabel('Contraseña', { exact: true }).fill(password);
+  await page.getByRole('button', { name: /iniciar sesión/i }).click();
+  await expect(page).toHaveURL(/\/home/, { timeout: 20_000 });
+  await expect(homeHeading(page)).toBeVisible({ timeout: 20_000 });
+}
+
+/**
+ * Abre Home con storageState si la app confirma sesión; si no, re-auth por API + inject.
+ * Persiste storageState tras éxito para no reutilizar refresh ya rotado.
+ */
+export async function openAuthenticatedHome(page: Page) {
+  await page.goto('/home');
+  await expect(homeHeading(page).or(loginHeading(page))).toBeVisible({ timeout: 25_000 });
+
+  const needsReauth =
+    page.url().includes('/login') || (await loginHeading(page).isVisible().catch(() => false));
+
+  if (needsReauth) {
+    await establishAuthenticatedSession(page);
+    return;
+  }
+
+  await expect(page).toHaveURL(/\/home/, { timeout: 20_000 });
+  await expect(homeHeading(page)).toBeVisible({ timeout: 20_000 });
+  // Guardar tokens posiblemente refrescados por useAuthInit
+  await persistAuthState(page);
 }
 
 /**
@@ -63,11 +160,6 @@ export async function readAccessToken(page: Page): Promise<string | null> {
     }
   });
 }
-
-/** Alineado con seed:demo / README (`aficionado_demo`). */
-export const DEMO_USERNAME =
-  process.env.TEST_USER_USERNAME ?? process.env.DEMO_USERNAME ?? 'aficionado_demo';
-export const API_BASE = process.env.E2E_API_URL ?? 'http://localhost:3001';
 
 export type DemoPublicProfile = {
   profile: {

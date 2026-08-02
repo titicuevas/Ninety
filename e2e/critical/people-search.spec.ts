@@ -1,14 +1,15 @@
 import { expect, test } from '@playwright/test';
-import { API_BASE, goAppNav, readAccessToken } from '../helpers/auth';
+import { API_BASE, goAppNav, openAuthenticatedHome, readAccessToken } from '../helpers/auth';
 
 test.describe('Crítico — búsqueda de aficionados @critical', () => {
   test('buscar aficionados responde en la UI', async ({ page }) => {
-    await page.goto('/home');
+    await openAuthenticatedHome(page);
     await goAppNav(page, /buscar/i);
     await expect(page).toHaveURL(/\/search/);
     await expect(page.getByRole('heading', { name: /^buscar$/i })).toBeVisible();
 
     await page.getByRole('tab', { name: 'Aficionados' }).click();
+    await expect(page.getByRole('tab', { name: 'Aficionados' })).toHaveAttribute('aria-selected', 'true');
     await expect(page).toHaveURL(/tab=people/);
 
     const suggestions = page.getByRole('heading', { name: /aficionados sugeridos/i });
@@ -28,7 +29,7 @@ test.describe('Crítico — búsqueda de aficionados @critical', () => {
   });
 
   test('API search de perfiles anota followed_by_me', async ({ page, request }) => {
-    await page.goto('/home');
+    await openAuthenticatedHome(page);
     const token = await readAccessToken(page);
     expect(token).toBeTruthy();
 

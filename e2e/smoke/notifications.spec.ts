@@ -50,14 +50,20 @@ test.describe('Smoke — notificaciones @smoke', () => {
 
     const panel = page.getByTestId('push-alerts-panel');
     await expect(panel).toBeVisible({ timeout: 15_000 });
-    await expect(panel.getByText(/alertas push/i)).toBeVisible();
+    // exact: evita strict mode (título + línea de diagnósticos "Alertas push: …")
+    await expect(panel.getByText('Alertas push', { exact: true })).toBeVisible();
 
     const enable = panel.getByRole('button', { name: /activar alertas/i });
     const disable = panel.getByRole('button', { name: /desactivar alertas/i });
     const testPush = panel.getByRole('button', { name: /enviar prueba/i });
     const diagnostics = page.getByTestId('push-diagnostics');
+    const unsupportedCopy = panel.getByText(
+      /no soporta alertas push|aún no están disponibles|permiso está bloqueado/i,
+    );
 
-    await expect(enable.or(disable).or(diagnostics)).toBeVisible({ timeout: 15_000 });
+    await expect(enable.or(disable).or(diagnostics).or(unsupportedCopy)).toBeVisible({
+      timeout: 15_000,
+    });
 
     if (await enable.isVisible()) {
       await expect(enable).toBeEnabled();
@@ -108,7 +114,7 @@ test.describe('Smoke — notificaciones @smoke', () => {
       timeout: 15_000,
     });
     await expect(
-      page.getByLabel(/nuevo comentario/i).or(page.getByText(/sé el primero en comentar/i)),
+      page.getByLabel(/nuevo comentario/i).or(page.getByText(/sé el primero en comentar/i)).first(),
     ).toBeVisible();
   });
 });

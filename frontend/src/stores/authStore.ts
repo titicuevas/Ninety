@@ -14,7 +14,8 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   session: null,
-  loading: false,
+  // true hasta useAuthInit: evita flash ProtectedRoute → /login con user aún null
+  loading: true,
   setSession: (session) => set({ session, user: session?.user ?? null }),
   setLoading: (loading) => set({ loading }),
   signOut: async () => {
