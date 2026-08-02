@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CapsuleComments } from '@/components/CapsuleComments';
 import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
+import { CapsuleLikersDialog } from '@/components/CapsuleLikersDialog';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
+import { formatLikesPanelTitle } from '@/lib/capsuleLikes';
 import { cn } from '@/lib/utils';
 
 type CapsuleEngagementBarProps = {
@@ -36,6 +39,8 @@ export function CapsuleEngagementBar({
   bordered = true,
   showShare = true,
 }: CapsuleEngagementBarProps) {
+  const [guestLikersOpen, setGuestLikersOpen] = useState(false);
+
   return (
     <div
       className={cn(
@@ -63,7 +68,15 @@ export function CapsuleEngagementBar({
 
       {!currentUserId ? (
         <p className="w-full text-sm text-muted-foreground">
-          {likesCount > 0 ? `${likesCount} me gusta` : null}
+          {likesCount > 0 ? (
+            <button
+              type="button"
+              className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={() => setGuestLikersOpen(true)}
+            >
+              {formatLikesPanelTitle(likesCount)}
+            </button>
+          ) : null}
           {likesCount > 0 && commentsCount > 0 ? ' · ' : null}
           {commentsCount > 0 ? `${commentsCount} comentarios` : null}
           {(likesCount > 0 || commentsCount > 0) && ' · '}
@@ -75,6 +88,15 @@ export function CapsuleEngagementBar({
 
       {showShare ? (
         <ShareCapsuleButton capsuleId={capsuleId} title={shareTitle} isPublic={isPublic} />
+      ) : null}
+
+      {!currentUserId ? (
+        <CapsuleLikersDialog
+          open={guestLikersOpen}
+          capsuleId={capsuleId}
+          likesCount={likesCount}
+          onClose={() => setGuestLikersOpen(false)}
+        />
       ) : null}
     </div>
   );

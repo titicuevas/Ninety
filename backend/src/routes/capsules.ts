@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { deleteCapsulePhotoByUrl, deleteCapsulePhotosByUrls, uploadCapsulePhotoBuffer } from '../lib/ensureStorage.js';
 import { validateCommentBody, validateImageBuffer } from '../lib/contentModeration.js';
 import { attachCommentCounts, fetchCommentsWithAuthors, isMissingCommentsTable } from '../lib/capsuleComments.js';
-import { attachLikeStats, isMissingLikesTable } from '../lib/capsuleLikes.js';
+import { attachLikeStats, fetchLikesWithProfiles, isMissingLikesTable } from '../lib/capsuleLikes.js';
 import { attachFollowStats, getFollowingIds } from '../lib/userFollows.js';
 import { notifyUser } from '../lib/notifyUser.js';
 import { normalizeProfile } from '../lib/profileNormalize.js';
@@ -602,6 +602,61 @@ capsulesRouter.delete('/:id/like', requireAuth, async (req: AuthRequest, res) =>
   }
 
   res.status(204).end();
+});
+
+const likesQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+capsulesRouter.get('/:id/likes', optionalAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  const reader = getReaderClient(token);
+
+  if (!reader) {
+    res.status(503).json({ error: 'Likes no disponibles temporalmente' });
+    return;
+  }
+
+  const parsed = likesQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const capsuleId = routeParam(req.params.id);
+  const { data: capsule, error: capsuleError } = await reader
+    .from('capsules')
+    .select('id, user_id, is_public')
+    .eq('id', capsuleId)
+    .maybeSingle();
+
+  if (capsuleError) {
+    res.status(400).json({ error: capsuleError.message });
+    return;
+  }
+
+  if (!capsule || !canViewCapsule(capsule, req.userId)) {
+    res.status(404).json({ error: 'Capsule no encontrada' });
+    return;
+  }
+
+  try {
+    const page = await fetchLikesWithProfiles(reader, capsuleId, {
+      limit: parsed.data.limit,
+      offset: parsed.data.offset,
+      viewerId: req.userId,
+    });
+    res.json(page);
+  } catch (err) {
+    if (isMissingLikesTable(err)) {
+      res.status(503).json({
+        error: 'Ejecuta la migración 20250711200000_capsule_likes.sql en Supabase.',
+      });
+      return;
+    }
+    res.status(400).json({ error: err instanceof Error ? err.message : 'Error al cargar likes' });
+  }
 });
 
 const commentBodySchema = z.object({

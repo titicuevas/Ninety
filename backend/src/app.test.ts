@@ -121,6 +121,11 @@ describe('API', () => {
     assert.notEqual(res.status, 401);
   });
 
+  it('GET /api/capsules/:id/likes no requiere auth', async () => {
+    const res = await request(createApp()).get('/api/capsules/00000000-0000-4000-8000-000000000001/likes');
+    assert.notEqual(res.status, 401);
+  });
+
   it('POST /api/auth/refresh valida el body', async () => {
     const res = await request(createApp()).post('/api/auth/refresh').send({});
     assert.equal(res.status, 400);
