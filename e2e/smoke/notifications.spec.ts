@@ -20,13 +20,20 @@ test.describe('Smoke — notificaciones @smoke', () => {
     await page.waitForURL(/\/notifications/);
 
     const empty = page.getByText(/sin notificaciones/i);
-    const list = page.locator('[class*="divide-"]');
+    const list = page.getByTestId('notifications-list');
 
     await expect(empty.or(list)).toBeVisible({ timeout: 15_000 });
 
     if (await empty.isVisible()) {
       await expect(page.getByRole('link', { name: /ir al feed/i })).toBeVisible();
       await expect(page.getByRole('link', { name: /buscar aficionados/i })).toBeVisible();
+    }
+
+    if (await list.isVisible()) {
+      const matchLine = page.getByTestId('notification-match').first();
+      if (await matchLine.isVisible()) {
+        await expect(matchLine).toContainText(/\bvs\b/i);
+      }
     }
 
     const loadMore = page.getByRole('button', { name: /cargar más/i });

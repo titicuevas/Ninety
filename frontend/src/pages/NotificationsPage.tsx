@@ -16,6 +16,10 @@ import {
   type AppNotification,
 } from '@/hooks/useNotifications';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import {
+  formatNotificationAriaLabel,
+  formatNotificationMatchContext,
+} from '@/lib/notificationCapsule';
 import { cn } from '@/lib/utils';
 
 function timeAgo(dateStr: string): string {
@@ -69,6 +73,23 @@ function ActorAvatar({ n }: { n: AppNotification }) {
   );
 }
 
+function CapsuleThumb({ n }: { n: AppNotification }) {
+  const thumb = n.capsule?.thumb_url;
+  if (!thumb || !n.capsule) return null;
+  const alt = formatNotificationMatchContext(n.capsule);
+
+  return (
+    <img
+      src={thumb}
+      alt=""
+      title={alt}
+      className="mt-0.5 h-11 w-11 shrink-0 rounded-md border border-border object-cover"
+      loading="lazy"
+      decoding="async"
+    />
+  );
+}
+
 function NotificationItem({
   n,
   onOpen,
@@ -86,6 +107,13 @@ function NotificationItem({
           : `/c/${n.capsule_id}`
         : undefined;
   const snippet = n.type === 'comment' && n.body?.trim() ? n.body.trim() : null;
+  const matchLine = n.capsule ? formatNotificationMatchContext(n.capsule) : null;
+  const ariaLabel = formatNotificationAriaLabel({
+    actorName,
+    actionText: textMap[n.type],
+    capsule: n.capsule,
+    snippet,
+  });
 
   const content = (
     <div
@@ -100,12 +128,23 @@ function NotificationItem({
         <p className="text-sm">
           <span className="font-medium">{actorName}</span> {textMap[n.type]}
         </p>
+        {matchLine ? (
+          <p
+            className="mt-0.5 truncate text-sm font-medium text-foreground/80"
+            data-testid="notification-match"
+          >
+            {matchLine}
+          </p>
+        ) : null}
         {snippet ? (
           <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">«{snippet}»</p>
         ) : null}
         <p className="mt-0.5 text-xs text-muted-foreground">{timeAgo(n.created_at)}</p>
       </div>
-      {!n.read && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary" />}
+      <CapsuleThumb n={n} />
+      {!n.read && (
+        <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden />
+      )}
     </div>
   );
 
@@ -113,6 +152,7 @@ function NotificationItem({
     return (
       <Link
         to={link}
+        aria-label={ariaLabel}
         onClick={() => {
           if (!n.read) onOpen?.(n.id);
         }}
@@ -126,6 +166,7 @@ function NotificationItem({
     <button
       type="button"
       className="block w-full text-left"
+      aria-label={ariaLabel}
       onClick={() => {
         if (!n.read) onOpen?.(n.id);
       }}
@@ -200,7 +241,7 @@ export function NotificationsPage() {
           </EmptyState>
         ) : (
           <div className="space-y-3">
-            <div className="divide-y divide-border rounded-lg border">
+            <div className="divide-y divide-border rounded-lg border" data-testid="notifications-list">
               {notifications.map((n) => (
                 <NotificationItem
                   key={n.id}

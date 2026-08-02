@@ -2,6 +2,11 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { requireAuth, type AuthRequest } from '../middleware/auth.js';
+import {
+  mapNotificationCapsule,
+  type CapsuleNotificationRow,
+  type NotificationCapsule,
+} from '../lib/notificationCapsule.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { getVapidPublicKey, isPushConfigured, sendPushToUser } from '../lib/webPush.js';
 
@@ -183,25 +188,44 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
       .eq('read', false);
 
     const actorIds = [...new Set(rows.map((n) => n.actor_id))];
+    const capsuleIds = [
+      ...new Set(rows.map((n) => n.capsule_id).filter((id): id is string => Boolean(id))),
+    ];
     const profiles: Record<
       string,
       { username: string | null; display_name: string | null; avatar_url: string | null }
     > = {};
+    const capsules: Record<string, NotificationCapsule> = {};
 
-    if (actorIds.length > 0) {
-      const { data: profileData } = await supabaseAdmin!
-        .from('profiles')
-        .select('id, username, full_name, avatar_url')
-        .in('id', actorIds);
+    const [profilesResult, capsulesResult] = await Promise.all([
+      actorIds.length > 0
+        ? supabaseAdmin!
+            .from('profiles')
+            .select('id, username, full_name, avatar_url')
+            .in('id', actorIds)
+        : Promise.resolve({ data: null }),
+      capsuleIds.length > 0
+        ? supabaseAdmin!
+            .from('capsules')
+            .select('id, home_team_name, away_team_name, competition_name, photo_urls, photo_url')
+            .in('id', capsuleIds)
+        : Promise.resolve({ data: null }),
+    ]);
 
-      if (profileData) {
-        for (const p of profileData) {
-          profiles[p.id] = {
-            username: p.username,
-            display_name: p.full_name ?? null,
-            avatar_url: p.avatar_url,
-          };
-        }
+    if (profilesResult.data) {
+      for (const p of profilesResult.data) {
+        profiles[p.id] = {
+          username: p.username,
+          display_name: p.full_name ?? null,
+          avatar_url: p.avatar_url,
+        };
+      }
+    }
+
+    if (capsulesResult.data) {
+      for (const row of capsulesResult.data as CapsuleNotificationRow[]) {
+        const mapped = mapNotificationCapsule(row);
+        if (mapped) capsules[mapped.id] = mapped;
       }
     }
 
@@ -209,6 +233,7 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
       ...n,
       body: typeof n.body === 'string' ? n.body : null,
       actor: profiles[n.actor_id] ?? null,
+      capsule: n.capsule_id ? (capsules[n.capsule_id] ?? null) : null,
     }));
 
     res.json({ notifications, unread_count: count ?? 0, total });

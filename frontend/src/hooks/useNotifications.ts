@@ -8,11 +8,15 @@ import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 
+import type { NotificationCapsuleContext } from '@/lib/notificationCapsule';
+
 export interface NotificationActor {
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
 }
+
+export type NotificationCapsule = NotificationCapsuleContext;
 
 export interface AppNotification {
   id: string;
@@ -24,6 +28,8 @@ export interface AppNotification {
   read: boolean;
   created_at: string;
   actor: NotificationActor | null;
+  /** Partido de la Capsule (like/comment). Null si se borró o es follow. */
+  capsule?: NotificationCapsule | null;
 }
 
 interface NotificationsResponse {

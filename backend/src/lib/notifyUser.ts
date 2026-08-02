@@ -1,24 +1,20 @@
 import { supabaseAdmin } from './supabase.js';
+import {
+  buildNotificationPushBody,
+  formatMatchLabel,
+  mapNotificationCapsule,
+  type CapsuleNotificationRow,
+} from './notificationCapsule.js';
 import { sendPushToUser } from './webPush.js';
 
 type NotificationType = 'like' | 'follow' | 'comment';
 
 const BODY_MAX = 120;
 
-const PUSH_COPY: Record<NotificationType, { title: string; body: (name: string, snippet?: string) => string }> = {
-  like: {
-    title: 'Nuevo like',
-    body: (name) => `A ${name} le gustó tu cápsula`,
-  },
-  follow: {
-    title: 'Nuevo seguidor',
-    body: (name) => `${name} te empezó a seguir`,
-  },
-  comment: {
-    title: 'Nuevo comentario',
-    body: (name, snippet) =>
-      snippet ? `${name}: «${snippet}»` : `${name} comentó en tu cápsula`,
-  },
+const PUSH_TITLE: Record<NotificationType, string> = {
+  like: 'Nuevo like',
+  follow: 'Nuevo seguidor',
+  comment: 'Nuevo comentario',
 };
 
 function truncateBody(raw: string | undefined): string | null {
@@ -70,14 +66,28 @@ export async function notifyUser(params: {
 
     if (error) return;
 
-    const { data: actor } = await supabaseAdmin
-      .from('profiles')
-      .select('username, full_name')
-      .eq('id', params.actorId)
-      .maybeSingle();
+    const [actorResult, capsuleResult] = await Promise.all([
+      supabaseAdmin
+        .from('profiles')
+        .select('username, full_name')
+        .eq('id', params.actorId)
+        .maybeSingle(),
+      params.capsuleId
+        ? supabaseAdmin
+            .from('capsules')
+            .select('id, home_team_name, away_team_name, competition_name, photo_urls, photo_url')
+            .eq('id', params.capsuleId)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
 
+    const actor = actorResult.data;
     const name = actor?.full_name || (actor?.username ? `@${actor.username}` : 'Alguien');
-    const copy = PUSH_COPY[params.type];
+    const capsule = mapNotificationCapsule(
+      (capsuleResult.data as CapsuleNotificationRow | null) ?? null,
+    );
+    const matchLabel = capsule ? formatMatchLabel(capsule) : null;
+
     const url =
       params.type === 'follow' && actor?.username
         ? `/u/${actor.username}`
@@ -88,8 +98,13 @@ export async function notifyUser(params: {
           : '/notifications';
 
     void sendPushToUser(params.userId, {
-      title: copy.title,
-      body: copy.body(name, snippet ?? undefined),
+      title: PUSH_TITLE[params.type],
+      body: buildNotificationPushBody({
+        type: params.type,
+        actorName: name,
+        matchLabel,
+        commentSnippet: snippet,
+      }),
       url,
     });
   } catch {
