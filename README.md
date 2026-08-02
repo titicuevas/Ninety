@@ -386,11 +386,11 @@ Ninety/
 - [x] Mapa de estadios
 - [x] Estadísticas avanzadas
 
-### 🚀 v4 — Diario social & portabilidad
+### ✅ v4 — Diario social & portabilidad
 - [x] Comparar diarios (cara a cara) — partidos, media, estadio y overlap de equipos vs otro aficionado (`/u/:username/vs`)
 - [x] Colecciones del diario — listas curadas de Capsules (“Clásicos”, “Viajes”, “Noches de Champions”) compartibles al estilo Letterboxd (`/collections`, `/u/:username/lists/:slug`; migración `20250802120000_collections.sql`)
 - [x] Exportar mi diario — descarga JSON/CSV desde Ajustes (backup y portabilidad GDPR)
-- [ ] Instalar Ninety (PWA) — añadir a pantalla de inicio + shell offline ligero
+- [x] Instalar Ninety (PWA) — añadir a pantalla de inicio desde Ajustes + shell offline ligero (`manifest.json`, `sw.js`, `/offline.html`)
 
 ## 🎨 Identidad visual
 

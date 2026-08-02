@@ -1,5 +1,5 @@
-const CACHE_NAME = 'ninety-v2';
-const PRECACHE = ['/', '/manifest.json', '/favicon.svg'];
+const CACHE_NAME = 'ninety-v3';
+const PRECACHE = ['/', '/offline.html', '/manifest.json', '/favicon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -45,12 +45,37 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML navigation: network-first with fallback
+  // HTML navigation: network-first with offline shell fallback
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match('/') || new Response('Offline', { status: 503 })),
+      fetch(request)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put('/', clone));
+          return res;
+        })
+        .catch(() =>
+          caches.match(request).then(
+            (cached) => cached || caches.match('/offline.html') || caches.match('/') ||
+              new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } }),
+          ),
+        ),
     );
     return;
+  }
+
+  // Static shell assets: stale-while-revalidate lite
+  if (PRECACHE.includes(url.pathname)) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        const network = fetch(request).then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          return res;
+        }).catch(() => cached);
+        return cached || network;
+      }),
+    );
   }
 });
 
