@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { MapPin, Swords, Trophy } from 'lucide-react';
+import { Library, MapPin, Swords, Trophy } from 'lucide-react';
 import { AchievementsSection } from '@/components/AchievementsSection';
 import { CapsuleDiaryFilters } from '@/components/CapsuleDiaryFilters';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
@@ -14,6 +14,7 @@ import { PublicWrappedSummary } from '@/components/PublicWrappedSummary';
 import { ShareProfileButton } from '@/components/ShareProfileButton';
 import { Button } from '@/components/ui/button';
 import { usePublicProfile } from '@/hooks/usePublicProfile';
+import { usePublicCollections } from '@/hooks/useCollections';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { useDiaryFilterParams } from '@/hooks/useDiaryFilterParams';
@@ -85,6 +86,8 @@ export function PublicProfilePage() {
     isFetching,
     fetchNextPage,
   } = usePublicProfile(username, { q, year, ratingMin, watchContext });
+
+  const { data: collectionsData } = usePublicCollections(username);
 
   const profile = data?.pages[0]?.profile;
   useDocumentTitle(
@@ -257,6 +260,45 @@ export function PublicProfilePage() {
                 : `${unlockedAchievements} de ${achievements.length} desbloqueados`
             }
           />
+        ) : null}
+
+        {(collectionsData?.collections.length ?? 0) > 0 ? (
+          <section className="space-y-3">
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
+              <Library className="h-5 w-5 text-primary" aria-hidden />
+              Colecciones
+            </h2>
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {collectionsData!.collections.map((col) => (
+                <li key={col.id}>
+                  <Link
+                    to={`/u/${encodeURIComponent(profile.username!)}/lists/${encodeURIComponent(col.slug)}`}
+                    className="block rounded-xl border border-border bg-card/50 px-4 py-3 transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <p className="font-medium">{col.name}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {col.items_count ?? 0}{' '}
+                      {(col.items_count ?? 0) === 1 ? 'partido' : 'partidos'}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            {isOwnProfile ? (
+              <Button asChild variant="secondary" size="sm">
+                <Link to="/collections">Gestionar colecciones</Link>
+              </Button>
+            ) : null}
+          </section>
+        ) : isOwnProfile ? (
+          <section>
+            <Button asChild variant="secondary" size="sm">
+              <Link to="/collections">
+                <Library className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                Crear colecciones
+              </Link>
+            </Button>
+          </section>
         ) : null}
 
         {!diaryEmpty ? (

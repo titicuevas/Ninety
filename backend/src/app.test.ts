@@ -74,6 +74,21 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/collections/me requiere auth', async () => {
+    const res = await request(createApp()).get('/api/collections/me');
+    assert.equal(res.status, 401);
+  });
+
+  it('POST /api/collections requiere auth', async () => {
+    const res = await request(createApp()).post('/api/collections').send({ name: 'Clásicos' });
+    assert.equal(res.status, 401);
+  });
+
+  it('GET /api/collections/user/:username no requiere auth', async () => {
+    const res = await request(createApp()).get('/api/collections/user/demo');
+    assert.notEqual(res.status, 401);
+  });
+
   it('GET /api/capsules/feed requiere auth', async () => {
     const res = await request(createApp()).get('/api/capsules/feed');
     assert.equal(res.status, 401);

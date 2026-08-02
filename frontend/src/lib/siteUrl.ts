@@ -24,3 +24,8 @@ export function compareProfileUrl(username: string): string {
 export function publicCapsuleUrl(capsuleId: string): string {
   return `${siteUrl()}/c/${encodeURIComponent(capsuleId)}`;
 }
+
+/** Colección pública (`/u/:username/lists/:slug`). */
+export function publicCollectionUrl(username: string, slug: string): string {
+  return `${siteUrl()}/u/${encodeURIComponent(username)}/lists/${encodeURIComponent(slug)}`;
+}

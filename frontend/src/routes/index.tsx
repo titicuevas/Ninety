@@ -2,6 +2,8 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute, GuestRoute } from '@/components/ProtectedRoute';
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
 import { CapsulesPage } from '@/pages/CapsulesPage';
+import { CollectionDetailPage } from '@/pages/CollectionDetailPage';
+import { CollectionsPage } from '@/pages/CollectionsPage';
 import { CreateCapsulePage } from '@/pages/CreateCapsulePage';
 import { EditCapsulePage } from '@/pages/EditCapsulePage';
 import { FeedPage } from '@/pages/FeedPage';
@@ -13,6 +15,7 @@ import { ProfilePage } from '@/pages/ProfilePage';
 import { FollowersPage, FollowingPage } from '@/pages/FollowListPage';
 import { CompareProfilePage } from '@/pages/CompareProfilePage';
 import { PublicCapsulePage } from '@/pages/PublicCapsulePage';
+import { PublicCollectionPage } from '@/pages/PublicCollectionPage';
 import { PublicProfilePage } from '@/pages/PublicProfilePage';
 import { PrivacyPage } from '@/pages/PrivacyPage';
 import { RegisterPage } from '@/pages/RegisterPage';
@@ -32,6 +35,7 @@ export const appRouter = createBrowserRouter([
   { path: '/u/:username/followers', element: <FollowersPage /> },
   { path: '/u/:username/following', element: <FollowingPage /> },
   { path: '/u/:username/vs', element: <CompareProfilePage /> },
+  { path: '/u/:username/lists/:slug', element: <PublicCollectionPage /> },
   { path: '/u/:username', element: <PublicProfilePage /> },
   { path: '/c/:id', element: <PublicCapsulePage /> },
   {
@@ -51,6 +55,8 @@ export const appRouter = createBrowserRouter([
       { path: '/capsules', element: <CapsulesPage /> },
       { path: '/capsules/new', element: <CreateCapsulePage /> },
       { path: '/capsules/:id/edit', element: <EditCapsulePage /> },
+      { path: '/collections', element: <CollectionsPage /> },
+      { path: '/collections/:id', element: <CollectionDetailPage /> },
       { path: '/notifications', element: <NotificationsPage /> },
       { path: '/profile', element: <ProfilePage /> },
       { path: '/settings', element: <SettingsPage /> },

@@ -94,6 +94,7 @@ cd Ninety
 4. Copia las credenciales del proyecto
 5. Ejecuta las migraciones de `supabase/migrations/` en el **SQL Editor** (en orden por fecha)
    - Incluye `20250724140000_capsule_photos_limit_9.sql` (límite de fotos 6 → 9)
+   - Incluye `20250802120000_collections.sql` (colecciones del diario)
 6. Verifica con `npm run verify:capsules --prefix backend`
 
 ### 3. Variables de entorno
@@ -344,6 +345,10 @@ Ninety/
 | POST/PATCH/DELETE | `/api/capsules`… | ✅ | CRUD capsules |
 | POST/DELETE | `/api/capsules/:id/like` | ✅ | Likes |
 | GET/POST/DELETE | `/api/capsules/:id/comments`… | ✅ | Comentarios |
+| GET | `/api/collections/me` | ✅ | Mis colecciones |
+| POST/PATCH/DELETE | `/api/collections`… | ✅ | CRUD colecciones + ítems |
+| GET | `/api/collections/user/:username` | opcional | Colecciones públicas |
+| GET | `/api/collections/user/:username/:slug` | opcional | Detalle colección (`/u/:username/lists/:slug`) |
 | GET | `/api/football/matches/search` | ✅ | Buscar partidos |
 | GET | `/api/football/competitions` | ✅ | Competiciones |
 
@@ -382,7 +387,7 @@ Ninety/
 
 ### 🚀 v4 — Diario social & portabilidad
 - [x] Comparar diarios (cara a cara) — partidos, media, estadio y overlap de equipos vs otro aficionado (`/u/:username/vs`)
-- [ ] Colecciones del diario — listas curadas de Capsules (“Clásicos”, “Viajes”, “Noches de Champions”) compartibles al estilo Letterboxd
+- [x] Colecciones del diario — listas curadas de Capsules (“Clásicos”, “Viajes”, “Noches de Champions”) compartibles al estilo Letterboxd (`/collections`, `/u/:username/lists/:slug`; migración `20250802120000_collections.sql`)
 - [ ] Exportar mi diario — descarga JSON/CSV desde Ajustes (backup y portabilidad GDPR)
 - [ ] Instalar Ninety (PWA) — añadir a pantalla de inicio + shell offline ligero
 

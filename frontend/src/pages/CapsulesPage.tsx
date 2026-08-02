@@ -137,9 +137,14 @@ export function CapsulesPage() {
               ) : null}
             </p>
           </div>
-          <Button asChild className="shrink-0">
-            <Link to="/search">Buscar partido</Link>
-          </Button>
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+            <Button asChild variant="secondary">
+              <Link to="/collections">Colecciones</Link>
+            </Button>
+            <Button asChild>
+              <Link to="/search">Buscar partido</Link>
+            </Button>
+          </div>
         </section>
 
         <CapsuleDiaryFilters

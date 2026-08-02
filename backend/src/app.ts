@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import { env } from './config/loadEnv.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { capsulesRouter } from './routes/capsules.js';
+import { collectionsRouter } from './routes/collections.js';
 import { footballRouter } from './routes/football.js';
 import { healthRouter } from './routes/health.js';
 import { indexRouter } from './routes/index.js';
@@ -71,6 +72,7 @@ export function createApp() {
   app.use('/api/auth', authLimiter, authRouter);
   app.use('/api/profile', profileRouter);
   app.use('/api/capsules', capsulesRouter);
+  app.use('/api/collections', collectionsRouter);
   app.use('/api/football', footballLimiter, footballRouter);
   app.use('/api/notifications', notificationsRouter);
 
