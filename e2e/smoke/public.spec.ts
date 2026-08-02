@@ -17,8 +17,8 @@ test.describe('Smoke — público @smoke', () => {
   test('login muestra formulario', async ({ page }) => {
     await page.goto('/login');
     await expect(page.getByRole('heading', { name: /bienvenido de vuelta/i })).toBeVisible();
-    await expect(page.getByLabel('Email')).toBeVisible();
-    await expect(page.getByLabel('Contraseña')).toBeVisible();
+    await expect(page.getByLabel('Email', { exact: true })).toBeVisible();
+    await expect(page.getByLabel('Contraseña', { exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: /olvidaste tu contraseña/i })).toBeVisible();
   });
 

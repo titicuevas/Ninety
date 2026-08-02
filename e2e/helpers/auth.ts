@@ -17,8 +17,8 @@ export async function loginAsDemo(page: Page) {
   const { email, password } = requireDemoCredentials();
   await page.goto('/login');
   await expect(page.getByRole('heading', { name: /bienvenido de vuelta/i })).toBeVisible();
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Contraseña').fill(password);
+  await page.getByLabel('Email', { exact: true }).fill(email);
+  await page.getByLabel('Contraseña', { exact: true }).fill(password);
   await page.getByRole('button', { name: /iniciar sesión/i }).click();
   await expect(page).toHaveURL(/\/home/, { timeout: 20_000 });
 }
