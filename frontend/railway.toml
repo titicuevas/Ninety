@@ -4,4 +4,6 @@ dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = "node serve.mjs"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
 restartPolicyType = "ON_FAILURE"

@@ -7,8 +7,10 @@ RUN npm run build
 
 FROM node:22-alpine AS run
 WORKDIR /app
-ENV PORT=4173
-EXPOSE 4173
+# No fijar PORT aquí: Railway lo inyecta en runtime (a menudo 8080).
+# El Target Port del dominio custom DEBE coincidir con process.env.PORT.
+# Si quieres 4173: Variables → PORT=4173 y Networking → Target Port = 4173.
+EXPOSE 8080
 
 # Incluye node_modules para que "vite preview" del dashboard de Railway funcione
 # aunque el start command del panel no se haya limpiado todavía.

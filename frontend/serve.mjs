@@ -343,5 +343,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Ninety frontend listening on :${PORT} (API ${API_URL})`);
+  // Railway Edge Proxy exige 0.0.0.0 + el mismo puerto que Variables PORT / Target Port del dominio.
+  console.log(`Ninety frontend listening on http://0.0.0.0:${PORT} (API ${API_URL})`);
 });

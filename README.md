@@ -137,6 +137,7 @@ npm run dev
 
 > Checklist DNS + env + Supabase Redirect URLs: [docs/auth-setup.md](docs/auth-setup.md#dominio-custom-getninetyapp--railway).
 > Si el frontend muestra error 403 en preview Vite, redeploy tras actualizar `frontend/vite.config.ts` (`preview.allowedHosts`).
+> Si Railway muestra **Application failed to respond**: el Target Port del dominio debe coincidir con `PORT` del contenedor (logs: `listening on http://0.0.0.0:N`). No uses `4173` a ciegas.
 
 ### Variables en Railway
 

@@ -22,11 +22,22 @@ En el panel DNS de `getninety.app`:
 
 \*Si el registrador no permite CNAME en apex (`@`), usa el registro **ALIAS / ANAME** que ofrezca, o el flujo «Custom Domain» de Railway (te indica registros exactos).
 
-En **Railway → servicio frontend (`ninety`) → Settings → Networking / Custom Domain**:
+En **Railway → servicio frontend (`ninety-frontend` / `ninety`) → Settings → Networking / Custom Domain**:
 
-1. Añade `getninety.app` y `www.getninety.app`
+1. Añade `getninety.app` y `www.getninety.app` **en el servicio del frontend**, no en el API
 2. Copia los registros DNS que indique el panel
-3. Espera el certificado TLS (Let's Encrypt) hasta estado **Active**
+3. Espera el certificado TLS (Let's Encrypt) hasta estado **Active** / DNS verificado en verde
+4. **Target Port:** debe ser el mismo puerto en el que escucha la app (ver logs: `listening on http://0.0.0.0:XXXX`). Railway inyecta `PORT` (a menudo `8080`); **no** asumas `4173` salvo que hayas fijado `PORT=4173` en Variables
+
+#### Si ves «Application failed to respond» (502)
+
+Causa habitual: el dominio apunta a un puerto (p. ej. `4173`) distinto del `PORT` real del contenedor.
+
+1. Deploy logs del frontend → busca `Ninety frontend listening on http://0.0.0.0:N`
+2. Settings → Networking → edita el dominio → **Target Port = N** (el mismo)
+3. Opcional y más estable: Variables → `PORT=8080` (o `4173`) **y** Target Port idéntico
+4. Confirma Start Command = `node serve.mjs` (no `vite preview` a menos que `preview.host` sea `0.0.0.0`)
+5. Prueba `/health` en el dominio: debe devolver `{"status":"ok"}`
 
 La API puede seguir en `https://ninety-api.up.railway.app` (no hace falta dominio custom en el API para este corte).
 
