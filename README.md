@@ -405,7 +405,7 @@ Ninety/
 ### 🚧 v5 — Activación & retención
 - [x] Colecciones descubribles — CTAs en Perfil / Mis Capsules / perfil público, «Añadir a colección» desde Capsule, empty states y humo e2e
 - [x] Cara a cara más visual (avatares, proporciones, equipos en común vacíos)
-- [ ] Digest / recordatorios ligeros para volver al diario
+- [x] Digest / recordatorios ligeros para volver al diario — tarjeta en Inicio (resumen semanal / nudge / hueco) + preferencia en Ajustes; on-device, sin emails
 - [x] Onboarding de valor (primera colección, primer compare)
 
 ## 🎨 Identidad visual

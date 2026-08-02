@@ -145,6 +145,18 @@ El producto **no** envía correos desde el backend propio: signup, confirmación
 
 Hasta completar 1–5 en el proyecto Supabase / Railway, los flujos de email están **parciales** (código OK, entrega/redirects = responsabilidad ops).
 
+### Probar email AHORA (checklist)
+
+Usar el frontend Railway (`https://ninety.up.railway.app`), **no** `getninety.app` mientras dé 502.
+
+1. **Supabase → Authentication → URL Configuration:** Site URL = `https://ninety.up.railway.app`. Redirect URLs deben incluir `/auth/callback`, `/auth/reset-password` y `/**` de ese origen (y localhost si pruebas en local).
+2. **Supabase → Authentication → Emails / SMTP:** built-in vale para una prueba; si no llega nada, activa SMTP custom (Mailtrap/Resend/etc.) o mira rate limit del built-in.
+3. **Registro:** abre `https://ninety.up.railway.app/register` → email real → bandeja/spam → click confirmar → login.
+4. **Recovery:** `/forgot-password` → mismo email → enlace → `/auth/reset-password` → nueva contraseña → login.
+5. **Si falla:** sin email → SMTP / rate limit / carpeta spam. Link roto o va a otro dominio → Redirect URLs o `CLIENT_URL` / Site URL no alineados con Railway.
+
+> No inventes que SMTP/Redirects ya estén en prod: hay que verificarlos en el Dashboard. El código de signup/recovery/callback ya está listo.
+
 ---
 
 ## Google OAuth (Supabase) — setup inicial

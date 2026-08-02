@@ -2,26 +2,26 @@ import { Link } from 'react-router-dom';
 import { Check, Library, Swords } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useValueOnboarding } from '@/hooks/useValueOnboarding';
 import { cn } from '@/lib/utils';
 
 type Props = {
   hasCollection: boolean;
   /** Username sugerido para el primer cara a cara (siguiendo / discover). */
   compareTargetUsername?: string | null;
+  visible: boolean;
+  hasCompare: boolean;
+  dismiss: (permanent?: boolean) => void;
   className?: string;
 };
 
 export function ValueOnboardingCard({
   hasCollection,
   compareTargetUsername,
+  visible,
+  hasCompare,
+  dismiss,
   className,
 }: Props) {
-  const { visible, hasCompare, dismiss } = useValueOnboarding({
-    coreComplete: true,
-    hasCollection,
-  });
-
   if (!visible) return null;
 
   const compareHref = compareTargetUsername

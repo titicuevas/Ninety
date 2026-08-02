@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { AchievementsSection } from '@/components/AchievementsSection';
 import { AdvancedStatsSection } from '@/components/AdvancedStatsSection';
 import { ClaimProfileCard } from '@/components/ClaimProfileCard';
+import { DiaryDigestCard } from '@/components/DiaryDigestCard';
 import { EmptyState } from '@/components/EmptyState';
 import { HomeSocialHub } from '@/components/HomeSocialHub';
 import { InsightsSection } from '@/components/InsightsSection';
@@ -18,6 +19,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useCapsules } from '@/hooks/useCapsules';
 import { useMyCollections } from '@/hooks/useCollections';
 import { useFollowList } from '@/hooks/useFollowList';
+import { useValueOnboarding } from '@/hooks/useValueOnboarding';
 import {
   achievementsInputFromStats,
   computeAchievements,
@@ -64,6 +66,10 @@ export function HomePage() {
   const hasCollection = (collectionsData?.collections?.length ?? 0) > 0;
   const compareTargetUsername =
     followingData?.profiles?.find((p) => p.username)?.username ?? null;
+  const valueOnboarding = useValueOnboarding({
+    coreComplete: !showOnboarding && !isLoading,
+    hasCollection,
+  });
 
   const metadataName =
     typeof user?.user_metadata?.display_name === 'string' ? user.user_metadata.display_name : undefined;
@@ -154,6 +160,14 @@ export function HomePage() {
             <ValueOnboardingCard
               hasCollection={hasCollection}
               compareTargetUsername={compareTargetUsername}
+              visible={valueOnboarding.visible}
+              hasCompare={valueOnboarding.hasCompare}
+              dismiss={valueOnboarding.dismiss}
+            />
+            <DiaryDigestCard
+              capsules={capsules}
+              coreComplete
+              valueOnboardingVisible={valueOnboarding.visible}
             />
             <PushActivationBanner context="home" />
           </>
