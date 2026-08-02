@@ -51,9 +51,13 @@ describe('diaryDigestMemory', () => {
     );
   });
 
-  it('no compite con value onboarding ni core incompleto', () => {
+  it('no compite con value onboarding, aniversario ni core incompleto', () => {
     assert.equal(
       shouldShowDiaryDigest(null, { ...base, valueOnboardingVisible: true }),
+      false,
+    );
+    assert.equal(
+      shouldShowDiaryDigest(null, { ...base, anniversaryVisible: true }),
       false,
     );
     assert.equal(shouldShowDiaryDigest(null, { ...base, coreComplete: false }), false);

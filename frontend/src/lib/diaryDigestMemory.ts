@@ -73,6 +73,8 @@ export function shouldShowDiaryDigest(
     coreComplete: boolean;
     /** Si el onboarding de valor está visible, no competir. */
     valueOnboardingVisible: boolean;
+    /** Aniversario «Tal día como hoy» tiene prioridad sobre el digest. */
+    anniversaryVisible?: boolean;
     hasDigest: boolean;
     kind: 'weekly' | 'nudge' | 'gap' | null;
     nowMs?: number;
@@ -80,6 +82,7 @@ export function shouldShowDiaryDigest(
 ): boolean {
   if (!opts.coreComplete) return false;
   if (opts.valueOnboardingVisible) return false;
+  if (opts.anniversaryVisible) return false;
   if (!opts.hasDigest || !opts.kind) return false;
   if (!isDiaryDigestEnabled(prefs)) return false;
   if (prefs?.dismissPermanent) return false;

@@ -7,6 +7,7 @@ import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
 import { FormAlert } from '@/components/FormAlert';
 import { Layout } from '@/components/Layout';
 import { PasswordField } from '@/components/PasswordField';
+import { DiaryAnniversaryPrefsPanel } from '@/components/DiaryAnniversaryPrefsPanel';
 import { DiaryDigestPrefsPanel } from '@/components/DiaryDigestPrefsPanel';
 import { PushAlertsPanel } from '@/components/PushAlertsPanel';
 import { InstallAppPanel } from '@/components/InstallAppPanel';
@@ -201,6 +202,7 @@ export function SettingsPage() {
           <CardContent className="space-y-6">
             <PushAlertsPanel variant="card" />
             <DiaryDigestPrefsPanel />
+            <DiaryAnniversaryPrefsPanel />
             <Button asChild variant="secondary" className="w-full sm:w-auto">
               <Link to="/notifications">
                 <Bell className="mr-2 h-4 w-4" aria-hidden />

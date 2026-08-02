@@ -1,28 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuthInit';
-import { computeDiaryDigest, type DiaryDigest } from '@/lib/diaryDigest';
+import { computeDiaryAnniversary, type DiaryAnniversary } from '@/lib/diaryAnniversary';
 import {
-  dismissDiaryDigest,
-  isDiaryDigestEnabled,
-  markWeeklyDigestShown,
-  readDiaryDigestPrefs,
-  setDiaryDigestEnabled,
-  shouldShowDiaryDigest,
-} from '@/lib/diaryDigestMemory';
+  dismissDiaryAnniversary,
+  isDiaryAnniversaryEnabled,
+  markDiaryAnniversaryShown,
+  readDiaryAnniversaryPrefs,
+  setDiaryAnniversaryEnabled,
+  shouldShowDiaryAnniversary,
+} from '@/lib/diaryAnniversaryMemory';
 import type { Capsule } from '@/types/capsule';
 
 type Options = {
   capsules: Capsule[];
   coreComplete: boolean;
   valueOnboardingVisible: boolean;
-  anniversaryVisible?: boolean;
 };
 
-export function useDiaryDigest({
+export function useDiaryAnniversary({
   capsules,
   coreComplete,
   valueOnboardingVisible,
-  anniversaryVisible = false,
 }: Options) {
   const { user } = useAuth();
   const userId = user?.id ?? '';
@@ -30,31 +28,29 @@ export function useDiaryDigest({
 
   const prefs = useMemo(() => {
     void tick;
-    return userId ? readDiaryDigestPrefs(userId) : null;
+    return userId ? readDiaryAnniversaryPrefs(userId) : null;
   }, [userId, tick]);
 
-  const digest: DiaryDigest | null = useMemo(
-    () => computeDiaryDigest(capsules),
+  const anniversary: DiaryAnniversary | null = useMemo(
+    () => computeDiaryAnniversary(capsules),
     [capsules],
   );
 
-  const visible = shouldShowDiaryDigest(prefs, {
+  const visible = shouldShowDiaryAnniversary(prefs, {
     coreComplete,
     valueOnboardingVisible,
-    anniversaryVisible,
-    hasDigest: digest != null,
-    kind: digest?.kind ?? null,
+    hasAnniversary: anniversary != null,
   });
 
   useEffect(() => {
-    if (!visible || !userId || digest?.kind !== 'weekly') return;
-    markWeeklyDigestShown(userId);
-  }, [visible, userId, digest?.kind]);
+    if (!visible || !userId) return;
+    markDiaryAnniversaryShown(userId);
+  }, [visible, userId]);
 
   const dismiss = useCallback(
     (permanent = false) => {
       if (!userId) return;
-      dismissDiaryDigest(userId, { permanent });
+      dismissDiaryAnniversary(userId, { permanent });
       setTick((n) => n + 1);
     },
     [userId],
@@ -63,16 +59,16 @@ export function useDiaryDigest({
   const setEnabled = useCallback(
     (enabled: boolean) => {
       if (!userId) return;
-      setDiaryDigestEnabled(userId, enabled);
+      setDiaryAnniversaryEnabled(userId, enabled);
       setTick((n) => n + 1);
     },
     [userId],
   );
 
   return {
-    digest,
+    anniversary,
     visible,
-    enabled: isDiaryDigestEnabled(prefs),
+    enabled: isDiaryAnniversaryEnabled(prefs),
     dismiss,
     setEnabled,
   };

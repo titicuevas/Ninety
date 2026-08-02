@@ -415,6 +415,7 @@ Ninety/
 - [x] Cara a cara más visual (avatares, proporciones, equipos en común vacíos)
 - [x] Digest / recordatorios ligeros para volver al diario — tarjeta en Inicio (resumen semanal / nudge / hueco) + preferencia en Ajustes; on-device, sin emails
 - [x] Onboarding de valor (primera colección, primer compare)
+- [x] Aniversarios del diario («Tal día como hoy») — card en Inicio cuando hace ≥1 año viste un partido el mismo mes/día + preferencia en Ajustes; on-device, prioridad sobre digest, sin emails
 
 ## 🎨 Identidad visual
 

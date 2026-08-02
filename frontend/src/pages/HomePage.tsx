@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { AchievementsSection } from '@/components/AchievementsSection';
 import { AdvancedStatsSection } from '@/components/AdvancedStatsSection';
 import { ClaimProfileCard } from '@/components/ClaimProfileCard';
+import { DiaryAnniversaryCard } from '@/components/DiaryAnniversaryCard';
 import { DiaryDigestCard } from '@/components/DiaryDigestCard';
 import { EmptyState } from '@/components/EmptyState';
 import { HomeSocialHub } from '@/components/HomeSocialHub';
@@ -18,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCapsules } from '@/hooks/useCapsules';
 import { useMyCollections } from '@/hooks/useCollections';
+import { useDiaryAnniversary } from '@/hooks/useDiaryAnniversary';
 import { useFollowList } from '@/hooks/useFollowList';
 import { useValueOnboarding } from '@/hooks/useValueOnboarding';
 import {
@@ -69,6 +71,11 @@ export function HomePage() {
   const valueOnboarding = useValueOnboarding({
     coreComplete: !showOnboarding && !isLoading,
     hasCollection,
+  });
+  const diaryAnniversary = useDiaryAnniversary({
+    capsules: capsulesData?.capsules ?? [],
+    coreComplete: !showOnboarding && !isLoading,
+    valueOnboardingVisible: valueOnboarding.visible,
   });
 
   const metadataName =
@@ -164,10 +171,16 @@ export function HomePage() {
               hasCompare={valueOnboarding.hasCompare}
               dismiss={valueOnboarding.dismiss}
             />
+            <DiaryAnniversaryCard
+              anniversary={diaryAnniversary.anniversary}
+              visible={diaryAnniversary.visible}
+              dismiss={diaryAnniversary.dismiss}
+            />
             <DiaryDigestCard
               capsules={capsules}
               coreComplete
               valueOnboardingVisible={valueOnboarding.visible}
+              anniversaryVisible={diaryAnniversary.visible}
             />
             <PushActivationBanner context="home" />
           </>

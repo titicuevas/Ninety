@@ -10,6 +10,7 @@ type Props = {
   capsules: Capsule[];
   coreComplete: boolean;
   valueOnboardingVisible: boolean;
+  anniversaryVisible?: boolean;
   className?: string;
 };
 
@@ -23,12 +24,14 @@ export function DiaryDigestCard({
   capsules,
   coreComplete,
   valueOnboardingVisible,
+  anniversaryVisible = false,
   className,
 }: Props) {
   const { digest, visible, dismiss } = useDiaryDigest({
     capsules,
     coreComplete,
     valueOnboardingVisible,
+    anniversaryVisible,
   });
 
   if (!visible || !digest) return null;
