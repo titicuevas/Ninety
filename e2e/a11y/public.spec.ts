@@ -29,6 +29,15 @@ test.describe('A11y — páginas públicas @a11y', () => {
     await expectNoA11yViolations(page, 'login');
   });
 
+  test('login: skip link alcanza el formulario', async ({ page }) => {
+    await page.goto('/login');
+    await page.keyboard.press('Tab');
+    const skip = page.getByRole('link', { name: /saltar al contenido/i });
+    await expect(skip).toBeFocused();
+    await skip.press('Enter');
+    await expect(page.locator('#main-content')).toBeFocused();
+  });
+
   test('perfil público sin violaciones graves', async ({ page, request }) => {
     const data = await requirePublicDemoProfile(request);
     const name = demoDisplayName(data);

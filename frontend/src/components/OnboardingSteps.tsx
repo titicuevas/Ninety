@@ -50,29 +50,34 @@ export function OnboardingSteps({ hasProfile, hasCapsule, hasFollow }: Onboardin
           {steps.map((step, i) => {
             const done = completed[i];
             const Icon = step.icon;
+            const body = (
+              <>
+                <span
+                  className={cn(
+                    'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+                    done ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground',
+                  )}
+                >
+                  {done ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
+                </span>
+                <div className="min-w-0">
+                  <p className={cn('text-sm font-medium', done && 'line-through')}>{step.title}</p>
+                  <p className="text-xs text-muted-foreground">{step.description}</p>
+                </div>
+              </>
+            );
             return (
               <li key={step.key}>
-                <Link
-                  to={done ? '#' : step.link}
-                  className={cn(
-                    'flex items-start gap-3 rounded-lg p-3 transition-colors',
-                    done ? 'pointer-events-none opacity-60' : 'hover:bg-secondary/60',
-                  )}
-                  aria-disabled={done}
-                >
-                  <span
-                    className={cn(
-                      'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
-                      done ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground',
-                    )}
+                {done ? (
+                  <div className="flex items-start gap-3 rounded-lg p-3 opacity-60">{body}</div>
+                ) : (
+                  <Link
+                    to={step.link}
+                    className="flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-secondary/60"
                   >
-                    {done ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
-                  </span>
-                  <div className="min-w-0">
-                    <p className={cn('text-sm font-medium', done && 'line-through')}>{step.title}</p>
-                    <p className="text-xs text-muted-foreground">{step.description}</p>
-                  </div>
-                </Link>
+                    {body}
+                  </Link>
+                )}
               </li>
             );
           })}

@@ -41,23 +41,22 @@ test.describe('Smoke — notificaciones @smoke', () => {
     await page.waitForURL(/\/notifications/);
     await expect(page.getByRole('heading', { name: /notificaciones/i })).toBeVisible();
 
-    const enable = page.getByRole('button', { name: /activar alertas/i });
-    const disable = page.getByRole('button', { name: /desactivar alertas/i });
-    const testPush = page.getByRole('button', { name: /enviar prueba/i });
-    const enabledLabel = page.getByText(/alertas activadas/i);
-    const empty = page.getByText(/sin notificaciones/i);
-    const list = page.locator('[class*="divide-"]');
+    const panel = page.getByTestId('push-alerts-panel');
+    await expect(panel).toBeVisible({ timeout: 15_000 });
+    await expect(panel.getByText(/alertas push/i)).toBeVisible();
+
+    const enable = panel.getByRole('button', { name: /activar alertas/i });
+    const disable = panel.getByRole('button', { name: /desactivar alertas/i });
+    const testPush = panel.getByRole('button', { name: /enviar prueba/i });
     const diagnostics = page.getByTestId('push-diagnostics');
 
-    await expect(empty.or(list).or(enable).or(disable).or(enabledLabel).or(diagnostics)).toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(enable.or(disable).or(diagnostics)).toBeVisible({ timeout: 15_000 });
 
     if (await enable.isVisible()) {
       await expect(enable).toBeEnabled();
     }
     if (await disable.isVisible()) {
-      await expect(enabledLabel).toBeVisible();
+      await expect(panel.getByText(/alertas activadas/i)).toBeVisible();
       await expect(testPush).toBeVisible();
     }
 
@@ -65,6 +64,19 @@ test.describe('Smoke — notificaciones @smoke', () => {
     if (await diagnostics.isVisible()) {
       await expect(diagnostics).toContainText(/alertas push/i);
     }
+  });
+
+  test('Ajustes expone el mismo panel de alertas push', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page.goto('/settings');
+    await page.waitForURL(/\/settings/);
+
+    const panel = page.getByTestId('push-alerts-panel');
+    await expect(panel).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('link', { name: /ver centro de alertas/i })).toBeVisible();
+    await page.getByRole('link', { name: /ver centro de alertas/i }).click();
+    await expect(page).toHaveURL(/\/notifications/);
+    await expect(page.getByTestId('push-alerts-panel')).toBeVisible();
   });
 
   test('deep link #comments abre el panel en el detalle', async ({ page, request }) => {

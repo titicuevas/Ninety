@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { LegalFooter } from '@/components/LegalFooter';
+import { SkipLink } from '@/components/SkipLink';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -13,6 +14,7 @@ type Props = {
 export function AuthLayout({ title, subtitle, children, className }: Props) {
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-background text-foreground">
+      <SkipLink />
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(16,185,129,0.14),_transparent_55%),radial-gradient(ellipse_at_bottom,_rgba(16,185,129,0.06),_transparent_50%)]"
         aria-hidden
@@ -44,9 +46,13 @@ export function AuthLayout({ title, subtitle, children, className }: Props) {
             <p className="mt-2 text-sm text-muted-foreground sm:text-base">{subtitle}</p>
           </div>
 
-          <div className="rounded-2xl border border-border/80 bg-card/80 p-5 shadow-xl shadow-black/20 backdrop-blur-sm sm:p-7">
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="rounded-2xl border border-border/80 bg-card/80 p-5 shadow-xl shadow-black/20 backdrop-blur-sm outline-none sm:p-7"
+          >
             {children}
-          </div>
+          </main>
 
           <LegalFooter className="mt-8" />
         </div>

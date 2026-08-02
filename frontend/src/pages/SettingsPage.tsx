@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,6 +7,7 @@ import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
 import { FormAlert } from '@/components/FormAlert';
 import { Layout } from '@/components/Layout';
 import { PasswordField } from '@/components/PasswordField';
+import { PushAlertsPanel } from '@/components/PushAlertsPanel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField } from '@/components/ui/form-field';
@@ -27,6 +28,9 @@ export function SettingsPage() {
   const [signOutBusy, setSignOutBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
+  const deleteDialogRef = useRef<HTMLDialogElement>(null);
+  const deleteTitleId = useId();
+  const deleteDescId = useId();
 
   const {
     register,
@@ -46,6 +50,21 @@ export function SettingsPage() {
   const accountEmail = (user?.email ?? '').trim().toLowerCase();
   const deleteReady =
     !!accountEmail && deleteConfirm.trim().toLowerCase() === accountEmail;
+
+  useEffect(() => {
+    const dialog = deleteDialogRef.current;
+    if (!dialog) return;
+    if (deleteOpen) {
+      if (!dialog.open) dialog.showModal();
+    } else if (dialog.open) {
+      dialog.close();
+    }
+  }, [deleteOpen]);
+
+  const closeDeleteDialog = () => {
+    setDeleteOpen(false);
+    setDeleteConfirm('');
+  };
 
   const onChangePassword = async (data: PasswordConfirmForm) => {
     if (!session?.access_token) return;
@@ -93,8 +112,7 @@ export function SettingsPage() {
         .join('\n'),
     );
     window.location.href = `mailto:hello@ninety.app?subject=${subject}&body=${body}`;
-    setDeleteOpen(false);
-    setDeleteConfirm('');
+    closeDeleteDialog();
   };
 
   return (
@@ -154,13 +172,17 @@ export function SettingsPage() {
         <Card className="border-border">
           <CardHeader>
             <CardTitle className="text-base">Notificaciones</CardTitle>
-            <CardDescription>Push del navegador y centro de alertas</CardDescription>
+            <CardDescription>
+              Activa o desactiva las alertas push de este dispositivo. El historial vive en el centro
+              de alertas.
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button asChild variant="secondary">
+          <CardContent className="space-y-4">
+            <PushAlertsPanel variant="card" />
+            <Button asChild variant="secondary" className="w-full sm:w-auto">
               <Link to="/notifications">
                 <Bell className="mr-2 h-4 w-4" aria-hidden />
-                Ir a notificaciones
+                Ver centro de alertas
               </Link>
             </Button>
           </CardContent>
@@ -195,57 +217,55 @@ export function SettingsPage() {
         </Card>
       </div>
 
-      {deleteOpen ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="delete-account-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-          onClick={() => {
-            setDeleteOpen(false);
-            setDeleteConfirm('');
-          }}
-        >
-          <div
-            className="w-full max-w-md rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 id="delete-account-title" className="text-lg font-semibold">
+      <dialog
+        ref={deleteDialogRef}
+        aria-labelledby={deleteTitleId}
+        aria-describedby={deleteDescId}
+        className="fixed inset-0 z-50 m-auto w-[min(100%-2rem,28rem)] rounded-2xl border border-border bg-card p-0 text-card-foreground shadow-xl backdrop:bg-black/60 open:flex open:flex-col"
+        onCancel={(event) => {
+          event.preventDefault();
+          closeDeleteDialog();
+        }}
+        onClick={(event) => {
+          if (event.target === deleteDialogRef.current) closeDeleteDialog();
+        }}
+      >
+        <div className="space-y-4 p-5 sm:p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="space-y-2">
+            <h2 id={deleteTitleId} className="text-lg font-semibold">
               Eliminar cuenta
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p id={deleteDescId} className="text-sm text-muted-foreground">
               Todavía no hay borrado automático. Para abrir el email a{' '}
               <span className="text-foreground">hello@ninety.app</span>, escribe tu email de cuenta
               debajo.
             </p>
-            <FormField label="Escribe tu email para confirmar" className="mt-4">
-              <Input
-                type="email"
-                autoComplete="off"
-                placeholder={user?.email ?? 'tu@email.com'}
-                value={deleteConfirm}
-                onChange={(e) => setDeleteConfirm(e.target.value)}
-                aria-label="Confirmar email para eliminar cuenta"
-              />
-            </FormField>
-            <div className="mt-5 flex flex-wrap justify-end gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  setDeleteOpen(false);
-                  setDeleteConfirm('');
-                }}
-              >
-                Cerrar
-              </Button>
-              <Button type="button" disabled={!deleteReady} onClick={openDeleteMailto}>
-                Escribir email
-              </Button>
-            </div>
+          </div>
+          <FormField label="Escribe tu email para confirmar">
+            <Input
+              type="email"
+              autoComplete="off"
+              placeholder={user?.email ?? 'tu@email.com'}
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              aria-label="Confirmar email para eliminar cuenta"
+            />
+          </FormField>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="secondary" className="min-h-11" onClick={closeDeleteDialog}>
+              Cerrar
+            </Button>
+            <Button
+              type="button"
+              className="min-h-11"
+              disabled={!deleteReady}
+              onClick={openDeleteMailto}
+            >
+              Escribir email
+            </Button>
           </div>
         </div>
-      ) : null}
+      </dialog>
 
       <DirtyLeaveDialog
         open={leaveOpen}

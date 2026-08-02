@@ -277,7 +277,17 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(page.getByRole('heading', { name: /^ajustes$/i })).toBeVisible();
     await expect(page.getByLabel(/^email$/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /guardar contraseña/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /ir a notificaciones/i })).toBeVisible();
+
+    const pushPanel = page.getByTestId('push-alerts-panel');
+    await expect(pushPanel).toBeVisible();
+    await expect(pushPanel.getByText(/alertas push/i)).toBeVisible();
+    await expect(
+      pushPanel
+        .getByRole('button', { name: /activar alertas|enviar prueba|desactivar alertas/i })
+        .or(page.getByTestId('push-diagnostics')),
+    ).toBeVisible({ timeout: 15_000 });
+
+    await expect(page.getByRole('link', { name: /ver centro de alertas/i })).toBeVisible();
     await expect(page.locator('main').getByRole('button', { name: /^cerrar sesión$/i })).toBeVisible();
   });
 

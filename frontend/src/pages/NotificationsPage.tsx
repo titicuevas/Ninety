@@ -4,6 +4,7 @@ import { Bell, Heart, UserPlus, MessageCircle } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
 import { NotificationListSkeleton } from '@/components/ListSkeletons';
+import { PushAlertsPanel } from '@/components/PushAlertsPanel';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
@@ -13,14 +14,6 @@ import {
   useClearReadNotifications,
   type AppNotification,
 } from '@/hooks/useNotifications';
-import {
-  useDisablePush,
-  useEnablePush,
-  usePushEnabled,
-  usePushPublicKey,
-  usePushSupport,
-  useTestPush,
-} from '@/hooks/usePushNotifications';
 import { cn } from '@/lib/utils';
 
 function timeAgo(dateStr: string): string {
@@ -151,26 +144,10 @@ export function NotificationsPage() {
   const markAll = useMarkAllRead();
   const markRead = useMarkNotificationsRead();
   const clearRead = useClearReadNotifications();
-  const { data: pushKey, isError: pushUnavailable } = usePushPublicKey();
-  const { data: pushSupport } = usePushSupport();
-  const { data: pushEnabled = false } = usePushEnabled();
-  const enablePush = useEnablePush();
-  const disablePush = useDisablePush();
-  const testPush = useTestPush();
   const [clearOpen, setClearOpen] = useState(false);
   const notifications = data?.pages.flatMap((page) => page.notifications) ?? [];
   const unread = data?.pages[0]?.unread_count ?? 0;
   const hasRead = notifications.some((n) => n.read);
-  const canEnablePush = !!pushKey?.enabled && !pushUnavailable;
-  const showPushDiagnostics = !canEnablePush || pushSupport?.permission === 'denied';
-  const pushPermissionLabel =
-    pushSupport?.permission === 'granted'
-      ? 'Permitidas'
-      : pushSupport?.permission === 'denied'
-        ? 'Bloqueadas'
-        : pushSupport?.permission === 'default'
-          ? 'Pendientes'
-          : 'No compatible';
 
   return (
     <Layout>
@@ -178,37 +155,6 @@ export function NotificationsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Notificaciones</h1>
           <div className="flex flex-wrap items-center gap-2">
-            {canEnablePush && !pushEnabled ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                loading={enablePush.isPending}
-                onClick={() => enablePush.mutate()}
-              >
-                Activar alertas
-              </Button>
-            ) : null}
-            {pushEnabled ? (
-              <>
-                <span className="text-xs text-muted-foreground">Alertas activadas</span>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  loading={testPush.isPending}
-                  onClick={() => testPush.mutate()}
-                >
-                  Enviar prueba
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  loading={disablePush.isPending}
-                  onClick={() => disablePush.mutate()}
-                >
-                  Desactivar alertas
-                </Button>
-              </>
-            ) : null}
             {unread > 0 && (
               <Button
                 variant="ghost"
@@ -232,33 +178,7 @@ export function NotificationsPage() {
           </div>
         </div>
 
-        {showPushDiagnostics ? (
-          <div
-            className="space-y-1 rounded-lg border border-border bg-secondary/40 px-3 py-2 text-xs text-muted-foreground"
-            data-testid="push-diagnostics"
-          >
-            <p>
-              Alertas push:{' '}
-              {canEnablePush ? 'servidor listo' : 'pendiente en backend/Railway'}
-              {' · '}
-              {pushSupport?.supported ? 'navegador compatible' : 'navegador no compatible'}
-              {' · '}
-              permiso {pushPermissionLabel.toLowerCase()}
-            </p>
-            {!canEnablePush ? (
-              <p>
-                En producción: configura <code className="text-foreground">VAPID_PUBLIC_KEY</code>,{' '}
-                <code className="text-foreground">VAPID_PRIVATE_KEY</code> y{' '}
-                <code className="text-foreground">VAPID_SUBJECT</code> en Railway (
-                <code className="text-foreground">npm run vapid:set-railway</code>) y aplica la
-                migración de <code className="text-foreground">push_subscriptions</code>.
-              </p>
-            ) : null}
-            {pushSupport?.permission === 'denied' ? (
-              <p>El permiso está bloqueado en el navegador: actívalo en la configuración del sitio.</p>
-            ) : null}
-          </div>
-        ) : null}
+        <PushAlertsPanel variant="compact" />
 
         {isLoading ? (
           <NotificationListSkeleton count={5} />
