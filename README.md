@@ -378,7 +378,7 @@ Ninety/
 - [ ] IA (resúmenes, recomendaciones)
 - [x] Gamificación (insignias, logros)
 - [ ] Mapa de estadios
-- [ ] Estadísticas avanzadas
+- [x] Estadísticas avanzadas
 
 ## 🎨 Identidad visual
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { AchievementsSection } from '@/components/AchievementsSection';
+import { AdvancedStatsSection } from '@/components/AdvancedStatsSection';
 import { ClaimProfileCard } from '@/components/ClaimProfileCard';
 import { EmptyState } from '@/components/EmptyState';
 import { HomeSocialHub } from '@/components/HomeSocialHub';
@@ -17,6 +18,7 @@ import {
   achievementsInputFromStats,
   computeAchievements,
 } from '@/lib/achievements';
+import { computeAdvancedStats } from '@/lib/advancedStats';
 import {
   computeCapsuleStats,
   defaultWrappedScope,
@@ -64,7 +66,11 @@ export function HomePage() {
     scopeFromUrl === 'all' || (typeof scopeFromUrl === 'number' && years.includes(scopeFromUrl));
   const activeScope: WrappedScope =
     scopeValid && scopeFromUrl != null ? scopeFromUrl : defaultWrappedScope(capsules);
-  const stats = computeCapsuleStats(filterCapsulesByScope(capsules, activeScope));
+  const scopedCapsules = filterCapsulesByScope(capsules, activeScope);
+  const stats = computeCapsuleStats(scopedCapsules);
+  const advancedStats = computeAdvancedStats(scopedCapsules, {
+    favoriteTeam: profile?.favorite_team,
+  });
   const lifetimeStats = computeCapsuleStats(capsules);
   const achievements = computeAchievements(
     achievementsInputFromStats(lifetimeStats, {
@@ -150,6 +156,7 @@ export function HomePage() {
               onScopeChange={onScopeChange}
               username={profile?.username}
             />
+            <AdvancedStatsSection stats={advancedStats} />
           </>
         )}
       </div>
