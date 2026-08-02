@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { ClaimProfileCard } from '@/components/ClaimProfileCard';
 import { EmptyState } from '@/components/EmptyState';
 import { HomeSocialHub } from '@/components/HomeSocialHub';
 import { Layout } from '@/components/Layout';
@@ -71,18 +72,24 @@ export function HomePage() {
   return (
     <Layout>
       <div className="space-y-8">
-        {welcomeOpen ? (
+        {profileIncomplete ? (
+          <ClaimProfileCard
+            profile={profile}
+            welcome={welcomeOpen}
+            onWelcomeDismiss={welcomeOpen ? dismissWelcome : undefined}
+          />
+        ) : welcomeOpen ? (
           <Card className="border-primary/40 bg-primary/5 motion-reveal" data-testid="welcome-register-banner">
             <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="font-medium">Bienvenido a Ninety</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Completa tu perfil, guarda un partido y sigue aficionados para llenar tu feed.
+                  Guarda un partido y sigue aficionados para llenar tu feed.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button asChild variant="secondary" className="shrink-0">
-                  <Link to="/profile">Completar perfil</Link>
+                  <Link to="/search">Buscar partido</Link>
                 </Button>
                 <Button type="button" variant="ghost" size="sm" onClick={dismissWelcome}>
                   Cerrar
@@ -92,27 +99,12 @@ export function HomePage() {
           </Card>
         ) : null}
 
-        {profileIncomplete && !welcomeOpen ? (
-          <Card className="border-primary/40 bg-primary/5">
-            <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="font-medium">Completa tu perfil</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Pon tu nombre y un username para que otros te reconozcan en el feed.
-                </p>
-              </div>
-              <Button asChild variant="secondary" className="shrink-0">
-                <Link to="/profile">Ir al perfil</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : null}
-
         {showOnboarding ? (
           <OnboardingSteps
             hasProfile={!profileIncomplete}
             hasCapsule={hasCapsule}
             hasFollow={hasFollow}
+            profileClaimInline={profileIncomplete}
           />
         ) : (
           <PushActivationBanner context="home" />

@@ -18,10 +18,51 @@ test.describe('Smoke — onboarding @smoke', () => {
     await expect(page.getByRole('heading', { name: /^tu perfil$/i })).toHaveCount(0);
 
     if (await onboarding.isVisible()) {
-      await expect(page.getByText(/completa tu perfil/i)).toBeVisible();
-      await expect(page.getByText(/crea tu primera cápsula/i )).toBeVisible();
+      await expect(page.getByText(/completa tu perfil/i).first()).toBeVisible();
+      await expect(page.getByText(/crea tu primera cápsula/i)).toBeVisible();
       await expect(page.getByText(/sigue a otros aficionados/i)).toBeVisible();
     }
+  });
+
+  test('claim de perfil en Home cuando el username sigue siendo auto', async ({ page }) => {
+    await page.route('**/api/profile/me', async (route) => {
+      if (route.request().method() !== 'GET') {
+        await route.continue();
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: 'e2e-claim-user',
+          username: 'user_abcdef12',
+          display_name: 'Aficionado E2E',
+          avatar_url: null,
+          favorite_team: null,
+          country: null,
+          city: null,
+          bio: null,
+          created_at: new Date().toISOString(),
+        }),
+      });
+    });
+
+    await openAuthenticatedHome(page);
+
+    const claim = page.getByTestId('claim-profile-card');
+    await expect(claim).toBeVisible({ timeout: 15_000 });
+    await expect(claim.getByLabel(/^nombre$/i)).toBeVisible();
+    await expect(claim.getByLabel(/^username$/i)).toBeVisible();
+    await expect(claim.getByRole('button', { name: /sugerir/i })).toBeVisible();
+    await expect(claim.getByRole('button', { name: /guardar y continuar/i })).toBeVisible();
+    await expect(claim.getByLabel(/equipo favorito/i)).toBeVisible();
+
+    // Checklist no debe empujar al formulario completo de /profile
+    const onboarding = page.getByRole('heading', { name: /primeros pasos/i });
+    await expect(onboarding).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: /completa tu perfil/i }),
+    ).toHaveAttribute('href', /#claim-profile$/);
   });
 
   test('registro con sesión apunta a home (contrato de navegación)', async ({ page }) => {

@@ -7,6 +7,8 @@ interface OnboardingStepsProps {
   hasProfile: boolean;
   hasCapsule: boolean;
   hasFollow: boolean;
+  /** Cuando el claim de perfil está en la misma página (Home), no mandar a /profile. */
+  profileClaimInline?: boolean;
 }
 
 const steps = [
@@ -16,6 +18,7 @@ const steps = [
     title: 'Completa tu perfil',
     description: 'Nombre y username para que otros te reconozcan en el feed.',
     link: '/profile',
+    inlineHash: '#claim-profile',
   },
   {
     key: 'capsule',
@@ -33,7 +36,12 @@ const steps = [
   },
 ] as const;
 
-export function OnboardingSteps({ hasProfile, hasCapsule, hasFollow }: OnboardingStepsProps) {
+export function OnboardingSteps({
+  hasProfile,
+  hasCapsule,
+  hasFollow,
+  profileClaimInline = false,
+}: OnboardingStepsProps) {
   const completed = [hasProfile, hasCapsule, hasFollow];
   const allDone = completed.every(Boolean);
 
@@ -50,6 +58,10 @@ export function OnboardingSteps({ hasProfile, hasCapsule, hasFollow }: Onboardin
           {steps.map((step, i) => {
             const done = completed[i];
             const Icon = step.icon;
+            const href =
+              step.key === 'profile' && profileClaimInline && 'inlineHash' in step
+                ? step.inlineHash
+                : step.link;
             const body = (
               <>
                 <span
@@ -62,7 +74,11 @@ export function OnboardingSteps({ hasProfile, hasCapsule, hasFollow }: Onboardin
                 </span>
                 <div className="min-w-0">
                   <p className={cn('text-sm font-medium', done && 'line-through')}>{step.title}</p>
-                  <p className="text-xs text-muted-foreground">{step.description}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {step.key === 'profile' && profileClaimInline && !done
+                      ? 'Usa el formulario de arriba — no hace falta ir a Ajustes.'
+                      : step.description}
+                  </p>
                 </div>
               </>
             );
@@ -72,7 +88,7 @@ export function OnboardingSteps({ hasProfile, hasCapsule, hasFollow }: Onboardin
                   <div className="flex items-start gap-3 rounded-lg p-3 opacity-60">{body}</div>
                 ) : (
                   <Link
-                    to={step.link}
+                    to={href}
                     className="flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-secondary/60"
                   >
                     {body}
