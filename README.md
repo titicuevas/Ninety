@@ -377,7 +377,7 @@ Ninety/
 ### 🚀 v3 — Avanzado
 - [ ] IA (resúmenes, recomendaciones)
 - [x] Gamificación (insignias, logros)
-- [ ] Mapa de estadios
+- [x] Mapa de estadios
 - [x] Estadísticas avanzadas
 
 ## 🎨 Identidad visual

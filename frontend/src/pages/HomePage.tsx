@@ -9,6 +9,7 @@ import { Layout } from '@/components/Layout';
 import { WrappedLoadingSkeleton } from '@/components/ListSkeletons';
 import { OnboardingSteps } from '@/components/OnboardingSteps';
 import { PushActivationBanner } from '@/components/PushActivationBanner';
+import { StadiumMapSection } from '@/components/StadiumMapSection';
 import { WrappedSummary } from '@/components/WrappedSummary';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -28,6 +29,7 @@ import {
   wrappedScopeToParam,
   type WrappedScope,
 } from '@/lib/capsuleStats';
+import { computeStadiumMap } from '@/lib/stadiumMap';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -71,6 +73,7 @@ export function HomePage() {
   const advancedStats = computeAdvancedStats(scopedCapsules, {
     favoriteTeam: profile?.favorite_team,
   });
+  const stadiumMap = computeStadiumMap(capsules);
   const lifetimeStats = computeCapsuleStats(capsules);
   const achievements = computeAchievements(
     achievementsInputFromStats(lifetimeStats, {
@@ -157,6 +160,7 @@ export function HomePage() {
               username={profile?.username}
             />
             <AdvancedStatsSection stats={advancedStats} />
+            <StadiumMapSection map={stadiumMap} />
           </>
         )}
       </div>
