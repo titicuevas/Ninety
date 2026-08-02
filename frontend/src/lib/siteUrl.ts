@@ -3,11 +3,22 @@ export function siteUrl(): string {
   if (typeof window !== 'undefined') {
     return window.location.origin;
   }
-  return import.meta.env.VITE_SITE_URL ?? 'https://ninety.up.railway.app';
+  try {
+    const fromEnv = import.meta.env?.VITE_SITE_URL;
+    if (typeof fromEnv === 'string' && fromEnv.trim()) return fromEnv.replace(/\/$/, '');
+  } catch {
+    // Node tests / entornos sin Vite env
+  }
+  return 'https://ninety.up.railway.app';
 }
 
 export function publicProfileUrl(username: string): string {
   return `${siteUrl()}/u/${encodeURIComponent(username)}`;
+}
+
+/** Cara a cara vs otro aficionado (`/u/:username/vs`). */
+export function compareProfileUrl(username: string): string {
+  return `${siteUrl()}/u/${encodeURIComponent(username)}/vs`;
 }
 
 export function publicCapsuleUrl(capsuleId: string): string {

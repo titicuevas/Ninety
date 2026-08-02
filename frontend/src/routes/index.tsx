@@ -11,6 +11,7 @@ import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { FollowersPage, FollowingPage } from '@/pages/FollowListPage';
+import { CompareProfilePage } from '@/pages/CompareProfilePage';
 import { PublicCapsulePage } from '@/pages/PublicCapsulePage';
 import { PublicProfilePage } from '@/pages/PublicProfilePage';
 import { PrivacyPage } from '@/pages/PrivacyPage';
@@ -30,6 +31,7 @@ export const appRouter = createBrowserRouter([
   { path: '/auth/reset-password', element: <ResetPasswordPage /> },
   { path: '/u/:username/followers', element: <FollowersPage /> },
   { path: '/u/:username/following', element: <FollowingPage /> },
+  { path: '/u/:username/vs', element: <CompareProfilePage /> },
   { path: '/u/:username', element: <PublicProfilePage /> },
   { path: '/c/:id', element: <PublicCapsulePage /> },
   {

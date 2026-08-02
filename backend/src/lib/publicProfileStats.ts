@@ -35,6 +35,8 @@ export type PublicProfileStats = {
   totalMatches: number;
   averageRating: number | null;
   topTeam: { name: string; count: number } | null;
+  /** Top equipos del diario (para overlap social / H2H). */
+  topTeams: Array<{ name: string; count: number }>;
   topCompetition: { name: string; count: number } | null;
   peakMonth: { month: number; label: string; count: number } | null;
   fiveStarCount: number;
@@ -57,6 +59,14 @@ function topEntry(counts: Map<string, number>): { name: string; count: number } 
     if (!best || count > best.count) best = { name, count };
   }
   return best;
+}
+
+function topNEntries(counts: Map<string, number>, n: number): Array<{ name: string; count: number }> {
+  return [...counts.entries()]
+    .filter(([name]) => name.trim())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n)
+    .map(([name, count]) => ({ name, count }));
 }
 
 function rowPhotoUrls(row: PublicProfileStatsRow): string[] {
@@ -139,6 +149,7 @@ export function computePublicProfileStats(rows: PublicProfileStatsRow[]): Public
     totalMatches: rows.length,
     averageRating,
     topTeam: topEntry(teams),
+    topTeams: topNEntries(teams, 5),
     topCompetition: topEntry(competitions),
     peakMonth,
     fiveStarCount: ratings.filter((r) => r >= 5).length,

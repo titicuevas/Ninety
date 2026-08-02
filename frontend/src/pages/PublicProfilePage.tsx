@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { MapPin, Trophy } from 'lucide-react';
+import { MapPin, Swords, Trophy } from 'lucide-react';
 import { AchievementsSection } from '@/components/AchievementsSection';
 import { CapsuleDiaryFilters } from '@/components/CapsuleDiaryFilters';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
@@ -223,6 +223,14 @@ export function PublicProfilePage() {
             ) : profile.username ? (
               <Button asChild className="w-full sm:w-auto">
                 <Link to={loginTo}>Inicia sesión para seguir</Link>
+              </Button>
+            ) : null}
+            {!isOwnProfile && profile.username && !isAutoUsername(profile.username) ? (
+              <Button asChild variant="outline" className="w-full sm:w-auto">
+                <Link to={`/u/${encodeURIComponent(profile.username)}/vs`}>
+                  <Swords className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                  Cara a cara
+                </Link>
               </Button>
             ) : null}
             {profile.username && !isAutoUsername(profile.username) ? (

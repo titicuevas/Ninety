@@ -36,6 +36,8 @@ describe('computePublicProfileStats', () => {
     assert.equal(stats.totalMatches, 3);
     assert.equal(stats.topTeam?.name, 'Betis');
     assert.equal(stats.topTeam?.count, 3);
+    assert.equal(stats.topTeams[0]?.name, 'Betis');
+    assert.equal(stats.topTeams.length, 4);
     assert.equal(stats.topCompetition?.name, 'LaLiga');
     assert.equal(stats.peakMonth?.month, 3);
     assert.equal(stats.fiveStarCount, 2);

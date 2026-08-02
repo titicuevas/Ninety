@@ -339,7 +339,7 @@ Ninety/
 | POST/DELETE | `/api/profile/:username/follow` | ✅ | Seguir / dejar de seguir |
 | GET | `/api/capsules/me` | ✅ | Mis capsules |
 | GET | `/api/capsules/feed` | ✅ | Feed (seguidos + tuyo) |
-| GET | `/api/capsules/user/:username` | opcional | Perfil + capsules públicas |
+| GET | `/api/capsules/user/:username` | opcional | Perfil + capsules + stats (base del cara a cara `/u/:username/vs`) |
 | GET | `/api/capsules/:id` | opcional | Capsule pública (compartir) |
 | POST/PATCH/DELETE | `/api/capsules`… | ✅ | CRUD capsules |
 | POST/DELETE | `/api/capsules/:id/like` | ✅ | Likes |
@@ -379,6 +379,12 @@ Ninety/
 - [x] Gamificación (insignias, logros)
 - [x] Mapa de estadios
 - [x] Estadísticas avanzadas
+
+### 🚀 v4 — Diario social & portabilidad
+- [x] Comparar diarios (cara a cara) — partidos, media, estadio y overlap de equipos vs otro aficionado (`/u/:username/vs`)
+- [ ] Colecciones del diario — listas curadas de Capsules (“Clásicos”, “Viajes”, “Noches de Champions”) compartibles al estilo Letterboxd
+- [ ] Exportar mi diario — descarga JSON/CSV desde Ajustes (backup y portabilidad GDPR)
+- [ ] Instalar Ninety (PWA) — añadir a pantalla de inicio + shell offline ligero
 
 ## 🎨 Identidad visual
 
