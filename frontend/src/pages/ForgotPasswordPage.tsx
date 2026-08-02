@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { requestPasswordReset } from '@/lib/auth';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 const schema = z.object({
   email: z.string().email('Email inválido'),
@@ -17,6 +18,7 @@ const schema = z.object({
 type Form = z.infer<typeof schema>;
 
 export function ForgotPasswordPage() {
+  useDocumentTitle('Recuperar contraseña');
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);

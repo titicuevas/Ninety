@@ -9,6 +9,7 @@ import { PublicLayout } from '@/components/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuthInit';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useFollowListInfinite, type FollowListKind } from '@/hooks/useFollowList';
 import { useProfile } from '@/hooks/useProfile';
 import { profilePath } from '@/lib/profilePath';
@@ -77,6 +78,7 @@ function FollowListPage({ kind }: { kind: FollowListKind }) {
   const Shell = user ? Layout : PublicLayout;
 
   const title = kind === 'followers' ? 'Seguidores' : 'Siguiendo';
+  useDocumentTitle(username ? `${title} · @${username}` : title);
   const emptyCopy =
     kind === 'followers' ? 'Todavía no tiene seguidores.' : 'Todavía no sigue a nadie.';
   const isOwnList =

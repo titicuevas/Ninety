@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useDirtyLeave } from '@/hooks/useDirtyLeave';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuthInit';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   isUsernameFormatValid,
   useUsernameAvailability,
@@ -62,6 +63,7 @@ function profileToFormValues(
 }
 
 export function ProfilePage() {
+  useDocumentTitle('Perfil');
   const { user } = useAuth();
   const session = useAuthStore((s) => s.session);
   const queryClient = useQueryClient();

@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { usePublicProfile } from '@/hooks/usePublicProfile';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useDiaryFilterParams } from '@/hooks/useDiaryFilterParams';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { publicProfileUrl } from '@/lib/siteUrl';
 import type { Capsule } from '@/types/capsule';
@@ -77,6 +78,13 @@ export function PublicProfilePage() {
   } = usePublicProfile(username, { q, year, ratingMin, watchContext });
 
   const profile = data?.pages[0]?.profile;
+  useDocumentTitle(
+    profile?.username
+      ? `@${profile.username}`
+      : isLoading
+        ? 'Perfil'
+        : 'Perfil no encontrado',
+  );
   const capsules = data?.pages.flatMap((page) => page.capsules) ?? [];
   const total = data?.pages[0]?.total ?? capsules.length;
   const stats = data?.pages[0]?.stats;

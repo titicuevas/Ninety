@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Compass, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
@@ -12,6 +11,9 @@ import { Button } from '@/components/ui/button';
 import { useCapsuleFeed, type FeedScope, type FeedSort } from '@/hooks/useCapsules';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { useAuth } from '@/hooks/useAuthInit';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useFeedFilterParams } from '@/hooks/useFeedFilterParams';
+import { feedDocumentTitle, feedPath } from '@/lib/feedParams';
 import { formatRelativeTime } from '@/lib/format';
 import { profilePath } from '@/lib/profilePath';
 import { cn } from '@/lib/utils';
@@ -135,8 +137,8 @@ function SortTabs({ sort, onChange }: { sort: FeedSort; onChange: (next: FeedSor
 
 export function FeedPage() {
   const { user } = useAuth();
-  const [scope, setScope] = useState<FeedScope>('following');
-  const [sort, setSort] = useState<FeedSort>('recent');
+  const { scope, sort, setScope, setSort } = useFeedFilterParams();
+  useDocumentTitle(feedDocumentTitle(scope, sort));
   const {
     data,
     isLoading,
@@ -201,8 +203,8 @@ export function FeedPage() {
                   : 'La gente que sigues aún no ha publicado partidos, o aún no has guardado ninguno.'
               }
             >
-              <Button type="button" variant="secondary" onClick={() => setScope('explore')}>
-                Explorar comunidad
+              <Button asChild variant="secondary">
+                <Link to={feedPath('explore', sort)}>Explorar comunidad</Link>
               </Button>
               <Button asChild>
                 <Link to="/search?tab=people">Buscar aficionados</Link>
@@ -241,8 +243,8 @@ export function FeedPage() {
             <Button asChild>
               <Link to="/search">Crear tu primera Capsule</Link>
             </Button>
-            <Button type="button" variant="secondary" onClick={() => setScope('following')}>
-              Volver a Siguiendo
+            <Button asChild variant="secondary">
+              <Link to={feedPath('following', sort)}>Volver a Siguiendo</Link>
             </Button>
           </EmptyState>
         ) : null}

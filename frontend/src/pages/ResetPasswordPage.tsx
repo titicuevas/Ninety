@@ -11,9 +11,11 @@ import { resetPasswordWithToken } from '@/lib/auth';
 import { passwordConfirmSchema, type PasswordConfirmForm } from '@/lib/authSchemas';
 import { clearRecoveryUrl, parseRecoveryParams } from '@/lib/recoveryToken';
 import { clearSession } from '@/lib/session';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/stores/authStore';
 
 export function ResetPasswordPage() {
+  useDocumentTitle('Nueva contraseña');
   const navigate = useNavigate();
   const setSession = useAuthStore((s) => s.setSession);
   const [token, setToken] = useState<string | null>(null);

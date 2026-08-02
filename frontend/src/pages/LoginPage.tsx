@@ -12,9 +12,11 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { loginWithGoogle, loginWithPassword } from '@/lib/auth';
 import { loginSchema, type LoginForm } from '@/lib/authSchemas';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/stores/authStore';
 
 export function LoginPage() {
+  useDocumentTitle('Iniciar sesión');
   const navigate = useNavigate();
   const location = useLocation();
   const setSession = useAuthStore((s) => s.setSession);

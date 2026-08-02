@@ -14,6 +14,7 @@ import { WatchContextBadge } from '@/components/WatchContextBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuthInit';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { usePublicCapsule } from '@/hooks/usePublicCapsule';
 import { formatCapsuleScore, formatWatchedDate } from '@/lib/format';
 import { isAutoUsername } from '@/lib/profileHelpers';
@@ -31,6 +32,13 @@ export function PublicCapsulePage() {
   const location = useLocation();
   const { user } = useAuth();
   const { data: capsule, isLoading, isError, error } = usePublicCapsule(id);
+  useDocumentTitle(
+    capsule
+      ? `${capsule.home_team_name} vs ${capsule.away_team_name}`
+      : isLoading
+        ? 'Capsule'
+        : 'Capsule no encontrada',
+  );
   const Shell = user ? Layout : PublicLayout;
   const openComments = location.hash === '#comments';
   const locationState = location.state as CapsuleLocationState | null;

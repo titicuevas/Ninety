@@ -14,12 +14,14 @@ import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useDirtyLeave } from '@/hooks/useDirtyLeave';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { apiFetch } from '@/lib/api';
 import { passwordConfirmSchema, type PasswordConfirmForm } from '@/lib/authSchemas';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 
 export function SettingsPage() {
+  useDocumentTitle('Ajustes');
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const session = useAuthStore((s) => s.session);

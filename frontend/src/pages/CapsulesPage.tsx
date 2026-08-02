@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useCapsules, useDeleteCapsule, useMyCapsulesInfinite } from '@/hooks/useCapsules';
 import { useDiaryFilterParams } from '@/hooks/useDiaryFilterParams';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { listCapsuleYears } from '@/lib/capsuleStats';
 import type { Capsule } from '@/types/capsule';
 
@@ -61,6 +62,7 @@ function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: s
 }
 
 export function CapsulesPage() {
+  useDocumentTitle('Mis Capsules');
   const {
     q,
     qDraft,

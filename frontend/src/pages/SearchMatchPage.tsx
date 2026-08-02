@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { MatchSearchPanel } from '@/components/MatchSearchPanel';
 import { PeopleSearchPanel } from '@/components/PeopleSearchPanel';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { cn } from '@/lib/utils';
 
 type SearchTab = 'matches' | 'people';
@@ -9,6 +10,7 @@ type SearchTab = 'matches' | 'people';
 export function SearchMatchPage() {
   const [params, setParams] = useSearchParams();
   const tab: SearchTab = params.get('tab') === 'people' ? 'people' : 'matches';
+  useDocumentTitle(tab === 'people' ? 'Buscar aficionados' : 'Buscar partido');
 
   const setTab = (next: SearchTab) => {
     const nextParams = new URLSearchParams(params);

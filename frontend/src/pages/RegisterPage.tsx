@@ -12,9 +12,11 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { loginWithGoogle, registerWithPassword } from '@/lib/auth';
 import { registerSchema, type RegisterForm } from '@/lib/authSchemas';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/stores/authStore';
 
 export function RegisterPage() {
+  useDocumentTitle('Crear cuenta');
   const navigate = useNavigate();
   const setSession = useAuthStore((s) => s.setSession);
   const [error, setError] = useState<string | null>(null);

@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
-import { Bell, Newspaper, Users } from 'lucide-react';
+import { Bell, Compass, Newspaper, Users } from 'lucide-react';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCapsuleFeed } from '@/hooks/useCapsules';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { useUnreadCount } from '@/hooks/useNotifications';
+import { feedPath } from '@/lib/feedParams';
 import { formatRelativeTime } from '@/lib/format';
 import { profilePath } from '@/lib/profilePath';
 import type { FeedCapsule } from '@/types/capsule';
@@ -89,9 +90,15 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
 
       <nav aria-label="Atajos sociales" className="flex flex-wrap gap-2">
         <Button asChild variant="secondary" size="sm">
-          <Link to="/feed">
+          <Link to={feedPath()}>
             <Newspaper className="mr-1.5 h-3.5 w-3.5" aria-hidden />
             Feed
+          </Link>
+        </Button>
+        <Button asChild variant="secondary" size="sm">
+          <Link to={feedPath('explore')}>
+            <Compass className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+            Explorar
           </Link>
         </Button>
         <Button asChild variant="secondary" size="sm">
@@ -128,7 +135,7 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
             ))}
           </ul>
           <Button asChild variant="ghost" size="sm" className="px-0 text-primary">
-            <Link to="/feed">Ver feed completo</Link>
+            <Link to={feedPath()}>Ver feed completo</Link>
           </Button>
         </div>
       ) : null}
@@ -155,6 +162,10 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
       {feedEmpty && suggestions.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Sigue a otros aficionados para ver sus partidos aquí.{' '}
+          <Link to={feedPath('explore')} className="text-primary hover:underline">
+            Explorar comunidad
+          </Link>
+          {' · '}
           <Link to="/search?tab=people" className="text-primary hover:underline">
             Buscar gente
           </Link>

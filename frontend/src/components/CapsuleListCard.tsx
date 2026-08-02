@@ -18,6 +18,8 @@ type CapsuleListCardProps = {
   photoClassName?: string;
   footer?: ReactNode;
   footerBordered?: boolean;
+  /** Destino del detalle; por defecto `/c/:id`. */
+  detailHref?: string;
 };
 
 export function CapsuleListCard({
@@ -29,11 +31,14 @@ export function CapsuleListCard({
   photoClassName = 'mb-4',
   footer,
   footerBordered = false,
+  detailHref,
 }: CapsuleListCardProps) {
+  const href = detailHref ?? `/c/${capsule.id}`;
   const score = formatCapsuleScore(capsule.home_score, capsule.away_score);
+  const matchLabel = `Ver Capsule: ${capsule.home_team_name} vs ${capsule.away_team_name}`;
 
   return (
-    <Card>
+    <Card className="transition-colors has-[[data-capsule-detail]:hover]:border-primary/30 has-[[data-capsule-detail]:focus-visible]:border-primary/30">
       <CardContent className="p-4 sm:p-5">
         {header}
 
@@ -43,47 +48,56 @@ export function CapsuleListCard({
           className={photoClassName}
         />
 
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <Link
-                to={`/c/${capsule.id}`}
-                className="font-medium hover:text-primary hover:underline"
-              >
-                {capsule.home_team_name}
-              </Link>
-              <WatchContextBadge context={capsule.watch_context} />
-              {badges}
+        <Link
+          to={href}
+          data-capsule-detail
+          aria-label={matchLabel}
+          className="block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-medium">
+                <span className="hover:text-primary">{capsule.home_team_name}</span>
+                <span className="text-muted-foreground"> vs </span>
+                <span className="text-muted-foreground hover:text-primary">
+                  {capsule.away_team_name}
+                </span>
+              </p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                <WatchContextBadge context={capsule.watch_context} />
+                {badges}
+              </div>
+              {capsule.competition_name ? (
+                <p
+                  className={cn(
+                    'mt-1 text-xs',
+                    competitionTone === 'primary' ? 'text-primary' : 'text-muted-foreground',
+                  )}
+                >
+                  {capsule.competition_name}
+                </p>
+              ) : null}
             </div>
-            <p className="text-muted-foreground">{capsule.away_team_name}</p>
-            {capsule.competition_name ? (
-              <p
-                className={cn(
-                  'mt-1 text-xs',
-                  competitionTone === 'primary' ? 'text-primary' : 'text-muted-foreground',
-                )}
-              >
-                {capsule.competition_name}
-              </p>
-            ) : null}
+            <div className="shrink-0 text-right">
+              {score ? <p className="font-semibold tabular-nums">{score}</p> : null}
+              {showWatchedDate ? (
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Visto {formatWatchedDate(capsule.watched_at)}
+                </p>
+              ) : null}
+            </div>
           </div>
-          <div className="shrink-0 text-right">
-            {score ? <p className="font-semibold tabular-nums">{score}</p> : null}
-            {showWatchedDate ? (
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Visto {formatWatchedDate(capsule.watched_at)}
-              </p>
-            ) : null}
-          </div>
-        </div>
 
-        {capsule.rating ? (
-          <div className="mt-3">
-            <StarRating rating={capsule.rating} />
-          </div>
-        ) : null}
+          {capsule.rating ? (
+            <div className="mt-3">
+              <StarRating rating={capsule.rating} />
+            </div>
+          ) : null}
 
-        {capsule.note ? <p className="mt-3 text-sm text-muted-foreground">{capsule.note}</p> : null}
+          {capsule.note ? (
+            <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">{capsule.note}</p>
+          ) : null}
+        </Link>
 
         {footer ? (
           <div

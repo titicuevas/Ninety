@@ -3,6 +3,7 @@ import { BarChart3, Camera, Search } from 'lucide-react';
 import { SkipLink } from '@/components/SkipLink';
 import { LegalFooter } from '@/components/LegalFooter';
 import { buttonVariants } from '@/components/ui/button-variants';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { cn } from '@/lib/utils';
 
 const features = [
@@ -24,6 +25,7 @@ const features = [
 ] as const;
 
 export function LandingPage() {
+  useDocumentTitle();
   return (
     <div className="landing-page min-h-dvh text-foreground">
       <SkipLink />

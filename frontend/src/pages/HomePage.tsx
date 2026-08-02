@@ -23,6 +23,7 @@ import {
 } from '@/lib/capsuleStats';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuthInit';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { isProfileIncomplete } from '@/lib/profileHelpers';
 
 type HomeLocationState = {
@@ -30,6 +31,7 @@ type HomeLocationState = {
 };
 
 export function HomePage() {
+  useDocumentTitle('Inicio');
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();

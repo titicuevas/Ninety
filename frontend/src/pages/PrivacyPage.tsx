@@ -1,4 +1,5 @@
 import { LegalPageLayout } from '@/components/LegalPageLayout';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -10,6 +11,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export function PrivacyPage() {
+  useDocumentTitle('Privacidad');
   return (
     <LegalPageLayout title="Política de privacidad">
       <p>

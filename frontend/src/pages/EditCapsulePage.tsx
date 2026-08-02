@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useCapsule, useDeleteCapsule, useUpdateCapsule } from '@/hooks/useCapsules';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { deleteCapsulePhotosByUrls, uploadCapsulePhotos } from '@/lib/capsulePhoto';
 import { friendlyApiError } from '@/lib/friendlyErrors';
 import { getCapsulePhotoUrls } from '@/lib/capsulePhotos';
@@ -19,6 +20,11 @@ export function EditCapsulePage() {
   const navigate = useNavigate();
   const session = useAuthStore((s) => s.session);
   const { data: capsule, isLoading, isError } = useCapsule(id);
+  useDocumentTitle(
+    capsule
+      ? `Editar · ${capsule.home_team_name} vs ${capsule.away_team_name}`
+      : 'Editar Capsule',
+  );
   const updateCapsule = useUpdateCapsule(id ?? '');
   const deleteCapsule = useDeleteCapsule();
   const [uploading, setUploading] = useState(false);

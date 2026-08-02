@@ -1,8 +1,11 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { ApiError, apiFetch } from '@/lib/api';
+import type { FeedScope, FeedSort } from '@/lib/feedParams';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 import type { Capsule, CapsulesResponse, CreateCapsuleInput, FeedCapsule, FeedResponse, UpdateCapsuleInput } from '@/types/capsule';
+
+export type { FeedScope, FeedSort } from '@/lib/feedParams';
 
 const FEED_PAGE_SIZE = 20;
 const MY_CAPSULES_PAGE_SIZE = 20;
@@ -87,9 +90,6 @@ export function useCreateCapsule() {
     },
   });
 }
-
-export type FeedScope = 'following' | 'explore';
-export type FeedSort = 'recent' | 'popular';
 
 export function useCapsuleFeed(scope: FeedScope = 'following', sort: FeedSort = 'recent') {
   const session = useAuthStore((s) => s.session);

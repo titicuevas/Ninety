@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCapsules, useCreateCapsule } from '@/hooks/useCapsules';
 import { useAuth } from '@/hooks/useAuthInit';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ApiError } from '@/lib/api';
 import { uploadCapsulePhotos } from '@/lib/capsulePhoto';
 import { clearDraftCapsuleMemory } from '@/lib/draftCapsuleMemory';
@@ -30,6 +31,7 @@ function resolveMatch(stateMatch: FootballMatch | undefined): FootballMatch | nu
 }
 
 export function CreateCapsulePage() {
+  useDocumentTitle('Nueva Capsule');
   const location = useLocation();
   const navigate = useNavigate();
   const stateMatch = (location.state as LocationState | null)?.match;

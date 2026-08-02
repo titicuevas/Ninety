@@ -14,6 +14,7 @@ import {
   useClearReadNotifications,
   type AppNotification,
 } from '@/hooks/useNotifications';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { cn } from '@/lib/utils';
 
 function timeAgo(dateStr: string): string {
@@ -134,6 +135,7 @@ function NotificationItem({
 }
 
 export function NotificationsPage() {
+  useDocumentTitle('Notificaciones');
   const {
     data,
     isLoading,
