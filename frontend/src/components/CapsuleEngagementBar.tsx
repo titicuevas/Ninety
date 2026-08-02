@@ -4,6 +4,7 @@ import { CapsuleComments } from '@/components/CapsuleComments';
 import { CapsuleLikeButton } from '@/components/CapsuleLikeButton';
 import { CapsuleLikersDialog } from '@/components/CapsuleLikersDialog';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
+import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { formatLikesPanelTitle } from '@/lib/capsuleLikes';
 import { cn } from '@/lib/utils';
 
@@ -40,6 +41,7 @@ export function CapsuleEngagementBar({
   showShare = true,
 }: CapsuleEngagementBarProps) {
   const [guestLikersOpen, setGuestLikersOpen] = useState(false);
+  const { loginTo } = useAuthReturnLinks();
 
   return (
     <div
@@ -80,7 +82,7 @@ export function CapsuleEngagementBar({
           {likesCount > 0 && commentsCount > 0 ? ' · ' : null}
           {commentsCount > 0 ? `${commentsCount} comentarios` : null}
           {(likesCount > 0 || commentsCount > 0) && ' · '}
-          <Link to="/login" className="text-primary hover:underline">
+          <Link to={loginTo} className="text-primary hover:underline">
             Inicia sesión para interactuar
           </Link>
         </p>

@@ -11,6 +11,12 @@ import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { loginWithGoogle, loginWithPassword } from '@/lib/auth';
+import {
+  parseNextParam,
+  registerPath,
+  safeReturnPath,
+  saveAuthReturnPath,
+} from '@/lib/authReturn';
 import { loginSchema, type LoginForm } from '@/lib/authSchemas';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/stores/authStore';
@@ -20,6 +26,8 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const setSession = useAuthStore((s) => s.setSession);
+  const nextPath = parseNextParam(location.search);
+  const postAuthPath = safeReturnPath(nextPath);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -37,6 +45,7 @@ export function LoginPage() {
     setError(null);
     setGoogleLoading(true);
     try {
+      saveAuthReturnPath(nextPath);
       await loginWithGoogle();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión con Google');
@@ -57,7 +66,7 @@ export function LoginPage() {
     try {
       const session = await loginWithPassword(data.email, data.password);
       setSession(session);
-      navigate('/home');
+      navigate(postAuthPath);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión');
     } finally {
@@ -107,7 +116,7 @@ export function LoginPage() {
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         ¿No tienes cuenta?{' '}
-        <Link to="/register" className="font-medium text-primary hover:underline">
+        <Link to={registerPath(nextPath)} className="font-medium text-primary hover:underline">
           Regístrate
         </Link>
       </p>

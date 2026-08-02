@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { SkipLink } from '@/components/SkipLink';
 import { useAuthInit, useAuth } from '@/hooks/useAuthInit';
+import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { cn } from '@/lib/utils';
 
 function LoadingSpinner() {
@@ -14,6 +15,7 @@ function LoadingSpinner() {
 export function PublicLayout({ children }: { children: React.ReactNode }) {
   useAuthInit();
   const { user, loading } = useAuth();
+  const { loginTo, registerTo } = useAuthReturnLinks();
 
   if (loading) return <LoadingSpinner />;
 
@@ -53,13 +55,13 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
             ) : (
               <>
                 <Link
-                  to="/login"
+                  to={loginTo}
                   className="inline-flex min-h-10 items-center rounded-lg px-2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   Iniciar sesión
                 </Link>
                 <Link
-                  to="/register"
+                  to={registerTo}
                   className={cn(
                     'inline-flex min-h-10 items-center rounded-lg bg-primary px-3 py-2 font-medium text-primary-foreground',
                     'hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',

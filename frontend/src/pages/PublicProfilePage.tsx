@@ -14,6 +14,7 @@ import { ShareProfileButton } from '@/components/ShareProfileButton';
 import { Button } from '@/components/ui/button';
 import { usePublicProfile } from '@/hooks/usePublicProfile';
 import { useAuth } from '@/hooks/useAuthInit';
+import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { useDiaryFilterParams } from '@/hooks/useDiaryFilterParams';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { isAutoUsername } from '@/lib/profileHelpers';
@@ -55,6 +56,7 @@ function PublicCapsuleCard({
 export function PublicProfilePage() {
   const { username } = useParams<{ username: string }>();
   const { user } = useAuth();
+  const { loginTo } = useAuthReturnLinks();
   const {
     q,
     qDraft,
@@ -201,7 +203,7 @@ export function PublicProfilePage() {
               />
             ) : profile.username ? (
               <Button asChild className="w-full sm:w-auto">
-                <Link to="/login">Inicia sesión para seguir</Link>
+                <Link to={loginTo}>Inicia sesión para seguir</Link>
               </Button>
             ) : null}
             {profile.username && !isAutoUsername(profile.username) ? (

@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { completeOAuthCallback } from '@/lib/auth';
+import {
+  consumeAuthReturnPath,
+  loginPath,
+  peekAuthReturnPath,
+} from '@/lib/authReturn';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -32,7 +37,7 @@ export function AuthCallbackPage() {
         const session = await completeOAuthCallback(code);
         if (!active) return;
         setSession(session);
-        navigate('/home', { replace: true });
+        navigate(consumeAuthReturnPath(), { replace: true });
       } catch (err) {
         if (!active) return;
         setError(err instanceof Error ? err.message : 'No se pudo completar el inicio de sesión.');
@@ -50,7 +55,7 @@ export function AuthCallbackPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
         <p className="text-sm text-destructive">{error}</p>
-        <Link to="/login" className="text-sm text-primary hover:underline">
+        <Link to={loginPath(peekAuthReturnPath())} className="text-sm text-primary hover:underline">
           Volver al login
         </Link>
       </div>

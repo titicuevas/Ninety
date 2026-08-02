@@ -12,6 +12,7 @@ import {
   useDeleteCapsuleComment,
   useUpdateCapsuleComment,
 } from '@/hooks/useCapsuleComments';
+import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { formatRelativeTime } from '@/lib/format';
 import { profilePath } from '@/lib/profilePath';
 import { toast } from '@/lib/toast';
@@ -208,6 +209,7 @@ export function CapsuleComments({
   const addComment = useAddCapsuleComment(capsuleId);
   const deleteComment = useDeleteCapsuleComment(capsuleId);
   const updateComment = useUpdateCapsuleComment(capsuleId);
+  const { loginTo } = useAuthReturnLinks();
 
   const comments = data?.comments ?? [];
   const label = displayCount > 0 ? `${displayCount} comentarios` : 'Comentar';
@@ -302,7 +304,7 @@ export function CapsuleComments({
             </form>
           ) : (
             <p className="text-sm text-muted-foreground">
-              <Link to="/login" className="text-primary hover:underline">
+              <Link to={loginTo} className="text-primary hover:underline">
                 Inicia sesión
               </Link>{' '}
               para comentar.

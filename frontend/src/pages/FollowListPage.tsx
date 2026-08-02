@@ -10,6 +10,7 @@ import { PublicLayout } from '@/components/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuthInit';
+import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useFollowListInfinite, type FollowListKind } from '@/hooks/useFollowList';
 import { useProfile } from '@/hooks/useProfile';
@@ -27,6 +28,7 @@ function FollowListRow({
   const name = profile.display_name ?? username;
   const location = [profile.city, profile.country].filter(Boolean).join(', ');
   const isSelf = !!currentUserId && profile.id === currentUserId;
+  const { loginTo } = useAuthReturnLinks();
 
   return (
     <li className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 sm:p-4">
@@ -56,7 +58,7 @@ function FollowListRow({
         <FollowButton username={username} followedByMe={profile.followed_by_me} />
       ) : !isSelf && username && !currentUserId ? (
         <Button asChild size="sm" variant="secondary" className="shrink-0">
-          <Link to="/login">Seguir</Link>
+          <Link to={loginTo}>Seguir</Link>
         </Button>
       ) : null}
     </li>

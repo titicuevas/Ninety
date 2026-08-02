@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AuthLayout } from '@/components/AuthLayout';
@@ -11,14 +11,28 @@ import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { loginWithGoogle, registerWithPassword } from '@/lib/auth';
+import {
+  DEFAULT_POST_AUTH_PATH,
+  loginPath,
+  parseNextParam,
+  safeReturnPath,
+  saveAuthReturnPath,
+} from '@/lib/authReturn';
 import { registerSchema, type RegisterForm } from '@/lib/authSchemas';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/stores/authStore';
 
+function isHomePath(path: string): boolean {
+  return path === DEFAULT_POST_AUTH_PATH || path.startsWith(`${DEFAULT_POST_AUTH_PATH}?`);
+}
+
 export function RegisterPage() {
   useDocumentTitle('Crear cuenta');
   const navigate = useNavigate();
+  const location = useLocation();
   const setSession = useAuthStore((s) => s.setSession);
+  const nextPath = parseNextParam(location.search);
+  const postAuthPath = safeReturnPath(nextPath);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -27,6 +41,7 @@ export function RegisterPage() {
     setError(null);
     setGoogleLoading(true);
     try {
+      saveAuthReturnPath(nextPath);
       await loginWithGoogle();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión con Google');
@@ -48,7 +63,10 @@ export function RegisterPage() {
       const result = await registerWithPassword(data.email, data.password, data.display_name);
       if (result.session) {
         setSession(result.session);
-        navigate('/home', { replace: true, state: { fromRegister: true } });
+        navigate(postAuthPath, {
+          replace: true,
+          state: isHomePath(postAuthPath) ? { fromRegister: true } : undefined,
+        });
       } else {
         setError(result.message ?? 'Revisa tu email para confirmar la cuenta');
       }
@@ -112,7 +130,7 @@ export function RegisterPage() {
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         ¿Ya tienes cuenta?{' '}
-        <Link to="/login" className="font-medium text-primary hover:underline">
+        <Link to={loginPath(nextPath)} className="font-medium text-primary hover:underline">
           Inicia sesión
         </Link>
       </p>

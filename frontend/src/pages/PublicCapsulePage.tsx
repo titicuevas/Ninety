@@ -14,6 +14,7 @@ import { WatchContextBadge } from '@/components/WatchContextBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuthInit';
+import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { usePublicCapsule } from '@/hooks/usePublicCapsule';
 import { formatCapsuleScore, formatWatchedDate } from '@/lib/format';
@@ -31,6 +32,7 @@ export function PublicCapsulePage() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const { user } = useAuth();
+  const { loginTo } = useAuthReturnLinks();
   const { data: capsule, isLoading, isError, error } = usePublicCapsule(id);
   useDocumentTitle(
     capsule
@@ -135,7 +137,7 @@ export function PublicCapsulePage() {
             ) : null}
             {canFollow && !user ? (
               <Button asChild size="sm" variant="secondary">
-                <Link to="/login">Inicia sesión para seguir</Link>
+                <Link to={loginTo}>Inicia sesión para seguir</Link>
               </Button>
             ) : null}
             <ShareCapsuleButton
