@@ -416,6 +416,7 @@ Ninety/
 - [x] Digest / recordatorios ligeros para volver al diario — tarjeta en Inicio (resumen semanal / nudge / hueco) + preferencia en Ajustes; on-device, sin emails
 - [x] Onboarding de valor (primera colección, primer compare)
 - [x] Aniversarios del diario («Tal día como hoy») — card en Inicio cuando hace ≥1 año viste un partido el mismo mes/día + preferencia en Ajustes; on-device, prioridad sobre digest, sin emails
+- [x] Hitos del diario — card en Inicio al llegar a 5 / 10 / 25 / 50 / 100 / 250 Capsules + preferencia en Ajustes; on-device, tras aniversario y antes del digest, sin emails
 
 ## 🎨 Identidad visual
 

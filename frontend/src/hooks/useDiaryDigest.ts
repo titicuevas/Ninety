@@ -16,6 +16,7 @@ type Options = {
   coreComplete: boolean;
   valueOnboardingVisible: boolean;
   anniversaryVisible?: boolean;
+  milestoneVisible?: boolean;
 };
 
 export function useDiaryDigest({
@@ -23,6 +24,7 @@ export function useDiaryDigest({
   coreComplete,
   valueOnboardingVisible,
   anniversaryVisible = false,
+  milestoneVisible = false,
 }: Options) {
   const { user } = useAuth();
   const userId = user?.id ?? '';
@@ -42,6 +44,7 @@ export function useDiaryDigest({
     coreComplete,
     valueOnboardingVisible,
     anniversaryVisible,
+    milestoneVisible,
     hasDigest: digest != null,
     kind: digest?.kind ?? null,
   });

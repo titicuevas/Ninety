@@ -9,6 +9,7 @@ import { Layout } from '@/components/Layout';
 import { PasswordField } from '@/components/PasswordField';
 import { DiaryAnniversaryPrefsPanel } from '@/components/DiaryAnniversaryPrefsPanel';
 import { DiaryDigestPrefsPanel } from '@/components/DiaryDigestPrefsPanel';
+import { DiaryMilestonePrefsPanel } from '@/components/DiaryMilestonePrefsPanel';
 import { PushAlertsPanel } from '@/components/PushAlertsPanel';
 import { InstallAppPanel } from '@/components/InstallAppPanel';
 import { Button } from '@/components/ui/button';
@@ -203,6 +204,7 @@ export function SettingsPage() {
             <PushAlertsPanel variant="card" />
             <DiaryDigestPrefsPanel />
             <DiaryAnniversaryPrefsPanel />
+            <DiaryMilestonePrefsPanel />
             <Button asChild variant="secondary" className="w-full sm:w-auto">
               <Link to="/notifications">
                 <Bell className="mr-2 h-4 w-4" aria-hidden />

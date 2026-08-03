@@ -75,6 +75,8 @@ export function shouldShowDiaryDigest(
     valueOnboardingVisible: boolean;
     /** Aniversario «Tal día como hoy» tiene prioridad sobre el digest. */
     anniversaryVisible?: boolean;
+    /** Hito del diario tiene prioridad sobre el digest. */
+    milestoneVisible?: boolean;
     hasDigest: boolean;
     kind: 'weekly' | 'nudge' | 'gap' | null;
     nowMs?: number;
@@ -83,6 +85,7 @@ export function shouldShowDiaryDigest(
   if (!opts.coreComplete) return false;
   if (opts.valueOnboardingVisible) return false;
   if (opts.anniversaryVisible) return false;
+  if (opts.milestoneVisible) return false;
   if (!opts.hasDigest || !opts.kind) return false;
   if (!isDiaryDigestEnabled(prefs)) return false;
   if (prefs?.dismissPermanent) return false;

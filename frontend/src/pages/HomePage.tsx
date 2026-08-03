@@ -5,6 +5,7 @@ import { AdvancedStatsSection } from '@/components/AdvancedStatsSection';
 import { ClaimProfileCard } from '@/components/ClaimProfileCard';
 import { DiaryAnniversaryCard } from '@/components/DiaryAnniversaryCard';
 import { DiaryDigestCard } from '@/components/DiaryDigestCard';
+import { DiaryMilestoneCard } from '@/components/DiaryMilestoneCard';
 import { EmptyState } from '@/components/EmptyState';
 import { HomeSocialHub } from '@/components/HomeSocialHub';
 import { InsightsSection } from '@/components/InsightsSection';
@@ -20,6 +21,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useCapsules } from '@/hooks/useCapsules';
 import { useMyCollections } from '@/hooks/useCollections';
 import { useDiaryAnniversary } from '@/hooks/useDiaryAnniversary';
+import { useDiaryMilestone } from '@/hooks/useDiaryMilestone';
 import { useFollowList } from '@/hooks/useFollowList';
 import { useValueOnboarding } from '@/hooks/useValueOnboarding';
 import {
@@ -76,6 +78,12 @@ export function HomePage() {
     capsules: capsulesData?.capsules ?? [],
     coreComplete: !showOnboarding && !isLoading,
     valueOnboardingVisible: valueOnboarding.visible,
+  });
+  const diaryMilestone = useDiaryMilestone({
+    capsules: capsulesData?.capsules ?? [],
+    coreComplete: !showOnboarding && !isLoading,
+    valueOnboardingVisible: valueOnboarding.visible,
+    anniversaryVisible: diaryAnniversary.visible,
   });
 
   const metadataName =
@@ -176,11 +184,18 @@ export function HomePage() {
               visible={diaryAnniversary.visible}
               dismiss={diaryAnniversary.dismiss}
             />
+            <DiaryMilestoneCard
+              milestone={diaryMilestone.milestone}
+              visible={diaryMilestone.visible}
+              dismiss={diaryMilestone.dismiss}
+              celebrate={diaryMilestone.celebrate}
+            />
             <DiaryDigestCard
               capsules={capsules}
               coreComplete
               valueOnboardingVisible={valueOnboarding.visible}
               anniversaryVisible={diaryAnniversary.visible}
+              milestoneVisible={diaryMilestone.visible}
             />
             <PushActivationBanner context="home" />
           </>
