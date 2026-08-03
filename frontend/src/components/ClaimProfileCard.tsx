@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check, Loader2, X } from 'lucide-react';
 import { FavoriteTeamField } from '@/components/FavoriteTeamField';
@@ -256,14 +257,19 @@ export function ClaimProfileCard({ profile, welcome = false, onWelcomeDismiss }:
             </p>
           ) : null}
 
-          <Button
-            type="submit"
-            loading={mutation.isPending}
-            className="w-full sm:w-auto"
-            disabled={usernameTaken || (usernameFormatOk && usernameCheck.isFetching)}
-          >
-            Guardar y continuar
-          </Button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <Button
+              type="submit"
+              loading={mutation.isPending}
+              className="w-full sm:w-auto"
+              disabled={usernameTaken || (usernameFormatOk && usernameCheck.isFetching)}
+            >
+              Guardar y continuar
+            </Button>
+            <Button asChild type="button" variant="ghost" size="sm" className="w-full sm:w-auto">
+              <Link to="/profile">Abrir editor de perfil</Link>
+            </Button>
+          </div>
         </form>
       </CardContent>
     </Card>

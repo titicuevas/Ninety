@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Bell, Compass, Library, Newspaper, Users } from 'lucide-react';
+import { Bell, Compass, Library, Newspaper, User, Users } from 'lucide-react';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -122,6 +122,12 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
                 {unreadLabel}
               </span>
             ) : null}
+          </Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/profile">
+            <User className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+            Editar perfil
           </Link>
         </Button>
         {username ? (

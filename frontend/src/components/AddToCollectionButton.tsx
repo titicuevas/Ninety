@@ -57,13 +57,26 @@ export function AddToCollectionButton({
     }
   }, [open]);
 
+  /** Esc / backdrop / Cerrar siempre pueden salir — busy no debe atrapar el modal. */
   const close = () => {
-    if (busy) return;
     setOpen(false);
     setCreating(false);
     setNewName('');
     setPendingId(null);
   };
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const onNativeClose = () => {
+      setOpen(false);
+      setCreating(false);
+      setNewName('');
+      setPendingId(null);
+    };
+    dialog.addEventListener('close', onNativeClose);
+    return () => dialog.removeEventListener('close', onNativeClose);
+  }, []);
 
   const toggleMembership = (collectionId: string) => {
     setPendingId(collectionId);
@@ -125,7 +138,7 @@ export function AddToCollectionButton({
         ref={dialogRef}
         aria-labelledby={titleId}
         className={cn(
-          'fixed inset-0 z-50 m-auto flex max-h-[min(85dvh,32rem)] w-[min(100%-2rem,24rem)] flex-col rounded-2xl border border-border bg-card p-0 text-card-foreground shadow-xl',
+          'fixed inset-0 z-50 m-0 flex h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-transparent p-4 text-card-foreground',
           'backdrop:bg-black/60 open:flex',
         )}
         onCancel={(event) => {
@@ -136,12 +149,15 @@ export function AddToCollectionButton({
           if (event.target === dialogRef.current) close();
         }}
       >
-        <div className="flex min-h-0 flex-1 flex-col" onClick={(event) => event.stopPropagation()}>
+        <div
+          className="flex max-h-[min(85dvh,32rem)] w-[min(100%,24rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xl"
+          onClick={(event) => event.stopPropagation()}
+        >
           <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
             <h2 id={titleId} className="text-base font-semibold tracking-tight">
               Añadir a colección
             </h2>
-            <Button type="button" variant="ghost" size="sm" onClick={close} disabled={busy}>
+            <Button type="button" variant="ghost" size="sm" onClick={close}>
               Cerrar
             </Button>
           </header>

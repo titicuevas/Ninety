@@ -16,6 +16,7 @@ import { PushActivationBanner } from '@/components/PushActivationBanner';
 import { StadiumMapSection } from '@/components/StadiumMapSection';
 import { ValueOnboardingCard } from '@/components/ValueOnboardingCard';
 import { WrappedSummary } from '@/components/WrappedSummary';
+import { WrappedTeaser } from '@/components/WrappedTeaser';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCapsules } from '@/hooks/useCapsules';
@@ -100,6 +101,7 @@ export function HomePage() {
     scopeFromUrl === 'all' || (typeof scopeFromUrl === 'number' && years.includes(scopeFromUrl));
   const activeScope: WrappedScope =
     scopeValid && scopeFromUrl != null ? scopeFromUrl : defaultWrappedScope(capsules);
+  const showWrappedDetail = searchParams.get('view') === 'wrapped';
   const scopedCapsules = filterCapsulesByScope(capsules, activeScope);
   const stats = computeCapsuleStats(scopedCapsules);
   const advancedStats = computeAdvancedStats(scopedCapsules, {
@@ -128,6 +130,23 @@ export function HomePage() {
   const onScopeChange = (next: WrappedScope) => {
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set('wrapped', wrappedScopeToParam(next));
+    nextParams.set('view', 'wrapped');
+    setSearchParams(nextParams, { replace: true });
+  };
+
+  const wrappedDetailHref = (() => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('view', 'wrapped');
+    if (!nextParams.get('wrapped')) {
+      nextParams.set('wrapped', wrappedScopeToParam(activeScope));
+    }
+    const qs = nextParams.toString();
+    return qs ? `/home?${qs}` : '/home?view=wrapped';
+  })();
+
+  const collapseWrapped = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('view');
     setSearchParams(nextParams, { replace: true });
   };
 
@@ -161,6 +180,9 @@ export function HomePage() {
               <div className="flex flex-wrap gap-2">
                 <Button asChild variant="secondary" className="shrink-0">
                   <Link to="/search">Buscar partido</Link>
+                </Button>
+                <Button asChild variant="outline" size="sm" className="shrink-0">
+                  <Link to="/profile">Editar perfil</Link>
                 </Button>
                 <Button type="button" variant="ghost" size="sm" onClick={dismissWelcome}>
                   Cerrar
@@ -208,8 +230,6 @@ export function HomePage() {
           </>
         )}
 
-        <HomeSocialHub username={profile?.username} />
-
         {isLoading ? (
           <WrappedLoadingSkeleton />
         ) : capsules.length === 0 ? (
@@ -221,8 +241,14 @@ export function HomePage() {
               <Link to="/search">Buscar partido</Link>
             </Button>
           </EmptyState>
-        ) : (
-          <>
+        ) : showWrappedDetail ? (
+          <div className="space-y-6" id="wrapped-detail">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-muted-foreground">Wrapped completo</p>
+              <Button type="button" variant="ghost" size="sm" onClick={collapseWrapped}>
+                Volver al inicio
+              </Button>
+            </div>
             <AchievementsSection achievements={achievements} />
             <InsightsSection insights={insights} />
             <WrappedSummary
@@ -235,8 +261,17 @@ export function HomePage() {
             />
             <AdvancedStatsSection stats={advancedStats} />
             <StadiumMapSection map={stadiumMap} />
-          </>
+          </div>
+        ) : (
+          <WrappedTeaser
+            name={name}
+            stats={stats}
+            scope={activeScope}
+            href={wrappedDetailHref}
+          />
         )}
+
+        {!showWrappedDetail ? <HomeSocialHub username={profile?.username} /> : null}
       </div>
     </Layout>
   );

@@ -60,7 +60,7 @@ export function OnboardingSteps({
             const Icon = step.icon;
             const href =
               step.key === 'profile' && profileClaimInline && 'inlineHash' in step
-                ? step.inlineHash
+                ? '/profile'
                 : step.link;
             const body = (
               <>
@@ -76,7 +76,7 @@ export function OnboardingSteps({
                   <p className={cn('text-sm font-medium', done && 'line-through')}>{step.title}</p>
                   <p className="text-xs text-muted-foreground">
                     {step.key === 'profile' && profileClaimInline && !done
-                      ? 'Usa el formulario de arriba — no hace falta ir a Ajustes.'
+                      ? 'Usa el formulario de arriba o abre el editor en Perfil.'
                       : step.description}
                   </p>
                 </div>
