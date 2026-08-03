@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
@@ -18,10 +18,12 @@ import {
   useCollectionDetail,
   useDeleteCollection,
   useRemoveCollectionItem,
+  useReorderCollectionItems,
   useUpdateCollection,
 } from '@/hooks/useCollections';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useProfile } from '@/hooks/useProfile';
+import { moveCapsuleInOrder } from '@/lib/collectionReorder';
 import { slugifyCollectionName } from '@/lib/collectionSlug';
 
 export function CollectionDetailPage() {
@@ -34,6 +36,7 @@ export function CollectionDetailPage() {
   const deleteCollection = useDeleteCollection();
   const addItem = useAddCollectionItem(id ?? '');
   const removeItem = useRemoveCollectionItem(id ?? '');
+  const reorderItems = useReorderCollectionItems(id ?? '');
 
   const collection = data?.collection;
   useDocumentTitle(collection?.name ? `Colección · ${collection.name}` : 'Colección');
@@ -64,6 +67,18 @@ export function CollectionDetailPage() {
   );
 
   const username = profile?.username ?? data?.profile?.username;
+
+  const orderedIds = useMemo(
+    () => (data?.capsules ?? []).map((c) => c.id),
+    [data?.capsules],
+  );
+
+  const moveCapsule = (capsuleId: string, direction: 'up' | 'down') => {
+    if (!id || reorderItems.isPending) return;
+    const next = moveCapsuleInOrder(orderedIds, capsuleId, direction);
+    if (!next) return;
+    reorderItems.mutate(next);
+  };
 
   const onSave = (event: FormEvent) => {
     event.preventDefault();
@@ -183,7 +198,14 @@ export function CollectionDetailPage() {
         </Card>
 
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold">Capsules en la lista</h2>
+          <div>
+            <h2 className="text-lg font-semibold">Capsules en la lista</h2>
+            {data.capsules.length > 1 ? (
+              <p className="mt-1 text-sm text-muted-foreground">
+                Ordena con subir/bajar: así se verá en la lista pública.
+              </p>
+            ) : null}
+          </div>
 
           {candidates.length > 0 ? (
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
@@ -241,23 +263,51 @@ export function CollectionDetailPage() {
               ) : null}
             </EmptyState>
           ) : (
-            <ul className="space-y-3">
-              {data.capsules.map((capsule) => (
+            <ul className="space-y-3" data-testid="collection-items">
+              {data.capsules.map((capsule, index) => (
                 <li key={capsule.id}>
                   <CapsuleListCard
                     capsule={capsule}
                     showWatchedDate
                     footer={
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="text-destructive"
-                        disabled={removeItem.isPending}
-                        onClick={() => removeItem.mutate(capsule.id)}
-                      >
-                        Quitar
-                      </Button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {data.capsules.length > 1 ? (
+                          <div className="flex items-center gap-1" role="group" aria-label="Reordenar">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              disabled={index === 0 || reorderItems.isPending}
+                              aria-label={`Subir ${capsule.home_team_name} vs ${capsule.away_team_name}`}
+                              onClick={() => moveCapsule(capsule.id, 'up')}
+                            >
+                              <ArrowUp className="h-3.5 w-3.5" aria-hidden />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              disabled={
+                                index === data.capsules.length - 1 || reorderItems.isPending
+                              }
+                              aria-label={`Bajar ${capsule.home_team_name} vs ${capsule.away_team_name}`}
+                              onClick={() => moveCapsule(capsule.id, 'down')}
+                            >
+                              <ArrowDown className="h-3.5 w-3.5" aria-hidden />
+                            </Button>
+                          </div>
+                        ) : null}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive"
+                          disabled={removeItem.isPending || reorderItems.isPending}
+                          onClick={() => removeItem.mutate(capsule.id)}
+                        >
+                          Quitar
+                        </Button>
+                      </div>
                     }
                   />
                 </li>

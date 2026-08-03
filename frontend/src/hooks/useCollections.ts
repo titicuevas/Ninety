@@ -204,6 +204,27 @@ export function useRemoveCollectionItem(collectionId: string) {
   });
 }
 
+/** Reordenar Capsules de una colección (sin toast de éxito: evita spam al subir/bajar). */
+export function useReorderCollectionItems(collectionId: string) {
+  const session = useAuthStore((s) => s.session);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (capsuleIds: string[]) =>
+      apiFetch<{ items: { collection_id: string; capsule_id: string; position: number }[] }>(
+        `/api/collections/${collectionId}/items/reorder`,
+        { method: 'PUT', body: JSON.stringify({ capsule_ids: capsuleIds }) },
+        session?.access_token,
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['collections'] });
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'No se pudo reordenar');
+    },
+  });
+}
+
 export function useRemoveCapsuleFromCollection() {
   const session = useAuthStore((s) => s.session);
   const queryClient = useQueryClient();

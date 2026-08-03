@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import { buildCollectionReorder } from '../lib/collectionReorder.js';
 import { nextUniqueSlug, slugifyCollectionName } from '../lib/collectionSlug.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
@@ -51,6 +52,10 @@ const updateSchema = z.object({
 
 const addItemSchema = z.object({
   capsule_id: z.string().uuid(),
+});
+
+const reorderItemsSchema = z.object({
+  capsule_ids: z.array(z.string().uuid()).min(1).max(MAX_ITEMS_PER_COLLECTION),
 });
 
 function routeParam(value: string | string[]): string {
@@ -613,6 +618,93 @@ collectionsRouter.delete('/:id', requireAuth, async (req: AuthRequest, res) => {
   }
 
   res.status(204).send();
+});
+
+/** PUT /api/collections/:id/items/reorder — orden curado (columna `position`) */
+collectionsRouter.put('/:id/items/reorder', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const parsed = reorderItemsSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const id = routeParam(req.params.id);
+  const supabase = createUserClient(token);
+
+  const { data: collection, error: collectionError } = await supabase
+    .from('collections')
+    .select('id')
+    .eq('id', id)
+    .eq('user_id', req.userId!)
+    .maybeSingle();
+
+  if (collectionError) {
+    if (isMissingCollectionsTable(collectionError)) {
+      res.status(503).json({ error: collectionsMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: collectionError.message });
+    return;
+  }
+
+  if (!collection) {
+    res.status(404).json({ error: 'Colección no encontrada' });
+    return;
+  }
+
+  const { data: items, error: itemsError } = await supabase
+    .from('collection_items')
+    .select('capsule_id')
+    .eq('collection_id', id);
+
+  if (itemsError) {
+    if (isMissingCollectionsTable(itemsError)) {
+      res.status(503).json({ error: collectionsMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: itemsError.message });
+    return;
+  }
+
+  const currentIds = (items ?? []).map((row) => row.capsule_id as string);
+  const reorder = buildCollectionReorder(currentIds, parsed.data.capsule_ids);
+  if (!reorder.ok) {
+    res.status(400).json({ error: reorder.error });
+    return;
+  }
+
+  for (const { capsule_id, position } of reorder.positions) {
+    const { error } = await supabase
+      .from('collection_items')
+      .update({ position })
+      .eq('collection_id', id)
+      .eq('capsule_id', capsule_id);
+
+    if (error) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
+  }
+
+  await supabase
+    .from('collections')
+    .update({ updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('user_id', req.userId!);
+
+  res.json({
+    items: reorder.positions.map(({ capsule_id, position }) => ({
+      collection_id: id,
+      capsule_id,
+      position,
+    })),
+  });
 });
 
 /** POST /api/collections/:id/items */

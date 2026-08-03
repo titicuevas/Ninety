@@ -96,6 +96,13 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('PUT /api/collections/:id/items/reorder requiere auth', async () => {
+    const res = await request(createApp())
+      .put('/api/collections/00000000-0000-4000-8000-000000000001/items/reorder')
+      .send({ capsule_ids: ['00000000-0000-4000-8000-000000000002'] });
+    assert.equal(res.status, 401);
+  });
+
   it('GET /api/collections/user/:username no requiere auth', async () => {
     const res = await request(createApp()).get('/api/collections/user/demo');
     assert.notEqual(res.status, 401);
