@@ -57,12 +57,6 @@
       }
       .ninety-splash__title { font-size: 1.75rem; font-weight: 700; margin: 0; }
       .ninety-splash__tagline { color: #a1a1aa; max-width: 20rem; line-height: 1.5; font-size: 0.9375rem; margin: 0; }
-      .ninety-splash__spinner {
-        width: 1.75rem; height: 1.75rem; margin-top: 0.5rem;
-        border: 2px solid #10b981; border-top-color: transparent;
-        border-radius: 50%; animation: spin 0.8s linear infinite;
-      }
-      @keyframes spin { to { transform: rotate(360deg); } }
     </style>
   </head>
   <body>
@@ -74,12 +68,12 @@
       </div>
     </noscript>
     <div id="root">
-      <div class="ninety-splash" aria-live="polite" aria-busy="true">
+      <!-- Splash de marca (sin rueda): la landing `/` pinta al montar React sin auth gate. -->
+      <div class="ninety-splash" aria-live="polite">
         <div class="ninety-splash__logo">90</div>
         <span class="ninety-splash__badge">Beta abierta</span>
         <p class="ninety-splash__title">Ninety</p>
-        <p class="ninety-splash__tagline">Calentando…</p>
-        <div class="ninety-splash__spinner" role="status" aria-label="Cargando"></div>
+        <p class="ninety-splash__tagline">Tu diario de partidos vistos</p>
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>

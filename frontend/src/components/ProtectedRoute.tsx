@@ -8,6 +8,7 @@ import {
   parseNextParam,
   safeReturnPath,
 } from '@/lib/authReturn';
+import { loadSession } from '@/lib/session';
 
 export function ProtectedRoute() {
   useAuthInit();
@@ -26,10 +27,13 @@ export function GuestRoute() {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) return <NinetyLoader variant="fullscreen" />;
   if (user) {
     const next = parseNextParam(location.search);
     return <Navigate to={safeReturnPath(next, DEFAULT_POST_AUTH_PATH)} replace />;
+  }
+  // Solo gate si hay sesión a restaurar — guests ven login/register al instante.
+  if (loading && loadSession()) {
+    return <NinetyLoader variant="fullscreen" />;
   }
   return <Outlet />;
 }

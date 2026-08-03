@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { NinetyLoader } from '@/components/NinetyLoader';
 import {
   completeOAuthCallback,
   establishSessionFromTokens,
@@ -124,9 +125,5 @@ export function AuthCallbackPage() {
     );
   }
 
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-    </div>
-  );
+  return <NinetyLoader variant="fullscreen" phrase="Validando el pase…" rotate={false} />;
 }

@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { NinetyLoader } from '@/components/NinetyLoader';
 import { SkipLink } from '@/components/SkipLink';
 import { useAuthInit, useAuth } from '@/hooks/useAuthInit';
 import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
@@ -7,11 +6,10 @@ import { cn } from '@/lib/utils';
 
 export function PublicLayout({ children }: { children: React.ReactNode }) {
   useAuthInit();
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const { loginTo, registerTo } = useAuthReturnLinks();
 
-  if (loading) return <NinetyLoader variant="fullscreen" />;
-
+  // No bloquear con loader: guests ven contenido al instante; la nav se actualiza al restaurar sesión.
   const homeHref = user ? '/home' : '/';
 
   return (
