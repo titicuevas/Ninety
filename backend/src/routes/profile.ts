@@ -13,6 +13,7 @@ import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.j
 import { notifyUser } from '../lib/notifyUser.js';
 import { rankDiscoverProfiles, favoriteTeamIlikePattern } from '../lib/discoverProfiles.js';
 import { isMissingFollowsTable, listFollowProfiles, type FollowListKind } from '../lib/userFollows.js';
+import { normalizeUsernameParam } from '../lib/usernameParam.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
 export const profileRouter = Router();
@@ -54,8 +55,7 @@ function getAccessToken(req: AuthRequest): string | null {
 }
 
 function routeUsername(req: AuthRequest): string {
-  const raw = req.params.username;
-  return Array.isArray(raw) ? raw[0] : raw;
+  return normalizeUsernameParam(req.params.username);
 }
 
 function getReaderClient(token: string | null) {
@@ -65,10 +65,13 @@ function getReaderClient(token: string | null) {
 }
 
 async function resolveProfileByUsername(username: string) {
+  const normalized = normalizeUsernameParam(username);
+  if (!normalized) return null;
+
   const { data, error } = await supabaseAnon
     .from('profiles')
     .select('id, username')
-    .eq('username', username)
+    .eq('username', normalized)
     .single();
 
   if (error || !data) return null;
@@ -567,10 +570,16 @@ profileRouter.delete('/:username/follow', requireAuth, async (req: AuthRequest, 
 });
 
 profileRouter.get('/:username', async (req, res) => {
+  const username = normalizeUsernameParam(req.params.username);
+  if (!username) {
+    res.status(404).json({ error: 'Usuario no encontrado' });
+    return;
+  }
+
   const { data, error } = await supabaseAnon
     .from('profiles')
     .select('id, username, full_name, avatar_url, favorite_team, country, city, bio, created_at')
-    .eq('username', req.params.username)
+    .eq('username', username)
     .single();
 
   if (error || !data) {

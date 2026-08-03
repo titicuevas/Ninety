@@ -20,6 +20,7 @@ import {
   formatNotificationAriaLabel,
   formatNotificationMatchContext,
 } from '@/lib/notificationCapsule';
+import { publicProfilePath } from '@/lib/profilePath';
 import { cn } from '@/lib/utils';
 
 function timeAgo(dateStr: string): string {
@@ -98,14 +99,15 @@ function NotificationItem({
   onOpen?: (id: string) => void;
 }) {
   const actorName = n.actor?.display_name || (n.actor?.username ? `@${n.actor.username}` : 'Alguien');
+  const followHref =
+    n.type === 'follow' ? publicProfilePath(n.actor?.username) ?? undefined : undefined;
   const link =
-    n.type === 'follow' && n.actor?.username
-      ? `/u/${n.actor.username}`
-      : n.capsule_id
-        ? n.type === 'comment'
-          ? `/c/${n.capsule_id}#comments`
-          : `/c/${n.capsule_id}`
-        : undefined;
+    followHref ??
+    (n.capsule_id
+      ? n.type === 'comment'
+        ? `/c/${n.capsule_id}#comments`
+        : `/c/${n.capsule_id}`
+      : undefined);
   const snippet = n.type === 'comment' && n.body?.trim() ? n.body.trim() : null;
   const matchLine = n.capsule ? formatNotificationMatchContext(n.capsule) : null;
   const ariaLabel = formatNotificationAriaLabel({

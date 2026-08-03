@@ -14,7 +14,8 @@ import {
 } from '@/hooks/useCapsuleComments';
 import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { formatRelativeTime } from '@/lib/format';
-import { profilePath } from '@/lib/profilePath';
+import { isAutoUsername } from '@/lib/profileHelpers';
+import { publicProfilePath } from '@/lib/profilePath';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import type { CapsuleComment } from '@/types/comment';
@@ -92,8 +93,8 @@ function CommentItem({
       <CommentAvatar name={name} avatarUrl={comment.author?.avatar_url} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-          {username && !isOwn ? (
-            <Link to={profilePath(username)} className="font-medium text-primary hover:underline">
+          {username && !isOwn && !isAutoUsername(username) ? (
+            <Link to={publicProfilePath(username)!} className="font-medium text-primary hover:underline">
               {name}
             </Link>
           ) : (

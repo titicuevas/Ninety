@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { AchievementsSection } from '@/components/AchievementsSection';
 import { AdvancedStatsSection } from '@/components/AdvancedStatsSection';
@@ -16,7 +16,7 @@ import { PushActivationBanner } from '@/components/PushActivationBanner';
 import { StadiumMapSection } from '@/components/StadiumMapSection';
 import { ValueOnboardingCard } from '@/components/ValueOnboardingCard';
 import { WrappedSummary } from '@/components/WrappedSummary';
-import { WrappedTeaser } from '@/components/WrappedTeaser';
+import { WrappedTeaser, WrappedTeaserCompact } from '@/components/WrappedTeaser';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCapsules } from '@/hooks/useCapsules';
@@ -45,6 +45,11 @@ import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { isProfileIncomplete } from '@/lib/profileHelpers';
+import {
+  dismissWrappedTeaser,
+  readWrappedTeaserState,
+  shouldShowWrappedTeaser,
+} from '@/lib/wrappedTeaserMemory';
 
 type HomeLocationState = {
   fromRegister?: boolean;
@@ -149,6 +154,15 @@ export function HomePage() {
     nextParams.delete('view');
     setSearchParams(nextParams, { replace: true });
   };
+
+  const [showWrappedTeaser, setShowWrappedTeaser] = useState(() =>
+    shouldShowWrappedTeaser(user?.id ? readWrappedTeaserState(user.id) : null),
+  );
+
+  const dismissTeaser = useCallback(() => {
+    if (user?.id) dismissWrappedTeaser(user.id);
+    setShowWrappedTeaser(false);
+  }, [user?.id]);
 
   const dismissWelcome = () => {
     setWelcomeOpen(false);
@@ -262,13 +276,16 @@ export function HomePage() {
             <AdvancedStatsSection stats={advancedStats} />
             <StadiumMapSection map={stadiumMap} />
           </div>
-        ) : (
+        ) : showWrappedTeaser ? (
           <WrappedTeaser
             name={name}
             stats={stats}
             scope={activeScope}
             href={wrappedDetailHref}
+            onDismiss={dismissTeaser}
           />
+        ) : (
+          <WrappedTeaserCompact href={wrappedDetailHref} stats={stats} />
         )}
 
         {!showWrappedDetail ? <HomeSocialHub username={profile?.username} /> : null}

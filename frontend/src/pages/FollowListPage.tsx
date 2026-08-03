@@ -14,7 +14,7 @@ import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useFollowListInfinite, type FollowListKind } from '@/hooks/useFollowList';
 import { useProfile } from '@/hooks/useProfile';
-import { profilePath } from '@/lib/profilePath';
+import { profilePath, publicProfilePath } from '@/lib/profilePath';
 import type { Profile } from '@/types/profile';
 
 function FollowListRow({
@@ -28,6 +28,7 @@ function FollowListRow({
   const name = profile.display_name ?? username;
   const location = [profile.city, profile.country].filter(Boolean).join(', ');
   const isSelf = !!currentUserId && profile.id === currentUserId;
+  const href = publicProfilePath(username);
   const { loginTo } = useAuthReturnLinks();
 
   return (
@@ -45,18 +46,22 @@ function FollowListRow({
       )}
 
       <div className="min-w-0 flex-1">
-        <Link to={profilePath(username)} className="font-medium text-foreground hover:text-primary hover:underline">
-          {name}
-        </Link>
-        <p className="text-sm text-muted-foreground">@{username}</p>
+        {href ? (
+          <Link to={href} className="font-medium text-foreground hover:text-primary hover:underline">
+            {name}
+          </Link>
+        ) : (
+          <p className="font-medium text-foreground">{name}</p>
+        )}
+        {href ? <p className="text-sm text-muted-foreground">@{username}</p> : null}
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
           {[profile.favorite_team, location].filter(Boolean).join(' · ') || 'Aficionado Ninety'}
         </p>
       </div>
 
-      {!isSelf && username && currentUserId ? (
+      {!isSelf && href && currentUserId ? (
         <FollowButton username={username} followedByMe={profile.followed_by_me} size="compact" />
-      ) : !isSelf && username && !currentUserId ? (
+      ) : !isSelf && href && !currentUserId ? (
         <Button asChild size="sm" variant="secondary" className="shrink-0">
           <Link to={loginTo}>Seguir</Link>
         </Button>
@@ -179,6 +184,12 @@ function FollowListPage({ kind }: { kind: FollowListKind }) {
 
         {profiles.length > 0 ? (
           <div className="space-y-4">
+            {isOwnList && kind === 'following' ? (
+              <p className="text-sm text-muted-foreground">
+                Pulsa <span className="font-medium text-foreground">Dejar de seguir</span> en cada
+                fila para quitar a alguien de tu feed.
+              </p>
+            ) : null}
             <ul className="space-y-2">
               {profiles.map((profile) => (
                 <FollowListRow key={profile.id} profile={profile} currentUserId={user?.id} />

@@ -9,10 +9,11 @@ type WrappedTeaserProps = {
   scope: WrappedScope;
   /** Ruta o query para abrir el Wrapped completo (misma Home expandida). */
   href: string;
+  onDismiss?: () => void;
 };
 
 /** Resumen compacto del Wrapped para Home — el detalle vive detrás de “Ver Wrapped”. */
-export function WrappedTeaser({ name, stats, scope, href }: WrappedTeaserProps) {
+export function WrappedTeaser({ name, stats, scope, href, onDismiss }: WrappedTeaserProps) {
   const periodLabel = scope === 'all' ? 'Todo tu diario' : `Año ${scope}`;
   const topTeam = stats.topTeam?.name;
 
@@ -20,6 +21,7 @@ export function WrappedTeaser({ name, stats, scope, href }: WrappedTeaserProps) 
     <section
       className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-emerald-600/30 via-emerald-900/20 to-background p-5 sm:p-6"
       aria-labelledby="wrapped-teaser-heading"
+      data-testid="wrapped-teaser"
     >
       <div
         className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/20 blur-3xl"
@@ -38,7 +40,8 @@ export function WrappedTeaser({ name, stats, scope, href }: WrappedTeaserProps) 
             {scope !== 'all' ? ` en ${scope}` : ''}
           </h2>
           <p className="mt-1.5 max-w-md text-sm text-white/75">
-            Un vistazo rápido — abre el Wrapped completo para highlights, stats y mapa.
+            Un vistazo rápido — abre el Wrapped completo cuando quieras; el resto de Home sigue
+            abajo.
           </p>
         </div>
 
@@ -68,10 +71,33 @@ export function WrappedTeaser({ name, stats, scope, href }: WrappedTeaserProps) 
           ) : null}
         </div>
 
-        <Button asChild className="min-h-11">
-          <Link to={href}>Ver Wrapped</Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild className="min-h-11">
+            <Link to={href}>Ver Wrapped</Link>
+          </Button>
+          {onDismiss ? (
+            <Button type="button" variant="ghost" size="sm" onClick={onDismiss}>
+              Ahora no
+            </Button>
+          ) : null}
+        </div>
       </div>
     </section>
+  );
+}
+
+/** CTA compacto cuando el teaser está descartado — no bloquea el resto de Home. */
+export function WrappedTeaserCompact({ href, stats }: { href: string; stats: CapsuleStats }) {
+  return (
+    <p
+      className="rounded-xl border border-border/80 bg-card/60 px-4 py-3 text-sm text-muted-foreground"
+      data-testid="wrapped-teaser-compact"
+    >
+      Tu Wrapped ({stats.totalMatches}{' '}
+      {stats.totalMatches === 1 ? 'partido' : 'partidos'}) ·{' '}
+      <Link to={href} className="font-medium text-primary hover:underline">
+        Ver resumen
+      </Link>
+    </p>
   );
 }

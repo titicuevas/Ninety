@@ -11,7 +11,7 @@ import { useCapsuleLikes } from '@/hooks/useCapsuleLikes';
 import { formatLikesPanelTitle } from '@/lib/capsuleLikes';
 import { formatRelativeTime } from '@/lib/format';
 import { isAutoUsername } from '@/lib/profileHelpers';
-import { profilePath } from '@/lib/profilePath';
+import { publicProfilePath } from '@/lib/profilePath';
 import { cn } from '@/lib/utils';
 import type { CapsuleLikeRow } from '@/types/like';
 
@@ -43,14 +43,15 @@ function LikerRow({
   const profile = like.profile;
   const name = profile?.display_name || profile?.username || 'Aficionado';
   const username = profile?.username;
-  const canLink = !!username && !isAutoUsername(username);
+  const href = publicProfilePath(username);
+  const canLink = !!href;
   const isSelf = !!currentUserId && like.user_id === currentUserId;
   const canFollow = canLink && !isSelf && !!currentUserId;
 
   return (
     <li className="flex items-center gap-3 py-2.5">
       {canLink ? (
-        <Link to={profilePath(username!)} className="shrink-0" aria-label={`Perfil de ${name}`}>
+        <Link to={href} className="shrink-0" aria-label={`Perfil de ${name}`}>
           <LikerAvatar name={name} avatarUrl={profile?.avatar_url} />
         </Link>
       ) : (
@@ -60,7 +61,7 @@ function LikerRow({
       <div className="min-w-0 flex-1">
         {canLink ? (
           <Link
-            to={profilePath(username!)}
+            to={href}
             className="block truncate font-medium text-foreground hover:text-primary hover:underline"
           >
             {name}
@@ -117,6 +118,10 @@ export function CapsuleLikersDialog({
   const total = data?.pages[0]?.total ?? likesCount;
   const title = formatLikesPanelTitle(total);
 
+  const dismiss = () => {
+    dialogRef.current?.close();
+  };
+
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -144,25 +149,21 @@ export function CapsuleLikersDialog({
       aria-labelledby={titleId}
       className={cn(
         'fixed inset-0 z-50 m-0 flex h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-transparent p-4 text-card-foreground',
-        'backdrop:bg-black/60 open:flex',
+        'pointer-events-auto backdrop:pointer-events-auto backdrop:bg-black/60 open:flex',
       )}
-      onCancel={(event) => {
-        event.preventDefault();
-        onClose();
-      }}
       onClick={(event) => {
-        if (event.target === dialogRef.current) onClose();
+        if (event.target === dialogRef.current) dismiss();
       }}
     >
       <div
-        className="flex max-h-[min(85dvh,32rem)] w-[min(100%,24rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xl"
+        className="pointer-events-auto flex max-h-[min(85dvh,32rem)] w-[min(100%,24rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
           <h2 id={titleId} className="text-base font-semibold tracking-tight">
             {title}
           </h2>
-          <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+          <Button type="button" variant="ghost" size="sm" onClick={dismiss}>
             Cerrar
           </Button>
         </header>

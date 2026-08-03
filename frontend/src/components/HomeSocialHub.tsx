@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Bell, Compass, Library, Newspaper, User, Users } from 'lucide-react';
+import { Bell, Compass, Library, Newspaper, User, UserPlus, Users } from 'lucide-react';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,23 +8,20 @@ import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { useUnreadCount } from '@/hooks/useNotifications';
 import { feedPath } from '@/lib/feedParams';
 import { formatRelativeTime } from '@/lib/format';
-import { profilePath } from '@/lib/profilePath';
+import { publicProfilePath } from '@/lib/profilePath';
 import type { FeedCapsule } from '@/types/capsule';
 
 const PREVIEW_COUNT = 3;
 
 function FeedPreviewRow({ capsule }: { capsule: FeedCapsule }) {
   const author = capsule.profiles?.display_name ?? capsule.profiles?.username ?? 'Aficionado';
-  const username = capsule.profiles?.username;
+  const href = publicProfilePath(capsule.profiles?.username);
 
   return (
     <li className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card p-3 sm:p-3.5">
       <div className="min-w-0">
-        {username ? (
-          <Link
-            to={profilePath(username)}
-            className="block truncate text-xs text-primary hover:underline"
-          >
+        {href ? (
+          <Link to={href} className="block truncate text-xs text-primary hover:underline">
             {author}
           </Link>
         ) : (
@@ -76,6 +73,9 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
     .slice(0, PREVIEW_COUNT);
 
   const unreadLabel = unread > 9 ? '9+' : String(unread);
+  const profileHref = publicProfilePath(username);
+  const followingHref = profileHref ? `${profileHref}/following` : null;
+  const followersHref = profileHref ? `${profileHref}/followers` : null;
 
   return (
     <section className="space-y-4" aria-labelledby="home-social-heading">
@@ -84,11 +84,33 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
           Comunidad
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Lo último de quien sigues y atajos para moverte por Ninety.
+          Gestiona a quién sigues, encuentra aficionados y entra al feed.
         </p>
       </div>
 
       <nav aria-label="Atajos sociales" className="flex flex-wrap gap-2">
+        {followingHref ? (
+          <Button asChild size="sm">
+            <Link to={followingHref}>
+              <UserPlus className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+              Siguiendo
+            </Link>
+          </Button>
+        ) : null}
+        <Button asChild variant={followingHref ? 'secondary' : 'default'} size="sm">
+          <Link to="/search?tab=people">
+            <Users className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+            Aficionados
+          </Link>
+        </Button>
+        {followersHref ? (
+          <Button asChild variant="secondary" size="sm">
+            <Link to={followersHref}>
+              <Users className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+              Seguidores
+            </Link>
+          </Button>
+        ) : null}
         <Button asChild variant="secondary" size="sm">
           <Link to={feedPath()}>
             <Newspaper className="mr-1.5 h-3.5 w-3.5" aria-hidden />
@@ -99,12 +121,6 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
           <Link to={feedPath('explore')}>
             <Compass className="mr-1.5 h-3.5 w-3.5" aria-hidden />
             Explorar
-          </Link>
-        </Button>
-        <Button asChild variant="secondary" size="sm">
-          <Link to="/search?tab=people">
-            <Users className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-            Aficionados
           </Link>
         </Button>
         <Button asChild variant="secondary" size="sm">
@@ -130,12 +146,25 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
             Editar perfil
           </Link>
         </Button>
-        {username ? (
-          <Button asChild variant="ghost" size="sm">
-            <Link to={`/u/${username}/following`}>Siguiendo</Link>
-          </Button>
-        ) : null}
       </nav>
+
+      {followingHref ? (
+        <p className="text-sm text-muted-foreground">
+          En{' '}
+          <Link to={followingHref} className="font-medium text-primary hover:underline">
+            Siguiendo
+          </Link>{' '}
+          puedes dejar de seguir a quien ya no quieras ver en el feed.
+        </p>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Elige un username en{' '}
+          <Link to="/profile" className="font-medium text-primary hover:underline">
+            Editar perfil
+          </Link>{' '}
+          para abrir tus listas de siguiendo y seguidores.
+        </p>
+      )}
 
       {feedLoading ? <FeedPreviewSkeleton /> : null}
 

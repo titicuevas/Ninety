@@ -16,7 +16,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useFeedFilterParams } from '@/hooks/useFeedFilterParams';
 import { feedDocumentTitle, feedPath } from '@/lib/feedParams';
 import { formatRelativeTime } from '@/lib/format';
-import { profilePath } from '@/lib/profilePath';
+import { publicProfilePath } from '@/lib/profilePath';
 import { cn } from '@/lib/utils';
 import type { FeedCapsule } from '@/types/capsule';
 
@@ -24,11 +24,11 @@ function AuthorName({ capsule, currentUserId }: { capsule: FeedCapsule; currentU
   const name = capsule.profiles?.display_name ?? capsule.profiles?.username ?? 'Aficionado';
   const isSelf = capsule.user_id === currentUserId;
   const label = isSelf ? `${name} (tú)` : name;
-  const username = capsule.profiles?.username;
+  const href = publicProfilePath(capsule.profiles?.username);
 
-  if (username) {
+  if (href) {
     return (
-      <Link to={profilePath(username)} className="text-sm font-medium text-primary hover:underline">
+      <Link to={href} className="text-sm font-medium text-primary hover:underline">
         {label}
       </Link>
     );

@@ -18,7 +18,9 @@ export function PeopleResultRow({ profile }: { profile: Profile }) {
   const username = profile.username!;
   const name = profile.display_name ?? username;
   const location = [profile.city, profile.country].filter(Boolean).join(', ');
-  const canCompare = !isAutoUsername(username);
+  const canLink = !isAutoUsername(username);
+  const href = canLink ? profilePath(username) : null;
+  const canCompare = canLink;
 
   return (
     <li className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 sm:p-4">
@@ -36,9 +38,13 @@ export function PeopleResultRow({ profile }: { profile: Profile }) {
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <Link to={profilePath(username)} className="font-medium text-foreground hover:text-primary hover:underline">
-            {name}
-          </Link>
+          {href ? (
+            <Link to={href} className="font-medium text-foreground hover:text-primary hover:underline">
+              {name}
+            </Link>
+          ) : (
+            <span className="font-medium text-foreground">{name}</span>
+          )}
           {profile.match_reason === 'favorite_team' ? (
             <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
               Mismo equipo
@@ -49,7 +55,7 @@ export function PeopleResultRow({ profile }: { profile: Profile }) {
             </span>
           ) : null}
         </div>
-        <p className="text-sm text-muted-foreground">@{username}</p>
+        {canLink ? <p className="text-sm text-muted-foreground">@{username}</p> : null}
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
           {[profile.favorite_team, location].filter(Boolean).join(' · ') || 'Aficionado Ninety'}
         </p>
@@ -67,7 +73,9 @@ export function PeopleResultRow({ profile }: { profile: Profile }) {
             </Link>
           </Button>
         ) : null}
-        <FollowButton username={username} followedByMe={!!profile.followed_by_me} size="compact" />
+        {canLink ? (
+          <FollowButton username={username} followedByMe={!!profile.followed_by_me} size="compact" />
+        ) : null}
       </div>
     </li>
   );

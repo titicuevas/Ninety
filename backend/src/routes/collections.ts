@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { buildCollectionReorder } from '../lib/collectionReorder.js';
 import { nextUniqueSlug, slugifyCollectionName } from '../lib/collectionSlug.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
+import { normalizeUsernameParam } from '../lib/usernameParam.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
 function collectionAuthor(profile: {
@@ -338,12 +339,17 @@ collectionsRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
 
 /** GET /api/collections/user/:username — listas públicas */
 collectionsRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res) => {
-  const username = routeParam(req.params.username);
+  const username = normalizeUsernameParam(req.params.username);
   const token = getAccessToken(req);
   const reader = getReaderClient(token);
 
   if (!reader) {
     res.status(503).json({ error: 'Colecciones no disponibles temporalmente' });
+    return;
+  }
+
+  if (!username) {
+    res.status(404).json({ error: 'Usuario no encontrado' });
     return;
   }
 
@@ -390,13 +396,18 @@ collectionsRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, 
 
 /** GET /api/collections/user/:username/:slug — detalle público */
 collectionsRouter.get('/user/:username/:slug', optionalAuth, async (req: AuthRequest, res) => {
-  const username = routeParam(req.params.username);
+  const username = normalizeUsernameParam(req.params.username);
   const slug = routeParam(req.params.slug);
   const token = getAccessToken(req);
   const reader = getReaderClient(token);
 
   if (!reader) {
     res.status(503).json({ error: 'Colecciones no disponibles temporalmente' });
+    return;
+  }
+
+  if (!username) {
+    res.status(404).json({ error: 'Usuario no encontrado' });
     return;
   }
 

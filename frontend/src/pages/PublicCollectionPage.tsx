@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuthInit';
 import { usePublicCollection } from '@/hooks/useCollections';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { profilePath } from '@/lib/profilePath';
+import { publicProfilePath } from '@/lib/profilePath';
 
 export function PublicCollectionPage() {
   const { username, slug } = useParams<{ username: string; slug: string }>();
@@ -24,6 +24,8 @@ export function PublicCollectionPage() {
   const collection = data?.collection;
   const profile = data?.profile;
   const displayName = profile?.display_name ?? profile?.username ?? username ?? 'Aficionado';
+  const authorHref = publicProfilePath(profile?.username);
+  const fallbackHref = publicProfilePath(username);
 
   useDocumentTitle(
     collection?.name ? `${collection.name} · ${displayName}` : 'Colección',
@@ -55,8 +57,8 @@ export function PublicCollectionPage() {
             />
           ) : null}
           <Button asChild variant="secondary">
-            <Link to={username ? profilePath(username) : user ? '/home' : '/'}>
-              {username ? 'Ver perfil' : 'Volver'}
+            <Link to={fallbackHref ?? (user ? '/home' : '/')}>
+              {fallbackHref ? 'Ver perfil' : 'Volver'}
             </Link>
           </Button>
         </div>
@@ -80,11 +82,8 @@ export function PublicCollectionPage() {
           ) : null}
           <p className="text-sm text-muted-foreground">
             Por{' '}
-            {profile?.username ? (
-              <Link
-                to={profilePath(profile.username)}
-                className="font-medium text-foreground hover:underline"
-              >
+            {authorHref ? (
+              <Link to={authorHref} className="font-medium text-foreground hover:underline">
                 {displayName}
               </Link>
             ) : (
@@ -94,16 +93,16 @@ export function PublicCollectionPage() {
             {capsules.length} {capsules.length === 1 ? 'partido' : 'partidos'}
           </p>
           <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
-            {profile?.username ? (
+            {authorHref && profile?.username ? (
               <ShareCollectionButton
                 username={profile.username}
                 slug={collection.slug}
                 name={collection.name}
               />
             ) : null}
-            {profile?.username ? (
+            {authorHref ? (
               <Button asChild variant="outline" size="sm">
-                <Link to={profilePath(profile.username)}>Ver diario</Link>
+                <Link to={authorHref}>Ver diario</Link>
               </Button>
             ) : null}
           </div>
