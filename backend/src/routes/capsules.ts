@@ -15,6 +15,7 @@ import { notifyUser } from '../lib/notifyUser.js';
 import { normalizeProfile } from '../lib/profileNormalize.js';
 import { computePublicProfileStats } from '../lib/publicProfileStats.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
+import { normalizeUsernameParam } from '../lib/usernameParam.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
 export const capsulesRouter = Router();
@@ -431,12 +432,17 @@ capsulesRouter.get('/me/export', requireAuth, async (req: AuthRequest, res) => {
 });
 
 capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res) => {
-  const username = routeParam(req.params.username);
+  const username = normalizeUsernameParam(req.params.username);
   const token = getAccessToken(req);
   const reader = getReaderClient(token);
 
   if (!reader) {
     res.status(503).json({ error: 'Perfil público no disponible temporalmente' });
+    return;
+  }
+
+  if (!username) {
+    res.status(404).json({ error: 'Usuario no encontrado' });
     return;
   }
 

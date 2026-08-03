@@ -11,6 +11,7 @@ import { Layout } from '@/components/Layout';
 import { ProfileLoadingSkeleton } from '@/components/ListSkeletons';
 import { PublicLayout } from '@/components/PublicLayout';
 import { PublicWrappedSummary } from '@/components/PublicWrappedSummary';
+import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { ShareProfileButton } from '@/components/ShareProfileButton';
 import { Button } from '@/components/ui/button';
 import { usePublicProfile } from '@/hooks/usePublicProfile';
@@ -25,6 +26,7 @@ import {
   countUnlockedAchievements,
 } from '@/lib/achievements';
 import { isAutoUsername } from '@/lib/profileHelpers';
+import { isPublicProfileNotFound } from '@/lib/publicProfileError';
 import { publicProfileUrl } from '@/lib/siteUrl';
 import type { Capsule } from '@/types/capsule';
 
@@ -84,18 +86,23 @@ export function PublicProfilePage() {
     hasNextPage,
     isFetchingNextPage,
     isFetching,
+    isRefetching,
     fetchNextPage,
+    refetch,
   } = usePublicProfile(username, { q, year, ratingMin, watchContext });
 
   const { data: collectionsData } = usePublicCollections(username);
 
   const profile = data?.pages[0]?.profile;
+  const notFound = !username || (isError && isPublicProfileNotFound(error));
   useDocumentTitle(
     profile?.username
       ? `@${profile.username}`
       : isLoading
         ? 'Perfil'
-        : 'Perfil no encontrado',
+        : notFound || (!isError && !profile)
+          ? 'Perfil no encontrado'
+          : 'Perfil',
   );
   const capsules = data?.pages.flatMap((page) => page.capsules) ?? [];
   const total = data?.pages[0]?.total ?? capsules.length;
@@ -114,7 +121,21 @@ export function PublicProfilePage() {
     );
   }
 
-  if (isError || !profile) {
+  if (isError && !isPublicProfileNotFound(error)) {
+    return (
+      <Shell>
+        <div className="space-y-4 py-8">
+          <QueryErrorCard
+            message={error instanceof Error ? error.message : 'No se pudo cargar el perfil'}
+            loading={isRefetching}
+            onRetry={() => void refetch()}
+          />
+        </div>
+      </Shell>
+    );
+  }
+
+  if (notFound || !profile) {
     return (
       <Shell>
         <div className="mx-auto max-w-lg space-y-4 py-16 text-center">
@@ -147,7 +168,7 @@ export function PublicProfilePage() {
 
   return (
     <Shell>
-      <div className="mx-auto max-w-2xl space-y-8">
+      <div className="space-y-8">
         <section className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
           {profile.avatar_url ? (
             <img
