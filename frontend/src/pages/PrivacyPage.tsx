@@ -1,107 +1,151 @@
-import { LegalPageLayout } from '@/components/LegalPageLayout';
+import { Link } from 'react-router-dom';
+import { LegalPageLayout, LegalSection } from '@/components/LegalPageLayout';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section>
-      <h2 className="mb-2 text-base font-semibold text-foreground">{title}</h2>
-      {children}
-    </section>
-  );
-}
+const CONTACT_EMAIL = 'hello@ninety.app';
+const SITE = 'https://www.getninety.app';
 
 export function PrivacyPage() {
   useDocumentTitle('Privacidad');
   return (
     <LegalPageLayout title="Política de privacidad">
-      <p>
-        En Ninety tratamos tus datos con cuidado. Esta política explica qué información recogemos, para qué la
-        usamos y qué derechos tienes. Al usar la app aceptas estas condiciones.
+      <p className="text-sm leading-relaxed text-muted-foreground sm:text-[0.9375rem]">
+        Esta política describe cómo Ninety (
+        <a href={SITE} className="text-primary underline-offset-2 hover:underline">
+          getninety.app
+        </a>
+        ) trata datos personales en la beta. Es un texto claro sobre el producto real, no un aviso
+        corporativo inventado: Ninety es un proyecto independiente en fase beta, sin sociedad ni
+        bufete asociados publicados aquí.
       </p>
 
-      <Section title="1. Responsable">
+      <LegalSection title="1. Quién opera el servicio">
         <p>
-          Ninety es un proyecto en fase beta. Para consultas sobre privacidad puedes escribir a{' '}
-          <a href="mailto:hello@ninety.app" className="text-primary hover:underline">
-            hello@ninety.app
+          El servicio se llama <strong className="text-foreground">Ninety</strong> y está disponible
+          en <strong className="text-foreground">getninety.app</strong> (y el fallback de
+          despliegue en Railway). Para consultas de privacidad o solicitudes sobre tus datos:{' '}
+          <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary underline-offset-2 hover:underline">
+            {CONTACT_EMAIL}
           </a>
           .
         </p>
-      </Section>
+      </LegalSection>
 
-      <Section title="2. Datos que recogemos">
-        <ul className="list-disc space-y-1 pl-5">
+      <LegalSection title="2. Datos que recogemos">
+        <ul className="list-disc space-y-2 pl-5">
           <li>
-            <strong className="text-foreground">Cuenta:</strong> email, nombre visible, nombre de usuario y datos de
-            perfil opcionales (equipo favorito, país, ciudad).
+            <strong className="text-foreground">Cuenta:</strong> email, nombre visible, nombre de
+            usuario y datos de perfil opcionales (equipo favorito, país, ciudad, bio, avatar).
           </li>
           <li>
-            <strong className="text-foreground">Contenido:</strong> Capsules que creas (partidos, fechas, valoraciones,
-            notas, fotos) y actividad en el feed.
+            <strong className="text-foreground">Contenido del diario:</strong> Capsules (partido,
+            fecha, valoración, notas, fotos, contexto de visionado), colecciones y actividad social
+            (likes, comentarios, follows) asociada a tu cuenta.
           </li>
           <li>
-            <strong className="text-foreground">Técnicos:</strong> logs básicos de uso, dirección IP aproximada y datos
-            de sesión necesarios para mantener la cuenta segura. La sesión se guarda en el almacenamiento local del
-            navegador (<code className="text-foreground">localStorage</code>), no en cookies de seguimiento. No usamos
-            cookies de marketing ni analítica de terceros.
+            <strong className="text-foreground">Técnicos:</strong> logs básicos de uso, IP aproximada
+            y datos de sesión para autenticarte. La sesión vive en{' '}
+            <code className="rounded bg-secondary px-1 py-0.5 text-foreground">localStorage</code> del
+            navegador, no en cookies de marketing. No usamos analítica de terceros ni cookies de
+            publicidad.
           </li>
         </ul>
-      </Section>
+      </LegalSection>
 
-      <Section title="2.1. Contenido público">
+      <LegalSection title="3. Qué es público y qué no (lo importante)">
         <p>
-          Ninety funciona como un diario social: tu perfil (<code className="text-foreground">/u/usuario</code>) y tus
-          Capsules son <strong className="text-foreground">públicos</strong> y pueden verse sin iniciar sesión,
-          también mediante enlaces compartibles (<code className="text-foreground">/c/…</code>). No publiques datos
-          personales sensibles en notas o fotos.
+          Ninety es un diario social. Eso implica visibilidad por diseño, con matices:
         </p>
-      </Section>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            <strong className="text-foreground">Perfil:</strong> tu página{' '}
+            <code className="rounded bg-secondary px-1 py-0.5 text-foreground">/u/usuario</code> es
+            pública (nombre, stats y Capsules públicas).
+          </li>
+          <li>
+            <strong className="text-foreground">Capsules:</strong> cada una puede ser{' '}
+            <strong className="text-foreground">pública</strong> (visible sin login, enlaces{' '}
+            <code className="rounded bg-secondary px-1 py-0.5 text-foreground">/c/…</code>, feed y
+            perfil) o <strong className="text-foreground">privada</strong> (solo tú). El valor por
+            defecto al crear es público; puedes cambiarlo al crear o editar.
+          </li>
+          <li>
+            <strong className="text-foreground">Colecciones:</strong> también pueden ser públicas o
+            privadas.
+          </li>
+        </ul>
+        <p>
+          No publiques datos sensibles (dirección, documentos, datos de menores, etc.) en notas o
+          fotos. Lo que marques como público puede indexarse o compartirse fuera de Ninety.
+        </p>
+      </LegalSection>
 
-      <Section title="3. Para qué usamos tus datos">
-        <ul className="list-disc space-y-1 pl-5">
+      <LegalSection title="4. Para qué usamos tus datos">
+        <ul className="list-disc space-y-2 pl-5">
           <li>Crear y gestionar tu cuenta.</li>
-          <li>Guardar y mostrar tus Capsules y estadísticas.</li>
-          <li>Mostrar actividad en el feed social de la beta.</li>
-          <li>Mejorar la estabilidad y seguridad del servicio.</li>
+          <li>Guardar y mostrar tu diario, estadísticas y funciones de la beta.</li>
+          <li>Mostrar actividad social (feed, follows, likes, comentarios) según la visibilidad.</li>
+          <li>Mantener seguridad y estabilidad del servicio.</li>
         </ul>
-        <p className="mt-2">No vendemos tus datos personales a terceros.</p>
-      </Section>
+        <p>No vendemos tus datos personales.</p>
+      </LegalSection>
 
-      <Section title="4. Servicios de terceros">
-        <p>Usamos proveedores para operar Ninety:</p>
-        <ul className="mt-2 list-disc space-y-1 pl-5">
+      <LegalSection title="5. Autenticación y proveedores">
+        <p>Usamos estos servicios para operar Ninety:</p>
+        <ul className="mt-1 list-disc space-y-2 pl-5">
           <li>
-            <strong className="text-foreground">Supabase</strong> — autenticación y base de datos.
+            <strong className="text-foreground">Supabase</strong> — autenticación (email/contraseña y
+            Google OAuth), base de datos y almacenamiento.
           </li>
           <li>
-            <strong className="text-foreground">Railway</strong> — alojamiento de la aplicación.
+            <strong className="text-foreground">Google</strong> — solo si eliges «Continuar con
+            Google»; Google trata el login según su propia política.
           </li>
           <li>
-            <strong className="text-foreground">football-data.org</strong> — datos públicos de partidos (no incluyen
-            información personal tuya).
+            <strong className="text-foreground">Railway</strong> — alojamiento de la app.
+          </li>
+          <li>
+            <strong className="text-foreground">football-data.org</strong> — datos públicos de
+            partidos (no son datos personales tuyos).
           </li>
         </ul>
-      </Section>
+      </LegalSection>
 
-      <Section title="5. Conservación y seguridad">
+      <LegalSection title="6. Exportar y eliminar">
         <p>
-          Conservamos tus datos mientras mantengas la cuenta activa. Puedes solicitar la eliminación escribiéndonos.
-          Aplicamos medidas razonables de seguridad, aunque ningún servicio en internet es 100 % infalible.
+          Puedes <strong className="text-foreground">exportar tu diario</strong> (Capsules en JSON o
+          CSV) desde <Link to="/settings" className="text-primary underline-offset-2 hover:underline">Ajustes</Link>
+          . El export no incluye contraseñas ni tokens; las colecciones no van en ese archivo.
         </p>
-      </Section>
+        <p>
+          Para eliminar la cuenta, hoy el flujo es manual: desde Ajustes se abre un email a{' '}
+          <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary underline-offset-2 hover:underline">
+            {CONTACT_EMAIL}
+          </a>
+          . Conservamos los datos mientras la cuenta exista; al borrarla dejamos de usarlos salvo
+          obligaciones legales mínimas o copias de seguridad técnicas con retención corta.
+        </p>
+      </LegalSection>
 
-      <Section title="6. Tus derechos">
+      <LegalSection title="7. Tus derechos">
         <p>
-          Puedes acceder, corregir o eliminar tus datos desde tu perfil o contactándonos. También puedes oponerte al
-          tratamiento o solicitar la portabilidad cuando la ley lo permita.
+          Puedes acceder y corregir datos de perfil en la app, exportar el diario y solicitar
+          borrado por email. Si la normativa aplicable te otorga más derechos (oposición,
+          limitación, etc.), escríbenos y los atenderemos en la medida en que el producto y la ley
+          lo permitan. No afirmamos aquí una jurisdicción ni un DPO inventados.
         </p>
-      </Section>
+      </LegalSection>
 
-      <Section title="7. Cambios">
+      <LegalSection title="8. Cambios">
         <p>
-          Podemos actualizar esta política. Publicaremos la nueva versión en esta página con la fecha de revisión.
+          Podemos actualizar esta política. La versión vigente estará en esta página con la fecha de
+          revisión. Los{' '}
+          <Link to="/terminos" className="text-primary underline-offset-2 hover:underline">
+            Términos de uso
+          </Link>{' '}
+          son un documento aparte.
         </p>
-      </Section>
+      </LegalSection>
     </LegalPageLayout>
   );
 }

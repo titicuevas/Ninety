@@ -157,4 +157,26 @@ test.describe('Smoke — público @smoke', () => {
     const body = (await res.json()) as { status?: string };
     expect(body.status).toBe('ok');
   });
+
+  test('privacidad y términos cargan con marca Ninety', async ({ page }) => {
+    await page.goto('/privacidad');
+    await expect(page.getByRole('heading', { name: /política de privacidad/i })).toBeVisible();
+    await expect(page.getByText(/getninety\.app/i).first()).toBeVisible();
+    await expect(page.getByText(/públicas|privada/i).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /ajustes/i })).toBeVisible();
+
+    await page.goto('/terminos');
+    await expect(page.getByRole('heading', { name: /términos de uso/i })).toBeVisible();
+    await expect(page.getByText(/supabase/i).first()).toBeVisible();
+  });
+
+  test('redirects EN de legales a rutas ES canónicas', async ({ page }) => {
+    await page.goto('/privacy');
+    await expect(page).toHaveURL(/\/privacidad\/?$/);
+    await expect(page.getByRole('heading', { name: /política de privacidad/i })).toBeVisible();
+
+    await page.goto('/terms');
+    await expect(page).toHaveURL(/\/terminos\/?$/);
+    await expect(page.getByRole('heading', { name: /términos de uso/i })).toBeVisible();
+  });
 });

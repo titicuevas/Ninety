@@ -29,6 +29,8 @@ export const appRouter = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
   { path: '/privacidad', element: <PrivacyPage /> },
   { path: '/terminos', element: <TermsPage /> },
+  { path: '/privacy', element: <Navigate to="/privacidad" replace /> },
+  { path: '/terms', element: <Navigate to="/terminos" replace /> },
   { path: '/welcome', element: <Navigate to="/" replace /> },
   { path: '/auth/callback', element: <AuthCallbackPage /> },
   { path: '/auth/reset-password', element: <ResetPasswordPage /> },

@@ -146,6 +146,25 @@ body {
     radial-gradient(ellipse 50% 35% at 0% 80%, rgba(16, 185, 129, 0.06), transparent 50%);
 }
 
+/* Jerarquía tipográfica de páginas legales (misma atmósfera que landing) */
+.prose-legal a {
+  color: var(--primary);
+  text-underline-offset: 2px;
+}
+
+.prose-legal a:hover {
+  text-decoration: underline;
+}
+
+.prose-legal strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.prose-legal code {
+  font-size: 0.85em;
+}
+
 input,
 textarea,
 select,
