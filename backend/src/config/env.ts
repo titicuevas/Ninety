@@ -14,7 +14,7 @@ export const envSchema = z
     FOOTBALL_DATA_API_KEY: z.string().default(''),
     VAPID_PUBLIC_KEY: z.string().optional(),
     VAPID_PRIVATE_KEY: z.string().optional(),
-    VAPID_SUBJECT: z.string().default('mailto:hello@ninety.app'),
+    VAPID_SUBJECT: z.string().default('mailto:hello@getninety.app'),
   })
   .refine((data) => data.SUPABASE_ANON_KEY || data.SUPABASE_PUBLISHABLE_KEY, {
     message: 'Se requiere SUPABASE_ANON_KEY o SUPABASE_PUBLISHABLE_KEY',

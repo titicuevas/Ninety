@@ -132,7 +132,7 @@ export function SettingsPage() {
         .filter(Boolean)
         .join('\n'),
     );
-    window.location.href = `mailto:hello@ninety.app?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:hello@getninety.app?subject=${subject}&body=${body}`;
     closeDeleteDialog();
   };
 
@@ -296,7 +296,7 @@ export function SettingsPage() {
             </h2>
             <p id={deleteDescId} className="text-sm text-muted-foreground">
               Todavía no hay borrado automático. Para abrir el email a{' '}
-              <span className="text-foreground">hello@ninety.app</span>, escribe tu email de cuenta
+              <span className="text-foreground">hello@getninety.app</span>, escribe tu email de cuenta
               debajo.
             </p>
           </div>

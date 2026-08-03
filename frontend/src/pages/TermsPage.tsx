@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { LegalPageLayout, LegalSection } from '@/components/LegalPageLayout';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
-const CONTACT_EMAIL = 'hello@ninety.app';
+const CONTACT_EMAIL = 'hello@getninety.app';
 const SITE = 'https://www.getninety.app';
 
 export function TermsPage() {

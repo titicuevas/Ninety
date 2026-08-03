@@ -29,7 +29,7 @@ const get = (key) => {
 
 const publicKey = get('VAPID_PUBLIC_KEY');
 const privateKey = get('VAPID_PRIVATE_KEY');
-const subject = get('VAPID_SUBJECT') || 'mailto:hello@ninety.app';
+const subject = get('VAPID_SUBJECT') || 'mailto:hello@getninety.app';
 
 if (!publicKey || !privateKey) {
   console.error('❌ Faltan VAPID_PUBLIC_KEY o VAPID_PRIVATE_KEY en backend/.env');

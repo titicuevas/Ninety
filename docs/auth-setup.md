@@ -13,29 +13,46 @@ Checklist para apuntar el dominio comprado al frontend en Railway **sin romper**
 
 ### Ops AHORA (orden fijo)
 
-Canónico **mientras el cutover**: `https://www.getninety.app` (CNAME activo). Apex `getninety.app` suele no resolver si Namecheap solo tiene MX / URL Redirect.
+Canónico **hoy**: `https://www.getninety.app` (CNAME → Railway, `/health` = ok). Apex `getninety.app` **no resuelve** (sin A/AAAA/ALIAS; solo MX eforward Namecheap).
+
+#### Estado medido (2026-08-03)
+
+| Target | Resultado |
+|--------|-----------|
+| `https://www.getninety.app/health` | **200** `{"status":"ok"}` |
+| `https://ninety.up.railway.app/health` | **200** `{"status":"ok"}` |
+| `https://ninety-api.up.railway.app/api/health` | **200** `{"status":"ok","service":"ninety-api",...}` |
+| `https://getninety.app/health` | **NXDOMAIN / no resolve** (sin A/ALIAS) |
+| DNS `www` | `CNAME v0vc6p84.up.railway.app` → `69.46.46.10` |
+| DNS apex | Solo MX eforward + SPF Namecheap (`include:spf.efwd.registrar-servers.com`) |
+| Resend DNS (`resend._domainkey` / `send` / `_dmarc`) | **NXDOMAIN** — dominio Resend **no verificado** en DNS público |
+| SMTP Supabase | **No medible desde fuera** — hay que mirar Dashboard (no inventar OK) |
+
+Contacto producto en UI/legales: `hello@getninety.app` (no `hello@ninety.app`). Forwarding del buzón = Namecheap Email Forwarding / Resend según configures.
 
 #### A) Railway frontend — puerto y dominio
 
 1. Abre el servicio **frontend** (`ninety` / `ninety-frontend`), **no** el API
 2. **Deployments → latest → Logs** → busca exactamente: `Ninety frontend listening on http://0.0.0.0:N`
 3. Anota **N** (Railway suele inyectar `8080`; **no** uses `4173` a ciegas)
-4. **Settings → Networking → Custom Domain** → `www.getninety.app` (y apex si lo añadiste) → **Target Port = N**
+4. **Settings → Networking → Custom Domain** → `www.getninety.app` → **Target Port = N** (www ya da 200; solo toca esto si vuelve 502)
 5. Start Command = `node serve.mjs` (no `vite preview` salvo que sepas lo que haces)
 6. Prueba: `curl -sS https://www.getninety.app/health` → `{"status":"ok"}`  
-   Fallback sano: `curl -sS https://ninety.up.railway.app/health` → debe ser `ok` ya
+   Fallback: `curl -sS https://ninety.up.railway.app/health` → `ok`  
+   API: `curl -sS https://ninety-api.up.railway.app/api/health` → `ok`
 
-#### B) Namecheap DNS
+#### B) Namecheap DNS (apex)
 
 1. **Domain List → getninety.app → Advanced DNS**
 2. Si existe **URL Redirect** / **Redirect** en `@` (apex) o `www` hacia parking u otra URL → **bórralo** (rompe o compite con Railway)
-3. Mantén **CNAME** `www` → target que muestra Railway (p. ej. `xxxxx.up.railway.app` o el hostname del panel)
-4. **Apex opcional** (solo si quieres `https://getninety.app` sin www):
-   - Namecheap no permite CNAME real en `@`. Opciones: **ALIAS / ANAME** si el plan lo ofrece, o el registro exacto que indique Railway al añadir `getninety.app`
-   - Sin A/ALIAS/CNAME de Railway en `@`, el apex **no resolverá** (solo MX de eforward = normal para email del registrador)
+3. Mantén **CNAME** `www` → `v0vc6p84.up.railway.app` (o el target actual del panel Railway)
+4. **Apex** (para que `https://getninety.app` resuelva):
+   - En Railway → Custom Domain → añade `getninety.app` → copia el registro que pida (suele ser **ALIAS/ANAME** o IPs **A**)
+   - Namecheap: crea ese registro en `@`. **No** uses URL Redirect como sustituto
+   - Sin A/ALIAS en `@`, el apex **seguirá sin resolver** (MX eforward solo = email del registrador; normal)
 5. Espera propagación; en Railway el dominio debe quedar **Active** (TLS verde)
 
-#### C) Variables Railway
+#### C) Variables Railway — lista verify
 
 **Frontend** (`ninety`) — tras cambiar `VITE_*` hace falta **Rebuild/Redeploy**:
 
@@ -58,7 +75,7 @@ CORS_ORIGINS=https://getninety.app,https://ninety.up.railway.app
 
 #### D) Supabase → Authentication → URL Configuration
 
-**Site URL** (mientras canónico = www):
+**Site URL** (canónico = www):
 
 ```
 https://www.getninety.app
@@ -81,13 +98,16 @@ https://ninety.up.railway.app/auth/reset-password
 https://ninety.up.railway.app/**
 ```
 
-#### E) Email Auth (ops; no magic link)
+#### E) Email Auth + Resend (ops; no magic link)
 
 1. **Authentication → Providers → Email**: confirmación ON/OFF según quieras registro con click
-2. **SMTP**: built-in vale para **una prueba**; prod fiable = SMTP custom (Resend/Postmark/SES/Mailtrap). **No asumir que SMTP ya está** — verificar en Dashboard
-3. Plantillas Confirm signup / Reset password: enlace debe usar Site URL / Redirect URLs de arriba
-4. **www live** (`/health` = ok): registro + recovery en `https://www.getninety.app` (fallback Railway solo si www vuelve a fallar)
-5. SMTP built-in = una prueba; prod = SMTP custom verificado en Dashboard
+2. **SMTP** en Supabase → Project Settings → Authentication → SMTP:
+   - **No asumir OK.** Built-in = una prueba (remitente `supabase.io`, rate limits)
+   - Prod: Enable custom SMTP → Resend (host `smtp.resend.com`, user `resend`, pass = API key)
+   - Remitente: p. ej. `noreply@getninety.app` (dominio verificado en Resend)
+3. **Resend → Domains → getninety.app**: añade los DNS que pida (DKIM / SPF / opcional DMARC). Hoy DNS público **no** tiene `resend._domainkey` ni `send` — hay que verificar
+4. Plantillas Confirm signup / Reset password: enlace vía Site URL / Redirect URLs de arriba
+5. Probar en **www** (ya live): registro + forgot-password en `https://www.getninety.app`
 
 ### 1. DNS (detalle)
 
@@ -173,15 +193,15 @@ Hasta completar 1–5 en el proyecto Supabase / Railway, los flujos de email que
 
 ### Probar email AHORA (checklist)
 
-Usar `https://ninety.up.railway.app` **mientras** `www.getninety.app/health` dé 502.
+**www está live** (`/health` = ok). Probar en canónico, no en Railway salvo fallback.
 
-1. **Supabase → Authentication → URL Configuration:** Site URL = `https://ninety.up.railway.app` (temporal). Redirect URLs: lista de **Ops AHORA → D**.
-2. **SMTP:** built-in vale para una prueba; si no llega nada → SMTP custom o rate limit. No asumir SMTP configurado.
-3. **Registro:** `https://ninety.up.railway.app/register` → email → confirmar → login.
+1. **Supabase → Authentication → URL Configuration:** Site URL = `https://www.getninety.app`. Redirect URLs: lista de **Ops AHORA → D**.
+2. **SMTP:** abrir Dashboard y anotar: built-in vs custom. Si custom Resend → dominio debe estar **Verified** en Resend (hoy DNS sin DKIM Resend).
+3. **Registro:** `https://www.getninety.app/register` → email real → confirmar (si confirmación ON) → login.
 4. **Recovery:** `/forgot-password` → enlace → `/auth/reset-password` → nueva password → login.
-5. Tras fix 502: misma prueba en `https://www.getninety.app` con Site URL / `CLIENT_URL` / `VITE_SITE_URL` en www.
+5. Fallback solo si www falla: misma prueba en `https://ninety.up.railway.app` con Site URL temporal alineado.
 
-> No inventes que SMTP/Redirects ya estén en prod: hay que verificarlos en el Dashboard. El código de signup/recovery/callback ya está listo.
+> No inventes que SMTP/Redirects ya estén en prod: hay que verificarlos en el Dashboard. El código de signup/recovery/callback ya está listo. DNS Resend medible: `host -t TXT resend._domainkey.getninety.app` (hoy NXDOMAIN).
 
 ---
 
