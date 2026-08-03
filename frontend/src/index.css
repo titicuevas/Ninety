@@ -251,6 +251,47 @@ button {
   animation: ninety-reveal 180ms ease-out;
 }
 
+/* Loading de marca — pulse del 90 + giro suave del balón */
+@keyframes ninety-loader-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes ninety-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ninety-loader-fade {
+  from {
+    opacity: 0;
+    transform: translateY(0.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ninety-loader-mark {
+  animation: ninety-loader-pulse 2.2s ease-in-out infinite;
+}
+
+.ninety-loader-ball {
+  animation: ninety-loader-spin 3.6s linear infinite;
+  transform-origin: center;
+}
+
+.ninety-loader-copy {
+  animation: ninety-loader-fade 320ms ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

@@ -44,6 +44,11 @@
         background: #10b981; color: #042f1e;
         display: flex; align-items: center; justify-content: center;
         font-weight: 700; font-size: 0.875rem;
+        animation: splash-pulse 2.2s ease-in-out infinite;
+      }
+      @keyframes splash-pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
       }
       .ninety-splash__badge {
         font-size: 0.75rem; color: #6ee7b7;
@@ -73,7 +78,7 @@
         <div class="ninety-splash__logo">90</div>
         <span class="ninety-splash__badge">Beta abierta</span>
         <p class="ninety-splash__title">Ninety</p>
-        <p class="ninety-splash__tagline">Cargando tu diario futbolero…</p>
+        <p class="ninety-splash__tagline">Calentando…</p>
         <div class="ninety-splash__spinner" role="status" aria-label="Cargando"></div>
       </div>
     </div>

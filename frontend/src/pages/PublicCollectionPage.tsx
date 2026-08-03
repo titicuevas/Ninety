@@ -3,6 +3,7 @@ import { Library } from 'lucide-react';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
+import { NinetyLoader } from '@/components/NinetyLoader';
 import { PublicLayout } from '@/components/PublicLayout';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { ShareCollectionButton } from '@/components/ShareCollectionButton';
@@ -33,9 +34,7 @@ export function PublicCollectionPage() {
   if (isLoading) {
     return (
       <Shell>
-        <p className="mx-auto max-w-lg py-16 text-center text-sm text-muted-foreground">
-          Cargando colección…
-        </p>
+        <NinetyLoader variant="panel" />
       </Shell>
     );
   }

@@ -1,23 +1,16 @@
 import { Link } from 'react-router-dom';
+import { NinetyLoader } from '@/components/NinetyLoader';
 import { SkipLink } from '@/components/SkipLink';
 import { useAuthInit, useAuth } from '@/hooks/useAuthInit';
 import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { cn } from '@/lib/utils';
-
-function LoadingSpinner() {
-  return (
-    <div className="flex min-h-dvh items-center justify-center" role="status" aria-label="Cargando">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-    </div>
-  );
-}
 
 export function PublicLayout({ children }: { children: React.ReactNode }) {
   useAuthInit();
   const { user, loading } = useAuth();
   const { loginTo, registerTo } = useAuthReturnLinks();
 
-  if (loading) return <LoadingSpinner />;
+  if (loading) return <NinetyLoader variant="fullscreen" />;
 
   const homeHref = user ? '/home' : '/';
 

@@ -1,3 +1,4 @@
+import { NinetyLoader } from '@/components/NinetyLoader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -45,13 +46,16 @@ export function CapsuleListSkeleton({
   className?: string;
 }) {
   return (
-    <ul className={cn('space-y-3', className)} role="status" aria-label="Cargando">
-      {Array.from({ length: count }, (_, i) => (
-        <li key={i}>
-          <CapsuleCardSkeleton withAuthor={withAuthor} />
-        </li>
-      ))}
-    </ul>
+    <div className={cn('space-y-3', className)} role="status" aria-label="Preparando el diario…">
+      <NinetyLoader variant="inline" />
+      <ul className="space-y-3" aria-hidden>
+        {Array.from({ length: count }, (_, i) => (
+          <li key={i}>
+            <CapsuleCardSkeleton withAuthor={withAuthor} />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -83,20 +87,23 @@ function MatchCardSkeleton() {
 export function MatchListSkeleton({
   count = 4,
   className,
-  label = 'Buscando partidos',
+  label = 'Revisando el VAR…',
 }: {
   count?: number;
   className?: string;
   label?: string;
 }) {
   return (
-    <ul className={cn('space-y-3', className)} role="status" aria-label={label} aria-live="polite">
-      {Array.from({ length: count }, (_, i) => (
-        <li key={i}>
-          <MatchCardSkeleton />
-        </li>
-      ))}
-    </ul>
+    <div className={cn('space-y-3', className)} role="status" aria-label={label} aria-live="polite">
+      <NinetyLoader variant="inline" phrase={label} rotate={false} />
+      <ul className="space-y-3" aria-hidden>
+        {Array.from({ length: count }, (_, i) => (
+          <li key={i}>
+            <MatchCardSkeleton />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -117,14 +124,13 @@ function NotificationRowSkeleton() {
 /** Filas de notificaciones. */
 export function NotificationListSkeleton({ count = 5, className }: { count?: number; className?: string }) {
   return (
-    <div
-      className={cn('divide-y divide-border rounded-lg border', className)}
-      role="status"
-      aria-label="Cargando notificaciones"
-    >
-      {Array.from({ length: count }, (_, i) => (
-        <NotificationRowSkeleton key={i} />
-      ))}
+    <div className={cn('space-y-3', className)} role="status" aria-label="Calentando…">
+      <NinetyLoader variant="inline" />
+      <div className="divide-y divide-border rounded-lg border" aria-hidden>
+        {Array.from({ length: count }, (_, i) => (
+          <NotificationRowSkeleton key={i} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -146,28 +152,32 @@ function PeopleRowSkeleton() {
 export function PeopleListSkeleton({
   count = 5,
   className,
-  label = 'Cargando',
+  label = 'Alineando el once…',
 }: {
   count?: number;
   className?: string;
   label?: string;
 }) {
   return (
-    <ul className={cn('space-y-2', className)} role="status" aria-label={label}>
-      {Array.from({ length: count }, (_, i) => (
-        <li key={i}>
-          <PeopleRowSkeleton />
-        </li>
-      ))}
-    </ul>
+    <div className={cn('space-y-2', className)} role="status" aria-label={label}>
+      <NinetyLoader variant="inline" phrase={label} rotate={false} />
+      <ul className="space-y-2" aria-hidden>
+        {Array.from({ length: count }, (_, i) => (
+          <li key={i}>
+            <PeopleRowSkeleton />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
 /** Cabecera de perfil + lista de cápsulas. */
 export function ProfileLoadingSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn('mx-auto max-w-xl space-y-6', className)} role="status" aria-label="Cargando perfil">
-      <div className="flex items-start gap-4">
+    <div className={cn('mx-auto max-w-xl space-y-6', className)} role="status" aria-label="Preparando el diario…">
+      <NinetyLoader variant="inline" />
+      <div className="flex items-start gap-4" aria-hidden>
         <Skeleton className="h-20 w-20 shrink-0 rounded-full" />
         <div className="min-w-0 flex-1 space-y-2 pt-1">
           <Skeleton className="h-6 w-40" />
@@ -175,11 +185,17 @@ export function ProfileLoadingSkeleton({ className }: { className?: string }) {
           <Skeleton className="h-3 w-48" />
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2" aria-hidden>
         <Skeleton className="h-9 w-24" />
         <Skeleton className="h-9 w-24" />
       </div>
-      <CapsuleListSkeleton count={2} />
+      <ul className="space-y-3" aria-hidden>
+        {Array.from({ length: 2 }, (_, i) => (
+          <li key={i}>
+            <CapsuleCardSkeleton />
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -187,17 +203,18 @@ export function ProfileLoadingSkeleton({ className }: { className?: string }) {
 /** Resumen Wrapped en Home. */
 export function WrappedLoadingSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn('space-y-6', className)} role="status" aria-label="Cargando resumen">
-      <div className="space-y-2">
+    <div className={cn('space-y-6', className)} role="status" aria-label="Puliendo el césped…">
+      <NinetyLoader variant="inline" />
+      <div className="space-y-2" aria-hidden>
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-4 w-64 max-w-full" />
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2" aria-hidden>
         <Skeleton className="h-8 w-16" />
         <Skeleton className="h-8 w-16" />
         <Skeleton className="h-8 w-16" />
       </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-hidden>
         {Array.from({ length: 4 }, (_, i) => (
           <Card key={i}>
             <CardContent className="space-y-2 p-4">

@@ -4,6 +4,7 @@ import { ArrowDown, ArrowLeft, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
+import { NinetyLoader } from '@/components/NinetyLoader';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { ShareCollectionButton } from '@/components/ShareCollectionButton';
 import { Button } from '@/components/ui/button';
@@ -94,7 +95,7 @@ export function CollectionDetailPage() {
   if (isLoading) {
     return (
       <Layout>
-        <p className="text-sm text-muted-foreground">Cargando colección…</p>
+        <NinetyLoader variant="panel" />
       </Layout>
     );
   }

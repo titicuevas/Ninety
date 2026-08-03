@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Library, Lock, Plus } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
+import { NinetyLoader } from '@/components/NinetyLoader';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -149,9 +150,7 @@ export function CollectionsPage() {
           </Card>
         ) : null}
 
-        {isLoading ? (
-          <p className="text-sm text-muted-foreground">Cargando colecciones…</p>
-        ) : null}
+        {isLoading ? <NinetyLoader variant="panel" className="py-10" /> : null}
 
         {isError ? (
           <QueryErrorCard
