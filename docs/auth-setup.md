@@ -205,6 +205,107 @@ Hasta completar 1–5 en el proyecto Supabase / Railway, los flujos de email que
 
 ---
 
+## Plantillas email (ES) — pegar en Supabase
+
+Dashboard → **Authentication → Email Templates**.
+
+Sustituye Subject + Body de **Confirm signup** y **Reset password (Recovery)**. Usa exactamente las variables `{{ .ConfirmationURL }}`, `{{ .SiteURL }}`, `{{ .Email }}`.
+
+El código ya envía `emailRedirectTo` / `redirectTo` a `{CLIENT_URL}/auth/callback` (signup) y `{CLIENT_URL}/auth/reset-password` (recovery). `{{ .ConfirmationURL }}` incluye ese redirect.
+
+### Confirm signup
+
+**Subject:**
+
+```
+Confirma tu cuenta en Ninety
+```
+
+**Body:**
+
+```html
+<div style="font-family: ui-sans-serif, system-ui, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; color: #fafafa; background: #0a0a0b;">
+  <p style="margin: 0 0 8px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #10b981;">Ninety</p>
+  <h1 style="margin: 0 0 16px; font-size: 22px; line-height: 1.3; color: #fafafa;">Confirma tu email</h1>
+  <p style="margin: 0 0 12px; font-size: 15px; line-height: 1.55; color: #a1a1aa;">
+    Hola{{ if .Data.display_name }} {{ .Data.display_name }}{{ end }}, gracias por unirte a Ninety — tu diario futbolero.
+  </p>
+  <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.55; color: #a1a1aa;">
+    Pulsa el botón para activar la cuenta asociada a <strong style="color: #fafafa;">{{ .Email }}</strong>.
+  </p>
+  <p style="margin: 0 0 24px;">
+    <a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 12px 20px; background: #10b981; color: #042f1e; text-decoration: none; font-weight: 700; border-radius: 10px;">
+      Confirmar email
+    </a>
+  </p>
+  <p style="margin: 0 0 8px; font-size: 13px; line-height: 1.5; color: #71717a;">
+    Si el botón no funciona, copia y pega este enlace:
+  </p>
+  <p style="margin: 0 0 24px; font-size: 12px; word-break: break-all; color: #34d399;">{{ .ConfirmationURL }}</p>
+  <p style="margin: 0; font-size: 12px; color: #52525b;">Si no creaste una cuenta en Ninety, ignora este correo.</p>
+</div>
+```
+
+### Recovery (Reset password)
+
+**Subject:**
+
+```
+Restablece tu contraseña de Ninety
+```
+
+**Body:**
+
+```html
+<div style="font-family: ui-sans-serif, system-ui, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; color: #fafafa; background: #0a0a0b;">
+  <p style="margin: 0 0 8px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #10b981;">Ninety</p>
+  <h1 style="margin: 0 0 16px; font-size: 22px; line-height: 1.3; color: #fafafa;">Nueva contraseña</h1>
+  <p style="margin: 0 0 12px; font-size: 15px; line-height: 1.55; color: #a1a1aa;">
+    Hemos recibido una solicitud para restablecer la contraseña de <strong style="color: #fafafa;">{{ .Email }}</strong>.
+  </p>
+  <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.55; color: #a1a1aa;">
+    El enlace caduca pronto y solo se puede usar una vez.
+  </p>
+  <p style="margin: 0 0 24px;">
+    <a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 12px 20px; background: #10b981; color: #042f1e; text-decoration: none; font-weight: 700; border-radius: 10px;">
+      Elegir nueva contraseña
+    </a>
+  </p>
+  <p style="margin: 0 0 8px; font-size: 13px; line-height: 1.5; color: #71717a;">
+    Si el botón no funciona, copia y pega este enlace:
+  </p>
+  <p style="margin: 0 0 24px; font-size: 12px; word-break: break-all; color: #34d399;">{{ .ConfirmationURL }}</p>
+  <p style="margin: 0; font-size: 12px; color: #52525b;">Si no pediste este cambio, ignora el correo — tu contraseña no se modifica.</p>
+</div>
+```
+
+### Qué debe configurar Henry en Supabase (si aún falta)
+
+1. **Authentication → URL Configuration**
+   - Site URL: `https://www.getninety.app`
+   - Redirect URLs: lista de **Ops AHORA → D** (incluye `/auth/callback` y `/auth/reset-password`)
+2. **Authentication → Email Templates** → pegar Confirm signup + Recovery de arriba
+3. **SMTP** (recomendado prod): Remitente `noreply@getninety.app` vía Resend/otro; dominio verificado
+4. Railway API: `CLIENT_URL=https://www.getninety.app` (debe coincidir con el origen canónico)
+
+---
+
+## Prompt logo / icono PWA (copy-paste)
+
+El favicon SVG del repo ya usa dark `#0a0a0b` + verde `#10b981` con “90”. Para regenerar PNG 192/512 / maskable / apple-touch con otra IA:
+
+```
+App icon for “Ninety”, a football fan diary (match memories). Square app icon, 1024×1024.
+Style: sports newspaper / matchday programme meets modern PWA — bold condensed “90” as the hero mark (not a soccer ball clipart).
+Colors: near-black background #0a0a0b, emerald accent #10b981, subtle pitch-line or centre-circle geometry behind the numerals, thin emerald border, soft corner radius ~22%.
+Mood: night match, editorial, confident. No purple, no glow soup, no photoreal ball, no generic sans wordmark besides “90”.
+Deliver: flat vector-like icon suitable for favicon + PWA 192/512 and maskable (keep safe zone: “90” inside central 80%).
+```
+
+Tras generar: sustituye `frontend/public/icon-192.png`, `icon-512.png`, `*-maskable.png`, `apple-touch-icon.png` alineados a esa paleta.
+
+---
+
 ## Google OAuth (Supabase) — setup inicial
 
 1. [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
