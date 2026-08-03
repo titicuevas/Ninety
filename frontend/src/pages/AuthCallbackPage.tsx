@@ -1,17 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import {
-  completeOAuthCallback,
-  establishSessionFromTokens,
-  verifyEmailTokenHash,
-} from '@/lib/auth';
-import {
-  clearAuthCallbackUrl,
-  parseAuthEmailCallback,
-} from '@/lib/authEmailCallback';
+import { completeOAuthCallback } from '@/lib/auth';
 import {
   consumeAuthReturnPath,
-  DEFAULT_POST_AUTH_PATH,
   loginPath,
   peekAuthReturnPath,
 } from '@/lib/authReturn';
@@ -28,81 +19,28 @@ export function AuthCallbackPage() {
     let active = true;
 
     async function handleCallback() {
-      const parsed = parseAuthEmailCallback(window.location.search, window.location.hash);
+      const params = new URLSearchParams(window.location.search);
+      const authError = params.get('error_description') ?? params.get('error');
 
-      if (parsed.kind === 'error') {
-        clearAuthCallbackUrl();
-        if (active) setError(parsed.message);
+      if (authError) {
+        if (active) setError(authError);
+        return;
+      }
+
+      const code = params.get('code');
+      if (!code) {
+        if (active) setError('No se pudo completar el inicio de sesión. Inténtalo de nuevo.');
         return;
       }
 
       try {
-        if (parsed.kind === 'tokens') {
-          clearAuthCallbackUrl();
-          if (parsed.type === 'recovery') {
-            if (active) {
-              setError(
-                'Este enlace es de recuperación de contraseña. Usa el enlace del email de restablecer contraseña.',
-              );
-            }
-            return;
-          }
-          const session = await establishSessionFromTokens(parsed.accessToken, parsed.refreshToken);
-          if (!active) return;
-          setSession(session);
-          const isEmailConfirm =
-            parsed.type === 'signup' || parsed.type === 'email' || parsed.type === null;
-          navigate(DEFAULT_POST_AUTH_PATH, {
-            replace: true,
-            state: isEmailConfirm
-              ? { emailConfirmed: true, fromRegister: true }
-              : undefined,
-          });
-          return;
-        }
-
-        if (parsed.kind === 'token_hash') {
-          clearAuthCallbackUrl();
-          if (parsed.type === 'recovery') {
-            navigate(`/auth/reset-password?token_hash=${encodeURIComponent(parsed.tokenHash)}&type=recovery`, {
-              replace: true,
-            });
-            return;
-          }
-          const session = await verifyEmailTokenHash(parsed.tokenHash, parsed.type);
-          if (!active) return;
-          setSession(session);
-          navigate(DEFAULT_POST_AUTH_PATH, {
-            replace: true,
-            state: { emailConfirmed: true, fromRegister: true },
-          });
-          return;
-        }
-
-        if (parsed.kind === 'code') {
-          clearAuthCallbackUrl();
-          const session = await completeOAuthCallback(parsed.code);
-          if (!active) return;
-          setSession(session);
-          navigate(consumeAuthReturnPath(), { replace: true });
-          return;
-        }
-
-        if (active) {
-          setError('No se pudo completar el inicio de sesión. Inténtalo de nuevo.');
-        }
+        const session = await completeOAuthCallback(code);
+        if (!active) return;
+        setSession(session);
+        navigate(consumeAuthReturnPath(), { replace: true });
       } catch (err) {
         if (!active) return;
-        const message = err instanceof Error ? err.message : 'No se pudo completar el inicio de sesión.';
-        // Confirmación sin PKCE local: pedir login en vez de parecer un fallo opaco
-        if (parsed.kind === 'code' && /OAuth expiró|pkce/i.test(message)) {
-          navigate(loginPath(), {
-            replace: true,
-            state: { emailConfirmed: true },
-          });
-          return;
-        }
-        setError(message);
+        setError(err instanceof Error ? err.message : 'No se pudo completar el inicio de sesión.');
       }
     }
 
@@ -118,7 +56,7 @@ export function AuthCallbackPage() {
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
         <p className="text-sm text-destructive">{error}</p>
         <Link to={loginPath(peekAuthReturnPath())} className="text-sm text-primary hover:underline">
-          Ir al login
+          Volver al login
         </Link>
       </div>
     );

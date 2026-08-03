@@ -47,7 +47,6 @@ import { isProfileIncomplete } from '@/lib/profileHelpers';
 
 type HomeLocationState = {
   fromRegister?: boolean;
-  emailConfirmed?: boolean;
 };
 
 export function HomePage() {
@@ -61,11 +60,9 @@ export function HomePage() {
   const { data: followersData } = useFollowList(profile?.username ?? undefined, 'followers');
   const { data: collectionsData } = useMyCollections();
   const [searchParams, setSearchParams] = useSearchParams();
-  const homeState = location.state as HomeLocationState | null;
-  const [welcomeOpen, setWelcomeOpen] = useState(() =>
-    Boolean(homeState?.fromRegister || homeState?.emailConfirmed),
+  const [welcomeOpen, setWelcomeOpen] = useState(
+    () => Boolean((location.state as HomeLocationState | null)?.fromRegister),
   );
-  const [emailConfirmedWelcome] = useState(() => Boolean(homeState?.emailConfirmed));
   const profileIncomplete = isProfileIncomplete(profile);
   const hasCapsule = (capsulesData?.capsules?.length ?? 0) > 0;
   const hasFollow = (followingData?.total ?? 0) > 0;
@@ -149,11 +146,7 @@ export function HomePage() {
           <Card className="border-primary/40 bg-primary/5 motion-reveal" data-testid="welcome-register-banner">
             <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="font-medium">
-                  {emailConfirmedWelcome
-                    ? 'Email confirmado — bienvenido a Ninety'
-                    : 'Bienvenido a Ninety'}
-                </p>
+                <p className="font-medium">Bienvenido a Ninety</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Guarda un partido y sigue aficionados para llenar tu feed.
                 </p>

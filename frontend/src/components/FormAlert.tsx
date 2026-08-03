@@ -1,7 +1,6 @@
-import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-export function FormAlert({ children, className }: { children: ReactNode; className?: string }) {
+export function FormAlert({ children, className }: { children: string; className?: string }) {
   return (
     <div
       role="alert"
@@ -15,7 +14,7 @@ export function FormAlert({ children, className }: { children: ReactNode; classN
   );
 }
 
-export function FormSuccess({ children, className }: { children: ReactNode; className?: string }) {
+export function FormSuccess({ children, className }: { children: string; className?: string }) {
   return (
     <div
       role="status"

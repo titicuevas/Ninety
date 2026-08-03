@@ -130,8 +130,7 @@ export function useToggleFollow(username: string) {
       toast.error('No se pudo actualizar el seguimiento');
     },
     onSuccess: (_data, { followed }) => {
-      // followed === false → acabamos de seguir
-      toast.success(followed ? `Ya no sigues a @${username}` : `Ahora sigues a @${username}`);
+      // Feedback en el botón (Seguir ↔ Dejar de seguir); sin toast de éxito.
       if (!followed && session?.user?.id) {
         markPushPromptEligible(session.user.id, 'first_follow');
       }

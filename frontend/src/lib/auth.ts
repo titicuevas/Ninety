@@ -58,27 +58,6 @@ export async function completeOAuthCallback(code: string) {
   return session;
 }
 
-export async function establishSessionFromTokens(accessToken: string, refreshToken: string) {
-  const { session } = await apiFetch<AuthResponse>('/api/auth/session/from-tokens', {
-    method: 'POST',
-    body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken }),
-  });
-  saveSession(session);
-  return session;
-}
-
-export async function verifyEmailTokenHash(
-  tokenHash: string,
-  type: 'signup' | 'email' | 'invite' | 'magiclink' | 'recovery' | 'email_change',
-) {
-  const { session } = await apiFetch<AuthResponse>('/api/auth/verify-email', {
-    method: 'POST',
-    body: JSON.stringify({ token_hash: tokenHash, type }),
-  });
-  saveSession(session);
-  return session;
-}
-
 export async function validateSession(accessToken: string) {
   return apiFetch<{ user: AuthSession['user'] }>(
     '/api/auth/session',

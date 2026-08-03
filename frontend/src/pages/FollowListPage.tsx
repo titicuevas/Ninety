@@ -55,7 +55,7 @@ function FollowListRow({
       </div>
 
       {!isSelf && username && currentUserId ? (
-        <FollowButton username={username} followedByMe={profile.followed_by_me} />
+        <FollowButton username={username} followedByMe={profile.followed_by_me} size="compact" />
       ) : !isSelf && username && !currentUserId ? (
         <Button asChild size="sm" variant="secondary" className="shrink-0">
           <Link to={loginTo}>Seguir</Link>

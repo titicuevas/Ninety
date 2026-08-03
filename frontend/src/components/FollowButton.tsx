@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { UserMinus, UserPlus } from 'lucide-react';
 import { useToggleFollow } from '@/hooks/useFollowUser';
+import { followButtonLabel } from '@/lib/followButton';
 import { cn } from '@/lib/utils';
 
 interface FollowButtonProps {
@@ -24,6 +25,12 @@ export function FollowButton({
     setFollowed(followedByMe);
   }, [followedByMe, username]);
 
+  const following = toggle.isPending && toggle.variables?.followed === false;
+  const unfollowing = toggle.isPending && toggle.variables?.followed === true;
+  const label = followButtonLabel({ followed, following, unfollowing });
+  const showUnfollowChrome = unfollowing || (followed && !following);
+  const pressed = followed || unfollowing;
+
   const handleClick = () => {
     const wasFollowed = followed;
     setFollowed(!wasFollowed);
@@ -40,30 +47,27 @@ export function FollowButton({
       type="button"
       onClick={handleClick}
       disabled={toggle.isPending}
-      aria-pressed={followed}
+      aria-pressed={pressed}
       aria-busy={toggle.isPending || undefined}
-      aria-label={followed ? 'Dejar de seguir' : 'Seguir'}
+      aria-label={label}
+      title={label}
       className={cn(
         'inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        size === 'default' ? 'min-h-11 w-full gap-2 px-4 py-2 sm:w-auto' : 'px-3 py-1.5',
-        followed
-          ? 'bg-secondary text-foreground hover:bg-secondary/80'
+        'disabled:pointer-events-none disabled:opacity-70',
+        size === 'default' ? 'min-h-11 w-full gap-2 px-4 py-2 sm:w-auto' : 'whitespace-nowrap px-3 py-1.5',
+        showUnfollowChrome
+          ? 'border border-border bg-secondary text-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive'
           : 'bg-primary text-primary-foreground hover:bg-primary/90',
         className,
       )}
     >
-      {followed ? (
-        <>
-          <UserMinus className="h-4 w-4 shrink-0" aria-hidden="true" />
-          Siguiendo
-        </>
+      {showUnfollowChrome ? (
+        <UserMinus className="h-4 w-4 shrink-0" aria-hidden="true" />
       ) : (
-        <>
-          <UserPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
-          Seguir
-        </>
+        <UserPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
       )}
+      {label}
     </button>
   );
 }
