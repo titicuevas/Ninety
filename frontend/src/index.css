@@ -106,9 +106,10 @@ body {
 .skip-link {
   position: absolute;
   left: 1rem;
-  top: 1rem;
+  top: 0;
   z-index: 100;
-  transform: translateY(-120%);
+  /* Debe salir del viewport por completo: top:1rem + translateY(-120%) dejaba un listón verde */
+  transform: translateY(calc(-100% - 0.5rem));
   border-radius: 0.75rem;
   background: var(--primary);
   color: var(--primary-foreground);
@@ -119,7 +120,7 @@ body {
 }
 
 .skip-link:focus {
-  transform: translateY(0);
+  transform: translateY(1rem);
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }

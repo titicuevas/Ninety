@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AuthLayout } from '@/components/AuthLayout';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
-import { FormAlert } from '@/components/FormAlert';
+import { FormAlert, FormSuccess } from '@/components/FormAlert';
 import { PasswordField } from '@/components/PasswordField';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
@@ -34,11 +34,13 @@ export function RegisterPage() {
   const nextPath = parseNextParam(location.search);
   const postAuthPath = safeReturnPath(nextPath);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
     setError(null);
+    setSuccess(null);
     setGoogleLoading(true);
     try {
       saveAuthReturnPath(nextPath);
@@ -57,6 +59,7 @@ export function RegisterPage() {
 
   const onSubmit = async (data: RegisterForm) => {
     setError(null);
+    setSuccess(null);
     setLoading(true);
 
     try {
@@ -68,7 +71,7 @@ export function RegisterPage() {
           state: isHomePath(postAuthPath) ? { fromRegister: true } : undefined,
         });
       } else {
-        setError(result.message ?? 'Revisa tu email para confirmar la cuenta');
+        setSuccess(result.message ?? 'Revisa tu email para confirmar la cuenta');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo crear la cuenta');
@@ -110,6 +113,7 @@ export function RegisterPage() {
         </FormField>
 
         {error ? <FormAlert>{error}</FormAlert> : null}
+        {success ? <FormSuccess>{success}</FormSuccess> : null}
 
         <p className="text-xs leading-relaxed text-muted-foreground">
           Al crear tu cuenta aceptas los{' '}
