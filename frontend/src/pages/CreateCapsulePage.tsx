@@ -134,26 +134,33 @@ export function CreateCapsulePage() {
 
   return (
     <Layout>
-      <div className="mx-auto w-full max-w-md space-y-5 pb-8 md:max-w-lg lg:max-w-xl">
-        <section>
-          <h1 className="text-2xl font-bold tracking-tight">Nueva Capsule</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Guarda el partido con fotos y recuerdos</p>
-        </section>
+      <div className="mx-auto w-full max-w-md space-y-6 pb-10 md:max-w-lg lg:max-w-xl">
+        <header className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Ninety</p>
+          <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
+            Nueva Capsule
+          </h1>
+          <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
+            Guarda el partido con fotos y recuerdos en tu diario.
+          </p>
+        </header>
 
         <MatchCard match={match} savedCapsuleId={existingCapsuleId} />
 
         {existingCapsuleId ? (
-          <Card className="border-primary/30 bg-primary/5">
-            <CardContent className="space-y-3 p-5">
-              <p className="font-medium">Este partido ya está en tu diario</p>
-              <p className="text-sm text-muted-foreground">
-                Ábrelo para ver o editar tu Capsule en lugar de crear otra.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" onClick={() => openExisting(existingCapsuleId)}>
+          <Card className="border-primary/35 bg-primary/5 shadow-[0_0_40px_-24px_rgba(16,185,129,0.55)]">
+            <CardContent className="space-y-3.5 p-5">
+              <div className="space-y-1">
+                <p className="text-base font-semibold text-foreground">Este partido ya está en tu diario</p>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Ábrelo para ver o editar tu Capsule en lugar de crear otra.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <Button type="button" className="h-11 w-full sm:w-auto" onClick={() => openExisting(existingCapsuleId)}>
                   Ver Capsule
                 </Button>
-                <Button asChild type="button" variant="secondary">
+                <Button asChild type="button" variant="secondary" className="h-11 w-full sm:w-auto">
                   <Link to={`/capsules/${existingCapsuleId}/edit`}>Editar</Link>
                 </Button>
               </div>

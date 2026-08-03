@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Star } from 'lucide-react';
+import { Eye, EyeOff, Star } from 'lucide-react';
 import { CapsulePhotosField } from '@/components/CapsulePhotosField';
 import { FormAlert } from '@/components/FormAlert';
 import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
@@ -56,6 +56,30 @@ interface CapsuleMemoryFormProps {
   error?: string | null;
   onCancel: () => void;
   onSubmit: (payload: CapsuleMemorySubmitPayload) => void | Promise<void>;
+}
+
+function SectionCard({
+  title,
+  description,
+  children,
+}: {
+  title?: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+      {title ? (
+        <header className="mb-5 space-y-1 border-b border-border/70 pb-4">
+          <h2 className="text-base font-semibold tracking-tight text-foreground">{title}</h2>
+          {description ? (
+            <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
+          ) : null}
+        </header>
+      ) : null}
+      {children}
+    </div>
+  );
 }
 
 export function CapsuleMemoryForm({
@@ -150,9 +174,18 @@ export function CapsuleMemoryForm({
     });
   };
 
+  const chipClass = (selected: boolean) =>
+    cn(
+      'min-h-10 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+      selected
+        ? 'bg-primary text-primary-foreground shadow-[0_0_20px_-10px_rgba(16,185,129,0.8)]'
+        : 'bg-secondary text-muted-foreground ring-1 ring-border hover:text-foreground hover:ring-primary/30',
+    );
+
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
-      <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 sm:space-y-5">
+      <SectionCard>
         <CapsulePhotosField
           existingUrls={existingPhotoUrls}
           newFiles={newFiles}
@@ -161,125 +194,132 @@ export function CapsuleMemoryForm({
           onRemoveNew={(index) => setNewFiles((prev) => prev.filter((_, i) => i !== index))}
           onRemoveExisting={(url) => setRemovedPhotoUrls((prev) => [...prev, url])}
         />
-      </div>
+      </SectionCard>
 
-      <div className="space-y-6 rounded-2xl border border-border bg-card p-4 sm:p-6">
-        <FormField label="¿Cuándo lo viste?" error={errors.watched_at?.message}>
-          <DateInput {...register('watched_at')} />
-        </FormField>
+      <SectionCard title="Recuerdo" description="Fecha, contexto y cómo lo viviste.">
+        <div className="space-y-6">
+          <FormField label="¿Cuándo lo viste?" error={errors.watched_at?.message}>
+            <DateInput {...register('watched_at')} />
+          </FormField>
 
-        <fieldset className="space-y-3">
-          <legend className="text-sm font-medium">¿Dónde lo viste? (opcional)</legend>
-          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Contexto de visionado">
-            <button
-              type="button"
-              role="radio"
-              aria-checked={watchContext === null}
-              onClick={() => setWatchContext(null)}
-              className={cn(
-                'min-h-10 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                watchContext === null
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-muted-foreground hover:text-foreground',
-              )}
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-medium text-foreground">¿Dónde lo viste? (opcional)</legend>
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Contexto de visionado">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={watchContext === null}
+                onClick={() => setWatchContext(null)}
+                className={chipClass(watchContext === null)}
+              >
+                Sin decir
+              </button>
+              {WATCH_CONTEXTS.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={watchContext === value}
+                  onClick={() => setWatchContext(value)}
+                  className={chipClass(watchContext === value)}
+                >
+                  {WATCH_CONTEXT_LABELS[value]}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-medium text-foreground">Valoración (opcional)</legend>
+            <div
+              className="flex flex-wrap justify-center gap-2 sm:justify-start"
+              role="radiogroup"
+              aria-label="Valoración del partido"
             >
-              Sin decir
-            </button>
-            {WATCH_CONTEXTS.map((value) => (
-              <button
-                key={value}
-                type="button"
-                role="radio"
-                aria-checked={watchContext === value}
-                onClick={() => setWatchContext(value)}
-                className={cn(
-                  'min-h-10 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                  watchContext === value
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-secondary text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {WATCH_CONTEXT_LABELS[value]}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+              {[1, 2, 3, 4, 5].map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={rating === value}
+                  onClick={() => setRating(rating === value ? null : value)}
+                  className={cn(
+                    'flex h-11 w-11 items-center justify-center rounded-xl transition-colors',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-95 sm:h-12 sm:w-12',
+                    rating != null && value <= rating
+                      ? 'bg-primary/15 text-primary ring-1 ring-primary/35'
+                      : 'bg-secondary text-muted-foreground ring-1 ring-border',
+                  )}
+                  aria-label={`${value} de 5 estrellas`}
+                >
+                  <Star
+                    className={cn('h-6 w-6 sm:h-7 sm:w-7', rating != null && value <= rating && 'fill-current')}
+                    aria-hidden
+                  />
+                </button>
+              ))}
+            </div>
+          </fieldset>
 
-        <fieldset className="space-y-3">
-          <legend className="text-sm font-medium">Valoración (opcional)</legend>
-          <div
-            className="flex flex-wrap justify-center gap-2 sm:justify-start"
-            role="radiogroup"
-            aria-label="Valoración del partido"
-          >
-            {[1, 2, 3, 4, 5].map((value) => (
-              <button
-                key={value}
-                type="button"
-                role="radio"
-                aria-checked={rating === value}
-                onClick={() => setRating(rating === value ? null : value)}
-                className={cn(
-                  'flex h-11 w-11 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-95 sm:h-12 sm:w-12',
-                  rating != null && value <= rating
-                    ? 'bg-primary/15 text-primary'
-                    : 'bg-secondary text-muted-foreground',
-                )}
-                aria-label={`${value} de 5 estrellas`}
-              >
-                <Star className={cn('h-6 w-6 sm:h-7 sm:w-7', rating != null && value <= rating && 'fill-current')} aria-hidden />
-              </button>
-            ))}
+          <div className="space-y-1.5">
+            <Label htmlFor="note">Nota (opcional)</Label>
+            <Textarea
+              id="note"
+              rows={4}
+              className="min-h-28 w-full resize-y text-base"
+              placeholder="Con quién lo viste, qué recuerdas..."
+              {...register('note')}
+            />
           </div>
-        </fieldset>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="note">Nota (opcional)</Label>
-          <Textarea
-            id="note"
-            rows={4}
-            className="min-h-28 w-full resize-y text-base"
-            placeholder="Con quién lo viste, qué recuerdas..."
-            {...register('note')}
-          />
         </div>
+      </SectionCard>
 
-        <fieldset className="space-y-3">
-          <legend className="text-sm font-medium">Visibilidad</legend>
-          <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Visibilidad de la Capsule">
-            <button
-              type="button"
-              role="radio"
-              aria-checked={isPublic}
-              onClick={() => setIsPublic(true)}
-              className={cn(
-                'rounded-xl border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                isPublic
-                  ? 'border-primary bg-primary/10 text-foreground'
-                  : 'border-border bg-secondary/40 text-muted-foreground hover:text-foreground',
-              )}
-            >
-              <span className="block text-sm font-medium text-foreground">Pública</span>
-              <span className="mt-0.5 block text-xs">Visible en tu perfil y al compartir</span>
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={!isPublic}
-              onClick={() => setIsPublic(false)}
-              className={cn(
-                'rounded-xl border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                !isPublic
-                  ? 'border-primary bg-primary/10 text-foreground'
-                  : 'border-border bg-secondary/40 text-muted-foreground hover:text-foreground',
-              )}
-            >
-              <span className="block text-sm font-medium text-foreground">Solo yo</span>
-              <span className="mt-0.5 block text-xs">Queda en tu diario, sin enlace público</span>
-            </button>
-          </div>
-        </fieldset>
-      </div>
+      <SectionCard title="Visibilidad" description="Quién puede ver esta Capsule.">
+        <div className="grid gap-2.5 sm:grid-cols-2" role="radiogroup" aria-label="Visibilidad de la Capsule">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={isPublic}
+            onClick={() => setIsPublic(true)}
+            className={cn(
+              'rounded-xl border px-4 py-3.5 text-left transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              isPublic
+                ? 'border-primary bg-primary/10 shadow-[0_0_28px_-16px_rgba(16,185,129,0.7)]'
+                : 'border-border bg-secondary/40 text-muted-foreground hover:border-primary/25 hover:text-foreground',
+            )}
+          >
+            <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Eye className="h-4 w-4 text-primary" aria-hidden />
+              Pública
+            </span>
+            <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+              Visible en tu perfil y al compartir
+            </span>
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={!isPublic}
+            onClick={() => setIsPublic(false)}
+            className={cn(
+              'rounded-xl border px-4 py-3.5 text-left transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              !isPublic
+                ? 'border-primary bg-primary/10 shadow-[0_0_28px_-16px_rgba(16,185,129,0.7)]'
+                : 'border-border bg-secondary/40 text-muted-foreground hover:border-primary/25 hover:text-foreground',
+            )}
+          >
+            <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <EyeOff className="h-4 w-4 text-primary" aria-hidden />
+              Solo yo
+            </span>
+            <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+              Queda en tu diario, sin enlace público
+            </span>
+          </button>
+        </div>
+      </SectionCard>
 
       {error ? (
         <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3">
@@ -287,11 +327,16 @@ export function CapsuleMemoryForm({
         </div>
       ) : null}
 
-      <div className="sticky bottom-16 z-10 -mx-4 space-y-3 border-t border-border bg-background/95 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:static lg:bottom-auto lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
-        <Button type="submit" loading={isBusy} className="h-12 w-full text-base">
+      <div className="sticky bottom-16 z-10 -mx-4 space-y-2 border-t border-border/80 bg-background/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:static lg:bottom-auto lg:mx-0 lg:space-y-3 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+        <Button type="submit" loading={isBusy} size="lg" className="h-12 w-full text-base font-semibold">
           {submitLabel}
         </Button>
-        <Button type="button" variant="secondary" className="h-12 w-full text-base" onClick={requestLeave}>
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-11 w-full text-base text-muted-foreground hover:text-foreground"
+          onClick={requestLeave}
+        >
           Cancelar
         </Button>
       </div>

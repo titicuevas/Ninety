@@ -37,6 +37,16 @@ const passwordSchema = z.object({
   password: z.string().min(6).max(72),
 });
 
+const sessionFromTokensSchema = z.object({
+  access_token: z.string().min(1),
+  refresh_token: z.string().min(1),
+});
+
+const verifyEmailSchema = z.object({
+  token_hash: z.string().min(1),
+  type: z.enum(['signup', 'email', 'invite', 'magiclink', 'recovery', 'email_change']),
+});
+
 function getBearerToken(req: { headers: { authorization?: string } }) {
   return req.headers.authorization?.replace(/^Bearer\s+/i, '') || null;
 }
@@ -102,7 +112,10 @@ authRouter.post('/register', async (req, res) => {
   const { data, error } = await supabaseAnon.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
-    options: { data: { display_name: parsed.data.display_name, full_name: parsed.data.display_name } },
+    options: {
+      emailRedirectTo: `${env.CLIENT_URL}/auth/callback`,
+      data: { display_name: parsed.data.display_name, full_name: parsed.data.display_name },
+    },
   });
 
   if (error) {
@@ -111,7 +124,11 @@ authRouter.post('/register', async (req, res) => {
   }
 
   if (!data.session) {
-    res.json({ session: null, message: 'Revisa tu email para confirmar la cuenta' });
+    res.json({
+      session: null,
+      message:
+        'Cuenta creada. Revisa tu email y confirma el enlace para activar la cuenta. Después podrás iniciar sesión.',
+    });
     return;
   }
 
@@ -234,6 +251,48 @@ authRouter.post('/oauth/exchange', async (req, res) => {
 
   if (error || !data.session) {
     res.status(401).json({ error: error?.message ?? 'No se pudo completar OAuth' });
+    return;
+  }
+
+  res.json({ session: await finalizeAuthSession(data.session) });
+});
+
+/** Sesión tras confirmación de email (tokens en hash/query del redirect). */
+authRouter.post('/session/from-tokens', async (req, res) => {
+  const parsed = sessionFromTokensSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const { data, error } = await supabaseAnon.auth.setSession({
+    access_token: parsed.data.access_token,
+    refresh_token: parsed.data.refresh_token,
+  });
+
+  if (error || !data.session) {
+    res.status(401).json({ error: error?.message ?? 'Enlace de confirmación inválido o caducado' });
+    return;
+  }
+
+  res.json({ session: await finalizeAuthSession(data.session) });
+});
+
+/** Confirmación vía token_hash (plantilla custom o PKCE email). */
+authRouter.post('/verify-email', async (req, res) => {
+  const parsed = verifyEmailSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const { data, error } = await supabaseAnon.auth.verifyOtp({
+    token_hash: parsed.data.token_hash,
+    type: parsed.data.type,
+  });
+
+  if (error || !data.session) {
+    res.status(401).json({ error: error?.message ?? 'No se pudo confirmar el email' });
     return;
   }
 

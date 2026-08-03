@@ -31,15 +31,16 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [passwordResetOk] = useState(
-    () => (location.state as { passwordReset?: boolean } | null)?.passwordReset === true,
-  );
+  type LoginLocationState = { passwordReset?: boolean; emailConfirmed?: boolean };
+  const loginState = location.state as LoginLocationState | null;
+  const [passwordResetOk] = useState(() => loginState?.passwordReset === true);
+  const [emailConfirmedOk] = useState(() => loginState?.emailConfirmed === true);
 
   useEffect(() => {
-    if ((location.state as { passwordReset?: boolean } | null)?.passwordReset) {
+    if (loginState?.passwordReset || loginState?.emailConfirmed) {
       navigate('.', { replace: true, state: {} });
     }
-  }, [location.state, navigate]);
+  }, [loginState?.passwordReset, loginState?.emailConfirmed, navigate]);
 
   const handleGoogleSignIn = async () => {
     setError(null);
@@ -105,6 +106,11 @@ export function LoginPage() {
         {passwordResetOk ? (
           <p className="text-sm text-primary" role="status">
             Contraseña actualizada. Ya puedes iniciar sesión.
+          </p>
+        ) : null}
+        {emailConfirmedOk ? (
+          <p className="text-sm text-primary" role="status">
+            Email confirmado. Ya puedes iniciar sesión con tu contraseña.
           </p>
         ) : null}
         {error ? <FormAlert>{error}</FormAlert> : null}

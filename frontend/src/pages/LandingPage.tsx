@@ -1,8 +1,10 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { BarChart3, Camera, Search } from 'lucide-react';
 import { SkipLink } from '@/components/SkipLink';
 import { LegalFooter } from '@/components/LegalFooter';
 import { buttonVariants } from '@/components/ui/button-variants';
+import { looksLikeAuthCallback } from '@/lib/authEmailCallback';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +28,15 @@ const features = [
 
 export function LandingPage() {
   useDocumentTitle();
+  const navigate = useNavigate();
+
+  // Si Site URL deja el hash/code de confirmación en `/`, reenviar al callback.
+  useEffect(() => {
+    const { search, hash } = window.location;
+    if (!looksLikeAuthCallback(search, hash)) return;
+    navigate(`/auth/callback${search}${hash}`, { replace: true });
+  }, [navigate]);
+
   return (
     <div className="landing-page min-h-dvh text-foreground">
       <SkipLink />
