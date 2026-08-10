@@ -117,9 +117,9 @@ export function AddToCollectionButton({
       </Button>
 
       <Modal open={open} title="Añadir a colección" onClose={close}>
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-4">
           {isLoading || (open && memberships.isLoading) ? (
-            <p className="py-6 text-sm text-muted-foreground">Cargando colecciones…</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">Cargando colecciones…</p>
           ) : null}
 
           {isError ? (
@@ -134,7 +134,7 @@ export function AddToCollectionButton({
           {!isLoading && !isError && collections.length === 0 && !creating ? (
             <EmptyState
               icon={Library}
-              className="border-0 py-8"
+              className="border-0 py-10"
               title="Sin colecciones aún"
               description="Crea una lista (Clásicos, Viajes…) y guarda este partido."
             >
@@ -146,7 +146,7 @@ export function AddToCollectionButton({
           ) : null}
 
           {!isLoading && !isError && collections.length > 0 ? (
-            <ul className="divide-y divide-border">
+            <ul className="divide-y divide-border/70">
               {collections.map((collection) => {
                 const inList = memberSet.has(collection.id);
                 const rowBusy = pendingId === collection.id && busy;
@@ -158,24 +158,25 @@ export function AddToCollectionButton({
                       onClick={() => toggleMembership(collection.id)}
                       className={cn(
                         'flex w-full items-center gap-3 py-3 text-left transition-colors',
-                        'hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        'hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        '-mx-1 rounded-lg px-1',
                         rowBusy && 'opacity-70',
                       )}
                       aria-pressed={inList}
                     >
                       <span
                         className={cn(
-                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border',
+                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors',
                           inList
-                            ? 'border-primary bg-primary text-primary-foreground'
-                            : 'border-border text-muted-foreground',
+                            ? 'border-primary bg-primary text-primary-foreground shadow-[0_0_12px_rgba(16,185,129,0.35)]'
+                            : 'border-border/90 bg-secondary/40 text-muted-foreground',
                         )}
                         aria-hidden
                       >
                         {inList ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                       </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-medium">{collection.name}</span>
+                      <span className="min-w-0 flex-1 space-y-0.5">
+                        <span className="block truncate text-sm font-medium">{collection.name}</span>
                         <span className="block text-xs text-muted-foreground">
                           {collection.items_count ?? 0}{' '}
                           {(collection.items_count ?? 0) === 1 ? 'partido' : 'partidos'}
@@ -190,7 +191,10 @@ export function AddToCollectionButton({
           ) : null}
 
           {creating ? (
-            <form onSubmit={onCreateAndAdd} className="mt-3 space-y-3 border-t border-border pt-3">
+            <form
+              onSubmit={onCreateAndAdd}
+              className="mt-4 space-y-3 border-t border-primary/15 pt-4"
+            >
               <FormField label="Nombre de la colección">
                 <Input
                   value={newName}
@@ -222,12 +226,18 @@ export function AddToCollectionButton({
           ) : null}
 
           {!creating && collections.length > 0 ? (
-            <div className="mt-3 flex flex-wrap gap-2 border-t border-border pt-3">
-              <Button type="button" size="sm" variant="secondary" onClick={() => setCreating(true)}>
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-primary/15 pt-4">
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="border-primary/20"
+                onClick={() => setCreating(true)}
+              >
                 <Plus className="mr-1.5 h-3.5 w-3.5" aria-hidden />
                 Nueva
               </Button>
-              <Button asChild size="sm" variant="ghost">
+              <Button asChild size="sm" variant="ghost" className="text-primary hover:text-primary">
                 <Link to="/collections" onClick={close}>
                   Ver todas
                 </Link>
