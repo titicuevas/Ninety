@@ -356,6 +356,7 @@ Ninety/
 | POST/DELETE | `/api/profile/:username/follow` | ✅ | Seguir / dejar de seguir |
 | GET | `/api/capsules/me` | ✅ | Mis capsules |
 | GET | `/api/capsules/me/export` | ✅ | Export diario JSON/CSV (GDPR) |
+| POST | `/api/capsules/me/import` | ✅ | Import diario desde export JSON (omite `match_id` existentes; v1 sin re-subida de fotos) |
 | GET | `/api/capsules/feed` | ✅ | Feed (seguidos + tuyo) |
 | GET | `/api/capsules/user/:username` | opcional | Perfil + capsules + stats (base del cara a cara `/u/:username/vs`) |
 | GET | `/api/capsules/:id` | opcional | Capsule pública (compartir) |
@@ -422,10 +423,15 @@ Ninety/
 ### 🚧 v6 — Diario curado & profundidad social
 - [x] Reordenar Capsules en colecciones — subir/bajar sobre la columna `position` (ya en schema); el orden se refleja en la lista pública (`PUT /api/collections/:id/items/reorder`)
 - [x] Portada de colección — destacar una Capsule o usar la primera foto como cover en listas públicas
-- [ ] Importar diario desde export JSON — complemento GDPR al backup actual (sin fotos remotas obligatorias en v1 del import)
+- [x] Importar diario desde export JSON — complemento GDPR al backup actual (sin fotos remotas obligatorias en v1 del import; Ajustes + `POST /api/capsules/me/import`)
 - [ ] Preferencias de alertas por tipo — silenciar likes / comentarios / follows (in-app + push), sin emails
 - [ ] Filtros del feed — competición o «solo con fotos» sobre Siguiendo / Explorar
 - [ ] Pulido a11y en flujos clave — foco, landmarks y labels en colecciones y notificaciones
+
+### 🚧 v7 — Ritmo social & control fino
+- [ ] Preferencias de alertas por tipo — silenciar likes / comentarios / follows (in-app + push); primer pilar tras cerrar v6 o en paralelo si importa más
+- [ ] Digest de actividad social (likes/comentarios agrupados) en el centro de alertas
+- [ ] Empty states post-import — guiar al usuario tras restaurar el diario
 
 ## 🎨 Identidad visual
 

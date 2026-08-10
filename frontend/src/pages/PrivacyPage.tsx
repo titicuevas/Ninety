@@ -114,7 +114,8 @@ export function PrivacyPage() {
       <LegalSection title="6. Exportar y eliminar">
         <p>
           Puedes <strong className="text-foreground">exportar tu diario</strong> (Capsules en JSON o
-          CSV) desde <Link to="/settings" className="text-primary underline-offset-2 hover:underline">Ajustes</Link>
+          CSV) e <strong className="text-foreground">importarlo</strong> desde un export JSON en{' '}
+          <Link to="/settings" className="text-primary underline-offset-2 hover:underline">Ajustes</Link>
           . El export no incluye contraseñas ni tokens; las colecciones no van en ese archivo.
         </p>
         <p>

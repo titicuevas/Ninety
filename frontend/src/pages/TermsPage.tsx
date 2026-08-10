@@ -70,7 +70,8 @@ export function TermsPage() {
 
       <LegalSection title="5. Exportación y baja">
         <p>
-          Puedes exportar tus Capsules (JSON/CSV) desde Ajustes. La eliminación de cuenta en la beta
+          Puedes exportar tus Capsules (JSON/CSV) e importar un export JSON desde Ajustes. La
+          eliminación de cuenta en la beta
           se solicita por email a{' '}
           <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary underline-offset-2 hover:underline">
             {CONTACT_EMAIL}

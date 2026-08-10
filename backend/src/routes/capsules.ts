@@ -7,6 +7,11 @@ import {
   buildDiaryExportJson,
   toExportCapsule,
 } from '../lib/diaryExport.js';
+import {
+  buildImportSummary,
+  formatDiaryImportSummary,
+  parseDiaryImportPayload,
+} from '../lib/diaryImport.js';
 import { validateCommentBody, validateImageBuffer } from '../lib/contentModeration.js';
 import { attachCommentCounts, fetchCommentsWithAuthors, isMissingCommentsTable } from '../lib/capsuleComments.js';
 import { attachLikeStats, fetchLikesWithProfiles, isMissingLikesTable } from '../lib/capsuleLikes.js';
@@ -429,6 +434,126 @@ capsulesRouter.get('/me/export', requireAuth, async (req: AuthRequest, res) => {
     `attachment; filename="ninety-diario-${username}-${stamp}.json"`,
   );
   res.send(body);
+});
+
+/** POST /api/capsules/me/import — restaura Capsules desde export JSON (GDPR). */
+capsulesRouter.post('/me/import', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const parsed = parseDiaryImportPayload(req.body);
+  if (!parsed.ok) {
+    res.status(400).json({ error: parsed.error });
+    return;
+  }
+
+  const totalInFile =
+    parsed.rows.length + parsed.skipped_invalid + parsed.skipped_duplicate_in_file;
+
+  if (parsed.rows.length === 0) {
+    const empty = buildImportSummary({
+      imported: 0,
+      skipped_duplicate: 0,
+      skipped_invalid: parsed.skipped_invalid,
+      skipped_duplicate_in_file: parsed.skipped_duplicate_in_file,
+      total_in_file: totalInFile,
+    });
+    res.json({ ...empty, message: formatDiaryImportSummary(empty) });
+    return;
+  }
+
+  const supabase = createUserClient(token);
+  const matchIds = parsed.rows.map((c) => c.match_id);
+
+  const { data: existingRows, error: existingError } = await supabase
+    .from('capsules')
+    .select('match_id')
+    .eq('user_id', req.userId!)
+    .in('match_id', matchIds);
+
+  if (existingError) {
+    res.status(400).json({ error: existingError.message });
+    return;
+  }
+
+  const existing = new Set((existingRows ?? []).map((row) => Number(row.match_id)));
+  const toInsert = parsed.rows.filter((c) => !existing.has(c.match_id));
+  let skippedDuplicate = parsed.rows.length - toInsert.length;
+
+  let imported = 0;
+  if (toInsert.length > 0) {
+    const rows = toInsert.map((capsule) => ({
+      user_id: req.userId!,
+      match_id: capsule.match_id,
+      match_played_at: capsule.match_played_at,
+      home_team_name: capsule.home_team_name,
+      away_team_name: capsule.away_team_name,
+      home_team_crest: capsule.home_team_crest,
+      away_team_crest: capsule.away_team_crest,
+      competition_name: capsule.competition_name,
+      home_score: capsule.home_score,
+      away_score: capsule.away_score,
+      watched_at: capsule.watched_at,
+      rating: capsule.rating,
+      note: capsule.note,
+      photo_urls: capsule.photo_urls,
+      is_public: capsule.is_public,
+      watch_context: capsule.watch_context,
+    }));
+
+    const { data: inserted, error: insertError } = await supabase
+      .from('capsules')
+      .insert(rows)
+      .select('id');
+
+    if (insertError) {
+      if (insertError.code === '23505') {
+        for (const row of rows) {
+          const { error: oneError } = await supabase.from('capsules').insert(row).select('id').single();
+          if (!oneError) {
+            imported += 1;
+          } else if (oneError.code !== '23505') {
+            if (isMissingPrivacyColumn(oneError)) {
+              res.status(503).json({ error: privacyMigrationHint() });
+              return;
+            }
+            if (isMissingWatchContextColumn(oneError)) {
+              res.status(503).json({ error: watchContextMigrationHint() });
+              return;
+            }
+            res.status(400).json({ error: oneError.message });
+            return;
+          } else {
+            skippedDuplicate += 1;
+          }
+        }
+      } else if (isMissingPrivacyColumn(insertError)) {
+        res.status(503).json({ error: privacyMigrationHint() });
+        return;
+      } else if (isMissingWatchContextColumn(insertError)) {
+        res.status(503).json({ error: watchContextMigrationHint() });
+        return;
+      } else {
+        res.status(400).json({ error: insertError.message });
+        return;
+      }
+    } else {
+      imported = inserted?.length ?? toInsert.length;
+    }
+  }
+
+  const summary = buildImportSummary({
+    imported,
+    skipped_duplicate: skippedDuplicate,
+    skipped_invalid: parsed.skipped_invalid,
+    skipped_duplicate_in_file: parsed.skipped_duplicate_in_file,
+    total_in_file: totalInFile,
+  });
+
+  res.json({ ...summary, message: formatDiaryImportSummary(summary) });
 });
 
 capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res) => {

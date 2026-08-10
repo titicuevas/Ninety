@@ -2,9 +2,9 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Bell, Download, LogOut, Settings } from 'lucide-react';
+import { Bell, Download, LogOut, Settings, Upload } from 'lucide-react';
 import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
-import { FormAlert } from '@/components/FormAlert';
+import { FormAlert, FormSuccess } from '@/components/FormAlert';
 import { Layout } from '@/components/Layout';
 import { PasswordField } from '@/components/PasswordField';
 import { DiaryAnniversaryPrefsPanel } from '@/components/DiaryAnniversaryPrefsPanel';
@@ -22,6 +22,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { apiFetch } from '@/lib/api';
 import { passwordConfirmSchema, type PasswordConfirmForm } from '@/lib/authSchemas';
 import { downloadDiaryExport, type DiaryExportFormat } from '@/lib/diaryExport';
+import { readDiaryImportFile, uploadDiaryImport } from '@/lib/diaryImport';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -34,11 +35,16 @@ export function SettingsPage() {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [signOutBusy, setSignOutBusy] = useState(false);
   const [exportBusy, setExportBusy] = useState<DiaryExportFormat | null>(null);
+  const [importBusy, setImportBusy] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importSuccess, setImportSuccess] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const deleteDialogRef = useRef<HTMLDialogElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const deleteTitleId = useId();
   const deleteDescId = useId();
+  const importInputId = useId();
 
   const {
     register,
@@ -113,6 +119,23 @@ export function SettingsPage() {
       toast.error(err instanceof Error ? err.message : 'No se pudo exportar el diario');
     } finally {
       setExportBusy(null);
+    }
+  };
+
+  const onImportFile = async (file: File | undefined) => {
+    if (!file || !session?.access_token) return;
+    setImportError(null);
+    setImportSuccess(null);
+    setImportBusy(true);
+    try {
+      const payload = await readDiaryImportFile(file);
+      const result = await uploadDiaryImport(payload, session.access_token);
+      setImportSuccess(result.message);
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'No se pudo importar el diario');
+    } finally {
+      setImportBusy(false);
+      if (importInputRef.current) importInputRef.current.value = '';
     }
   };
 
@@ -216,34 +239,61 @@ export function SettingsPage() {
 
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="text-base">Exportar mi diario</CardTitle>
+            <CardTitle className="text-base">Exportar e importar diario</CardTitle>
             <CardDescription>
-              Descarga tus Capsules en JSON o CSV (backup y portabilidad). Solo tus datos; sin
-              contraseñas ni tokens. Las colecciones no se incluyen en el export (solo Capsules del
-              diario).
+              Descarga tus Capsules en JSON o CSV, o restaura desde un export JSON. Solo tus datos;
+              sin contraseñas ni tokens. Las colecciones no se incluyen. Las Capsules con el mismo
+              partido ya guardado se omiten. En v1 no se re-suben fotos remotas (quedan vacías al
+              importar).
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3 sm:flex-row">
-            <Button
-              type="button"
-              variant="secondary"
-              loading={exportBusy === 'json'}
-              disabled={exportBusy != null}
-              onClick={() => void onExport('json')}
-            >
-              <Download className="mr-2 h-4 w-4" aria-hidden />
-              Descargar JSON
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              loading={exportBusy === 'csv'}
-              disabled={exportBusy != null}
-              onClick={() => void onExport('csv')}
-            >
-              <Download className="mr-2 h-4 w-4" aria-hidden />
-              Descargar CSV
-            </Button>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Button
+                type="button"
+                variant="secondary"
+                loading={exportBusy === 'json'}
+                disabled={exportBusy != null || importBusy}
+                onClick={() => void onExport('json')}
+              >
+                <Download className="mr-2 h-4 w-4" aria-hidden />
+                Descargar JSON
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                loading={exportBusy === 'csv'}
+                disabled={exportBusy != null || importBusy}
+                onClick={() => void onExport('csv')}
+              >
+                <Download className="mr-2 h-4 w-4" aria-hidden />
+                Descargar CSV
+              </Button>
+              <input
+                ref={importInputRef}
+                id={importInputId}
+                type="file"
+                accept="application/json,.json"
+                className="sr-only"
+                disabled={importBusy || exportBusy != null}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  void onImportFile(file);
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                loading={importBusy}
+                disabled={importBusy || exportBusy != null}
+                onClick={() => importInputRef.current?.click()}
+              >
+                <Upload className="mr-2 h-4 w-4" aria-hidden />
+                Importar JSON
+              </Button>
+            </div>
+            {importError ? <FormAlert>{importError}</FormAlert> : null}
+            {importSuccess ? <FormSuccess>{importSuccess}</FormSuccess> : null}
           </CardContent>
         </Card>
 

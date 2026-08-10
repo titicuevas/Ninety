@@ -79,6 +79,13 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('POST /api/capsules/me/import requiere auth', async () => {
+    const res = await request(createApp())
+      .post('/api/capsules/me/import')
+      .send({ format_version: 1, capsules: [] });
+    assert.equal(res.status, 401);
+  });
+
   it('GET /api/collections/me requiere auth', async () => {
     const res = await request(createApp()).get('/api/collections/me');
     assert.equal(res.status, 401);
