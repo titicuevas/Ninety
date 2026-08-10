@@ -1,4 +1,3 @@
-import { useEffect, useId, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
@@ -6,13 +5,13 @@ import { FollowButton } from '@/components/FollowButton';
 import { PeopleListSkeleton } from '@/components/ListSkeletons';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { Button } from '@/components/ui/button';
+import { Modal } from '@/components/ui/modal';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useCapsuleLikes } from '@/hooks/useCapsuleLikes';
 import { formatLikesPanelTitle } from '@/lib/capsuleLikes';
 import { formatRelativeTime } from '@/lib/format';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { publicProfilePath } from '@/lib/profilePath';
-import { cn } from '@/lib/utils';
 import type { CapsuleLikeRow } from '@/types/like';
 
 function LikerAvatar({ name, avatarUrl }: { name: string; avatarUrl: string | null | undefined }) {
@@ -99,8 +98,6 @@ export function CapsuleLikersDialog({
   likesCount = 0,
   onClose,
 }: CapsuleLikersDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const titleId = useId();
   const { user } = useAuth();
   const {
     data,
@@ -118,100 +115,51 @@ export function CapsuleLikersDialog({
   const total = data?.pages[0]?.total ?? likesCount;
   const title = formatLikesPanelTitle(total);
 
-  const dismiss = () => {
-    dialogRef.current?.close();
-  };
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (open) {
-      if (!dialog.open) dialog.showModal();
-    } else if (dialog.open) {
-      dialog.close();
-    }
-  }, [open]);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    const onNativeClose = () => {
-      onClose();
-    };
-    dialog.addEventListener('close', onNativeClose);
-    return () => dialog.removeEventListener('close', onNativeClose);
-  }, [onClose]);
-
   return (
-    <dialog
-      ref={dialogRef}
-      aria-labelledby={titleId}
-      className={cn(
-        'fixed inset-0 z-50 m-0 flex h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-transparent p-4 text-card-foreground',
-        'pointer-events-auto backdrop:pointer-events-auto backdrop:bg-black/60 open:flex',
-      )}
-      onClick={(event) => {
-        if (event.target === dialogRef.current) dismiss();
-      }}
-    >
-      <div
-        className="pointer-events-auto flex max-h-[min(85dvh,32rem)] w-[min(100%,24rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xl"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
-          <h2 id={titleId} className="text-base font-semibold tracking-tight">
-            {title}
-          </h2>
-          <Button type="button" variant="ghost" size="sm" onClick={dismiss}>
-            Cerrar
-          </Button>
-        </header>
+    <Modal open={open} title={title} onClose={onClose}>
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2 sm:px-5">
+        {isLoading ? <PeopleListSkeleton count={4} label="Cargando me gusta" /> : null}
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2 sm:px-5">
-          {isLoading ? <PeopleListSkeleton count={4} label="Cargando me gusta" /> : null}
+        {isError ? (
+          <QueryErrorCard
+            className="my-3"
+            message={error instanceof Error ? error.message : 'No se pudieron cargar los me gusta'}
+            loading={isRefetching}
+            onRetry={() => void refetch()}
+          />
+        ) : null}
 
-          {isError ? (
-            <QueryErrorCard
-              className="my-3"
-              message={error instanceof Error ? error.message : 'No se pudieron cargar los me gusta'}
-              loading={isRefetching}
-              onRetry={() => void refetch()}
-            />
-          ) : null}
+        {!isLoading && !isError && likes.length === 0 ? (
+          <EmptyState
+            icon={Heart}
+            className="border-0 py-8"
+            title="Sin me gusta aún"
+            description="Cuando alguien pulse el corazón, aparecerá aquí."
+          />
+        ) : null}
 
-          {!isLoading && !isError && likes.length === 0 ? (
-            <EmptyState
-              icon={Heart}
-              className="border-0 py-8"
-              title="Sin me gusta aún"
-              description="Cuando alguien pulse el corazón, aparecerá aquí."
-            />
-          ) : null}
+        {!isLoading && !isError && likes.length > 0 ? (
+          <ul className="divide-y divide-border">
+            {likes.map((like) => (
+              <LikerRow key={`${like.user_id}-${like.created_at}`} like={like} currentUserId={user?.id} />
+            ))}
+          </ul>
+        ) : null}
 
-          {!isLoading && !isError && likes.length > 0 ? (
-            <ul className="divide-y divide-border">
-              {likes.map((like) => (
-                <LikerRow key={`${like.user_id}-${like.created_at}`} like={like} currentUserId={user?.id} />
-              ))}
-            </ul>
-          ) : null}
-
-          {hasNextPage ? (
-            <div className="py-3">
-              <Button
-                type="button"
-                variant="secondary"
-                className="w-full"
-                loading={isFetchingNextPage}
-                onClick={() => void fetchNextPage()}
-              >
-                Ver más
-              </Button>
-            </div>
-          ) : null}
-        </div>
+        {hasNextPage ? (
+          <div className="py-3">
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              loading={isFetchingNextPage}
+              onClick={() => void fetchNextPage()}
+            >
+              Ver más
+            </Button>
+          </div>
+        ) : null}
       </div>
-    </dialog>
+    </Modal>
   );
 }
