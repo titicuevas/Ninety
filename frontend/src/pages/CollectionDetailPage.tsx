@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowDown, ArrowLeft, ArrowUp, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, ImageIcon, Plus, Trash2 } from 'lucide-react';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
@@ -24,6 +24,7 @@ import {
 } from '@/hooks/useCollections';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useProfile } from '@/hooks/useProfile';
+import { resolveCollectionCoverUrl } from '@/lib/collectionCover';
 import { moveCapsuleInOrder } from '@/lib/collectionReorder';
 import { slugifyCollectionName } from '@/lib/collectionSlug';
 
@@ -79,6 +80,18 @@ export function CollectionDetailPage() {
     const next = moveCapsuleInOrder(orderedIds, capsuleId, direction);
     if (!next) return;
     reorderItems.mutate(next);
+  };
+
+  const coverUrl =
+    collection?.cover_url ??
+    resolveCollectionCoverUrl({
+      coverCapsuleId: collection?.cover_capsule_id,
+      capsules: data?.capsules ?? [],
+    });
+
+  const setCover = (capsuleId: string | null) => {
+    if (!id || updateCollection.isPending) return;
+    updateCollection.mutate({ cover_capsule_id: capsuleId });
   };
 
   const onSave = (event: FormEvent) => {
@@ -145,12 +158,23 @@ export function CollectionDetailPage() {
           ) : null}
         </div>
 
+        {coverUrl ? (
+          <div className="overflow-hidden rounded-xl border border-border">
+            <img
+              src={coverUrl}
+              alt={`Portada de ${collection.name}`}
+              className="aspect-[21/9] w-full object-cover"
+            />
+          </div>
+        ) : null}
+
         <Card className="border-border">
           <CardHeader>
             <CardTitle className="text-base">Editar colección</CardTitle>
             <CardDescription>
               {collection.items_count ?? data.capsules.length} Capsules · slug{' '}
               <code className="text-xs">{collection.slug}</code>
+              {collection.cover_capsule_id ? ' · portada destacada' : ''}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -203,7 +227,11 @@ export function CollectionDetailPage() {
             <h2 className="text-lg font-semibold">Capsules en la lista</h2>
             {data.capsules.length > 1 ? (
               <p className="mt-1 text-sm text-muted-foreground">
-                Ordena con subir/bajar: así se verá en la lista pública.
+                Ordena con subir/bajar y elige una portada: así se verá en la lista pública.
+              </p>
+            ) : data.capsules.length === 1 ? (
+              <p className="mt-1 text-sm text-muted-foreground">
+                Puedes destacar esta Capsule como portada de la colección.
               </p>
             ) : null}
           </div>
@@ -298,6 +326,30 @@ export function CollectionDetailPage() {
                             </Button>
                           </div>
                         ) : null}
+                        {collection.cover_capsule_id === capsule.id ? (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            disabled={updateCollection.isPending || removeItem.isPending}
+                            onClick={() => setCover(null)}
+                          >
+                            <ImageIcon className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                            Quitar portada
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={updateCollection.isPending || removeItem.isPending}
+                            aria-label={`Usar ${capsule.home_team_name} vs ${capsule.away_team_name} como portada`}
+                            onClick={() => setCover(capsule.id)}
+                          >
+                            <ImageIcon className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                            Portada
+                          </Button>
+                        )}
                         <Button
                           type="button"
                           variant="outline"

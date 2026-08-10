@@ -232,8 +232,16 @@ async function ogForCollection(username, slug) {
 
   const firstCapsule = Array.isArray(data.capsules) ? data.capsules[0] : null;
   const photos = Array.isArray(firstCapsule?.photo_urls) ? firstCapsule.photo_urls : [];
+  const coverFromApi =
+    typeof collection.cover_url === 'string' && collection.cover_url.trim()
+      ? collection.cover_url.trim()
+      : null;
   const image =
-    photos[0] || firstCapsule?.photo_url || profile.avatar_url || defaultImage();
+    coverFromApi ||
+    photos[0] ||
+    firstCapsule?.photo_url ||
+    profile.avatar_url ||
+    defaultImage();
 
   return renderOgHtml({
     title,

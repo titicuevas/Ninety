@@ -64,5 +64,6 @@ describe('PWA shell', () => {
     assert.match(serve, /Cara a cara con/);
     assert.ok(serve.includes('/lists/'));
     assert.ok(serve.includes('/vs$/i') || serve.includes('\\/vs$/i'));
+    assert.match(serve, /cover_url/);
   });
 });

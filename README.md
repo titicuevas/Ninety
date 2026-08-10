@@ -95,7 +95,7 @@ cd Ninety
 4. Copia las credenciales del proyecto
 5. Ejecuta las migraciones de `supabase/migrations/` en el **SQL Editor** (en orden por fecha)
    - Incluye `20250724140000_capsule_photos_limit_9.sql` (límite de fotos 6 → 9)
-   - Incluye `20250802120000_collections.sql` (colecciones del diario; `position` para orden curado)
+   - Incluye `20250802120000_collections.sql` (colecciones del diario; `position` para orden curado) y `20250810160000_collection_cover.sql` (portada / Capsule destacada)
 6. Verifica con `npm run verify:capsules --prefix backend`
 
 ### 3. Variables de entorno
@@ -364,7 +364,7 @@ Ninety/
 | GET/POST/DELETE | `/api/capsules/:id/comments`… | ✅ | Comentarios |
 | GET | `/api/collections/me` | ✅ | Mis colecciones |
 | GET | `/api/collections/me/containing/:capsuleId` | ✅ | Colecciones que ya incluyen una Capsule |
-| POST/PATCH/DELETE | `/api/collections`… | ✅ | CRUD colecciones + ítems |
+| POST/PATCH/DELETE | `/api/collections`… | ✅ | CRUD colecciones + ítems (`cover_capsule_id` en PATCH) |
 | PUT | `/api/collections/:id/items/reorder` | ✅ | Reordenar Capsules (`position`) |
 | GET | `/api/collections/user/:username` | opcional | Colecciones públicas |
 | GET | `/api/collections/user/:username/:slug` | opcional | Detalle colección (`/u/:username/lists/:slug`) |
@@ -421,7 +421,7 @@ Ninety/
 
 ### 🚧 v6 — Diario curado & profundidad social
 - [x] Reordenar Capsules en colecciones — subir/bajar sobre la columna `position` (ya en schema); el orden se refleja en la lista pública (`PUT /api/collections/:id/items/reorder`)
-- [ ] Portada de colección — destacar una Capsule o usar la primera foto como cover en listas públicas
+- [x] Portada de colección — destacar una Capsule o usar la primera foto como cover en listas públicas
 - [ ] Importar diario desde export JSON — complemento GDPR al backup actual (sin fotos remotas obligatorias en v1 del import)
 - [ ] Preferencias de alertas por tipo — silenciar likes / comentarios / follows (in-app + push), sin emails
 - [ ] Filtros del feed — competición o «solo con fotos» sobre Siguiendo / Explorar

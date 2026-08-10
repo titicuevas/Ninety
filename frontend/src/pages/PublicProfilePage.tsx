@@ -302,13 +302,29 @@ export function PublicProfilePage() {
                 <li key={col.id}>
                   <Link
                     to={`/u/${encodeURIComponent(profile.username!)}/lists/${encodeURIComponent(col.slug)}`}
-                    className="block rounded-xl border border-border bg-card/50 px-4 py-3 transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex items-center gap-3 rounded-xl border border-border bg-card/50 px-3 py-3 transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <p className="font-medium">{col.name}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {col.items_count ?? 0}{' '}
-                      {(col.items_count ?? 0) === 1 ? 'partido' : 'partidos'}
-                    </p>
+                    {col.cover_url ? (
+                      <img
+                        src={col.cover_url}
+                        alt=""
+                        className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+                        aria-hidden
+                      >
+                        <Library className="h-4 w-4" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-medium">{col.name}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {col.items_count ?? 0}{' '}
+                        {(col.items_count ?? 0) === 1 ? 'partido' : 'partidos'}
+                      </p>
+                    </div>
                   </Link>
                 </li>
               ))}

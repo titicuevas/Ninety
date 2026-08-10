@@ -180,8 +180,22 @@ export function CollectionsPage() {
                   to={`/collections/${collection.id}`}
                   className="block rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
+                  <div className="flex items-start gap-3">
+                    {collection.cover_url ? (
+                      <img
+                        src={collection.cover_url}
+                        alt=""
+                        className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div
+                        className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+                        aria-hidden
+                      >
+                        <Library className="h-5 w-5" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
                       <p className="font-medium">{collection.name}</p>
                       {collection.description ? (
                         <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">

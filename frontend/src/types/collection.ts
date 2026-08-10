@@ -5,6 +5,8 @@ export interface Collection {
   slug: string;
   description: string | null;
   is_public: boolean;
+  cover_capsule_id?: string | null;
+  cover_url?: string | null;
   created_at: string;
   updated_at: string;
   items_count?: number;
@@ -44,4 +46,5 @@ export interface UpdateCollectionInput {
   description?: string | null;
   is_public?: boolean;
   slug?: string;
+  cover_capsule_id?: string | null;
 }

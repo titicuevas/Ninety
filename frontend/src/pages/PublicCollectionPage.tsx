@@ -67,10 +67,24 @@ export function PublicCollectionPage() {
   }
 
   const capsules = data?.capsules ?? [];
+  const coverUrl =
+    collection.cover_url ??
+    (capsules.find((c) => c.id === collection.cover_capsule_id)?.photo_urls?.[0] ??
+      capsules.find((c) => (c.photo_urls?.length ?? 0) > 0)?.photo_urls?.[0] ??
+      null);
 
   return (
     <Shell>
       <div className="mx-auto max-w-2xl space-y-8">
+        {coverUrl ? (
+          <div className="overflow-hidden rounded-xl border border-border">
+            <img
+              src={coverUrl}
+              alt=""
+              className="aspect-[21/9] w-full object-cover"
+            />
+          </div>
+        ) : null}
         <section className="space-y-3 text-center sm:text-left">
           <p className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-primary">
             <Library className="h-3.5 w-3.5" aria-hidden />

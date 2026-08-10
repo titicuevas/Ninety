@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import { resolveCollectionCoverUrl } from '../lib/collectionCover.js';
 import { buildCollectionReorder } from '../lib/collectionReorder.js';
 import { nextUniqueSlug, slugifyCollectionName } from '../lib/collectionSlug.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
@@ -49,6 +50,7 @@ const updateSchema = z.object({
     .max(80)
     .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
     .optional(),
+  cover_capsule_id: z.string().uuid().nullable().optional(),
 });
 
 const addItemSchema = z.object({
@@ -85,7 +87,22 @@ function isMissingCollectionsTable(error: { message?: string; code?: string } | 
 }
 
 function collectionsMigrationHint(): string {
-  return 'Colecciones no disponibles: aplica la migración supabase/migrations/20250802120000_collections.sql en el SQL Editor de Supabase.';
+  return 'Colecciones no disponibles: aplica las migraciones supabase/migrations/20250802120000_collections.sql y 20250810160000_collection_cover.sql en el SQL Editor de Supabase.';
+}
+
+function isMissingCoverColumn(error: { message?: string; code?: string } | null | undefined): boolean {
+  const message = error?.message ?? '';
+  return (
+    message.includes('cover_capsule_id') &&
+    (message.includes('schema cache') ||
+      message.includes('Could not find') ||
+      message.includes('does not exist') ||
+      message.includes('column'))
+  );
+}
+
+function coverMigrationHint(): string {
+  return 'Portada de colección no disponible: aplica supabase/migrations/20250810160000_collection_cover.sql en el SQL Editor de Supabase.';
 }
 
 type CollectionRow = {
@@ -95,6 +112,7 @@ type CollectionRow = {
   slug: string;
   description: string | null;
   is_public: boolean;
+  cover_capsule_id?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -135,6 +153,87 @@ async function loadItemCounts(
     counts.set(id, (counts.get(id) ?? 0) + 1);
   }
   return counts;
+}
+
+/** Resuelve cover_url por colección (destacada o primera foto en orden). */
+async function loadCoverUrls(
+  reader: ReturnType<typeof createUserClient>,
+  rows: CollectionRow[],
+  opts: { onlyPublicCapsules?: boolean } = {},
+): Promise<Map<string, string | null>> {
+  const covers = new Map<string, string | null>();
+  if (rows.length === 0) return covers;
+
+  const { data: items } = await reader
+    .from('collection_items')
+    .select('collection_id, capsule_id, position')
+    .in(
+      'collection_id',
+      rows.map((row) => row.id),
+    )
+    .order('position', { ascending: true });
+
+  const orderedByCollection = new Map<string, string[]>();
+  for (const item of items ?? []) {
+    const collectionId = item.collection_id as string;
+    const list = orderedByCollection.get(collectionId) ?? [];
+    list.push(item.capsule_id as string);
+    orderedByCollection.set(collectionId, list);
+  }
+
+  const capsuleIds = [
+    ...new Set([
+      ...rows.map((row) => row.cover_capsule_id).filter((id): id is string => !!id),
+      ...[...orderedByCollection.values()].flat(),
+    ]),
+  ];
+
+  const photoByCapsule = new Map<string, string[]>();
+  if (capsuleIds.length > 0) {
+    let query = reader.from('capsules').select('id, photo_urls, is_public').in('id', capsuleIds);
+    if (opts.onlyPublicCapsules) {
+      query = query.eq('is_public', true);
+    }
+    const { data: capsules } = await query;
+    for (const capsule of capsules ?? []) {
+      const urls = Array.isArray(capsule.photo_urls)
+        ? (capsule.photo_urls as string[])
+        : [];
+      photoByCapsule.set(capsule.id as string, urls);
+    }
+  }
+
+  for (const row of rows) {
+    const orderedIds = (orderedByCollection.get(row.id) ?? []).filter((id) =>
+      photoByCapsule.has(id),
+    );
+    const capsules = orderedIds.map((id) => ({
+      id,
+      photo_urls: photoByCapsule.get(id) ?? [],
+    }));
+    const featuredId = row.cover_capsule_id ?? null;
+    covers.set(
+      row.id,
+      resolveCollectionCoverUrl({
+        coverCapsuleId: featuredId && photoByCapsule.has(featuredId) ? featuredId : null,
+        capsules,
+      }),
+    );
+  }
+
+  return covers;
+}
+
+function serializeCollection(
+  row: CollectionRow,
+  extras: { items_count?: number; cover_url?: string | null },
+) {
+  return {
+    ...row,
+    cover_capsule_id: row.cover_capsule_id ?? null,
+    items_count: extras.items_count ?? 0,
+    cover_url: extras.cover_url ?? null,
+  };
 }
 
 async function loadCollectionItems(
@@ -208,13 +307,17 @@ collectionsRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   }
 
   const rows = (data ?? []) as CollectionRow[];
-  const counts = await loadItemCounts(supabase, rows.map((r) => r.id));
+  const ids = rows.map((r) => r.id);
+  const counts = await loadItemCounts(supabase, ids);
+  const coverUrls = await loadCoverUrls(supabase, rows);
 
   res.json({
-    collections: rows.map((row) => ({
-      ...row,
-      items_count: counts.get(row.id) ?? 0,
-    })),
+    collections: rows.map((row) =>
+      serializeCollection(row, {
+        items_count: counts.get(row.id) ?? 0,
+        cover_url: coverUrls.get(row.id) ?? null,
+      }),
+    ),
   });
 });
 
@@ -334,7 +437,12 @@ collectionsRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  res.status(201).json({ collection: { ...data, items_count: 0 } });
+  res.status(201).json({
+    collection: serializeCollection(data as CollectionRow, {
+      items_count: 0,
+      cover_url: null,
+    }),
+  });
 });
 
 /** GET /api/collections/user/:username — listas públicas */
@@ -382,15 +490,19 @@ collectionsRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, 
   }
 
   const rows = (data ?? []) as CollectionRow[];
-  const counts = await loadItemCounts(reader, rows.map((r) => r.id));
+  const ids = rows.map((r) => r.id);
+  const counts = await loadItemCounts(reader, ids);
+  const coverUrls = await loadCoverUrls(reader, rows, { onlyPublicCapsules: !isOwner });
   const author = collectionAuthor(profile);
 
   res.json({
     profile: author,
-    collections: rows.map((row) => ({
-      ...row,
-      items_count: counts.get(row.id) ?? 0,
-    })),
+    collections: rows.map((row) =>
+      serializeCollection(row, {
+        items_count: counts.get(row.id) ?? 0,
+        cover_url: coverUrls.get(row.id) ?? null,
+      }),
+    ),
   });
 });
 
@@ -453,13 +565,17 @@ collectionsRouter.get('/user/:username/:slug', optionalAuth, async (req: AuthReq
   const capsules = await loadCollectionItems(reader, collection.id as string, {
     onlyPublicCapsules: !isOwner,
   });
+  const row = collection as CollectionRow;
 
   res.json({
     profile: collectionAuthor(profile),
-    collection: {
-      ...(collection as CollectionRow),
+    collection: serializeCollection(row, {
       items_count: capsules.length,
-    },
+      cover_url: resolveCollectionCoverUrl({
+        coverCapsuleId: row.cover_capsule_id ?? null,
+        capsules,
+      }),
+    }),
     capsules,
   });
 });
@@ -507,12 +623,16 @@ collectionsRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
     .eq('id', collection.user_id)
     .maybeSingle();
 
+  const row = collection as CollectionRow;
   res.json({
     profile: profile ? collectionAuthor(profile) : null,
-    collection: {
-      ...(collection as CollectionRow),
+    collection: serializeCollection(row, {
       items_count: capsules.length,
-    },
+      cover_url: resolveCollectionCoverUrl({
+        coverCapsuleId: row.cover_capsule_id ?? null,
+        capsules,
+      }),
+    }),
     capsules,
   });
 });
@@ -568,6 +688,35 @@ collectionsRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
   if (parsed.data.description !== undefined) patch.description = parsed.data.description;
   if (parsed.data.is_public !== undefined) patch.is_public = parsed.data.is_public;
 
+  if (parsed.data.cover_capsule_id !== undefined) {
+    if (parsed.data.cover_capsule_id === null) {
+      patch.cover_capsule_id = null;
+    } else {
+      const { data: membership, error: membershipError } = await supabase
+        .from('collection_items')
+        .select('capsule_id')
+        .eq('collection_id', id)
+        .eq('capsule_id', parsed.data.cover_capsule_id)
+        .maybeSingle();
+
+      if (membershipError) {
+        if (isMissingCollectionsTable(membershipError)) {
+          res.status(503).json({ error: collectionsMigrationHint() });
+          return;
+        }
+        res.status(400).json({ error: membershipError.message });
+        return;
+      }
+
+      if (!membership) {
+        res.status(400).json({ error: 'La Capsule de portada debe pertenecer a la colección' });
+        return;
+      }
+
+      patch.cover_capsule_id = parsed.data.cover_capsule_id;
+    }
+  }
+
   if (parsed.data.slug !== undefined || parsed.data.name !== undefined) {
     const taken = await resolveTakenSlugs(supabase, req.userId!, id);
     const desired =
@@ -589,12 +738,23 @@ collectionsRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
       res.status(409).json({ error: 'Ya existe una colección con ese slug' });
       return;
     }
+    if (isMissingCoverColumn(error)) {
+      res.status(503).json({ error: coverMigrationHint() });
+      return;
+    }
     res.status(400).json({ error: error.message });
     return;
   }
 
+  const row = data as CollectionRow;
   const counts = await loadItemCounts(supabase, [id]);
-  res.json({ collection: { ...data, items_count: counts.get(id) ?? 0 } });
+  const coverUrls = await loadCoverUrls(supabase, [row]);
+  res.json({
+    collection: serializeCollection(row, {
+      items_count: counts.get(id) ?? 0,
+      cover_url: coverUrls.get(id) ?? null,
+    }),
+  });
 });
 
 /** DELETE /api/collections/:id */
@@ -825,7 +985,7 @@ collectionsRouter.delete('/:id/items/:capsuleId', requireAuth, async (req: AuthR
 
   const { data: collection } = await supabase
     .from('collections')
-    .select('id')
+    .select('id, cover_capsule_id')
     .eq('id', id)
     .eq('user_id', req.userId!)
     .maybeSingle();
@@ -855,11 +1015,23 @@ collectionsRouter.delete('/:id/items/:capsuleId', requireAuth, async (req: AuthR
     return;
   }
 
-  await supabase
+  const clearCover = collection.cover_capsule_id === capsuleId;
+  const { error: touchError } = await supabase
     .from('collections')
-    .update({ updated_at: new Date().toISOString() })
+    .update({
+      updated_at: new Date().toISOString(),
+      ...(clearCover ? { cover_capsule_id: null } : {}),
+    })
     .eq('id', id)
     .eq('user_id', req.userId!);
+
+  if (touchError && isMissingCoverColumn(touchError) && clearCover) {
+    await supabase
+      .from('collections')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('user_id', req.userId!);
+  }
 
   res.status(204).send();
 });
