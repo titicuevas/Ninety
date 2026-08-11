@@ -20,9 +20,12 @@ import { attachFollowStats, getFollowingIds } from '../lib/userFollows.js';
 import { attachMutedByMe } from '../lib/notificationMutes.js';
 import { notifyUser } from '../lib/notifyUser.js';
 import { normalizeProfile } from '../lib/profileNormalize.js';
+import {
+  fetchProfileByUsername,
+  profilesAlignMigrationHint,
+} from '../lib/profileLookup.js';
 import { computePublicProfileStats } from '../lib/publicProfileStats.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
-import { normalizeUsernameParam } from '../lib/usernameParam.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
 export const capsulesRouter = Router();
@@ -566,7 +569,6 @@ capsulesRouter.post('/me/import', requireAuth, async (req: AuthRequest, res) => 
 });
 
 capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res) => {
-  const username = normalizeUsernameParam(req.params.username);
   const token = getAccessToken(req);
   const reader = getReaderClient(token);
 
@@ -575,21 +577,21 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
     return;
   }
 
-  if (!username) {
+  const profileResult = await fetchProfileByUsername(supabaseAnon, req.params.username);
+  if (profileResult.error === 'schema') {
+    res.status(503).json({ error: profileResult.message ?? profilesAlignMigrationHint() });
+    return;
+  }
+  if (profileResult.error === 'query') {
+    res.status(400).json({ error: profileResult.message ?? 'No se pudo cargar el perfil' });
+    return;
+  }
+  if (profileResult.error === 'not_found' || !profileResult.profile) {
     res.status(404).json({ error: 'Usuario no encontrado' });
     return;
   }
 
-  const { data: profile, error: profileError } = await supabaseAnon
-    .from('profiles')
-    .select('id, username, full_name, avatar_url, favorite_team, country, city, bio, created_at')
-    .eq('username', username)
-    .single();
-
-  if (profileError || !profile) {
-    res.status(404).json({ error: 'Usuario no encontrado' });
-    return;
-  }
+  const profile = profileResult.profile;
 
   const parsed = publicProfileQuerySchema.safeParse(req.query);
   if (!parsed.success) {

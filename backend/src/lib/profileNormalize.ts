@@ -16,6 +16,7 @@ export function normalizeProfile(row: ProfileRow) {
   return {
     ...row,
     display_name: row.display_name ?? row.full_name ?? null,
+    bio: row.bio ?? null,
   };
 }
 

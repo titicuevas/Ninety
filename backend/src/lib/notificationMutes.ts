@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { fetchProfilesByIds } from './profileLookup.js';
 import { normalizeProfile, type ProfileRow } from './profileNormalize.js';
 import { normalizeUsernameParam } from './usernameParam.js';
 
@@ -126,15 +127,10 @@ export async function listMutedProfiles(
     rows.map((row) => [row.muted_user_id as string, row.created_at as string]),
   );
 
-  const { data: profileRows, error: profilesError } = await supabaseAdmin
-    .from('profiles')
-    .select('id, username, full_name, avatar_url, favorite_team, country, city, bio, created_at')
-    .in('id', ids)
-    .not('username', 'is', null);
+  const profilesResult = await fetchProfilesByIds(supabaseAdmin, ids);
+  if (profilesResult.error) throw profilesResult.error;
 
-  if (profilesError) throw profilesError;
-
-  const byId = new Map((profileRows ?? []).map((row) => [row.id, row as ProfileRow]));
+  const byId = new Map(profilesResult.rows.map((row) => [row.id, row as ProfileRow]));
 
   const profiles = ids
     .map((id) => {

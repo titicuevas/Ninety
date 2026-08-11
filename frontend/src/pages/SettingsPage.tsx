@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useDirtyLeave } from '@/hooks/useDirtyLeave';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -46,10 +47,7 @@ export function SettingsPage() {
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
-  const deleteDialogRef = useRef<HTMLDialogElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
-  const deleteTitleId = useId();
-  const deleteDescId = useId();
   const importInputId = useId();
 
   const {
@@ -70,16 +68,6 @@ export function SettingsPage() {
   const accountEmail = (user?.email ?? '').trim().toLowerCase();
   const deleteReady =
     !!accountEmail && deleteConfirm.trim().toLowerCase() === accountEmail;
-
-  useEffect(() => {
-    const dialog = deleteDialogRef.current;
-    if (!dialog) return;
-    if (deleteOpen) {
-      if (!dialog.open) dialog.showModal();
-    } else if (dialog.open) {
-      dialog.close();
-    }
-  }, [deleteOpen]);
 
   const closeDeleteDialog = () => {
     setDeleteOpen(false);
@@ -346,30 +334,13 @@ export function SettingsPage() {
         </Card>
       </div>
 
-      <dialog
-        ref={deleteDialogRef}
-        aria-labelledby={deleteTitleId}
-        aria-describedby={deleteDescId}
-        className="fixed inset-0 z-50 m-auto w-[min(100%-2rem,28rem)] rounded-2xl border border-border bg-card p-0 text-card-foreground shadow-xl backdrop:bg-black/60 open:flex open:flex-col"
-        onCancel={(event) => {
-          event.preventDefault();
-          closeDeleteDialog();
-        }}
-        onClick={(event) => {
-          if (event.target === deleteDialogRef.current) closeDeleteDialog();
-        }}
-      >
-        <div className="space-y-4 p-5 sm:p-6" onClick={(e) => e.stopPropagation()}>
-          <div className="space-y-2">
-            <h2 id={deleteTitleId} className="text-lg font-semibold">
-              Eliminar cuenta
-            </h2>
-            <p id={deleteDescId} className="text-sm text-muted-foreground">
-              Todavía no hay borrado automático. Para abrir el email a{' '}
-              <span className="text-foreground">hello@getninety.app</span>, escribe tu email de cuenta
-              debajo.
-            </p>
-          </div>
+      <Modal open={deleteOpen} title="Eliminar cuenta" onClose={closeDeleteDialog}>
+        <div className="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
+          <p className="text-sm text-muted-foreground">
+            Todavía no hay borrado automático. Para abrir el email a{' '}
+            <span className="text-foreground">hello@getninety.app</span>, escribe tu email de cuenta
+            debajo.
+          </p>
           <FormField label="Escribe tu email para confirmar">
             <Input
               type="email"
@@ -394,7 +365,7 @@ export function SettingsPage() {
             </Button>
           </div>
         </div>
-      </dialog>
+      </Modal>
 
       <DirtyLeaveDialog
         open={leaveOpen}

@@ -19,6 +19,12 @@ import {
   loadFollowRelationSets,
   type FollowListKind,
 } from '../lib/userFollows.js';
+import {
+  fetchProfileByUsername,
+  isMissingProfileColumn,
+  profilesAlignMigrationHint,
+  resolveProfileIdByUsername,
+} from '../lib/profileLookup.js';
 import { normalizeUsernameParam } from '../lib/usernameParam.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
@@ -71,17 +77,7 @@ function getReaderClient(token: string | null) {
 }
 
 async function resolveProfileByUsername(username: string) {
-  const normalized = normalizeUsernameParam(username);
-  if (!normalized) return null;
-
-  const { data, error } = await supabaseAnon
-    .from('profiles')
-    .select('id, username')
-    .eq('username', normalized)
-    .single();
-
-  if (error || !data) return null;
-  return data;
+  return resolveProfileIdByUsername(supabaseAnon, username);
 }
 
 async function handleFollowList(req: AuthRequest, res: import('express').Response, kind: FollowListKind) {
@@ -170,16 +166,35 @@ profileRouter.patch('/me', requireAuth, async (req: AuthRequest, res) => {
   }
 
   const supabase = createUserClient(token);
-  const { data, error } = await supabase
+  const payload = profileUpdatePayload(parsed.data);
+  let { data, error } = await supabase
     .from('profiles')
-    .update(profileUpdatePayload(parsed.data))
+    .update(payload)
     .eq('id', req.userId!)
     .select()
     .single();
 
+  if (error && isMissingProfileColumn(error, 'bio') && Object.prototype.hasOwnProperty.call(payload, 'bio')) {
+    const { bio: _bio, ...withoutBio } = payload as Record<string, unknown> & { bio?: unknown };
+    ({ data, error } = await supabase
+      .from('profiles')
+      .update(withoutBio)
+      .eq('id', req.userId!)
+      .select()
+      .single());
+    if (!error && data) {
+      res.json(normalizeProfile({ ...data, bio: null }));
+      return;
+    }
+  }
+
   if (error) {
     if (error.code === '23505') {
       res.status(409).json({ error: 'Ese username ya está en uso' });
+      return;
+    }
+    if (isMissingProfileColumn(error)) {
+      res.status(503).json({ error: profilesAlignMigrationHint() });
       return;
     }
     res.status(400).json({ error: error.message });
@@ -590,22 +605,20 @@ profileRouter.delete('/:username/follow', requireAuth, async (req: AuthRequest, 
 });
 
 profileRouter.get('/:username', async (req, res) => {
-  const username = normalizeUsernameParam(req.params.username);
-  if (!username) {
+  const result = await fetchProfileByUsername(supabaseAnon, req.params.username);
+
+  if (result.error === 'schema') {
+    res.status(503).json({ error: result.message ?? profilesAlignMigrationHint() });
+    return;
+  }
+  if (result.error === 'query') {
+    res.status(400).json({ error: result.message ?? 'No se pudo cargar el perfil' });
+    return;
+  }
+  if (result.error === 'not_found' || !result.profile) {
     res.status(404).json({ error: 'Usuario no encontrado' });
     return;
   }
 
-  const { data, error } = await supabaseAnon
-    .from('profiles')
-    .select('id, username, full_name, avatar_url, favorite_team, country, city, bio, created_at')
-    .eq('username', username)
-    .single();
-
-  if (error || !data) {
-    res.status(404).json({ error: 'Usuario no encontrado' });
-    return;
-  }
-
-  res.json(normalizeProfile(data));
+  res.json(normalizeProfile(result.profile));
 });
