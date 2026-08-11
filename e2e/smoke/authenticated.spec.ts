@@ -326,6 +326,9 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(page.getByRole('button', { name: /descargar json/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /descargar csv/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /importar json/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /exportar e importar colecciones/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /descargar colecciones/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /importar colecciones/i })).toBeVisible();
     await expect(page.getByRole('heading', { name: /instalar ninety/i })).toBeVisible();
     await expect(page.locator('main').getByRole('button', { name: /^cerrar sesión$/i })).toBeVisible();
   });

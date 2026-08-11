@@ -26,6 +26,8 @@ import { useDirtyLeave } from '@/hooks/useDirtyLeave';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { apiFetch } from '@/lib/api';
 import { passwordConfirmSchema, type PasswordConfirmForm } from '@/lib/authSchemas';
+import { downloadCollectionsExport } from '@/lib/collectionsExport';
+import { readCollectionsImportFile, uploadCollectionsImport } from '@/lib/collectionsImport';
 import { downloadDiaryExport, type DiaryExportFormat } from '@/lib/diaryExport';
 import { readDiaryImportFile, uploadDiaryImport } from '@/lib/diaryImport';
 import { markDiaryImported } from '@/lib/diaryPostImportMemory';
@@ -45,10 +47,16 @@ export function SettingsPage() {
   const [importBusy, setImportBusy] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
+  const [collectionsExportBusy, setCollectionsExportBusy] = useState(false);
+  const [collectionsImportBusy, setCollectionsImportBusy] = useState(false);
+  const [collectionsImportError, setCollectionsImportError] = useState<string | null>(null);
+  const [collectionsImportSuccess, setCollectionsImportSuccess] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const importInputRef = useRef<HTMLInputElement>(null);
   const importInputId = useId();
+  const collectionsImportInputRef = useRef<HTMLInputElement>(null);
+  const collectionsImportInputId = useId();
 
   const {
     register,
@@ -136,6 +144,42 @@ export function SettingsPage() {
       if (importInputRef.current) importInputRef.current.value = '';
     }
   };
+
+  const onCollectionsExport = async () => {
+    if (!session?.access_token) return;
+    setCollectionsExportBusy(true);
+    try {
+      await downloadCollectionsExport(session.access_token);
+      toast.success('Colecciones descargadas');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'No se pudieron exportar las colecciones');
+    } finally {
+      setCollectionsExportBusy(false);
+    }
+  };
+
+  const onCollectionsImportFile = async (file: File | undefined) => {
+    if (!file || !session?.access_token) return;
+    setCollectionsImportError(null);
+    setCollectionsImportSuccess(null);
+    setCollectionsImportBusy(true);
+    try {
+      const payload = await readCollectionsImportFile(file);
+      const result = await uploadCollectionsImport(payload, session.access_token);
+      void queryClient.invalidateQueries({ queryKey: ['collections'] });
+      setCollectionsImportSuccess(result.message);
+    } catch (err) {
+      setCollectionsImportError(
+        err instanceof Error ? err.message : 'No se pudieron importar las colecciones',
+      );
+    } finally {
+      setCollectionsImportBusy(false);
+      if (collectionsImportInputRef.current) collectionsImportInputRef.current.value = '';
+    }
+  };
+
+  const portabilityBusy =
+    exportBusy != null || importBusy || collectionsExportBusy || collectionsImportBusy;
 
   const openDeleteMailto = () => {
     if (!deleteReady) return;
@@ -243,9 +287,9 @@ export function SettingsPage() {
             <CardTitle className="text-base">Exportar e importar diario</CardTitle>
             <CardDescription>
               Descarga tus Capsules en JSON o CSV, o restaura desde un export JSON. Solo tus datos;
-              sin contraseñas ni tokens. Las colecciones no se incluyen. Las Capsules con el mismo
-              partido ya guardado se omiten. En v1 no se re-suben fotos remotas (quedan vacías al
-              importar).
+              sin contraseñas ni tokens. Las colecciones van en la sección de abajo. Las Capsules con
+              el mismo partido ya guardado se omiten. En v1 no se re-suben fotos remotas (quedan
+              vacías al importar).
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -254,7 +298,7 @@ export function SettingsPage() {
                 type="button"
                 variant="secondary"
                 loading={exportBusy === 'json'}
-                disabled={exportBusy != null || importBusy}
+                disabled={portabilityBusy}
                 onClick={() => void onExport('json')}
               >
                 <Download className="mr-2 h-4 w-4" aria-hidden />
@@ -264,7 +308,7 @@ export function SettingsPage() {
                 type="button"
                 variant="outline"
                 loading={exportBusy === 'csv'}
-                disabled={exportBusy != null || importBusy}
+                disabled={portabilityBusy}
                 onClick={() => void onExport('csv')}
               >
                 <Download className="mr-2 h-4 w-4" aria-hidden />
@@ -276,7 +320,7 @@ export function SettingsPage() {
                 type="file"
                 accept="application/json,.json"
                 className="sr-only"
-                disabled={importBusy || exportBusy != null}
+                disabled={portabilityBusy}
                 onChange={(event) => {
                   const file = event.target.files?.[0];
                   void onImportFile(file);
@@ -286,7 +330,7 @@ export function SettingsPage() {
                 type="button"
                 variant="outline"
                 loading={importBusy}
-                disabled={importBusy || exportBusy != null}
+                disabled={portabilityBusy}
                 onClick={() => importInputRef.current?.click()}
               >
                 <Upload className="mr-2 h-4 w-4" aria-hidden />
@@ -299,6 +343,62 @@ export function SettingsPage() {
                 <FormSuccess>{importSuccess}</FormSuccess>
                 <Button asChild variant="secondary" size="sm">
                   <Link to="/home">Ver guía en Inicio</Link>
+                </Button>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="text-base">Exportar e importar colecciones</CardTitle>
+            <CardDescription>
+              Backup GDPR de tus listas curadas (nombre, slug, orden y portada por partido). Los
+              ítems se enlazan por <span className="text-foreground">match_id</span>: importa antes
+              el diario si hace falta. Las colecciones con el mismo slug ya existentes se omiten.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Button
+                type="button"
+                variant="secondary"
+                loading={collectionsExportBusy}
+                disabled={portabilityBusy}
+                onClick={() => void onCollectionsExport()}
+              >
+                <Download className="mr-2 h-4 w-4" aria-hidden />
+                Descargar colecciones
+              </Button>
+              <input
+                ref={collectionsImportInputRef}
+                id={collectionsImportInputId}
+                type="file"
+                accept="application/json,.json"
+                className="sr-only"
+                disabled={portabilityBusy}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  void onCollectionsImportFile(file);
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                loading={collectionsImportBusy}
+                disabled={portabilityBusy}
+                onClick={() => collectionsImportInputRef.current?.click()}
+              >
+                <Upload className="mr-2 h-4 w-4" aria-hidden />
+                Importar colecciones
+              </Button>
+            </div>
+            {collectionsImportError ? <FormAlert>{collectionsImportError}</FormAlert> : null}
+            {collectionsImportSuccess ? (
+              <div className="space-y-2">
+                <FormSuccess>{collectionsImportSuccess}</FormSuccess>
+                <Button asChild variant="secondary" size="sm">
+                  <Link to="/collections">Ver colecciones</Link>
                 </Button>
               </div>
             ) : null}

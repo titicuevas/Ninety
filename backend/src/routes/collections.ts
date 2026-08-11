@@ -3,6 +3,18 @@ import { z } from 'zod';
 import { resolveCollectionCoverUrl } from '../lib/collectionCover.js';
 import { buildCollectionReorder } from '../lib/collectionReorder.js';
 import { nextUniqueSlug, slugifyCollectionName } from '../lib/collectionSlug.js';
+import {
+  buildCollectionsExportJson,
+  toExportCollection,
+  type ExportCollection,
+} from '../lib/collectionsExport.js';
+import {
+  COLLECTIONS_IMPORT_MAX,
+  COLLECTIONS_IMPORT_MAX_ITEMS,
+  buildCollectionsImportSummary,
+  formatCollectionsImportSummary,
+  parseCollectionsImportPayload,
+} from '../lib/collectionsImport.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
 import { normalizeUsernameParam } from '../lib/usernameParam.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
@@ -375,6 +387,316 @@ collectionsRouter.get('/me/containing/:capsuleId', requireAuth, async (req: Auth
   res.json({
     collection_ids: (items ?? []).map((row) => row.collection_id as string),
   });
+});
+
+/** GET /api/collections/me/export — backup GDPR de colecciones (match_id, sin secretos). */
+collectionsRouter.get('/me/export', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const supabase = createUserClient(token);
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('username, full_name')
+    .eq('id', req.userId!)
+    .maybeSingle();
+
+  const { data: collectionRows, error: collectionsError } = await supabase
+    .from('collections')
+    .select('id, name, slug, description, is_public, cover_capsule_id, created_at')
+    .eq('user_id', req.userId!)
+    .order('created_at', { ascending: true });
+
+  if (collectionsError) {
+    if (isMissingCollectionsTable(collectionsError)) {
+      res.status(503).json({ error: collectionsMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: collectionsError.message });
+    return;
+  }
+
+  const rows = collectionRows ?? [];
+  const collectionIds = rows.map((row) => row.id as string);
+
+  const itemsByCollection = new Map<string, Array<{ capsule_id: string; position: number }>>();
+  const capsuleIds = new Set<string>();
+
+  if (collectionIds.length > 0) {
+    const { data: itemRows, error: itemsError } = await supabase
+      .from('collection_items')
+      .select('collection_id, capsule_id, position')
+      .in('collection_id', collectionIds)
+      .order('position', { ascending: true });
+
+    if (itemsError) {
+      res.status(400).json({ error: itemsError.message });
+      return;
+    }
+
+    for (const item of itemRows ?? []) {
+      const collectionId = item.collection_id as string;
+      const capsuleId = item.capsule_id as string;
+      const list = itemsByCollection.get(collectionId) ?? [];
+      list.push({ capsule_id: capsuleId, position: Number(item.position) || 0 });
+      itemsByCollection.set(collectionId, list);
+      capsuleIds.add(capsuleId);
+    }
+  }
+
+  for (const row of rows) {
+    const coverId = row.cover_capsule_id as string | null | undefined;
+    if (coverId) capsuleIds.add(coverId);
+  }
+
+  const matchByCapsule = new Map<string, number>();
+  if (capsuleIds.size > 0) {
+    const { data: capsules, error: capsulesError } = await supabase
+      .from('capsules')
+      .select('id, match_id')
+      .eq('user_id', req.userId!)
+      .in('id', [...capsuleIds]);
+
+    if (capsulesError) {
+      res.status(400).json({ error: capsulesError.message });
+      return;
+    }
+
+    for (const capsule of capsules ?? []) {
+      const matchId = Number(capsule.match_id);
+      if (Number.isFinite(matchId) && matchId > 0) {
+        matchByCapsule.set(capsule.id as string, matchId);
+      }
+    }
+  }
+
+  const collections: ExportCollection[] = rows.map((row) => {
+    const rawItems = itemsByCollection.get(row.id as string) ?? [];
+    const items = rawItems
+      .map((item) => {
+        const matchId = matchByCapsule.get(item.capsule_id);
+        if (matchId == null) return null;
+        return { match_id: matchId, position: item.position };
+      })
+      .filter((item): item is { match_id: number; position: number } => item != null);
+
+    const coverCapsuleId = (row.cover_capsule_id as string | null | undefined) ?? null;
+    const coverMatchId = coverCapsuleId ? (matchByCapsule.get(coverCapsuleId) ?? null) : null;
+
+    return toExportCollection({
+      name: String(row.name ?? ''),
+      slug: String(row.slug ?? ''),
+      description: (row.description as string | null) ?? null,
+      is_public: row.is_public !== false,
+      cover_match_id: coverMatchId,
+      items,
+    });
+  });
+
+  const username = (profile?.username as string | null) ?? 'ninety';
+  const stamp = new Date().toISOString().slice(0, 10);
+  const payload = {
+    exported_at: new Date().toISOString(),
+    format_version: 1 as const,
+    kind: 'collections' as const,
+    profile: {
+      username: (profile?.username as string | null) ?? null,
+      display_name: (profile?.full_name as string | null) ?? null,
+    },
+    collections,
+  };
+
+  const body = buildCollectionsExportJson(payload);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename="ninety-colecciones-${username}-${stamp}.json"`,
+  );
+  res.send(body);
+});
+
+/** POST /api/collections/me/import — restaura colecciones desde export JSON (GDPR). */
+collectionsRouter.post('/me/import', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const parsed = parseCollectionsImportPayload(req.body);
+  if (!parsed.ok) {
+    res.status(400).json({ error: parsed.error });
+    return;
+  }
+
+  const totalInFile =
+    parsed.rows.length + parsed.skipped_invalid + parsed.skipped_duplicate_in_file;
+
+  if (parsed.rows.length === 0) {
+    const empty = buildCollectionsImportSummary({
+      imported: 0,
+      skipped_duplicate: 0,
+      skipped_invalid: parsed.skipped_invalid,
+      skipped_duplicate_in_file: parsed.skipped_duplicate_in_file,
+      skipped_invalid_items: parsed.skipped_invalid_items,
+      skipped_missing_capsule: 0,
+      skipped_limit: 0,
+      items_linked: 0,
+      total_in_file: totalInFile,
+    });
+    res.json({ ...empty, message: formatCollectionsImportSummary(empty) });
+    return;
+  }
+
+  const supabase = createUserClient(token);
+
+  const { data: existingRows, error: existingError } = await supabase
+    .from('collections')
+    .select('id, slug')
+    .eq('user_id', req.userId!);
+
+  if (existingError) {
+    if (isMissingCollectionsTable(existingError)) {
+      res.status(503).json({ error: collectionsMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: existingError.message });
+    return;
+  }
+
+  const existingSlugs = new Set((existingRows ?? []).map((row) => row.slug as string));
+  let remainingSlots = Math.max(0, COLLECTIONS_IMPORT_MAX - (existingRows?.length ?? 0));
+
+  const allMatchIds = [
+    ...new Set(parsed.rows.flatMap((row) => row.items.map((item) => item.match_id))),
+  ];
+  const capsuleByMatch = new Map<number, string>();
+
+  if (allMatchIds.length > 0) {
+    const { data: capsules, error: capsulesError } = await supabase
+      .from('capsules')
+      .select('id, match_id')
+      .eq('user_id', req.userId!)
+      .in('match_id', allMatchIds);
+
+    if (capsulesError) {
+      res.status(400).json({ error: capsulesError.message });
+      return;
+    }
+
+    for (const capsule of capsules ?? []) {
+      const matchId = Number(capsule.match_id);
+      if (Number.isFinite(matchId) && matchId > 0 && !capsuleByMatch.has(matchId)) {
+        capsuleByMatch.set(matchId, capsule.id as string);
+      }
+    }
+  }
+
+  let imported = 0;
+  let skippedDuplicate = 0;
+  let skippedLimit = 0;
+  let skippedMissingCapsule = 0;
+  let itemsLinked = 0;
+
+  for (const row of parsed.rows) {
+    if (existingSlugs.has(row.slug)) {
+      skippedDuplicate += 1;
+      continue;
+    }
+    if (remainingSlots <= 0) {
+      skippedLimit += 1;
+      continue;
+    }
+
+    const { data: created, error: createError } = await supabase
+      .from('collections')
+      .insert({
+        user_id: req.userId!,
+        name: row.name,
+        slug: row.slug,
+        description: row.description,
+        is_public: row.is_public,
+      })
+      .select('id')
+      .single();
+
+    if (createError) {
+      if (createError.code === '23505') {
+        skippedDuplicate += 1;
+        existingSlugs.add(row.slug);
+        continue;
+      }
+      if (isMissingCollectionsTable(createError)) {
+        res.status(503).json({ error: collectionsMigrationHint() });
+        return;
+      }
+      res.status(400).json({ error: createError.message });
+      return;
+    }
+
+    const collectionId = created.id as string;
+    existingSlugs.add(row.slug);
+    remainingSlots -= 1;
+    imported += 1;
+
+    const itemRows: Array<{ collection_id: string; capsule_id: string; position: number }> = [];
+    for (const item of row.items.slice(0, COLLECTIONS_IMPORT_MAX_ITEMS)) {
+      const capsuleId = capsuleByMatch.get(item.match_id);
+      if (!capsuleId) {
+        skippedMissingCapsule += 1;
+        continue;
+      }
+      itemRows.push({
+        collection_id: collectionId,
+        capsule_id: capsuleId,
+        position: itemRows.length,
+      });
+    }
+
+    if (itemRows.length > 0) {
+      const { error: itemsError } = await supabase.from('collection_items').insert(itemRows);
+      if (itemsError) {
+        res.status(400).json({ error: itemsError.message });
+        return;
+      }
+      itemsLinked += itemRows.length;
+    }
+
+    if (row.cover_match_id != null) {
+      const coverCapsuleId = capsuleByMatch.get(row.cover_match_id);
+      const coverInCollection =
+        coverCapsuleId != null && itemRows.some((item) => item.capsule_id === coverCapsuleId);
+      if (coverInCollection && coverCapsuleId) {
+        const { error: coverError } = await supabase
+          .from('collections')
+          .update({ cover_capsule_id: coverCapsuleId })
+          .eq('id', collectionId)
+          .eq('user_id', req.userId!);
+        if (coverError && !isMissingCoverColumn(coverError)) {
+          res.status(400).json({ error: coverError.message });
+          return;
+        }
+      }
+    }
+  }
+
+  const summary = buildCollectionsImportSummary({
+    imported,
+    skipped_duplicate: skippedDuplicate,
+    skipped_invalid: parsed.skipped_invalid,
+    skipped_duplicate_in_file: parsed.skipped_duplicate_in_file,
+    skipped_invalid_items: parsed.skipped_invalid_items,
+    skipped_missing_capsule: skippedMissingCapsule,
+    skipped_limit: skippedLimit,
+    items_linked: itemsLinked,
+    total_in_file: totalInFile,
+  });
+
+  res.json({ ...summary, message: formatCollectionsImportSummary(summary) });
 });
 
 /** POST /api/collections */

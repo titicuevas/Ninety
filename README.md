@@ -364,6 +364,8 @@ Ninety/
 | POST/DELETE | `/api/capsules/:id/like` | ✅ | Likes |
 | GET/POST/DELETE | `/api/capsules/:id/comments`… | ✅ | Comentarios |
 | GET | `/api/collections/me` | ✅ | Mis colecciones |
+| GET | `/api/collections/me/export` | ✅ | Export colecciones JSON (GDPR; ítems por `match_id`) |
+| POST | `/api/collections/me/import` | ✅ | Import colecciones desde export JSON (omite slug existentes; enlaza Capsules por `match_id`) |
 | GET | `/api/collections/me/containing/:capsuleId` | ✅ | Colecciones que ya incluyen una Capsule |
 | POST/PATCH/DELETE | `/api/collections`… | ✅ | CRUD colecciones + ítems (`cover_capsule_id` en PATCH) |
 | PUT | `/api/collections/:id/items/reorder` | ✅ | Reordenar Capsules (`position`) |
@@ -441,7 +443,7 @@ Ninety/
 
 ### 🚧 v8 — Reciprocidad social & portabilidad profunda
 - [x] Badge «Te sigue» + seguir de vuelta fuera del digest — `follows_me` en perfil, listas, búsqueda, me gusta y Capsule pública; CTA «Seguir de vuelta» cuando aún no hay follow mutuo
-- [ ] Exportar / importar colecciones — incluir listas curadas en el backup GDPR (hoy el export solo lleva Capsules)
+- [x] Exportar / importar colecciones — incluir listas curadas en el backup GDPR (Ajustes + `GET/POST /api/collections/me/export|import`; ítems por `match_id`)
 - [ ] Digest de push — agrupar likes/comentarios/follows en un push periódico en lugar de uno por evento (complemento al digest in-app de v7)
 - [ ] Restaurar fotos al importar el diario — re-subida opcional de `photo_urls` del export (hoy el import v1 las omite)
 - [ ] Explorar colecciones ajenas — descubrimiento de listas públicas más allá del perfil

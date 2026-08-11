@@ -114,9 +114,12 @@ export function PrivacyPage() {
       <LegalSection title="6. Exportar y eliminar">
         <p>
           Puedes <strong className="text-foreground">exportar tu diario</strong> (Capsules en JSON o
-          CSV) e <strong className="text-foreground">importarlo</strong> desde un export JSON en{' '}
+          CSV) e <strong className="text-foreground">importarlo</strong> desde un export JSON, y
+          también <strong className="text-foreground">exportar e importar tus colecciones</strong>{' '}
+          (listas curadas) en{' '}
           <Link to="/settings" className="text-primary underline-offset-2 hover:underline">Ajustes</Link>
-          . El export no incluye contraseñas ni tokens; las colecciones no van en ese archivo.
+          . El export no incluye contraseñas ni tokens; diario y colecciones van en archivos
+          separados.
         </p>
         <p>
           Para eliminar la cuenta, hoy el flujo es manual: desde Ajustes se abre un email a{' '}
@@ -130,7 +133,8 @@ export function PrivacyPage() {
 
       <LegalSection title="7. Tus derechos">
         <p>
-          Puedes acceder y corregir datos de perfil en la app, exportar el diario y solicitar
+          Puedes acceder y corregir datos de perfil en la app, exportar el diario y las colecciones, y
+          solicitar
           borrado por email. Si la normativa aplicable te otorga más derechos (oposición,
           limitación, etc.), escríbenos y los atenderemos en la medida en que el producto y la ley
           lo permitan. No afirmamos aquí una jurisdicción ni un DPO inventados.
