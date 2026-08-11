@@ -14,6 +14,7 @@ import { WrappedLoadingSkeleton } from '@/components/ListSkeletons';
 import { OnboardingSteps } from '@/components/OnboardingSteps';
 import { PushActivationBanner } from '@/components/PushActivationBanner';
 import { StadiumMapSection } from '@/components/StadiumMapSection';
+import { PostImportGuideCard } from '@/components/PostImportGuideCard';
 import { ValueOnboardingCard } from '@/components/ValueOnboardingCard';
 import { WrappedSummary } from '@/components/WrappedSummary';
 import { WrappedTeaser, WrappedTeaserCompact } from '@/components/WrappedTeaser';
@@ -23,6 +24,7 @@ import { useCapsules } from '@/hooks/useCapsules';
 import { useMyCollections } from '@/hooks/useCollections';
 import { useDiaryAnniversary } from '@/hooks/useDiaryAnniversary';
 import { useDiaryMilestone } from '@/hooks/useDiaryMilestone';
+import { useDiaryPostImportGuide } from '@/hooks/useDiaryPostImportGuide';
 import { useFollowList } from '@/hooks/useFollowList';
 import { useValueOnboarding } from '@/hooks/useValueOnboarding';
 import {
@@ -79,19 +81,21 @@ export function HomePage() {
   const hasCollection = (collectionsData?.collections?.length ?? 0) > 0;
   const compareTargetUsername =
     followingData?.profiles?.find((p) => p.username)?.username ?? null;
+  const coreComplete = !showOnboarding && !isLoading;
+  const postImportGuide = useDiaryPostImportGuide({ coreComplete });
   const valueOnboarding = useValueOnboarding({
-    coreComplete: !showOnboarding && !isLoading,
+    coreComplete: coreComplete && !postImportGuide.visible,
     hasCollection,
   });
   const diaryAnniversary = useDiaryAnniversary({
     capsules: capsulesData?.capsules ?? [],
-    coreComplete: !showOnboarding && !isLoading,
-    valueOnboardingVisible: valueOnboarding.visible,
+    coreComplete,
+    valueOnboardingVisible: valueOnboarding.visible || postImportGuide.visible,
   });
   const diaryMilestone = useDiaryMilestone({
     capsules: capsulesData?.capsules ?? [],
-    coreComplete: !showOnboarding && !isLoading,
-    valueOnboardingVisible: valueOnboarding.visible,
+    coreComplete,
+    valueOnboardingVisible: valueOnboarding.visible || postImportGuide.visible,
     anniversaryVisible: diaryAnniversary.visible,
   });
 
@@ -215,6 +219,14 @@ export function HomePage() {
           />
         ) : (
           <>
+            <PostImportGuideCard
+              visible={postImportGuide.visible}
+              importedCount={postImportGuide.importedCount}
+              hasCollection={hasCollection}
+              hasCompare={valueOnboarding.hasCompare}
+              compareTargetUsername={compareTargetUsername}
+              dismiss={postImportGuide.dismiss}
+            />
             <ValueOnboardingCard
               hasCollection={hasCollection}
               compareTargetUsername={compareTargetUsername}
@@ -236,7 +248,7 @@ export function HomePage() {
             <DiaryDigestCard
               capsules={capsules}
               coreComplete
-              valueOnboardingVisible={valueOnboarding.visible}
+              valueOnboardingVisible={valueOnboarding.visible || postImportGuide.visible}
               anniversaryVisible={diaryAnniversary.visible}
               milestoneVisible={diaryMilestone.visible}
             />

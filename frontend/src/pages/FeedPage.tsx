@@ -17,6 +17,10 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useFeedFilterParams } from '@/hooks/useFeedFilterParams';
 import { feedDocumentTitle, feedPath, hasFeedContentFilters } from '@/lib/feedParams';
 import { formatRelativeTime } from '@/lib/format';
+import {
+  postImportFeedHint,
+  readDiaryPostImportState,
+} from '@/lib/diaryPostImportMemory';
 import { publicProfilePath } from '@/lib/profilePath';
 import { cn } from '@/lib/utils';
 import type { FeedCapsule } from '@/types/capsule';
@@ -172,6 +176,9 @@ export function FeedPage() {
   const showDiscover = isEmpty && scope === 'following' && !contentFiltersActive;
   const { data: discoverData } = useDiscoverProfiles(showDiscover);
   const suggestions = discoverData?.profiles ?? [];
+  const postImportHint = user?.id
+    ? postImportFeedHint(readDiaryPostImportState(user.id))
+    : null;
 
   const subtitle =
     scope === 'explore'
@@ -242,9 +249,10 @@ export function FeedPage() {
               icon={Users}
               title="Tu feed está vacío"
               description={
-                followingCount === 0
+                postImportHint ??
+                (followingCount === 0
                   ? 'Sigue a otros aficionados para ver sus partidos aquí.'
-                  : 'La gente que sigues aún no ha publicado partidos, o aún no has guardado ninguno.'
+                  : 'La gente que sigues aún no ha publicado partidos, o aún no has guardado ninguno.')
               }
             >
               <Button asChild variant="secondary">
@@ -253,9 +261,15 @@ export function FeedPage() {
               <Button asChild>
                 <Link to="/search?tab=people">Buscar aficionados</Link>
               </Button>
-              <Button asChild variant="secondary">
-                <Link to="/search">Buscar partido</Link>
-              </Button>
+              {postImportHint ? (
+                <Button asChild variant="secondary">
+                  <Link to="/collections?new=1">Crear colección</Link>
+                </Button>
+              ) : (
+                <Button asChild variant="secondary">
+                  <Link to="/search">Buscar partido</Link>
+                </Button>
+              )}
             </EmptyState>
 
             {suggestions.length > 0 ? (

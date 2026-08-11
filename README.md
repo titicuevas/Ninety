@@ -431,7 +431,7 @@ Ninety/
 
 ### 🚧 v7 — Ritmo social & control fino
 - [x] Digest de actividad social — likes / comentarios (por cápsula) y follows agrupados en el centro de alertas; avatares apilados y marcar leído por grupo
-- [ ] Empty states post-import — guiar al usuario tras restaurar el diario (colecciones, feed, comparar)
+- [x] Empty states post-import — guiar al usuario tras restaurar el diario (colecciones, feed, comparar)
 - [ ] Filtros en el centro de alertas — ver solo likes / comentarios / follows
 - [ ] Silenciar usuario concreto — no recibir alertas de un actor (in-app + push), desde la fila o el perfil
 - [ ] Horario silencioso de push — franja on-device sin push (sin emails ni spam de toasts)

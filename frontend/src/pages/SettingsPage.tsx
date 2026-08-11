@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -24,12 +25,14 @@ import { apiFetch } from '@/lib/api';
 import { passwordConfirmSchema, type PasswordConfirmForm } from '@/lib/authSchemas';
 import { downloadDiaryExport, type DiaryExportFormat } from '@/lib/diaryExport';
 import { readDiaryImportFile, uploadDiaryImport } from '@/lib/diaryImport';
+import { markDiaryImported } from '@/lib/diaryPostImportMemory';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 
 export function SettingsPage() {
   useDocumentTitle('Ajustes');
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
   const session = useAuthStore((s) => s.session);
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -131,6 +134,10 @@ export function SettingsPage() {
     try {
       const payload = await readDiaryImportFile(file);
       const result = await uploadDiaryImport(payload, session.access_token);
+      if (user?.id && result.imported > 0) {
+        markDiaryImported(user.id, { importedCount: result.imported });
+      }
+      void queryClient.invalidateQueries({ queryKey: ['capsules'] });
       setImportSuccess(result.message);
     } catch (err) {
       setImportError(err instanceof Error ? err.message : 'No se pudo importar el diario');
@@ -295,7 +302,14 @@ export function SettingsPage() {
               </Button>
             </div>
             {importError ? <FormAlert>{importError}</FormAlert> : null}
-            {importSuccess ? <FormSuccess>{importSuccess}</FormSuccess> : null}
+            {importSuccess ? (
+              <div className="space-y-2">
+                <FormSuccess>{importSuccess}</FormSuccess>
+                <Button asChild variant="secondary" size="sm">
+                  <Link to="/home">Ver guía en Inicio</Link>
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 

@@ -11,14 +11,20 @@ import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useCreateCollection, useMyCollections } from '@/hooks/useCollections';
+import { useAuth } from '@/hooks/useAuthInit';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useProfile } from '@/hooks/useProfile';
 import { slugifyCollectionName } from '@/lib/collectionSlug';
+import {
+  postImportCollectionsHint,
+  readDiaryPostImportState,
+} from '@/lib/diaryPostImportMemory';
 import { toast } from '@/lib/toast';
 
 export function CollectionsPage() {
   useDocumentTitle('Colecciones');
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data, isLoading, isError, error, refetch, isRefetching } = useMyCollections();
   const { data: profile } = useProfile();
@@ -31,6 +37,9 @@ export function CollectionsPage() {
 
   const collections = data?.collections ?? [];
   const username = profile?.username;
+  const postImportHint = user?.id
+    ? postImportCollectionsHint(readDiaryPostImportState(user.id))
+    : null;
 
   const openForm = (open: boolean) => {
     setFormOpen(open);
@@ -178,11 +187,19 @@ export function CollectionsPage() {
           <EmptyState
             icon={Library}
             title="Aún no tienes colecciones"
-            description="Agrupa Capsules en listas como Clásicos o Viajes y compártelas."
+            description={
+              postImportHint ??
+              'Agrupa Capsules en listas como Clásicos o Viajes y compártelas.'
+            }
           >
             <Button type="button" onClick={() => openForm(true)}>
               Crear la primera
             </Button>
+            {postImportHint ? (
+              <Button asChild variant="secondary">
+                <Link to="/feed?scope=explore">Ver el feed</Link>
+              </Button>
+            ) : null}
           </EmptyState>
         ) : null}
 
