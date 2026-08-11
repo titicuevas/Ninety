@@ -357,7 +357,7 @@ Ninety/
 | GET | `/api/capsules/me` | ✅ | Mis capsules |
 | GET | `/api/capsules/me/export` | ✅ | Export diario JSON/CSV (GDPR) |
 | POST | `/api/capsules/me/import` | ✅ | Import diario desde export JSON (omite `match_id` existentes; v1 sin re-subida de fotos) |
-| GET | `/api/capsules/feed` | ✅ | Feed (seguidos + tuyo) |
+| GET | `/api/capsules/feed` | ✅ | Feed (seguidos + tuyo); `scope`, `sort`, `photos=1`, `competition` |
 | GET | `/api/capsules/user/:username` | opcional | Perfil + capsules + stats (base del cara a cara `/u/:username/vs`) |
 | GET | `/api/capsules/:id` | opcional | Capsule pública (compartir) |
 | POST/PATCH/DELETE | `/api/capsules`… | ✅ | CRUD capsules |
@@ -426,7 +426,7 @@ Ninety/
 - [x] Portada de colección — destacar una Capsule o usar la primera foto como cover en listas públicas
 - [x] Importar diario desde export JSON — complemento GDPR al backup actual (sin fotos remotas obligatorias en v1 del import; Ajustes + `POST /api/capsules/me/import`)
 - [x] Preferencias de alertas por tipo — silenciar likes / comentarios / follows (in-app + push), sin emails (`GET/PATCH /api/notifications/preferences`; migración `20250811143000_notification_preferences.sql`)
-- [ ] Filtros del feed — competición o «solo con fotos» sobre Siguiendo / Explorar
+- [x] Filtros del feed — competición o «solo con fotos» sobre Siguiendo / Explorar (`photos=1`, `competition` en `/api/capsules/feed` + chips en `/feed`)
 - [ ] Pulido a11y en flujos clave — foco, landmarks y labels en colecciones y notificaciones
 
 ### 🚧 v7 — Ritmo social & control fino

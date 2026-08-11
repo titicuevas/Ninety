@@ -76,6 +76,8 @@ export interface FeedResponse {
   following_count?: number;
   scope?: 'following' | 'explore';
   sort?: 'recent' | 'popular';
+  photos?: boolean;
+  competition?: string | null;
 }
 
 /** Capsule pública (detalle /c/:id) */

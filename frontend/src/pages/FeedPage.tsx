@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
+import { FeedContentFiltersBar } from '@/components/FeedContentFiltersBar';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { CapsuleListSkeleton } from '@/components/ListSkeletons';
 import { Layout } from '@/components/Layout';
@@ -14,7 +15,7 @@ import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useFeedFilterParams } from '@/hooks/useFeedFilterParams';
-import { feedDocumentTitle, feedPath } from '@/lib/feedParams';
+import { feedDocumentTitle, feedPath, hasFeedContentFilters } from '@/lib/feedParams';
 import { formatRelativeTime } from '@/lib/format';
 import { publicProfilePath } from '@/lib/profilePath';
 import { cn } from '@/lib/utils';
@@ -138,8 +139,20 @@ function SortTabs({ sort, onChange }: { sort: FeedSort; onChange: (next: FeedSor
 
 export function FeedPage() {
   const { user } = useAuth();
-  const { scope, sort, setScope, setSort } = useFeedFilterParams();
-  useDocumentTitle(feedDocumentTitle(scope, sort));
+  const {
+    scope,
+    sort,
+    content,
+    photosOnly,
+    competition,
+    setScope,
+    setSort,
+    setPhotosOnly,
+    setCompetition,
+    clearContentFilters,
+  } = useFeedFilterParams();
+  const contentFiltersActive = hasFeedContentFilters(content);
+  useDocumentTitle(feedDocumentTitle(scope, sort, content));
   const {
     data,
     isLoading,
@@ -151,11 +164,12 @@ export function FeedPage() {
     isFetching,
     refetch,
     isRefetching,
-  } = useCapsuleFeed(scope, sort);
+  } = useCapsuleFeed(scope, sort, content);
   const capsules = data?.pages.flatMap((page) => page.capsules) ?? [];
   const followingCount = data?.pages[0]?.following_count;
   const isEmpty = !isLoading && !isError && capsules.length === 0;
-  const showDiscover = isEmpty && scope === 'following';
+  const filterEmpty = isEmpty && contentFiltersActive;
+  const showDiscover = isEmpty && scope === 'following' && !contentFiltersActive;
   const { data: discoverData } = useDiscoverProfiles(showDiscover);
   const suggestions = discoverData?.profiles ?? [];
 
@@ -181,6 +195,14 @@ export function FeedPage() {
               </span>
             ) : null}
           </div>
+          <FeedContentFiltersBar
+            photosOnly={photosOnly}
+            competition={competition}
+            hasFilters={contentFiltersActive}
+            onPhotosOnlyChange={setPhotosOnly}
+            onCompetitionChange={setCompetition}
+            onClear={clearContentFilters}
+          />
         </section>
 
         {isLoading ? <CapsuleListSkeleton withAuthor count={3} /> : null}
@@ -193,7 +215,28 @@ export function FeedPage() {
           />
         ) : null}
 
-        {isEmpty && scope === 'following' ? (
+        {filterEmpty ? (
+          <EmptyState
+            icon={Compass}
+            title="Ningún partido con estos filtros"
+            description="Prueba otra competición, quita «solo con fotos» o cambia de Siguiendo a Explorar."
+          >
+            <Button type="button" variant="secondary" onClick={clearContentFilters}>
+              Quitar filtros
+            </Button>
+            {scope === 'following' ? (
+              <Button asChild>
+                <Link to={feedPath('explore', sort, content)}>Explorar comunidad</Link>
+              </Button>
+            ) : (
+              <Button asChild variant="secondary">
+                <Link to={feedPath('following', sort, content)}>Volver a Siguiendo</Link>
+              </Button>
+            )}
+          </EmptyState>
+        ) : null}
+
+        {isEmpty && scope === 'following' && !contentFiltersActive ? (
           <div className="space-y-6">
             <EmptyState
               icon={Users}
@@ -235,7 +278,7 @@ export function FeedPage() {
           </div>
         ) : null}
 
-        {isEmpty && scope === 'explore' ? (
+        {isEmpty && scope === 'explore' && !contentFiltersActive ? (
           <EmptyState
             icon={Compass}
             title="Aún no hay cápsulas públicas"

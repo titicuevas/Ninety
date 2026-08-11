@@ -1,11 +1,11 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { ApiError, apiFetch } from '@/lib/api';
-import type { FeedScope, FeedSort } from '@/lib/feedParams';
+import type { FeedContentFilters, FeedScope, FeedSort } from '@/lib/feedParams';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 import type { Capsule, CapsulesResponse, CreateCapsuleInput, FeedCapsule, FeedResponse, UpdateCapsuleInput } from '@/types/capsule';
 
-export type { FeedScope, FeedSort } from '@/lib/feedParams';
+export type { FeedContentFilters, FeedScope, FeedSort } from '@/lib/feedParams';
 
 const FEED_PAGE_SIZE = 20;
 const MY_CAPSULES_PAGE_SIZE = 20;
@@ -91,11 +91,17 @@ export function useCreateCapsule() {
   });
 }
 
-export function useCapsuleFeed(scope: FeedScope = 'following', sort: FeedSort = 'recent') {
+export function useCapsuleFeed(
+  scope: FeedScope = 'following',
+  sort: FeedSort = 'recent',
+  content: FeedContentFilters = { photosOnly: false, competition: '' },
+) {
   const session = useAuthStore((s) => s.session);
+  const photosOnly = content.photosOnly;
+  const competition = content.competition;
 
   return useInfiniteQuery({
-    queryKey: ['capsules', 'feed', scope, sort],
+    queryKey: ['capsules', 'feed', scope, sort, photosOnly, competition],
     queryFn: ({ pageParam }) => {
       const params = new URLSearchParams({
         limit: String(FEED_PAGE_SIZE),
@@ -103,6 +109,8 @@ export function useCapsuleFeed(scope: FeedScope = 'following', sort: FeedSort = 
         scope,
         sort,
       });
+      if (photosOnly) params.set('photos', '1');
+      if (competition.length >= 2) params.set('competition', competition);
       return apiFetch<FeedResponse>(
         `/api/capsules/feed?${params.toString()}`,
         {},

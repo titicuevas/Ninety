@@ -15,6 +15,7 @@ import {
 import { validateCommentBody, validateImageBuffer } from '../lib/contentModeration.js';
 import { attachCommentCounts, fetchCommentsWithAuthors, isMissingCommentsTable } from '../lib/capsuleComments.js';
 import { attachLikeStats, fetchLikesWithProfiles, isMissingLikesTable } from '../lib/capsuleLikes.js';
+import { applyFeedContentFilters, resolveFeedContentFilters } from '../lib/feedFilters.js';
 import { attachFollowStats, getFollowingIds } from '../lib/userFollows.js';
 import { notifyUser } from '../lib/notifyUser.js';
 import { normalizeProfile } from '../lib/profileNormalize.js';
@@ -61,6 +62,10 @@ const feedQuerySchema = z.object({
   /** following = tú + seguidos; explore = cápsulas públicas de cualquiera */
   scope: z.enum(['following', 'explore']).default('following'),
   sort: z.enum(['recent', 'popular']).default('recent'),
+  /** Solo cápsulas con fotos (`photos=1`). */
+  photos: z.string().optional(),
+  /** Filtro ilike sobre competition_name. */
+  competition: z.string().max(100).optional(),
 });
 
 /** Populares: ordenamos en servidor sobre un pool reciente (sin columna denormalizada). */
@@ -167,23 +172,24 @@ capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  const { limit, offset, scope, sort } = parsed.data;
+  const { limit, offset, scope, sort, photos, competition } = parsed.data;
+  const contentFilters = resolveFeedContentFilters({ photos, competition });
   const supabase = createUserClient(token);
   const userId = req.userId!;
   const followingIds = await getFollowingIds(supabase, userId);
 
-  /** Aplica Siguiendo (tú+seguidos) o Explorar (públicas). */
+  /** Aplica Siguiendo (tú+seguidos) o Explorar (públicas) + filtros de contenido. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const applyFeedScope = (query: any) => {
     if (scope === 'explore') {
-      return query.eq('is_public', true);
+      return applyFeedContentFilters(query.eq('is_public', true), contentFilters);
     }
     let scoped = query.or(`is_public.eq.true,user_id.eq.${userId}`);
     if (followingIds !== null) {
       const feedUserIds = [...new Set([userId, ...followingIds])];
       scoped = scoped.in('user_id', feedUserIds);
     }
-    return scoped;
+    return applyFeedContentFilters(scoped, contentFilters);
   };
 
   let rows: Array<{ id: string; user_id: string; created_at: string }> = [];
@@ -288,6 +294,8 @@ capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
     following_count: followingIds?.length ?? undefined,
     scope,
     sort,
+    photos: contentFilters.photosOnly,
+    competition: contentFilters.competition || null,
   });
 });
 

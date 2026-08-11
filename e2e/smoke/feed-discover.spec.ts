@@ -71,7 +71,7 @@ test.describe('Smoke — feed y discover @smoke', () => {
     }
   });
 
-  test('API feed acepta scope y sort', async ({ page, request }) => {
+  test('API feed acepta scope, sort y filtros de contenido', async ({ page, request }) => {
     await openAuthenticatedHome(page);
     const token = await readAccessToken(page);
     expect(token).toBeTruthy();
@@ -99,6 +99,43 @@ test.describe('Smoke — feed y discover @smoke', () => {
       expect(body.scope).toBe(scope);
       expect(body.sort).toBe(sort);
     }
+
+    const filtered = await request.get(
+      `${API_BASE}/api/capsules/feed?limit=5&offset=0&scope=explore&photos=1&competition=${encodeURIComponent('La Liga')}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    expect(filtered.ok(), `photos+competition → ${filtered.status()}`).toBeTruthy();
+    const filteredBody = (await filtered.json()) as {
+      capsules?: unknown[];
+      photos?: boolean;
+      competition?: string | null;
+    };
+    expect(Array.isArray(filteredBody.capsules)).toBe(true);
+    expect(filteredBody.photos).toBe(true);
+    expect(filteredBody.competition).toBe('la liga');
+  });
+
+  test('feed filtros solo fotos y competición en URL', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await goAppNav(page, /feed/i);
+    await expect(page).toHaveURL(/\/feed/);
+
+    const photosChip = page.getByRole('button', { name: /solo con fotos/i });
+    await expect(photosChip).toBeVisible({ timeout: 15_000 });
+    await photosChip.click();
+    await expect(page).toHaveURL(/photos=1/);
+    await expect(photosChip).toHaveAttribute('aria-pressed', 'true');
+
+    const ligaChip = page.getByRole('button', { name: /^la liga$/i });
+    await ligaChip.click();
+    await expect(page).toHaveURL(/competition=La(\+|%20)Liga/);
+    await expect(ligaChip).toHaveAttribute('aria-pressed', 'true');
+
+    const clear = page.getByRole('button', { name: /quitar filtros/i }).first();
+    await expect(clear).toBeVisible();
+    await clear.click();
+    await expect(page).not.toHaveURL(/photos=1/);
+    await expect(page).not.toHaveURL(/competition=/);
   });
 
   test('Mis Capsules accesible con lista, empty o cargar más', async ({ page }) => {
