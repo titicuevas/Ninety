@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { Layout } from '@/components/Layout';
 import { NotificationListSkeleton } from '@/components/ListSkeletons';
+import { NotificationTypeFiltersBar } from '@/components/NotificationTypeFiltersBar';
 import { PushAlertsPanel } from '@/components/PushAlertsPanel';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -14,6 +15,7 @@ import {
   useMarkNotificationsRead,
   useClearReadNotifications,
 } from '@/hooks/useNotifications';
+import { useNotificationFilterParams } from '@/hooks/useNotificationFilterParams';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   formatNotificationAriaLabel,
@@ -27,6 +29,11 @@ import {
   type DigestActor,
   type NotificationDigestGroup,
 } from '@/lib/notificationDigest';
+import {
+  hasNotificationTypeFilter,
+  notificationDocumentTitle,
+  notificationTypeEmptyCopy,
+} from '@/lib/notificationTypeFilter';
 import { publicProfilePath } from '@/lib/profilePath';
 import { cn } from '@/lib/utils';
 
@@ -202,14 +209,16 @@ function DigestNotificationItem({
 }
 
 export function NotificationsPage() {
-  useDocumentTitle('Notificaciones');
+  const { type, setType, clearType } = useNotificationFilterParams();
+  const typeFilterActive = hasNotificationTypeFilter(type);
+  useDocumentTitle(notificationDocumentTitle(type));
   const {
     data,
     isLoading,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useNotifications();
+  } = useNotifications(type);
   const markAll = useMarkAllRead();
   const markRead = useMarkNotificationsRead();
   const clearRead = useClearReadNotifications();
@@ -221,6 +230,9 @@ export function NotificationsPage() {
   }, [data]);
   const unread = data?.pages[0]?.unread_count ?? 0;
   const hasRead = notifications.some((n) => n.read);
+  const isEmpty = !isLoading && notifications.length === 0;
+  const filterEmpty = isEmpty && typeFilterActive;
+  const filterEmptyCopy = type ? notificationTypeEmptyCopy(type) : null;
 
   return (
     <Layout>
@@ -236,7 +248,7 @@ export function NotificationsPage() {
             >
               Notificaciones
             </h1>
-            {unread > 0 ? (
+            {unread > 0 && !typeFilterActive ? (
               <p className="text-sm text-muted-foreground" aria-live="polite">
                 {unread === 1 ? '1 sin leer' : `${unread} sin leer`}
               </p>
@@ -270,11 +282,27 @@ export function NotificationsPage() {
           </div>
         </header>
 
+        <NotificationTypeFiltersBar
+          type={type}
+          onTypeChange={setType}
+          onClear={clearType}
+        />
+
         <PushAlertsPanel variant="compact" />
 
         {isLoading ? (
           <NotificationListSkeleton count={5} />
-        ) : notifications.length === 0 ? (
+        ) : filterEmpty && filterEmptyCopy ? (
+          <EmptyState
+            icon={Bell}
+            title={filterEmptyCopy.title}
+            description={filterEmptyCopy.description}
+          >
+            <Button type="button" variant="secondary" onClick={clearType}>
+              Ver todas
+            </Button>
+          </EmptyState>
+        ) : isEmpty ? (
           <EmptyState
             icon={Bell}
             title="Sin notificaciones"

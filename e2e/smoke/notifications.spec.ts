@@ -23,7 +23,9 @@ test.describe('Smoke — notificaciones @smoke', () => {
 
     const empty = page.getByText(/sin notificaciones/i);
     const list = page.getByTestId('notifications-list');
+    const filters = page.getByTestId('notification-type-filters');
 
+    await expect(filters).toBeVisible({ timeout: 15_000 });
     await expect(empty.or(list)).toBeVisible({ timeout: 15_000 });
 
     if (await empty.isVisible()) {
@@ -42,6 +44,39 @@ test.describe('Smoke — notificaciones @smoke', () => {
     if (await loadMore.isVisible()) {
       await expect(loadMore).toBeEnabled();
     }
+  });
+
+  test('filtros por tipo en URL (likes / comentarios / follows)', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page.goto('/notifications');
+    await page.waitForURL(/\/notifications/);
+
+    const filters = page.getByTestId('notification-type-filters');
+    await expect(filters).toBeVisible({ timeout: 15_000 });
+
+    const likesChip = filters.getByRole('button', { name: /me gusta/i });
+    await likesChip.click();
+    await expect(page).toHaveURL(/type=like/);
+    await expect(likesChip).toHaveAttribute('aria-pressed', 'true');
+
+    const commentsChip = filters.getByRole('button', { name: /^comentarios$/i });
+    await commentsChip.click();
+    await expect(page).toHaveURL(/type=comment/);
+    await expect(commentsChip).toHaveAttribute('aria-pressed', 'true');
+
+    const followsChip = filters.getByRole('button', { name: /^seguidores$/i });
+    await followsChip.click();
+    await expect(page).toHaveURL(/type=follow/);
+    await expect(followsChip).toHaveAttribute('aria-pressed', 'true');
+
+    const clear = filters.getByRole('button', { name: /quitar filtro/i });
+    await expect(clear).toBeVisible();
+    await clear.click();
+    await expect(page).not.toHaveURL(/type=/);
+    await expect(filters.getByRole('button', { name: /^todas$/i })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
   });
 
   test('UI de push: activar, desactivar o sin configurar', async ({ page }) => {

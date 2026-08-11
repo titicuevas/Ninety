@@ -11,6 +11,7 @@ import {
   getNotificationPreferences,
   upsertNotificationPreferences,
 } from '../lib/notificationPreferencesStore.js';
+import { parseNotificationTypeFilter } from '../lib/notificationTypeFilter.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { getVapidPublicKey, isPushConfigured, sendPushToUser } from '../lib/webPush.js';
 
@@ -171,6 +172,7 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
     const userId = req.userId!;
     const limit = Math.min(Number(req.query.limit) || 30, 50);
     const offset = Number(req.query.offset) || 0;
+    const typeFilter = parseNotificationTypeFilter(req.query.type);
 
     type NotificationRow = {
       id: string;
@@ -187,10 +189,12 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
     let total = 0;
 
     {
-      const result = await supabaseAdmin!
+      let query = supabaseAdmin!
         .from('notifications')
         .select('id, type, actor_id, capsule_id, body, read, created_at', { count: 'exact' })
-        .eq('user_id', userId)
+        .eq('user_id', userId);
+      if (typeFilter) query = query.eq('type', typeFilter);
+      const result = await query
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
@@ -208,10 +212,12 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
           (listError.message ?? '').includes('does not exist'));
 
       if (missingBody) {
-        const fallback = await supabaseAdmin!
+        let fallbackQuery = supabaseAdmin!
           .from('notifications')
           .select('id, type, actor_id, capsule_id, read, created_at', { count: 'exact' })
-          .eq('user_id', userId)
+          .eq('user_id', userId);
+        if (typeFilter) fallbackQuery = fallbackQuery.eq('type', typeFilter);
+        const fallback = await fallbackQuery
           .order('created_at', { ascending: false })
           .range(offset, offset + limit - 1);
         listError = fallback.error;
@@ -222,7 +228,7 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
 
     if (listError) {
       if (listError.code === '42P01') {
-        res.json({ notifications: [], unread_count: 0, total: 0 });
+        res.json({ notifications: [], unread_count: 0, total: 0, type: typeFilter });
         return;
       }
       throw listError;
@@ -283,7 +289,12 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
       capsule: n.capsule_id ? (capsules[n.capsule_id] ?? null) : null,
     }));
 
-    res.json({ notifications, unread_count: count ?? 0, total });
+    res.json({
+      notifications,
+      unread_count: count ?? 0,
+      total,
+      type: typeFilter,
+    });
   } catch (err) {
     next(err);
   }

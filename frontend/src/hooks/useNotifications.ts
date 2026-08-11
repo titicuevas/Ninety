@@ -5,6 +5,7 @@ import {
   type InfiniteData,
 } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
+import type { NotificationListFilter } from '@/lib/notificationTypeFilter';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -36,20 +37,22 @@ interface NotificationsResponse {
   notifications: AppNotification[];
   unread_count: number;
   total: number;
+  type?: NotificationListFilter;
 }
 
 const QUERY_KEY = ['notifications'] as const;
 const PAGE_SIZE = 30;
 
-export function useNotifications() {
+export function useNotifications(typeFilter: NotificationListFilter = null) {
   const session = useAuthStore((s) => s.session);
   return useInfiniteQuery({
-    queryKey: QUERY_KEY,
+    queryKey: [...QUERY_KEY, typeFilter ?? 'all'],
     queryFn: ({ pageParam }) => {
       const params = new URLSearchParams({
         limit: String(PAGE_SIZE),
         offset: String(pageParam),
       });
+      if (typeFilter) params.set('type', typeFilter);
       return apiFetch<NotificationsResponse>(
         `/api/notifications?${params.toString()}`,
         {},
@@ -71,7 +74,7 @@ export function useNotifications() {
 }
 
 export function useUnreadCount() {
-  const { data } = useNotifications();
+  const { data } = useNotifications(null);
   return data?.pages[0]?.unread_count ?? 0;
 }
 
@@ -105,10 +108,12 @@ export function useMarkNotificationsRead() {
       ),
     onMutate: async (ids) => {
       await qc.cancelQueries({ queryKey: QUERY_KEY });
-      const previous = qc.getQueryData<InfiniteData<NotificationsResponse>>(QUERY_KEY);
-      qc.setQueryData<InfiniteData<NotificationsResponse>>(QUERY_KEY, (old) => {
+      const previous = qc.getQueriesData<InfiniteData<NotificationsResponse>>({
+        queryKey: QUERY_KEY,
+      });
+      const idSet = new Set(ids);
+      qc.setQueriesData<InfiniteData<NotificationsResponse>>({ queryKey: QUERY_KEY }, (old) => {
         if (!old) return old;
-        const idSet = new Set(ids);
         let unreadDelta = 0;
         const pages = old.pages.map((page) => ({
           ...page,
@@ -130,7 +135,11 @@ export function useMarkNotificationsRead() {
       return { previous };
     },
     onError: (_err, _ids, context) => {
-      if (context?.previous) qc.setQueryData(QUERY_KEY, context.previous);
+      if (context?.previous) {
+        for (const [key, data] of context.previous) {
+          qc.setQueryData(key, data);
+        }
+      }
     },
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: QUERY_KEY });
@@ -151,8 +160,10 @@ export function useClearReadNotifications() {
       ),
     onMutate: async () => {
       await qc.cancelQueries({ queryKey: QUERY_KEY });
-      const previous = qc.getQueryData<InfiniteData<NotificationsResponse>>(QUERY_KEY);
-      qc.setQueryData<InfiniteData<NotificationsResponse>>(QUERY_KEY, (old) => {
+      const previous = qc.getQueriesData<InfiniteData<NotificationsResponse>>({
+        queryKey: QUERY_KEY,
+      });
+      qc.setQueriesData<InfiniteData<NotificationsResponse>>({ queryKey: QUERY_KEY }, (old) => {
         if (!old) return old;
         const pages = old.pages.map((page) => {
           const notifications = page.notifications.filter((n) => !n.read);
@@ -167,7 +178,11 @@ export function useClearReadNotifications() {
       return { previous };
     },
     onError: (_err, _vars, context) => {
-      if (context?.previous) qc.setQueryData(QUERY_KEY, context.previous);
+      if (context?.previous) {
+        for (const [key, data] of context.previous) {
+          qc.setQueryData(key, data);
+        }
+      }
       toast.error('No se pudieron limpiar las leídas');
     },
     onSuccess: () => {
