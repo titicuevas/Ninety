@@ -24,7 +24,7 @@ import {
   fetchProfileByUsername,
   profilesAlignMigrationHint,
 } from '../lib/profileLookup.js';
-import { computePublicProfileStats } from '../lib/publicProfileStats.js';
+import { computePublicProfileStats, type PublicProfileStatsRow } from '../lib/publicProfileStats.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
@@ -655,16 +655,37 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
   let stats = null;
   let years: number[] | null = null;
   if (offset === 0) {
+    // Solo `photo_urls`: `photo_url` se eliminó en 20250705160000_capsule_photo_urls.
+    // Pedir la columna legacy hace fallar el select y el Wrapped público desaparece en silencio.
+    const statsSelectWithContext =
+      'watched_at, rating, home_team_name, away_team_name, competition_name, watch_context, photo_urls';
+    const statsSelectCore =
+      'watched_at, rating, home_team_name, away_team_name, competition_name, photo_urls';
+
     let statsQuery = reader
       .from('capsules')
-      .select('watched_at, rating, home_team_name, away_team_name, competition_name, watch_context, photo_urls, photo_url')
+      .select(statsSelectWithContext)
       .eq('user_id', profile.id);
 
     if (viewerId !== profile.id) {
       statsQuery = statsQuery.eq('is_public', true);
     }
 
-    const { data: statsRows, error: statsError } = await statsQuery;
+    let statsRows: PublicProfileStatsRow[] | null = null;
+    const firstStats = await statsQuery;
+    let statsError = firstStats.error;
+    statsRows = (firstStats.data as PublicProfileStatsRow[] | null) ?? null;
+
+    if (statsError && isMissingWatchContextColumn(statsError)) {
+      let fallback = reader.from('capsules').select(statsSelectCore).eq('user_id', profile.id);
+      if (viewerId !== profile.id) {
+        fallback = fallback.eq('is_public', true);
+      }
+      const secondStats = await fallback;
+      statsError = secondStats.error;
+      statsRows = (secondStats.data as PublicProfileStatsRow[] | null) ?? null;
+    }
+
     if (!statsError) {
       const rows = statsRows ?? [];
       stats = computePublicProfileStats(rows);

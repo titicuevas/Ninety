@@ -85,7 +85,7 @@ export async function notifyUser(params: {
       params.capsuleId
         ? supabaseAdmin
             .from('capsules')
-            .select('id, home_team_name, away_team_name, competition_name, photo_urls, photo_url')
+            .select('id, home_team_name, away_team_name, competition_name, photo_urls')
             .eq('id', params.capsuleId)
             .maybeSingle()
         : Promise.resolve({ data: null }),
