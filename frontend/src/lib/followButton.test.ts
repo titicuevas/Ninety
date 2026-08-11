@@ -36,4 +36,8 @@ describe('followButtonLabel', () => {
     );
     assert.equal(followButtonLabel({ followed: true, followBack: true }), 'Dejar de seguir');
   });
+
+  it('Seguir de vuelta aplica igual fuera del digest (follows_me)', () => {
+    assert.equal(followButtonLabel({ followed: false, followBack: true }), 'Seguir de vuelta');
+  });
 });

@@ -12,7 +12,13 @@ import { syncUserProfile } from '../lib/syncUserProfile.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
 import { notifyUser } from '../lib/notifyUser.js';
 import { rankDiscoverProfiles, favoriteTeamIlikePattern } from '../lib/discoverProfiles.js';
-import { isMissingFollowsTable, listFollowProfiles, type FollowListKind } from '../lib/userFollows.js';
+import {
+  followRelationFlags,
+  isMissingFollowsTable,
+  listFollowProfiles,
+  loadFollowRelationSets,
+  type FollowListKind,
+} from '../lib/userFollows.js';
 import { normalizeUsernameParam } from '../lib/usernameParam.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
@@ -369,27 +375,25 @@ profileRouter.get('/search', requireAuth, async (req: AuthRequest, res) => {
 
   const ids = profiles.map((profile) => profile.id);
   let followedSet = new Set<string>();
+  let followerSet = new Set<string>();
   if (ids.length > 0) {
-    const { data: followRows, error: followError } = await supabase
-      .from('user_follows')
-      .select('following_id')
-      .eq('follower_id', req.userId!)
-      .in('following_id', ids);
-
-    if (followError) {
-      if (!isMissingFollowsTable(followError)) {
-        res.status(400).json({ error: followError.message });
+    try {
+      const relations = await loadFollowRelationSets(supabase, req.userId!, ids);
+      followedSet = relations.followedSet;
+      followerSet = relations.followerSet;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (!isMissingFollowsTable(err)) {
+        res.status(400).json({ error: message });
         return;
       }
-    } else {
-      followedSet = new Set((followRows ?? []).map((row) => row.following_id));
     }
   }
 
   res.json({
     profiles: profiles.map((profile) => ({
       ...profile,
-      followed_by_me: followedSet.has(profile.id),
+      ...followRelationFlags(profile.id, req.userId!, followedSet, followerSet),
     })),
     query: parsed.data.q,
   });
@@ -471,9 +475,25 @@ profileRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {
     limit,
   );
 
+  const rankedIds = ranked.map((row) => row.id);
+  let followerSet = new Set<string>();
+  if (rankedIds.length > 0) {
+    try {
+      const relations = await loadFollowRelationSets(supabase, req.userId!, rankedIds);
+      followerSet = relations.followerSet;
+    } catch (err) {
+      if (!isMissingFollowsTable(err)) {
+        const message = err instanceof Error ? err.message : String(err);
+        res.status(400).json({ error: message });
+        return;
+      }
+    }
+  }
+
   const profiles = ranked.map(({ match_reason, ...row }) => ({
     ...normalizeProfile(row),
     followed_by_me: false,
+    follows_me: followerSet.has(row.id),
     match_reason,
   }));
 

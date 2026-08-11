@@ -7,16 +7,19 @@ import { cn } from '@/lib/utils';
 interface FollowButtonProps {
   username: string;
   followedByMe?: boolean;
+  /** El perfil te sigue → CTA «Seguir de vuelta» si aún no le sigues. */
+  followsMe?: boolean;
   className?: string;
   /** Compacto para filas de búsqueda / sugerencias; `icon` para digest. */
   size?: 'default' | 'compact' | 'icon';
-  /** Etiqueta «Seguir de vuelta» (digest de follows). */
+  /** Fuerza etiqueta «Seguir de vuelta» (p. ej. digest de follows). */
   followBack?: boolean;
 }
 
 export function FollowButton({
   username,
   followedByMe = false,
+  followsMe = false,
   className,
   size = 'default',
   followBack = false,
@@ -28,9 +31,15 @@ export function FollowButton({
     setFollowed(followedByMe);
   }, [followedByMe, username]);
 
+  const useFollowBack = followBack || (followsMe && !followed);
   const following = toggle.isPending && toggle.variables?.followed === false;
   const unfollowing = toggle.isPending && toggle.variables?.followed === true;
-  const label = followButtonLabel({ followed, following, unfollowing, followBack });
+  const label = followButtonLabel({
+    followed,
+    following,
+    unfollowing,
+    followBack: useFollowBack,
+  });
   const showUnfollowChrome = unfollowing || (followed && !following);
   const pressed = followed || unfollowing;
 
@@ -56,7 +65,7 @@ export function FollowButton({
       aria-busy={toggle.isPending || undefined}
       aria-label={label}
       title={label}
-      data-testid={followBack ? 'follow-back-button' : 'follow-button'}
+      data-testid={useFollowBack ? 'follow-back-button' : 'follow-button'}
       className={cn(
         'inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',

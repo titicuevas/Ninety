@@ -5,12 +5,19 @@ export interface FollowStats {
   followers_count: number;
   following_count: number;
   followed_by_me: boolean;
+  /** true si el perfil sigue al viewer (mutual o «te sigue»). */
+  follows_me: boolean;
 }
 
 export type FollowListKind = 'followers' | 'following';
 
+export type FollowAnnotatedProfile = ReturnType<typeof normalizeProfile> & {
+  followed_by_me: boolean;
+  follows_me: boolean;
+};
+
 export interface FollowListResult {
-  profiles: Array<ReturnType<typeof normalizeProfile> & { followed_by_me: boolean }>;
+  profiles: FollowAnnotatedProfile[];
   total: number;
 }
 
@@ -35,6 +42,63 @@ function defaultFollowStats(): FollowStats {
     followers_count: 0,
     following_count: 0,
     followed_by_me: false,
+    follows_me: false,
+  };
+}
+
+/** Flags de relación viewer ↔ perfil (excluye self). */
+export function followRelationFlags(
+  profileId: string,
+  viewerId: string,
+  followedSet: Set<string>,
+  followerSet: Set<string>,
+): { followed_by_me: boolean; follows_me: boolean } {
+  if (!viewerId || viewerId === profileId) {
+    return { followed_by_me: false, follows_me: false };
+  }
+  return {
+    followed_by_me: followedSet.has(profileId),
+    follows_me: followerSet.has(profileId),
+  };
+}
+
+/**
+ * Carga sets bidireccionales: a quién sigue el viewer y quién de `profileIds` le sigue.
+ * Sets vacíos si no hay viewer, ids o la tabla no existe.
+ */
+export async function loadFollowRelationSets(
+  supabase: SupabaseClient,
+  viewerId: string,
+  profileIds: string[],
+): Promise<{ followedSet: Set<string>; followerSet: Set<string> }> {
+  const empty = { followedSet: new Set<string>(), followerSet: new Set<string>() };
+  if (!viewerId || profileIds.length === 0) return empty;
+
+  const [outgoing, incoming] = await Promise.all([
+    supabase
+      .from('user_follows')
+      .select('following_id')
+      .eq('follower_id', viewerId)
+      .in('following_id', profileIds),
+    supabase
+      .from('user_follows')
+      .select('follower_id')
+      .eq('following_id', viewerId)
+      .in('follower_id', profileIds),
+  ]);
+
+  if (outgoing.error) {
+    if (isMissingFollowsTable(outgoing.error)) return empty;
+    throw outgoing.error;
+  }
+  if (incoming.error) {
+    if (isMissingFollowsTable(incoming.error)) return empty;
+    throw incoming.error;
+  }
+
+  return {
+    followedSet: new Set((outgoing.data ?? []).map((row) => row.following_id)),
+    followerSet: new Set((incoming.data ?? []).map((row) => row.follower_id)),
   };
 }
 
@@ -63,7 +127,7 @@ export async function attachFollowStats<T extends { id: string }>(
 ): Promise<T & FollowStats> {
   const profileId = profile.id;
 
-  const [followersResult, followingResult, followCheck] = await Promise.all([
+  const [followersResult, followingResult, followCheck, followsMeCheck] = await Promise.all([
     supabase
       .from('user_follows')
       .select('*', { count: 'exact', head: true })
@@ -80,9 +144,18 @@ export async function attachFollowStats<T extends { id: string }>(
           .eq('following_id', profileId)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    viewerId && viewerId !== profileId
+      ? supabase
+          .from('user_follows')
+          .select('follower_id')
+          .eq('follower_id', profileId)
+          .eq('following_id', viewerId)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
-  const firstError = followersResult.error ?? followingResult.error ?? followCheck.error;
+  const firstError =
+    followersResult.error ?? followingResult.error ?? followCheck.error ?? followsMeCheck.error;
   if (firstError) {
     if (isMissingFollowsTable(firstError)) {
       return { ...profile, ...defaultFollowStats() };
@@ -95,6 +168,7 @@ export async function attachFollowStats<T extends { id: string }>(
     followers_count: followersResult.count ?? 0,
     following_count: followingResult.count ?? 0,
     followed_by_me: !!viewerId && viewerId !== profileId && !!followCheck.data,
+    follows_me: !!viewerId && viewerId !== profileId && !!followsMeCheck.data,
   };
 }
 
@@ -140,28 +214,14 @@ export async function listFollowProfiles(
   if (profilesError) throw profilesError;
 
   const byId = new Map((profileRows ?? []).map((row) => [row.id, row as ProfileRow]));
-
-  let followedSet = new Set<string>();
-  if (viewerId) {
-    const { data: myFollows, error: myFollowsError } = await supabase
-      .from('user_follows')
-      .select('following_id')
-      .eq('follower_id', viewerId)
-      .in('following_id', ids);
-
-    if (myFollowsError) {
-      if (!isMissingFollowsTable(myFollowsError)) throw myFollowsError;
-    } else {
-      followedSet = new Set((myFollows ?? []).map((row) => row.following_id));
-    }
-  }
+  const { followedSet, followerSet } = await loadFollowRelationSets(supabase, viewerId, ids);
 
   const profiles = ids
     .map((id) => byId.get(id))
     .filter((row): row is ProfileRow => !!row?.username)
     .map((row) => ({
       ...normalizeProfile(row),
-      followed_by_me: viewerId !== row.id && followedSet.has(row.id),
+      ...followRelationFlags(row.id, viewerId, followedSet, followerSet),
     }));
 
   return { profiles, total: count ?? profiles.length };

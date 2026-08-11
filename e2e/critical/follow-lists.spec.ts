@@ -53,9 +53,16 @@ test.describe('Crítico — perfiles públicos @critical', () => {
       `${API_BASE}/api/profile/${DEMO_USERNAME}/followers?limit=5&offset=0`,
     );
     expect(res.ok()).toBeTruthy();
-    const body = (await res.json()) as { profiles?: unknown[]; total?: number };
+    const body = (await res.json()) as {
+      profiles?: Array<{ followed_by_me?: boolean; follows_me?: boolean }>;
+      total?: number;
+    };
     expect(Array.isArray(body.profiles)).toBe(true);
     expect(body.profiles!.length).toBeLessThanOrEqual(5);
     expect(typeof body.total).toBe('number');
+    for (const profile of body.profiles ?? []) {
+      expect(typeof profile.followed_by_me).toBe('boolean');
+      expect(typeof profile.follows_me).toBe('boolean');
+    }
   });
 });

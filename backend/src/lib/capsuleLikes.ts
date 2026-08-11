@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { isMissingFollowsTable } from './userFollows.js';
+import { followRelationFlags, isMissingFollowsTable, loadFollowRelationSets } from './userFollows.js';
 
 export interface LikeStats {
   likes_count: number;
@@ -12,6 +12,7 @@ export interface LikerProfile {
   display_name: string | null;
   avatar_url: string | null;
   followed_by_me: boolean;
+  follows_me: boolean;
 }
 
 export interface CapsuleLikeRow {
@@ -136,17 +137,14 @@ export async function fetchLikesWithProfiles(
   }
 
   let followedSet = new Set<string>();
+  let followerSet = new Set<string>();
   if (viewerId) {
-    const { data: myFollows, error: myFollowsError } = await supabase
-      .from('user_follows')
-      .select('following_id')
-      .eq('follower_id', viewerId)
-      .in('following_id', userIds);
-
-    if (myFollowsError) {
-      if (!isMissingFollowsTable(myFollowsError)) throw myFollowsError;
-    } else {
-      followedSet = new Set((myFollows ?? []).map((row) => row.following_id));
+    try {
+      const relations = await loadFollowRelationSets(supabase, viewerId, userIds);
+      followedSet = relations.followedSet;
+      followerSet = relations.followerSet;
+    } catch (err) {
+      if (!isMissingFollowsTable(err)) throw err;
     }
   }
 
@@ -159,7 +157,7 @@ export async function fetchLikesWithProfiles(
         profile: base
           ? {
               ...base,
-              followed_by_me: viewerId !== base.id && followedSet.has(base.id),
+              ...followRelationFlags(base.id, viewerId, followedSet, followerSet),
             }
           : null,
       };

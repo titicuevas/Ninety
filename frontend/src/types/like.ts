@@ -4,6 +4,7 @@ export interface CapsuleLikerProfile {
   display_name: string | null;
   avatar_url: string | null;
   followed_by_me: boolean;
+  follows_me?: boolean;
 }
 
 export interface CapsuleLikeRow {

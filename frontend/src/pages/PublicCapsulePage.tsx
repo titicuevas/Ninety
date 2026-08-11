@@ -4,6 +4,7 @@ import { AddToCollectionButton } from '@/components/AddToCollectionButton';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { FollowButton } from '@/components/FollowButton';
+import { FollowsYouBadge } from '@/components/FollowsYouBadge';
 import { FormSuccess } from '@/components/FormAlert';
 import { Layout } from '@/components/Layout';
 import { CapsuleListSkeleton } from '@/components/ListSkeletons';
@@ -134,8 +135,13 @@ export function PublicCapsulePage() {
 
           <div className="flex flex-wrap items-center gap-2">
             {canFollow && user && username ? (
-              <FollowButton username={username} followedByMe={capsule.profiles?.followed_by_me} />
+              <FollowButton
+                username={username}
+                followedByMe={capsule.profiles?.followed_by_me}
+                followsMe={capsule.profiles?.follows_me}
+              />
             ) : null}
+            {canFollow && user && capsule.profiles?.follows_me ? <FollowsYouBadge /> : null}
             {canFollow && !user ? (
               <Button asChild size="sm" variant="secondary">
                 <Link to={loginTo}>Inicia sesión para seguir</Link>

@@ -6,6 +6,7 @@ import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
+import { FollowsYouBadge } from '@/components/FollowsYouBadge';
 import { MuteUserButton } from '@/components/MuteUserButton';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { Layout } from '@/components/Layout';
@@ -214,7 +215,7 @@ export function PublicProfilePage() {
             </p>
 
             {profile.username ? (
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm text-muted-foreground">
                 <Link
                   to={`/u/${encodeURIComponent(profile.username)}/followers`}
                   className="hover:text-foreground hover:underline"
@@ -230,6 +231,12 @@ export function PublicProfilePage() {
                   <span className="font-medium text-foreground">{profile.following_count ?? 0}</span>{' '}
                   siguiendo
                 </Link>
+                {user && !isOwnProfile && profile.follows_me ? (
+                  <>
+                    {' · '}
+                    <FollowsYouBadge />
+                  </>
+                ) : null}
               </p>
             ) : null}
           </div>
@@ -244,6 +251,7 @@ export function PublicProfilePage() {
                 <FollowButton
                   username={profile.username}
                   followedByMe={profile.followed_by_me}
+                  followsMe={profile.follows_me}
                   className="w-full sm:w-auto"
                 />
                 <MuteUserButton

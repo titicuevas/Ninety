@@ -350,9 +350,9 @@ Ninety/
 | GET | `/api/profile/me` | ✅ | Perfil propio |
 | PATCH | `/api/profile/me` | ✅ | Actualizar perfil |
 | GET | `/api/profile/:username` | — | Perfil público (metadatos) |
-| GET | `/api/profile/:username/followers` | opcional | Lista de seguidores |
-| GET | `/api/profile/:username/following` | opcional | Lista de seguidos |
-| GET | `/api/profile/search` | ✅ | Buscar aficionados (`?q=`) |
+| GET | `/api/profile/:username/followers` | opcional | Lista de seguidores (`followed_by_me`, `follows_me`) |
+| GET | `/api/profile/:username/following` | opcional | Lista de seguidos (`followed_by_me`, `follows_me`) |
+| GET | `/api/profile/search` | ✅ | Buscar aficionados (`?q=`; anota `followed_by_me` + `follows_me`) |
 | POST/DELETE | `/api/profile/:username/follow` | ✅ | Seguir / dejar de seguir |
 | GET | `/api/capsules/me` | ✅ | Mis capsules |
 | GET | `/api/capsules/me/export` | ✅ | Export diario JSON/CSV (GDPR) |
@@ -438,6 +438,14 @@ Ninety/
 - [x] Silenciar usuario concreto — no recibir alertas de un actor (in-app + push), desde la fila o el perfil (`GET/POST/DELETE /api/notifications/muted`; migración `20250811170000_notification_mutes.sql`)
 - [x] Horario silencioso de push — franja local (timezone del dispositivo) sin push; in-app sí (`push_quiet` en `GET/PATCH /api/notifications/preferences`; migración `20250811180000_notification_push_quiet_hours.sql`)
 - [x] Seguir de vuelta desde un follow — acción rápida en la fila del digest (`followed_by_me` en actores de `GET /api/notifications` + CTA en follows de un solo actor)
+
+### 🚧 v8 — Reciprocidad social & portabilidad profunda
+- [x] Badge «Te sigue» + seguir de vuelta fuera del digest — `follows_me` en perfil, listas, búsqueda, me gusta y Capsule pública; CTA «Seguir de vuelta» cuando aún no hay follow mutuo
+- [ ] Exportar / importar colecciones — incluir listas curadas en el backup GDPR (hoy el export solo lleva Capsules)
+- [ ] Digest de push — agrupar likes/comentarios/follows en un push periódico en lugar de uno por evento (complemento al digest in-app de v7)
+- [ ] Restaurar fotos al importar el diario — re-subida opcional de `photo_urls` del export (hoy el import v1 las omite)
+- [ ] Explorar colecciones ajenas — descubrimiento de listas públicas más allá del perfil
+- [ ] Borrado de cuenta self-serve — eliminar cuenta desde Ajustes (hoy solo mailto)
 
 ## 🎨 Identidad visual
 

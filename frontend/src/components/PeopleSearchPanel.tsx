@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Search, Swords, Users } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
+import { FollowsYouBadge } from '@/components/FollowsYouBadge';
 import { PeopleListSkeleton } from '@/components/ListSkeletons';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { Button } from '@/components/ui/button';
@@ -54,6 +55,7 @@ export function PeopleResultRow({ profile }: { profile: Profile }) {
               Cerca
             </span>
           ) : null}
+          {profile.follows_me ? <FollowsYouBadge /> : null}
         </div>
         {canLink ? <p className="text-sm text-muted-foreground">@{username}</p> : null}
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -74,7 +76,12 @@ export function PeopleResultRow({ profile }: { profile: Profile }) {
           </Button>
         ) : null}
         {canLink ? (
-          <FollowButton username={username} followedByMe={!!profile.followed_by_me} size="compact" />
+          <FollowButton
+            username={username}
+            followedByMe={!!profile.followed_by_me}
+            followsMe={!!profile.follows_me}
+            size="compact"
+          />
         ) : null}
       </div>
     </li>
@@ -140,7 +147,7 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
           <ul className="max-w-xl space-y-2">
             {profiles.map((profile) => (
               <PeopleResultRow
-                key={`${profile.id}:${profile.followed_by_me ? '1' : '0'}`}
+                key={`${profile.id}:${profile.followed_by_me ? '1' : '0'}:${profile.follows_me ? '1' : '0'}`}
                 profile={profile}
               />
             ))}

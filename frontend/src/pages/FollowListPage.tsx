@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Users } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
+import { FollowsYouBadge } from '@/components/FollowsYouBadge';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { Layout } from '@/components/Layout';
 import { PeopleListSkeleton } from '@/components/ListSkeletons';
@@ -54,13 +55,21 @@ function FollowListRow({
           <p className="font-medium text-foreground">{name}</p>
         )}
         {href ? <p className="text-sm text-muted-foreground">@{username}</p> : null}
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {[profile.favorite_team, location].filter(Boolean).join(' · ') || 'Aficionado Ninety'}
+        <p className="mt-0.5 flex flex-wrap items-center gap-1.5 truncate text-xs text-muted-foreground">
+          <span className="truncate">
+            {[profile.favorite_team, location].filter(Boolean).join(' · ') || 'Aficionado Ninety'}
+          </span>
+          {!isSelf && currentUserId && profile.follows_me ? <FollowsYouBadge /> : null}
         </p>
       </div>
 
       {!isSelf && href && currentUserId ? (
-        <FollowButton username={username} followedByMe={profile.followed_by_me} size="compact" />
+        <FollowButton
+          username={username}
+          followedByMe={profile.followed_by_me}
+          followsMe={profile.follows_me}
+          size="compact"
+        />
       ) : !isSelf && href && !currentUserId ? (
         <Button asChild size="sm" variant="secondary" className="shrink-0">
           <Link to={loginTo}>Seguir</Link>

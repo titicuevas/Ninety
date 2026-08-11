@@ -1224,16 +1224,24 @@ capsulesRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
     .maybeSingle();
 
   let followed_by_me = false;
+  let follows_me = false;
   if (viewerId && profile && viewerId !== profile.id) {
-    const { data: followRow, error: followError } = await reader
+    const { data: followRows, error: followError } = await reader
       .from('user_follows')
-      .select('follower_id')
-      .eq('follower_id', viewerId)
-      .eq('following_id', profile.id)
-      .maybeSingle();
+      .select('follower_id, following_id')
+      .or(
+        `and(follower_id.eq.${viewerId},following_id.eq.${profile.id}),and(follower_id.eq.${profile.id},following_id.eq.${viewerId})`,
+      );
 
-    if (!followError) {
-      followed_by_me = !!followRow;
+    if (!followError && followRows) {
+      for (const row of followRows) {
+        if (row.follower_id === viewerId && row.following_id === profile.id) {
+          followed_by_me = true;
+        }
+        if (row.follower_id === profile.id && row.following_id === viewerId) {
+          follows_me = true;
+        }
+      }
     }
   }
 
@@ -1245,6 +1253,7 @@ capsulesRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
           display_name: profile.full_name ?? null,
           avatar_url: profile.avatar_url,
           followed_by_me,
+          follows_me,
         }
       : null,
   });

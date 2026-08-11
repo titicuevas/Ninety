@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
+import { FollowsYouBadge } from '@/components/FollowsYouBadge';
 import { PeopleListSkeleton } from '@/components/ListSkeletons';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { Button } from '@/components/ui/button';
@@ -73,13 +74,23 @@ function LikerRow({
           </p>
         )}
         {username && !isAutoUsername(username) ? (
-          <p className="truncate text-xs text-muted-foreground">@{username}</p>
+          <p className="flex flex-wrap items-center gap-1.5 truncate text-xs text-muted-foreground">
+            <span className="truncate">@{username}</span>
+            {!isSelf && profile?.follows_me ? <FollowsYouBadge /> : null}
+          </p>
+        ) : !isSelf && profile?.follows_me ? (
+          <FollowsYouBadge />
         ) : null}
         <p className="text-[11px] text-muted-foreground/90">{formatRelativeTime(like.created_at)}</p>
       </div>
 
       {canFollow && username ? (
-        <FollowButton username={username} followedByMe={!!profile?.followed_by_me} size="compact" />
+        <FollowButton
+          username={username}
+          followedByMe={!!profile?.followed_by_me}
+          followsMe={!!profile?.follows_me}
+          size="compact"
+        />
       ) : null}
     </li>
   );
