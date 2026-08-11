@@ -3,6 +3,7 @@ import { apiFetch } from '@/lib/api';
 import {
   normalizeNotificationAlertPreferences,
   type NotificationAlertPreferences,
+  type NotificationAlertPreferencesPatch,
   type NotificationAlertType,
 } from '@/lib/notificationAlertPreferences';
 import { toast } from '@/lib/toast';
@@ -31,7 +32,7 @@ export function useUpdateNotificationAlertPreferences() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (patch: Partial<NotificationAlertPreferences>) => {
+    mutationFn: async (patch: NotificationAlertPreferencesPatch) => {
       const data = await apiFetch<Partial<NotificationAlertPreferences>>(
         '/api/notifications/preferences',
         { method: 'PATCH', body: JSON.stringify(patch) },
@@ -46,6 +47,9 @@ export function useUpdateNotificationAlertPreferences() {
         queryClient.setQueryData<NotificationAlertPreferences>(QUERY_KEY, {
           ...previous,
           ...patch,
+          push_quiet: patch.push_quiet
+            ? { ...previous.push_quiet, ...patch.push_quiet }
+            : previous.push_quiet,
         });
       }
       return { previous };
@@ -58,6 +62,16 @@ export function useUpdateNotificationAlertPreferences() {
     },
     onSuccess: (data, patch) => {
       queryClient.setQueryData(QUERY_KEY, data);
+      if (patch.push_quiet) {
+        if (patch.push_quiet.enabled === true) {
+          toast.success('Horario silencioso activado');
+        } else if (patch.push_quiet.enabled === false) {
+          toast.success('Horario silencioso desactivado');
+        } else {
+          toast.success('Horario silencioso actualizado');
+        }
+        return;
+      }
       const muted = (Object.keys(patch) as NotificationAlertType[]).find((key) => patch[key] === false);
       const enabled = (Object.keys(patch) as NotificationAlertType[]).find((key) => patch[key] === true);
       if (muted) {

@@ -150,6 +150,19 @@ test.describe('Smoke — notificaciones @smoke', () => {
     ).toBeVisible();
   });
 
+  test('Ajustes expone horario silencioso de push', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page.goto('/settings');
+    await page.waitForURL(/\/settings/);
+
+    const quiet = page.getByTestId('push-quiet-hours-panel');
+    await expect(quiet).toBeVisible({ timeout: 15_000 });
+    await expect(quiet.getByText('Horario silencioso de push', { exact: true })).toBeVisible();
+    await expect(
+      quiet.getByRole('button', { name: /horario silencioso: (activado|desactivado)/i }),
+    ).toBeVisible();
+  });
+
   test('deep link #comments abre el panel en el detalle', async ({ page, request }) => {
     await openAuthenticatedHome(page);
     const token = await readAccessToken(page);

@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   DEFAULT_NOTIFICATION_ALERT_PREFERENCES,
+  isValidQuietHhMm,
   normalizeNotificationAlertPreferences,
+  normalizePushQuietHours,
 } from './notificationAlertPreferences.ts';
 
 describe('normalizeNotificationAlertPreferences', () => {
@@ -14,11 +16,40 @@ describe('normalizeNotificationAlertPreferences', () => {
     );
   });
 
-  it('conserva silenciados explícitos', () => {
-    assert.deepEqual(normalizeNotificationAlertPreferences({ like: false, follow: true }), {
-      like: false,
-      comment: true,
-      follow: true,
+  it('conserva silenciados explícitos y quiet hours', () => {
+    assert.deepEqual(
+      normalizeNotificationAlertPreferences({
+        like: false,
+        follow: true,
+        push_quiet: { enabled: true, start: '23:00', end: '07:00', timezone: 'Europe/Madrid' },
+      }),
+      {
+        like: false,
+        comment: true,
+        follow: true,
+        push_quiet: {
+          enabled: true,
+          start: '23:00',
+          end: '07:00',
+          timezone: 'Europe/Madrid',
+        },
+      },
+    );
+  });
+});
+
+describe('normalizePushQuietHours / isValidQuietHhMm', () => {
+  it('valida HH:MM', () => {
+    assert.equal(isValidQuietHhMm('22:00'), true);
+    assert.equal(isValidQuietHhMm('9:00'), false);
+  });
+
+  it('defaults si falta', () => {
+    assert.deepEqual(normalizePushQuietHours(null), {
+      enabled: false,
+      start: '22:00',
+      end: '08:00',
+      timezone: 'UTC',
     });
   });
 });

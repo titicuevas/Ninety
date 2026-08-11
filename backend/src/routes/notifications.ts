@@ -18,6 +18,7 @@ import {
   unmuteUserById,
 } from '../lib/notificationMutes.js';
 import { parseNotificationTypeFilter } from '../lib/notificationTypeFilter.js';
+import { isValidIanaTimeZone } from '../lib/notificationQuietHours.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { getVapidPublicKey, isPushConfigured, sendPushToUser } from '../lib/webPush.js';
 
@@ -25,15 +26,41 @@ export const notificationsRouter = Router();
 
 notificationsRouter.use(requireAuth);
 
+const hhMmSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Usa HH:MM');
+
+const pushQuietPatchSchema = z
+  .object({
+    enabled: z.boolean().optional(),
+    start: hhMmSchema.optional(),
+    end: hhMmSchema.optional(),
+    timezone: z.string().trim().min(1).max(64).optional(),
+  })
+  .refine(
+    (q) =>
+      q.enabled !== undefined ||
+      q.start !== undefined ||
+      q.end !== undefined ||
+      q.timezone !== undefined,
+    { message: 'Indica al menos un campo de horario silencioso' },
+  );
+
 const preferencesPatchSchema = z
   .object({
     like: z.boolean().optional(),
     comment: z.boolean().optional(),
     follow: z.boolean().optional(),
+    push_quiet: pushQuietPatchSchema.optional(),
   })
-  .refine((body) => body.like !== undefined || body.comment !== undefined || body.follow !== undefined, {
-    message: 'Indica al menos un tipo',
-  });
+  .refine(
+    (body) =>
+      body.like !== undefined ||
+      body.comment !== undefined ||
+      body.follow !== undefined ||
+      body.push_quiet !== undefined,
+    { message: 'Indica al menos un campo' },
+  );
 
 notificationsRouter.get('/preferences', async (req: AuthRequest, res, next) => {
   try {
@@ -49,6 +76,14 @@ notificationsRouter.patch('/preferences', async (req: AuthRequest, res, next) =>
     const parsed = preferencesPatchSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: 'Preferencias inválidas' });
+      return;
+    }
+
+    if (
+      parsed.data.push_quiet?.timezone !== undefined &&
+      !isValidIanaTimeZone(parsed.data.push_quiet.timezone)
+    ) {
+      res.status(400).json({ error: 'Zona horaria inválida' });
       return;
     }
 

@@ -371,7 +371,7 @@ Ninety/
 | GET | `/api/collections/user/:username/:slug` | opcional | Detalle colección (`/u/:username/lists/:slug`) |
 | GET | `/api/football/matches/search` | ✅ | Buscar partidos |
 | GET | `/api/football/competitions` | ✅ | Competiciones |
-| GET/PATCH | `/api/notifications/preferences` | ✅ | Preferencias de alertas por tipo (like / comment / follow) |
+| GET/PATCH | `/api/notifications/preferences` | ✅ | Preferencias por tipo + horario silencioso de push (`push_quiet`) |
 | GET/POST/DELETE | `/api/notifications/muted`… | ✅ | Silenciar / reactivar usuario (alertas in-app + push) |
 | GET | `/api/notifications` | ✅ | Lista de alertas (`actor.followed_by_me` para seguir de vuelta) |
 
@@ -431,12 +431,12 @@ Ninety/
 - [x] Filtros del feed — competición o «solo con fotos» sobre Siguiendo / Explorar (`photos=1`, `competition` en `/api/capsules/feed` + chips en `/feed`)
 - [x] Pulido a11y en flujos clave — foco, landmarks y labels en colecciones y notificaciones
 
-### 🚧 v7 — Ritmo social & control fino
+### ✅ v7 — Ritmo social & control fino
 - [x] Digest de actividad social — likes / comentarios (por cápsula) y follows agrupados en el centro de alertas; avatares apilados y marcar leído por grupo
 - [x] Empty states post-import — guiar al usuario tras restaurar el diario (colecciones, feed, comparar)
 - [x] Filtros en el centro de alertas — ver solo likes / comentarios / follows
 - [x] Silenciar usuario concreto — no recibir alertas de un actor (in-app + push), desde la fila o el perfil (`GET/POST/DELETE /api/notifications/muted`; migración `20250811170000_notification_mutes.sql`)
-- [ ] Horario silencioso de push — franja on-device sin push (sin emails ni spam de toasts)
+- [x] Horario silencioso de push — franja local (timezone del dispositivo) sin push; in-app sí (`push_quiet` en `GET/PATCH /api/notifications/preferences`; migración `20250811180000_notification_push_quiet_hours.sql`)
 - [x] Seguir de vuelta desde un follow — acción rápida en la fila del digest (`followed_by_me` en actores de `GET /api/notifications` + CTA en follows de un solo actor)
 
 ## 🎨 Identidad visual

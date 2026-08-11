@@ -11,6 +11,7 @@ import {
   isNotificationTypeEnabled,
   type NotificationType,
 } from './notificationPreferencesStore.js';
+import { isWithinPushQuietHours } from './notificationQuietHours.js';
 import { sendPushToUser } from './webPush.js';
 
 const BODY_MAX = 120;
@@ -106,16 +107,19 @@ export async function notifyUser(params: {
             : `/c/${params.capsuleId}`
           : '/notifications';
 
-    void sendPushToUser(params.userId, {
-      title: PUSH_TITLE[params.type],
-      body: buildNotificationPushBody({
-        type: params.type,
-        actorName: name,
-        matchLabel,
-        commentSnippet: snippet,
-      }),
-      url,
-    });
+    // In-app siempre; push solo fuera del horario silencioso (timezone del dispositivo).
+    if (!isWithinPushQuietHours(prefs.push_quiet)) {
+      void sendPushToUser(params.userId, {
+        title: PUSH_TITLE[params.type],
+        body: buildNotificationPushBody({
+          type: params.type,
+          actorName: name,
+          matchLabel,
+          commentSnippet: snippet,
+        }),
+        url,
+      });
+    }
   } catch {
     // Non-critical — don't break the main flow
   }
