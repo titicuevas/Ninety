@@ -421,13 +421,13 @@ Ninety/
 - [x] Aniversarios del diario («Tal día como hoy») — card en Inicio cuando hace ≥1 año viste un partido el mismo mes/día + preferencia en Ajustes; on-device, prioridad sobre digest, sin emails
 - [x] Hitos del diario — card en Inicio al llegar a 5 / 10 / 25 / 50 / 100 / 250 Capsules + preferencia en Ajustes; on-device, tras aniversario y antes del digest, sin emails
 
-### 🚧 v6 — Diario curado & profundidad social
+### ✅ v6 — Diario curado & profundidad social
 - [x] Reordenar Capsules en colecciones — subir/bajar sobre la columna `position` (ya en schema); el orden se refleja en la lista pública (`PUT /api/collections/:id/items/reorder`)
 - [x] Portada de colección — destacar una Capsule o usar la primera foto como cover en listas públicas
 - [x] Importar diario desde export JSON — complemento GDPR al backup actual (sin fotos remotas obligatorias en v1 del import; Ajustes + `POST /api/capsules/me/import`)
 - [x] Preferencias de alertas por tipo — silenciar likes / comentarios / follows (in-app + push), sin emails (`GET/PATCH /api/notifications/preferences`; migración `20250811143000_notification_preferences.sql`)
 - [x] Filtros del feed — competición o «solo con fotos» sobre Siguiendo / Explorar (`photos=1`, `competition` en `/api/capsules/feed` + chips en `/feed`)
-- [ ] Pulido a11y en flujos clave — foco, landmarks y labels en colecciones y notificaciones
+- [x] Pulido a11y en flujos clave — foco, landmarks y labels en colecciones y notificaciones
 
 ### 🚧 v7 — Ritmo social & control fino
 - [x] Preferencias de alertas por tipo — silenciar likes / comentarios / follows (in-app + push); cerrado en v6

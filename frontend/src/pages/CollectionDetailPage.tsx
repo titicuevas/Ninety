@@ -133,7 +133,7 @@ export function CollectionDetailPage() {
   return (
     <Layout>
       <div className="mx-auto max-w-2xl space-y-8">
-        <div className="flex flex-wrap items-center gap-3">
+        <nav className="flex flex-wrap items-center gap-3" aria-label="Acciones de la colección">
           <Button asChild variant="ghost" size="sm">
             <Link to="/collections">
               <ArrowLeft className="mr-1.5 h-4 w-4" aria-hidden />
@@ -156,7 +156,7 @@ export function CollectionDetailPage() {
               </Link>
             </Button>
           ) : null}
-        </div>
+        </nav>
 
         {coverUrl ? (
           <div className="overflow-hidden rounded-xl border border-border">
@@ -170,7 +170,9 @@ export function CollectionDetailPage() {
 
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="text-base">Editar colección</CardTitle>
+            <CardTitle className="text-base" id="edit-collection-heading">
+              Editar colección
+            </CardTitle>
             <CardDescription>
               {collection.items_count ?? data.capsules.length} Capsules · slug{' '}
               <code className="text-xs">{collection.slug}</code>
@@ -178,7 +180,11 @@ export function CollectionDetailPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={onSave} className="space-y-4">
+            <form
+              onSubmit={onSave}
+              className="space-y-4"
+              aria-labelledby="edit-collection-heading"
+            >
               <FormField label="Nombre">
                 <Input
                   value={name}
@@ -212,6 +218,7 @@ export function CollectionDetailPage() {
                   type="button"
                   variant="outline"
                   className="text-destructive"
+                  aria-label={`Eliminar colección ${collection.name}`}
                   onClick={() => setDeleteOpen(true)}
                 >
                   <Trash2 className="mr-1.5 h-3.5 w-3.5" aria-hidden />
@@ -222,9 +229,11 @@ export function CollectionDetailPage() {
           </CardContent>
         </Card>
 
-        <section className="space-y-4">
+        <section className="space-y-4" aria-labelledby="collection-items-heading">
           <div>
-            <h2 className="text-lg font-semibold">Capsules en la lista</h2>
+            <h2 id="collection-items-heading" className="text-lg font-semibold">
+              Capsules en la lista
+            </h2>
             {data.capsules.length > 1 ? (
               <p className="mt-1 text-sm text-muted-foreground">
                 Ordena con subir/bajar y elige una portada: así se verá en la lista pública.
@@ -332,6 +341,7 @@ export function CollectionDetailPage() {
                             variant="secondary"
                             size="sm"
                             disabled={updateCollection.isPending || removeItem.isPending}
+                            aria-label={`Quitar portada de ${capsule.home_team_name} vs ${capsule.away_team_name}`}
                             onClick={() => setCover(null)}
                           >
                             <ImageIcon className="mr-1.5 h-3.5 w-3.5" aria-hidden />
@@ -356,6 +366,7 @@ export function CollectionDetailPage() {
                           size="sm"
                           className="text-destructive"
                           disabled={removeItem.isPending || reorderItems.isPending}
+                          aria-label={`Quitar ${capsule.home_team_name} vs ${capsule.away_team_name} de la colección`}
                           onClick={() => removeItem.mutate(capsule.id)}
                         >
                           Quitar

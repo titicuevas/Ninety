@@ -80,24 +80,32 @@ export function PublicCollectionPage() {
           <div className="overflow-hidden rounded-xl border border-border">
             <img
               src={coverUrl}
-              alt=""
+              alt={`Portada de ${collection.name}`}
               className="aspect-[21/9] w-full object-cover"
             />
           </div>
         ) : null}
-        <section className="space-y-3 text-center sm:text-left">
+        <section className="space-y-3 text-center sm:text-left" aria-labelledby="public-collection-heading">
           <p className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-primary">
             <Library className="h-3.5 w-3.5" aria-hidden />
             Colección
           </p>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{collection.name}</h1>
+          <h1
+            id="public-collection-heading"
+            className="text-2xl font-bold tracking-tight sm:text-3xl"
+          >
+            {collection.name}
+          </h1>
           {collection.description ? (
             <p className="text-sm text-muted-foreground sm:text-base">{collection.description}</p>
           ) : null}
           <p className="text-sm text-muted-foreground">
             Por{' '}
             {authorHref ? (
-              <Link to={authorHref} className="font-medium text-foreground hover:underline">
+              <Link
+                to={authorHref}
+                className="font-medium text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
                 {displayName}
               </Link>
             ) : (
@@ -106,7 +114,11 @@ export function PublicCollectionPage() {
             {' · '}
             {capsules.length} {capsules.length === 1 ? 'partido' : 'partidos'}
           </p>
-          <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
+          <div
+            className="flex flex-wrap justify-center gap-2 sm:justify-start"
+            role="group"
+            aria-label="Acciones de la colección"
+          >
             {authorHref && profile?.username ? (
               <ShareCollectionButton
                 username={profile.username}
@@ -128,13 +140,18 @@ export function PublicCollectionPage() {
             description="Todavía no hay partidos públicos en esta lista."
           />
         ) : (
-          <ul className="space-y-3">
-            {capsules.map((capsule) => (
-              <li key={capsule.id}>
-                <CapsuleListCard capsule={capsule} showWatchedDate />
-              </li>
-            ))}
-          </ul>
+          <section aria-labelledby="public-collection-items-heading">
+            <h2 id="public-collection-items-heading" className="sr-only">
+              Partidos de la colección
+            </h2>
+            <ul className="space-y-3">
+              {capsules.map((capsule) => (
+                <li key={capsule.id}>
+                  <CapsuleListCard capsule={capsule} showWatchedDate />
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
       </div>
     </Shell>

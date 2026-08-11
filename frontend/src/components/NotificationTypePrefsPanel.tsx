@@ -27,12 +27,19 @@ export function NotificationTypePrefsPanel({ className }: Props) {
   };
 
   return (
-    <div className={cn('space-y-3', className)} data-testid="notification-type-prefs">
+    <section
+      className={cn('space-y-3', className)}
+      aria-labelledby="notification-type-prefs-heading"
+      data-testid="notification-type-prefs"
+    >
       <div className="min-w-0">
-        <p className="inline-flex items-center gap-1.5 text-sm font-medium">
+        <h2
+          id="notification-type-prefs-heading"
+          className="inline-flex items-center gap-1.5 text-sm font-medium"
+        >
           <BellOff className="h-4 w-4 text-primary" aria-hidden />
           Alertas por tipo
-        </p>
+        </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Silencia likes, comentarios o seguidores en el centro de alertas y en push. Sin emails.
         </p>
@@ -44,7 +51,7 @@ export function NotificationTypePrefsPanel({ className }: Props) {
         </p>
       ) : null}
 
-      <ul className="space-y-3">
+      <ul className="space-y-3" aria-label="Preferencias por tipo de alerta">
         {NOTIFICATION_ALERT_TYPES.map((type) => {
           const enabled = prefs?.[type] !== false;
           const busy = updatePrefs.isPending && updatePrefs.variables?.[type] !== undefined;
@@ -54,14 +61,22 @@ export function NotificationTypePrefsPanel({ className }: Props) {
               className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0">
-                <p className="text-sm font-medium">{NOTIFICATION_ALERT_TYPE_LABELS[type]}</p>
-                <p className="text-xs text-muted-foreground">{NOTIFICATION_ALERT_TYPE_HINTS[type]}</p>
+                <p className="text-sm font-medium" id={`alert-type-${type}-label`}>
+                  {NOTIFICATION_ALERT_TYPE_LABELS[type]}
+                </p>
+                <p
+                  className="text-xs text-muted-foreground"
+                  id={`alert-type-${type}-hint`}
+                >
+                  {NOTIFICATION_ALERT_TYPE_HINTS[type]}
+                </p>
               </div>
               <Button
                 type="button"
                 variant={enabled ? 'secondary' : 'outline'}
                 className="shrink-0"
                 aria-pressed={enabled}
+                aria-describedby={`alert-type-${type}-hint`}
                 aria-label={`${NOTIFICATION_ALERT_TYPE_LABELS[type]}: ${enabled ? 'activadas' : 'silenciadas'}`}
                 disabled={isLoading || !prefs}
                 loading={busy}
@@ -73,6 +88,6 @@ export function NotificationTypePrefsPanel({ className }: Props) {
           );
         })}
       </ul>
-    </div>
+    </section>
   );
 }

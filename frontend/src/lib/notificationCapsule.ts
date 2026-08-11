@@ -28,14 +28,15 @@ export function formatNotificationMatchContext(capsule: {
 }
 
 /**
- * Etiqueta accesible de la fila: actor + acción + partido.
- * Ej. "Ana le gustó tu cápsula · Betis vs Sevilla · LaLiga"
+ * Etiqueta accesible de la fila: actor + acción + partido (+ sin leer).
+ * Ej. "Ana le gustó tu cápsula · Betis vs Sevilla · LaLiga · sin leer"
  */
 export function formatNotificationAriaLabel(params: {
   actorName: string;
   actionText: string;
   capsule?: NotificationCapsuleContext | null;
   snippet?: string | null;
+  unread?: boolean;
 }): string {
   const parts = [`${params.actorName} ${params.actionText}`];
   if (params.capsule) {
@@ -43,5 +44,6 @@ export function formatNotificationAriaLabel(params: {
   }
   const snippet = params.snippet?.trim();
   if (snippet) parts.push(`«${snippet}»`);
+  if (params.unread) parts.push('sin leer');
   return parts.join(' · ');
 }

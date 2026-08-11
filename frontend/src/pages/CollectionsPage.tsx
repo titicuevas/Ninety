@@ -67,9 +67,15 @@ export function CollectionsPage() {
   return (
     <Layout>
       <div className="mx-auto max-w-2xl space-y-8">
-        <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <section
+          className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+          aria-labelledby="collections-heading"
+        >
           <div>
-            <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl">
+            <h1
+              id="collections-heading"
+              className="flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl"
+            >
               <Library className="h-7 w-7 text-primary" aria-hidden />
               Colecciones
             </h1>
@@ -80,6 +86,8 @@ export function CollectionsPage() {
           <Button
             type="button"
             className="shrink-0"
+            aria-expanded={formOpen}
+            aria-controls="create-collection-panel"
             onClick={() => openForm(!formOpen)}
           >
             <Plus className="mr-1.5 h-4 w-4" aria-hidden />
@@ -88,9 +96,11 @@ export function CollectionsPage() {
         </section>
 
         {formOpen ? (
-          <Card className="border-border">
+          <Card className="border-border" id="create-collection-panel">
             <CardHeader>
-              <CardTitle className="text-base">Crear colección</CardTitle>
+              <CardTitle className="text-base" id="create-collection-heading">
+                Crear colección
+              </CardTitle>
               <CardDescription>
                 El enlace público será{' '}
                 {username ? (
@@ -103,7 +113,11 @@ export function CollectionsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={onCreate} className="space-y-4">
+              <form
+                onSubmit={onCreate}
+                className="space-y-4"
+                aria-labelledby="create-collection-heading"
+              >
                 <FormField label="Nombre">
                   <Input
                     value={name}
@@ -173,55 +187,63 @@ export function CollectionsPage() {
         ) : null}
 
         {!isLoading && !isError && collections.length > 0 ? (
-          <ul className="space-y-3">
-            {collections.map((collection) => (
-              <li key={collection.id}>
-                <Link
-                  to={`/collections/${collection.id}`}
-                  className="block rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <div className="flex items-start gap-3">
-                    {collection.cover_url ? (
-                      <img
-                        src={collection.cover_url}
-                        alt=""
-                        className="h-16 w-16 shrink-0 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div
-                        className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
-                        aria-hidden
-                      >
-                        <Library className="h-5 w-5" />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium">{collection.name}</p>
-                      {collection.description ? (
-                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                          {collection.description}
-                        </p>
-                      ) : null}
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        {collection.items_count ?? 0}{' '}
-                        {(collection.items_count ?? 0) === 1 ? 'Capsule' : 'Capsules'}
-                        {!collection.is_public ? (
-                          <span className="ml-2 inline-flex items-center gap-1">
-                            <Lock className="h-3 w-3" aria-hidden />
-                            Privada
-                          </span>
+          <section aria-labelledby="collections-list-heading">
+            <h2 id="collections-list-heading" className="sr-only">
+              Tus colecciones
+            </h2>
+            <ul className="space-y-3">
+              {collections.map((collection) => (
+                <li key={collection.id}>
+                  <Link
+                    to={`/collections/${collection.id}`}
+                    className="block rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <div className="flex items-start gap-3">
+                      {collection.cover_url ? (
+                        <img
+                          src={collection.cover_url}
+                          alt=""
+                          className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div
+                          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+                          aria-hidden
+                        >
+                          <Library className="h-5 w-5" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium">{collection.name}</p>
+                        {collection.description ? (
+                          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                            {collection.description}
+                          </p>
                         ) : null}
-                      </p>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          {collection.items_count ?? 0}{' '}
+                          {(collection.items_count ?? 0) === 1 ? 'Capsule' : 'Capsules'}
+                          {!collection.is_public ? (
+                            <span className="ml-2 inline-flex items-center gap-1">
+                              <Lock className="h-3 w-3" aria-hidden />
+                              Privada
+                            </span>
+                          ) : null}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
         ) : null}
 
         <p className="text-center text-sm text-muted-foreground">
-          <Link to="/capsules" className="text-primary hover:underline">
+          <Link
+            to="/capsules"
+            className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             Volver a Mis Capsules
           </Link>
         </p>

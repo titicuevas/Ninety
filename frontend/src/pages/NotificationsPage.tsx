@@ -115,6 +115,7 @@ function NotificationItem({
     actionText: textMap[n.type],
     capsule: n.capsule,
     snippet,
+    unread: !n.read,
   });
 
   const content = (
@@ -155,6 +156,7 @@ function NotificationItem({
       <Link
         to={link}
         aria-label={ariaLabel}
+        className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         onClick={() => {
           if (!n.read) onOpen?.(n.id);
         }}
@@ -167,7 +169,7 @@ function NotificationItem({
   return (
     <button
       type="button"
-      className="block w-full text-left"
+      className="block w-full rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       aria-label={ariaLabel}
       onClick={() => {
         if (!n.read) onOpen?.(n.id);
@@ -198,9 +200,28 @@ export function NotificationsPage() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Notificaciones</h1>
-          <div className="flex flex-wrap items-center gap-2">
+        <header
+          className="flex flex-wrap items-center justify-between gap-3"
+          aria-labelledby="notifications-heading"
+        >
+          <div className="min-w-0 space-y-1">
+            <h1
+              id="notifications-heading"
+              className="text-2xl font-bold tracking-tight sm:text-3xl"
+            >
+              Notificaciones
+            </h1>
+            {unread > 0 ? (
+              <p className="text-sm text-muted-foreground" aria-live="polite">
+                {unread === 1 ? '1 sin leer' : `${unread} sin leer`}
+              </p>
+            ) : null}
+          </div>
+          <div
+            className="flex flex-wrap items-center gap-2"
+            role="group"
+            aria-label="Acciones de notificaciones"
+          >
             {unread > 0 && (
               <Button
                 variant="ghost"
@@ -222,7 +243,7 @@ export function NotificationsPage() {
               </Button>
             ) : null}
           </div>
-        </div>
+        </header>
 
         <PushAlertsPanel variant="compact" />
 
@@ -242,23 +263,27 @@ export function NotificationsPage() {
             </Button>
           </EmptyState>
         ) : (
-          <div className="space-y-3">
-            <div className="divide-y divide-border rounded-lg border" data-testid="notifications-list">
+          <section className="space-y-3" aria-labelledby="notifications-list-heading">
+            <h2 id="notifications-list-heading" className="sr-only">
+              Lista de notificaciones
+            </h2>
+            <ul
+              className="divide-y divide-border rounded-lg border"
+              data-testid="notifications-list"
+            >
               {notifications.map((n) => (
-                <NotificationItem
-                  key={n.id}
-                  n={n}
-                  onOpen={(id) => markRead.mutate([id])}
-                />
+                <li key={n.id}>
+                  <NotificationItem n={n} onOpen={(id) => markRead.mutate([id])} />
+                </li>
               ))}
-            </div>
+            </ul>
             <InfiniteScrollSentinel
               className="pt-1"
               hasNextPage={Boolean(hasNextPage)}
               isFetchingNextPage={isFetchingNextPage}
               fetchNextPage={fetchNextPage}
             />
-          </div>
+          </section>
         )}
       </div>
 

@@ -52,13 +52,14 @@ export function PushAlertsPanel({ variant = 'card', className }: Props) {
             : 'Las alertas push aún no están disponibles en el servidor';
 
   return (
-    <div
+    <section
       className={cn(
         variant === 'card'
           ? 'space-y-3'
           : 'space-y-2 rounded-xl border border-border bg-secondary/30 px-3 py-3',
         className,
       )}
+      aria-labelledby="push-alerts-heading"
       data-testid="push-alerts-panel"
     >
       <div
@@ -68,14 +69,24 @@ export function PushAlertsPanel({ variant = 'card', className }: Props) {
         )}
       >
         <div className="min-w-0">
-          <p className="inline-flex items-center gap-1.5 text-sm font-medium">
+          <h2
+            id="push-alerts-heading"
+            className="inline-flex items-center gap-1.5 text-sm font-medium"
+          >
             <Bell className="h-4 w-4 text-primary" aria-hidden />
             Alertas push
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground" id="push-alerts-status">
+            {statusLine}
           </p>
-          <p className="mt-1 text-sm text-muted-foreground">{statusLine}</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div
+          className="flex flex-wrap items-center gap-2"
+          role="group"
+          aria-label="Controles de alertas push"
+          aria-describedby="push-alerts-status"
+        >
           {mode === 'ready_off' ? (
             <Button
               type="button"
@@ -139,6 +150,6 @@ export function PushAlertsPanel({ variant = 'card', className }: Props) {
           ) : null}
         </div>
       ) : null}
-    </div>
+    </section>
   );
 }

@@ -20,9 +20,12 @@ test.describe('Smoke — colecciones @smoke', () => {
     await expect(page.getByRole('heading', { name: /^colecciones$/i })).toBeVisible({
       timeout: 20_000,
     });
+    await expect(page.locator('#main-content')).toBeVisible();
 
     const uniqueName = `E2E ${Date.now()}`;
-    await page.getByRole('button', { name: /nueva colección|crear la primera/i }).first().click();
+    const newBtn = page.getByRole('button', { name: /nueva colección|crear la primera/i }).first();
+    await newBtn.click();
+    await expect(newBtn).toHaveAttribute('aria-expanded', 'true');
     await page.getByLabel(/^nombre$/i).fill(uniqueName);
     await page.getByRole('button', { name: /^crear$/i }).click();
 

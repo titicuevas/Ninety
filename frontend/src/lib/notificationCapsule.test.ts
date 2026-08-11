@@ -71,5 +71,14 @@ describe('formatNotificationAriaLabel', () => {
       }),
       '@ana te empezó a seguir',
     );
+
+    assert.equal(
+      formatNotificationAriaLabel({
+        actorName: 'Ana',
+        actionText: 'le gustó tu cápsula',
+        unread: true,
+      }),
+      'Ana le gustó tu cápsula · sin leer',
+    );
   });
 });

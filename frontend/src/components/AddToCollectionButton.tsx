@@ -163,6 +163,11 @@ export function AddToCollectionButton({
                         rowBusy && 'opacity-70',
                       )}
                       aria-pressed={inList}
+                      aria-label={
+                        inList
+                          ? `Quitar de ${collection.name}`
+                          : `Añadir a ${collection.name}`
+                      }
                     >
                       <span
                         className={cn(
