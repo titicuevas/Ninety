@@ -430,9 +430,12 @@ Ninety/
 - [x] Pulido a11y en flujos clave — foco, landmarks y labels en colecciones y notificaciones
 
 ### 🚧 v7 — Ritmo social & control fino
-- [x] Preferencias de alertas por tipo — silenciar likes / comentarios / follows (in-app + push); cerrado en v6
-- [ ] Digest de actividad social (likes/comentarios agrupados) en el centro de alertas
-- [ ] Empty states post-import — guiar al usuario tras restaurar el diario
+- [x] Digest de actividad social — likes / comentarios (por cápsula) y follows agrupados en el centro de alertas; avatares apilados y marcar leído por grupo
+- [ ] Empty states post-import — guiar al usuario tras restaurar el diario (colecciones, feed, comparar)
+- [ ] Filtros en el centro de alertas — ver solo likes / comentarios / follows
+- [ ] Silenciar usuario concreto — no recibir alertas de un actor (in-app + push), desde la fila o el perfil
+- [ ] Horario silencioso de push — franja on-device sin push (sin emails ni spam de toasts)
+- [ ] Seguir de vuelta desde un follow — acción rápida en la fila del digest
 
 ## 🎨 Identidad visual
 

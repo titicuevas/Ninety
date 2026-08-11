@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Bell, Heart, UserPlus, MessageCircle } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
@@ -13,13 +13,20 @@ import {
   useMarkAllRead,
   useMarkNotificationsRead,
   useClearReadNotifications,
-  type AppNotification,
 } from '@/hooks/useNotifications';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   formatNotificationAriaLabel,
   formatNotificationMatchContext,
 } from '@/lib/notificationCapsule';
+import {
+  digestActionText,
+  digestUnreadIds,
+  formatDigestActorNames,
+  groupNotificationsForDigest,
+  type DigestActor,
+  type NotificationDigestGroup,
+} from '@/lib/notificationDigest';
 import { publicProfilePath } from '@/lib/profilePath';
 import { cn } from '@/lib/utils';
 
@@ -40,44 +47,51 @@ const iconMap = {
   comment: MessageCircle,
 } as const;
 
-const textMap = {
-  like: 'le gustó tu cápsula',
-  follow: 'te empezó a seguir',
-  comment: 'comentó en tu cápsula',
-} as const;
-
-function ActorAvatar({ n }: { n: AppNotification }) {
-  const Icon = iconMap[n.type];
-  const name = n.actor?.display_name || n.actor?.username || '?';
-  const avatarUrl = n.actor?.avatar_url;
+function StackedAvatars({ actors, type }: { actors: DigestActor[]; type: NotificationDigestGroup['type'] }) {
+  const Icon = iconMap[type];
+  const shown = actors.slice(0, 3);
 
   return (
-    <span className="relative mt-0.5 shrink-0">
-      {avatarUrl ? (
-        <img
-          src={avatarUrl}
-          alt=""
-          className="h-10 w-10 rounded-full border border-border object-cover"
-        />
-      ) : (
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-          {name.slice(0, 1).toUpperCase()}
-        </span>
-      )}
-      <span
-        className="absolute -right-0.5 -bottom-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-background bg-secondary text-muted-foreground"
-        aria-hidden
-      >
+    <span className="relative mt-0.5 shrink-0" aria-hidden>
+      <span className="flex">
+        {shown.map((actor, index) => {
+          const name = actor.display_name || actor.username || '?';
+          return (
+            <span
+              key={actor.id}
+              className={cn('relative', index > 0 && '-ml-2')}
+              style={{ zIndex: shown.length - index }}
+            >
+              {actor.avatar_url ? (
+                <img
+                  src={actor.avatar_url}
+                  alt=""
+                  className="h-10 w-10 rounded-full border-2 border-background object-cover"
+                />
+              ) : (
+                <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-background bg-primary text-sm font-bold text-primary-foreground">
+                  {name.slice(0, 1).toUpperCase()}
+                </span>
+              )}
+            </span>
+          );
+        })}
+      </span>
+      <span className="absolute -right-0.5 -bottom-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-background bg-secondary text-muted-foreground">
         <Icon className="h-2.5 w-2.5" />
       </span>
     </span>
   );
 }
 
-function CapsuleThumb({ n }: { n: AppNotification }) {
-  const thumb = n.capsule?.thumb_url;
-  if (!thumb || !n.capsule) return null;
-  const alt = formatNotificationMatchContext(n.capsule);
+function CapsuleThumb({
+  capsule,
+}: {
+  capsule: NonNullable<NotificationDigestGroup['capsule']>;
+}) {
+  const thumb = capsule.thumb_url;
+  if (!thumb) return null;
+  const alt = formatNotificationMatchContext(capsule);
 
   return (
     <img
@@ -91,45 +105,51 @@ function CapsuleThumb({ n }: { n: AppNotification }) {
   );
 }
 
-function NotificationItem({
-  n,
+function DigestNotificationItem({
+  group,
   onOpen,
 }: {
-  n: AppNotification;
-  onOpen?: (id: string) => void;
+  group: NotificationDigestGroup;
+  onOpen?: (ids: string[]) => void;
 }) {
-  const actorName = n.actor?.display_name || (n.actor?.username ? `@${n.actor.username}` : 'Alguien');
+  const actorNames = formatDigestActorNames(group.actors);
+  const actionText = digestActionText(group.type, group.actors.length);
   const followHref =
-    n.type === 'follow' ? publicProfilePath(n.actor?.username) ?? undefined : undefined;
+    group.type === 'follow' && group.actors.length === 1
+      ? publicProfilePath(group.actors[0]?.username) ?? undefined
+      : undefined;
   const link =
     followHref ??
-    (n.capsule_id
-      ? n.type === 'comment'
-        ? `/c/${n.capsule_id}#comments`
-        : `/c/${n.capsule_id}`
+    (group.capsule_id
+      ? group.type === 'comment'
+        ? `/c/${group.capsule_id}#comments`
+        : `/c/${group.capsule_id}`
       : undefined);
-  const snippet = n.type === 'comment' && n.body?.trim() ? n.body.trim() : null;
-  const matchLine = n.capsule ? formatNotificationMatchContext(n.capsule) : null;
+  const snippet = group.type === 'comment' ? group.latestBody : null;
+  const matchLine = group.capsule ? formatNotificationMatchContext(group.capsule) : null;
   const ariaLabel = formatNotificationAriaLabel({
-    actorName,
-    actionText: textMap[n.type],
-    capsule: n.capsule,
+    actorName: actorNames,
+    actionText,
+    capsule: group.capsule,
     snippet,
-    unread: !n.read,
+    unread: group.unread,
   });
 
   const content = (
     <div
       className={cn(
         'flex items-start gap-3 rounded-lg p-3 transition-colors',
-        !n.read && 'bg-primary/5',
+        group.unread && 'bg-primary/5',
         link && 'hover:bg-secondary/60',
       )}
+      data-testid="notification-digest-item"
+      data-digest-key={group.key}
+      data-digest-count={group.notifications.length}
     >
-      <ActorAvatar n={n} />
+      <StackedAvatars actors={group.actors} type={group.type} />
       <div className="min-w-0 flex-1">
         <p className="text-sm">
-          <span className="font-medium">{actorName}</span> {textMap[n.type]}
+          <span className="font-medium">{actorNames}</span> {actionText}
         </p>
         {matchLine ? (
           <p
@@ -142,14 +162,19 @@ function NotificationItem({
         {snippet ? (
           <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">«{snippet}»</p>
         ) : null}
-        <p className="mt-0.5 text-xs text-muted-foreground">{timeAgo(n.created_at)}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{timeAgo(group.created_at)}</p>
       </div>
-      <CapsuleThumb n={n} />
-      {!n.read && (
+      {group.capsule ? <CapsuleThumb capsule={group.capsule} /> : null}
+      {group.unread && (
         <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden />
       )}
     </div>
   );
+
+  const openGroup = () => {
+    const ids = digestUnreadIds(group);
+    if (ids.length > 0) onOpen?.(ids);
+  };
 
   if (link) {
     return (
@@ -157,9 +182,7 @@ function NotificationItem({
         to={link}
         aria-label={ariaLabel}
         className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        onClick={() => {
-          if (!n.read) onOpen?.(n.id);
-        }}
+        onClick={openGroup}
       >
         {content}
       </Link>
@@ -171,9 +194,7 @@ function NotificationItem({
       type="button"
       className="block w-full rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       aria-label={ariaLabel}
-      onClick={() => {
-        if (!n.read) onOpen?.(n.id);
-      }}
+      onClick={openGroup}
     >
       {content}
     </button>
@@ -194,6 +215,10 @@ export function NotificationsPage() {
   const clearRead = useClearReadNotifications();
   const [clearOpen, setClearOpen] = useState(false);
   const notifications = data?.pages.flatMap((page) => page.notifications) ?? [];
+  const digestGroups = useMemo(() => {
+    const list = data?.pages.flatMap((page) => page.notifications) ?? [];
+    return groupNotificationsForDigest(list);
+  }, [data]);
   const unread = data?.pages[0]?.unread_count ?? 0;
   const hasRead = notifications.some((n) => n.read);
 
@@ -271,9 +296,12 @@ export function NotificationsPage() {
               className="divide-y divide-border rounded-lg border"
               data-testid="notifications-list"
             >
-              {notifications.map((n) => (
-                <li key={n.id}>
-                  <NotificationItem n={n} onOpen={(id) => markRead.mutate([id])} />
+              {digestGroups.map((group) => (
+                <li key={group.key}>
+                  <DigestNotificationItem
+                    group={group}
+                    onOpen={(ids) => markRead.mutate(ids)}
+                  />
                 </li>
               ))}
             </ul>
