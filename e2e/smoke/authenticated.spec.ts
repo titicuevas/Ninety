@@ -317,6 +317,10 @@ test.describe('Smoke — autenticado @smoke', () => {
       timeout: 15_000,
     });
 
+    const muted = page.getByTestId('muted-users-panel');
+    await expect(muted).toBeVisible();
+    await expect(muted.getByText('Usuarios silenciados', { exact: true })).toBeVisible();
+
     await expect(page.getByRole('link', { name: /ver centro de alertas/i })).toBeVisible();
     await expect(page.getByRole('heading', { name: /exportar e importar diario/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /descargar json/i })).toBeVisible();

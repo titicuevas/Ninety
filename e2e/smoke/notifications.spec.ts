@@ -129,6 +129,19 @@ test.describe('Smoke — notificaciones @smoke', () => {
     await expect(page.getByTestId('push-alerts-panel')).toBeVisible();
   });
 
+  test('Ajustes expone usuarios silenciados', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page.goto('/settings');
+    await page.waitForURL(/\/settings/);
+
+    const muted = page.getByTestId('muted-users-panel');
+    await expect(muted).toBeVisible({ timeout: 15_000 });
+    await expect(muted.getByText('Usuarios silenciados', { exact: true })).toBeVisible();
+    await expect(
+      muted.getByTestId('muted-users-empty').or(muted.getByRole('list', { name: /usuarios silenciados/i })),
+    ).toBeVisible();
+  });
+
   test('deep link #comments abre el panel en el detalle', async ({ page, request }) => {
     await openAuthenticatedHome(page);
     const token = await readAccessToken(page);

@@ -5,6 +5,7 @@ import {
   mapNotificationCapsule,
   type CapsuleNotificationRow,
 } from './notificationCapsule.js';
+import { isActorMuted } from './notificationMutes.js';
 import {
   getNotificationPreferences,
   isNotificationTypeEnabled,
@@ -53,6 +54,8 @@ export async function notifyUser(params: {
 
     const prefs = await getNotificationPreferences(params.userId);
     if (!isNotificationTypeEnabled(prefs, params.type)) return;
+
+    if (await isActorMuted(params.userId, params.actorId)) return;
 
     const snippet = params.type === 'comment' ? truncateBody(params.body) : null;
     const row: Record<string, unknown> = {

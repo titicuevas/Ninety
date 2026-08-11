@@ -4,6 +4,7 @@ import { Bell, Heart, UserPlus, MessageCircle } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { Layout } from '@/components/Layout';
+import { MuteUserButton } from '@/components/MuteUserButton';
 import { NotificationListSkeleton } from '@/components/ListSkeletons';
 import { NotificationTypeFiltersBar } from '@/components/NotificationTypeFiltersBar';
 import { PushAlertsPanel } from '@/components/PushAlertsPanel';
@@ -121,6 +122,8 @@ function DigestNotificationItem({
 }) {
   const actorNames = formatDigestActorNames(group.actors);
   const actionText = digestActionText(group.type, group.actors.length);
+  const singleActorUsername =
+    group.actors.length === 1 ? group.actors[0]?.username ?? null : null;
   const followHref =
     group.type === 'follow' && group.actors.length === 1
       ? publicProfilePath(group.actors[0]?.username) ?? undefined
@@ -145,7 +148,7 @@ function DigestNotificationItem({
   const content = (
     <div
       className={cn(
-        'flex items-start gap-3 rounded-lg p-3 transition-colors',
+        'flex min-w-0 flex-1 items-start gap-3 rounded-lg p-3 transition-colors',
         group.unread && 'bg-primary/5',
         link && 'hover:bg-secondary/60',
       )}
@@ -183,28 +186,40 @@ function DigestNotificationItem({
     if (ids.length > 0) onOpen?.(ids);
   };
 
+  const muteControl = singleActorUsername ? (
+    <div className="flex shrink-0 items-start pt-2 pr-1">
+      <MuteUserButton username={singleActorUsername} size="icon" />
+    </div>
+  ) : null;
+
   if (link) {
     return (
-      <Link
-        to={link}
-        aria-label={ariaLabel}
-        className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        onClick={openGroup}
-      >
-        {content}
-      </Link>
+      <div className="flex items-stretch gap-0 rounded-lg">
+        <Link
+          to={link}
+          aria-label={ariaLabel}
+          className="min-w-0 flex-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={openGroup}
+        >
+          {content}
+        </Link>
+        {muteControl}
+      </div>
     );
   }
 
   return (
-    <button
-      type="button"
-      className="block w-full rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      aria-label={ariaLabel}
-      onClick={openGroup}
-    >
-      {content}
-    </button>
+    <div className="flex items-stretch gap-0 rounded-lg">
+      <button
+        type="button"
+        className="min-w-0 flex-1 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label={ariaLabel}
+        onClick={openGroup}
+      >
+        {content}
+      </button>
+      {muteControl}
+    </div>
   );
 }
 

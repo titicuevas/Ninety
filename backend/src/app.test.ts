@@ -86,6 +86,21 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/notifications/muted requiere auth', async () => {
+    const res = await request(createApp()).get('/api/notifications/muted');
+    assert.equal(res.status, 401);
+  });
+
+  it('POST /api/notifications/muted/:username requiere auth', async () => {
+    const res = await request(createApp()).post('/api/notifications/muted/demo');
+    assert.equal(res.status, 401);
+  });
+
+  it('DELETE /api/notifications/muted/:username requiere auth', async () => {
+    const res = await request(createApp()).delete('/api/notifications/muted/demo');
+    assert.equal(res.status, 401);
+  });
+
   it('GET /api/capsules/me/export requiere auth', async () => {
     const res = await request(createApp()).get('/api/capsules/me/export');
     assert.equal(res.status, 401);

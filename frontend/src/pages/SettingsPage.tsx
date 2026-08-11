@@ -12,6 +12,7 @@ import { DiaryAnniversaryPrefsPanel } from '@/components/DiaryAnniversaryPrefsPa
 import { DiaryDigestPrefsPanel } from '@/components/DiaryDigestPrefsPanel';
 import { DiaryMilestonePrefsPanel } from '@/components/DiaryMilestonePrefsPanel';
 import { NotificationTypePrefsPanel } from '@/components/NotificationTypePrefsPanel';
+import { MutedUsersPanel } from '@/components/MutedUsersPanel';
 import { PushAlertsPanel } from '@/components/PushAlertsPanel';
 import { InstallAppPanel } from '@/components/InstallAppPanel';
 import { Button } from '@/components/ui/button';
@@ -227,13 +228,14 @@ export function SettingsPage() {
           <CardHeader>
             <CardTitle className="text-base">Notificaciones</CardTitle>
             <CardDescription>
-              Push del dispositivo y silenciado por tipo (likes, comentarios, seguidores). El
-              historial vive en el centro de alertas.
+              Push del dispositivo, silenciado por tipo y por usuario. El historial vive en el
+              centro de alertas.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <PushAlertsPanel variant="card" />
             <NotificationTypePrefsPanel />
+            <MutedUsersPanel />
             <DiaryDigestPrefsPanel />
             <DiaryAnniversaryPrefsPanel />
             <DiaryMilestonePrefsPanel />

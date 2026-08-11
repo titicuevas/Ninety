@@ -6,6 +6,7 @@ import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
+import { MuteUserButton } from '@/components/MuteUserButton';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { Layout } from '@/components/Layout';
 import { ProfileLoadingSkeleton } from '@/components/ListSkeletons';
@@ -239,11 +240,18 @@ export function PublicProfilePage() {
                 <Link to="/profile">Editar perfil</Link>
               </Button>
             ) : profile.username && user ? (
-              <FollowButton
-                username={profile.username}
-                followedByMe={profile.followed_by_me}
-                className="w-full sm:w-auto"
-              />
+              <>
+                <FollowButton
+                  username={profile.username}
+                  followedByMe={profile.followed_by_me}
+                  className="w-full sm:w-auto"
+                />
+                <MuteUserButton
+                  username={profile.username}
+                  mutedByMe={profile.muted_by_me}
+                  className="w-full sm:w-auto"
+                />
+              </>
             ) : profile.username ? (
               <Button asChild className="w-full sm:w-auto">
                 <Link to={loginTo}>Inicia sesión para seguir</Link>

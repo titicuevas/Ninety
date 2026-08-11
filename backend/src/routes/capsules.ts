@@ -17,6 +17,7 @@ import { attachCommentCounts, fetchCommentsWithAuthors, isMissingCommentsTable }
 import { attachLikeStats, fetchLikesWithProfiles, isMissingLikesTable } from '../lib/capsuleLikes.js';
 import { applyFeedContentFilters, resolveFeedContentFilters } from '../lib/feedFilters.js';
 import { attachFollowStats, getFollowingIds } from '../lib/userFollows.js';
+import { attachMutedByMe } from '../lib/notificationMutes.js';
 import { notifyUser } from '../lib/notifyUser.js';
 import { normalizeProfile } from '../lib/profileNormalize.js';
 import { computePublicProfileStats } from '../lib/publicProfileStats.js';
@@ -673,9 +674,10 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
   const capsulesWithLikes = await attachCommentCounts(reader, withLikes);
   const normalizedProfile = normalizeProfile(profile);
   const profileWithFollows = await attachFollowStats(reader, viewerId, normalizedProfile);
+  const profileWithMute = await attachMutedByMe(reader, viewerId, profileWithFollows);
 
   res.json({
-    profile: profileWithFollows,
+    profile: profileWithMute,
     capsules: capsulesWithLikes,
     total: count ?? capsulesWithLikes.length,
     ...(stats ? { stats } : {}),

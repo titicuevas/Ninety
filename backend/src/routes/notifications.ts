@@ -11,6 +11,12 @@ import {
   getNotificationPreferences,
   upsertNotificationPreferences,
 } from '../lib/notificationPreferencesStore.js';
+import {
+  listMutedProfiles,
+  muteUserById,
+  resolveMuteTargetByUsername,
+  unmuteUserById,
+} from '../lib/notificationMutes.js';
 import { parseNotificationTypeFilter } from '../lib/notificationTypeFilter.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { getVapidPublicKey, isPushConfigured, sendPushToUser } from '../lib/webPush.js';
@@ -55,6 +61,67 @@ notificationsRouter.patch('/preferences', async (req: AuthRequest, res, next) =>
     if (status === 503) {
       res.status(503).json({
         error: err instanceof Error ? err.message : 'Preferencias no disponibles',
+      });
+      return;
+    }
+    next(err);
+  }
+});
+
+function muteErrorStatus(err: unknown): number | undefined {
+  return typeof (err as { status?: unknown })?.status === 'number'
+    ? (err as { status: number }).status
+    : undefined;
+}
+
+notificationsRouter.get('/muted', async (req: AuthRequest, res, next) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 30, 50);
+    const offset = Number(req.query.offset) || 0;
+    const result = await listMutedProfiles(req.userId!, { limit, offset });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+notificationsRouter.post('/muted/:username', async (req: AuthRequest, res, next) => {
+  try {
+    const target = await resolveMuteTargetByUsername(String(req.params.username ?? ''));
+    if (!target) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    const result = await muteUserById(req.userId!, target.id);
+    res.status(201).json(result);
+  } catch (err) {
+    const status = muteErrorStatus(err);
+    if (status === 400 || status === 409 || status === 503) {
+      res.status(status).json({
+        error: err instanceof Error ? err.message : 'No se pudo silenciar',
+      });
+      return;
+    }
+    next(err);
+  }
+});
+
+notificationsRouter.delete('/muted/:username', async (req: AuthRequest, res, next) => {
+  try {
+    const target = await resolveMuteTargetByUsername(String(req.params.username ?? ''));
+    if (!target) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    const result = await unmuteUserById(req.userId!, target.id);
+    res.json(result);
+  } catch (err) {
+    const status = muteErrorStatus(err);
+    if (status === 404 || status === 503) {
+      res.status(status).json({
+        error: err instanceof Error ? err.message : 'No se pudo reactivar',
       });
       return;
     }
