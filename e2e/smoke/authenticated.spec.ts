@@ -310,6 +310,13 @@ test.describe('Smoke — autenticado @smoke', () => {
         ),
     ).toBeVisible({ timeout: 15_000 });
 
+    const typePrefs = page.getByTestId('notification-type-prefs');
+    await expect(typePrefs).toBeVisible();
+    await expect(typePrefs.getByText('Alertas por tipo', { exact: true })).toBeVisible();
+    await expect(typePrefs.getByRole('button', { name: /me gusta/i })).toBeVisible({
+      timeout: 15_000,
+    });
+
     await expect(page.getByRole('link', { name: /ver centro de alertas/i })).toBeVisible();
     await expect(page.getByRole('heading', { name: /exportar e importar diario/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /descargar json/i })).toBeVisible();

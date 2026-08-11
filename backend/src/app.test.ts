@@ -74,6 +74,18 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/notifications/preferences requiere auth', async () => {
+    const res = await request(createApp()).get('/api/notifications/preferences');
+    assert.equal(res.status, 401);
+  });
+
+  it('PATCH /api/notifications/preferences requiere auth', async () => {
+    const res = await request(createApp())
+      .patch('/api/notifications/preferences')
+      .send({ like: false });
+    assert.equal(res.status, 401);
+  });
+
   it('GET /api/capsules/me/export requiere auth', async () => {
     const res = await request(createApp()).get('/api/capsules/me/export');
     assert.equal(res.status, 401);

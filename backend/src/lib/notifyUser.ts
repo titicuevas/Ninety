@@ -5,9 +5,12 @@ import {
   mapNotificationCapsule,
   type CapsuleNotificationRow,
 } from './notificationCapsule.js';
+import {
+  getNotificationPreferences,
+  isNotificationTypeEnabled,
+  type NotificationType,
+} from './notificationPreferencesStore.js';
 import { sendPushToUser } from './webPush.js';
-
-type NotificationType = 'like' | 'follow' | 'comment';
 
 const BODY_MAX = 120;
 
@@ -47,6 +50,9 @@ export async function notifyUser(params: {
 
   try {
     if (!supabaseAdmin) return;
+
+    const prefs = await getNotificationPreferences(params.userId);
+    if (!isNotificationTypeEnabled(prefs, params.type)) return;
 
     const snippet = params.type === 'comment' ? truncateBody(params.body) : null;
     const row: Record<string, unknown> = {

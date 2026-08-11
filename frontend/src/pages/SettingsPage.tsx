@@ -10,6 +10,7 @@ import { PasswordField } from '@/components/PasswordField';
 import { DiaryAnniversaryPrefsPanel } from '@/components/DiaryAnniversaryPrefsPanel';
 import { DiaryDigestPrefsPanel } from '@/components/DiaryDigestPrefsPanel';
 import { DiaryMilestonePrefsPanel } from '@/components/DiaryMilestonePrefsPanel';
+import { NotificationTypePrefsPanel } from '@/components/NotificationTypePrefsPanel';
 import { PushAlertsPanel } from '@/components/PushAlertsPanel';
 import { InstallAppPanel } from '@/components/InstallAppPanel';
 import { Button } from '@/components/ui/button';
@@ -219,12 +220,13 @@ export function SettingsPage() {
           <CardHeader>
             <CardTitle className="text-base">Notificaciones</CardTitle>
             <CardDescription>
-              Activa o desactiva las alertas push de este dispositivo. El historial vive en el centro
-              de alertas.
+              Push del dispositivo y silenciado por tipo (likes, comentarios, seguidores). El
+              historial vive en el centro de alertas.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <PushAlertsPanel variant="card" />
+            <NotificationTypePrefsPanel />
             <DiaryDigestPrefsPanel />
             <DiaryAnniversaryPrefsPanel />
             <DiaryMilestonePrefsPanel />

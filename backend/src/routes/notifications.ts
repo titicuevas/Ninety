@@ -7,12 +7,59 @@ import {
   type CapsuleNotificationRow,
   type NotificationCapsule,
 } from '../lib/notificationCapsule.js';
+import {
+  getNotificationPreferences,
+  upsertNotificationPreferences,
+} from '../lib/notificationPreferencesStore.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { getVapidPublicKey, isPushConfigured, sendPushToUser } from '../lib/webPush.js';
 
 export const notificationsRouter = Router();
 
 notificationsRouter.use(requireAuth);
+
+const preferencesPatchSchema = z
+  .object({
+    like: z.boolean().optional(),
+    comment: z.boolean().optional(),
+    follow: z.boolean().optional(),
+  })
+  .refine((body) => body.like !== undefined || body.comment !== undefined || body.follow !== undefined, {
+    message: 'Indica al menos un tipo',
+  });
+
+notificationsRouter.get('/preferences', async (req: AuthRequest, res, next) => {
+  try {
+    const prefs = await getNotificationPreferences(req.userId!);
+    res.json(prefs);
+  } catch (err) {
+    next(err);
+  }
+});
+
+notificationsRouter.patch('/preferences', async (req: AuthRequest, res, next) => {
+  try {
+    const parsed = preferencesPatchSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'Preferencias inválidas' });
+      return;
+    }
+
+    const prefs = await upsertNotificationPreferences(req.userId!, parsed.data);
+    res.json(prefs);
+  } catch (err) {
+    const status = typeof (err as { status?: unknown })?.status === 'number'
+      ? (err as { status: number }).status
+      : undefined;
+    if (status === 503) {
+      res.status(503).json({
+        error: err instanceof Error ? err.message : 'Preferencias no disponibles',
+      });
+      return;
+    }
+    next(err);
+  }
+});
 
 const pushTestLimiter = rateLimit({
   windowMs: 60_000,

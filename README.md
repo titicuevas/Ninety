@@ -371,6 +371,7 @@ Ninety/
 | GET | `/api/collections/user/:username/:slug` | opcional | Detalle colección (`/u/:username/lists/:slug`) |
 | GET | `/api/football/matches/search` | ✅ | Buscar partidos |
 | GET | `/api/football/competitions` | ✅ | Competiciones |
+| GET/PATCH | `/api/notifications/preferences` | ✅ | Preferencias de alertas por tipo (like / comment / follow) |
 
 <a id="roadmap"></a>
 ## 📅 Roadmap
@@ -424,12 +425,12 @@ Ninety/
 - [x] Reordenar Capsules en colecciones — subir/bajar sobre la columna `position` (ya en schema); el orden se refleja en la lista pública (`PUT /api/collections/:id/items/reorder`)
 - [x] Portada de colección — destacar una Capsule o usar la primera foto como cover en listas públicas
 - [x] Importar diario desde export JSON — complemento GDPR al backup actual (sin fotos remotas obligatorias en v1 del import; Ajustes + `POST /api/capsules/me/import`)
-- [ ] Preferencias de alertas por tipo — silenciar likes / comentarios / follows (in-app + push), sin emails
+- [x] Preferencias de alertas por tipo — silenciar likes / comentarios / follows (in-app + push), sin emails (`GET/PATCH /api/notifications/preferences`; migración `20250811143000_notification_preferences.sql`)
 - [ ] Filtros del feed — competición o «solo con fotos» sobre Siguiendo / Explorar
 - [ ] Pulido a11y en flujos clave — foco, landmarks y labels en colecciones y notificaciones
 
 ### 🚧 v7 — Ritmo social & control fino
-- [ ] Preferencias de alertas por tipo — silenciar likes / comentarios / follows (in-app + push); primer pilar tras cerrar v6 o en paralelo si importa más
+- [x] Preferencias de alertas por tipo — silenciar likes / comentarios / follows (in-app + push); cerrado en v6
 - [ ] Digest de actividad social (likes/comentarios agrupados) en el centro de alertas
 - [ ] Empty states post-import — guiar al usuario tras restaurar el diario
 
