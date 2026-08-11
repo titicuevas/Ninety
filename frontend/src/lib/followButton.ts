@@ -5,9 +5,11 @@ export function followButtonLabel(options: {
   following?: boolean;
   /** true mientras corre DELETE (dejar de seguir). */
   unfollowing?: boolean;
+  /** CTA «Seguir de vuelta» en digest de follows. */
+  followBack?: boolean;
 }): string {
   if (options.unfollowing) return 'Dejando de seguir';
-  if (options.following) return 'Siguiendo…';
+  if (options.following) return options.followBack ? 'Siguiendo de vuelta…' : 'Siguiendo…';
   if (options.followed) return 'Dejar de seguir';
-  return 'Seguir';
+  return options.followBack ? 'Seguir de vuelta' : 'Seguir';
 }

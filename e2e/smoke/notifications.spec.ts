@@ -38,6 +38,14 @@ test.describe('Smoke — notificaciones @smoke', () => {
       if (await matchLine.isVisible()) {
         await expect(matchLine).toContainText(/\bvs\b/i);
       }
+
+      const followBack = page.getByTestId('follow-back-button').first();
+      if (await followBack.isVisible()) {
+        await expect(followBack).toHaveAttribute(
+          'aria-label',
+          /seguir de vuelta|dejar de seguir|siguiendo/i,
+        );
+      }
     }
 
     const loadMore = page.getByRole('button', { name: /cargar más/i });

@@ -7,6 +7,8 @@ export interface DigestActor {
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
+  /** true si el viewer ya sigue a este actor (follows del digest). */
+  followed_by_me?: boolean;
 }
 
 export interface DigestNotificationInput {
@@ -21,6 +23,7 @@ export interface DigestNotificationInput {
     username: string | null;
     display_name: string | null;
     avatar_url: string | null;
+    followed_by_me?: boolean;
   } | null;
   capsule?: {
     id: string;
@@ -125,6 +128,7 @@ export function groupNotificationsForDigest(
         username: n.actor?.username ?? null,
         display_name: n.actor?.display_name ?? null,
         avatar_url: n.actor?.avatar_url ?? null,
+        followed_by_me: n.actor?.followed_by_me === true,
       });
     }
 
@@ -154,4 +158,15 @@ export function groupNotificationsForDigest(
 
 export function digestUnreadIds(group: NotificationDigestGroup): string[] {
   return group.notifications.filter((n) => !n.read).map((n) => n.id);
+}
+
+/**
+ * Actor único de un follow digest con username — candidato a «Seguir de vuelta».
+ */
+export function digestFollowBackActor(group: NotificationDigestGroup): DigestActor | null {
+  if (group.type !== 'follow') return null;
+  if (group.actors.length !== 1) return null;
+  const actor = group.actors[0];
+  if (!actor?.username?.trim()) return null;
+  return actor;
 }

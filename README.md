@@ -372,6 +372,8 @@ Ninety/
 | GET | `/api/football/matches/search` | ✅ | Buscar partidos |
 | GET | `/api/football/competitions` | ✅ | Competiciones |
 | GET/PATCH | `/api/notifications/preferences` | ✅ | Preferencias de alertas por tipo (like / comment / follow) |
+| GET/POST/DELETE | `/api/notifications/muted`… | ✅ | Silenciar / reactivar usuario (alertas in-app + push) |
+| GET | `/api/notifications` | ✅ | Lista de alertas (`actor.followed_by_me` para seguir de vuelta) |
 
 <a id="roadmap"></a>
 ## 📅 Roadmap
@@ -435,7 +437,7 @@ Ninety/
 - [x] Filtros en el centro de alertas — ver solo likes / comentarios / follows
 - [x] Silenciar usuario concreto — no recibir alertas de un actor (in-app + push), desde la fila o el perfil (`GET/POST/DELETE /api/notifications/muted`; migración `20250811170000_notification_mutes.sql`)
 - [ ] Horario silencioso de push — franja on-device sin push (sin emails ni spam de toasts)
-- [ ] Seguir de vuelta desde un follow — acción rápida en la fila del digest
+- [x] Seguir de vuelta desde un follow — acción rápida en la fila del digest (`followed_by_me` en actores de `GET /api/notifications` + CTA en follows de un solo actor)
 
 ## 🎨 Identidad visual
 

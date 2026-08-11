@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   digestActionText,
+  digestFollowBackActor,
   digestUnreadIds,
   formatDigestActorNames,
   groupNotificationsForDigest,
@@ -143,5 +144,59 @@ describe('groupNotificationsForDigest', () => {
     assert.equal(groups[0]!.type, 'comment');
     assert.equal(groups[0]!.latestBody, 'Qué partidazo');
     assert.equal(groups[1]!.type, 'like');
+  });
+
+  it('propaga followed_by_me en actores del digest', () => {
+    const groups = groupNotificationsForDigest([
+      n({
+        id: '1',
+        type: 'follow',
+        actor_id: 'b',
+        actor: {
+          username: 'bob',
+          display_name: 'Bob',
+          avatar_url: null,
+          followed_by_me: true,
+        },
+      }),
+    ]);
+    assert.equal(groups[0]!.actors[0]!.followed_by_me, true);
+  });
+});
+
+describe('digestFollowBackActor', () => {
+  it('solo en follow de un actor con username', () => {
+    const single = groupNotificationsForDigest([
+      n({
+        id: '1',
+        type: 'follow',
+        actor_id: 'b',
+        actor: { username: 'bob', display_name: 'Bob', avatar_url: null, followed_by_me: false },
+      }),
+    ])[0]!;
+    const actor = digestFollowBackActor(single);
+    assert.equal(actor?.username, 'bob');
+    assert.equal(actor?.followed_by_me, false);
+
+    const multi = groupNotificationsForDigest([
+      n({
+        id: '1',
+        type: 'follow',
+        actor_id: 'b',
+        actor: { username: 'bob', display_name: 'Bob', avatar_url: null },
+      }),
+      n({
+        id: '2',
+        type: 'follow',
+        actor_id: 'c',
+        actor: { username: 'carla', display_name: 'Carla', avatar_url: null },
+      }),
+    ])[0]!;
+    assert.equal(digestFollowBackActor(multi), null);
+
+    const like = groupNotificationsForDigest([
+      n({ id: '1', type: 'like', actor_id: 'a', capsule_id: 'c1' }),
+    ])[0]!;
+    assert.equal(digestFollowBackActor(like), null);
   });
 });

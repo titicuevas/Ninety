@@ -313,11 +313,17 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
     ];
     const profiles: Record<
       string,
-      { username: string | null; display_name: string | null; avatar_url: string | null }
+      {
+        username: string | null;
+        display_name: string | null;
+        avatar_url: string | null;
+        followed_by_me: boolean;
+      }
     > = {};
     const capsules: Record<string, NotificationCapsule> = {};
+    const followedSet = new Set<string>();
 
-    const [profilesResult, capsulesResult] = await Promise.all([
+    const [profilesResult, capsulesResult, followsResult] = await Promise.all([
       actorIds.length > 0
         ? supabaseAdmin!
             .from('profiles')
@@ -330,7 +336,20 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
             .select('id, home_team_name, away_team_name, competition_name, photo_urls, photo_url')
             .in('id', capsuleIds)
         : Promise.resolve({ data: null }),
+      actorIds.length > 0
+        ? supabaseAdmin!
+            .from('user_follows')
+            .select('following_id')
+            .eq('follower_id', userId)
+            .in('following_id', actorIds)
+        : Promise.resolve({ data: null, error: null }),
     ]);
+
+    if (Array.isArray(followsResult.data)) {
+      for (const row of followsResult.data as Array<{ following_id: string }>) {
+        followedSet.add(row.following_id);
+      }
+    }
 
     if (profilesResult.data) {
       for (const p of profilesResult.data) {
@@ -338,6 +357,7 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
           username: p.username,
           display_name: p.full_name ?? null,
           avatar_url: p.avatar_url,
+          followed_by_me: followedSet.has(p.id),
         };
       }
     }

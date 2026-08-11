@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { Bell, Heart, UserPlus, MessageCircle } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
+import { FollowButton } from '@/components/FollowButton';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { Layout } from '@/components/Layout';
 import { MuteUserButton } from '@/components/MuteUserButton';
@@ -24,6 +25,7 @@ import {
 } from '@/lib/notificationCapsule';
 import {
   digestActionText,
+  digestFollowBackActor,
   digestUnreadIds,
   formatDigestActorNames,
   groupNotificationsForDigest,
@@ -124,6 +126,7 @@ function DigestNotificationItem({
   const actionText = digestActionText(group.type, group.actors.length);
   const singleActorUsername =
     group.actors.length === 1 ? group.actors[0]?.username ?? null : null;
+  const followBackActor = digestFollowBackActor(group);
   const followHref =
     group.type === 'follow' && group.actors.length === 1
       ? publicProfilePath(group.actors[0]?.username) ?? undefined
@@ -186,11 +189,20 @@ function DigestNotificationItem({
     if (ids.length > 0) onOpen?.(ids);
   };
 
-  const muteControl = singleActorUsername ? (
-    <div className="flex shrink-0 items-start pt-2 pr-1">
-      <MuteUserButton username={singleActorUsername} size="icon" />
-    </div>
-  ) : null;
+  const rowActions =
+    followBackActor || singleActorUsername ? (
+      <div className="flex shrink-0 items-start gap-1 pt-2 pr-1">
+        {followBackActor?.username ? (
+          <FollowButton
+            username={followBackActor.username}
+            followedByMe={followBackActor.followed_by_me === true}
+            followBack
+            size="compact"
+          />
+        ) : null}
+        {singleActorUsername ? <MuteUserButton username={singleActorUsername} size="icon" /> : null}
+      </div>
+    ) : null;
 
   if (link) {
     return (
@@ -203,7 +215,7 @@ function DigestNotificationItem({
         >
           {content}
         </Link>
-        {muteControl}
+        {rowActions}
       </div>
     );
   }
@@ -218,7 +230,7 @@ function DigestNotificationItem({
       >
         {content}
       </button>
-      {muteControl}
+      {rowActions}
     </div>
   );
 }

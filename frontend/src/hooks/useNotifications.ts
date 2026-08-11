@@ -15,6 +15,8 @@ export interface NotificationActor {
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
+  /** true si el viewer ya sigue al actor. */
+  followed_by_me?: boolean;
 }
 
 export type NotificationCapsule = NotificationCapsuleContext;

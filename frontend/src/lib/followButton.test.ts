@@ -27,4 +27,13 @@ describe('followButtonLabel', () => {
       'Dejando de seguir',
     );
   });
+
+  it('usa Seguir de vuelta en el digest de follows', () => {
+    assert.equal(followButtonLabel({ followed: false, followBack: true }), 'Seguir de vuelta');
+    assert.equal(
+      followButtonLabel({ followed: false, followBack: true, following: true }),
+      'Siguiendo de vuelta…',
+    );
+    assert.equal(followButtonLabel({ followed: true, followBack: true }), 'Dejar de seguir');
+  });
 });

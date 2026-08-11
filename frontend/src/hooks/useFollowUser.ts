@@ -5,6 +5,7 @@ import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 import type { FeedResponse } from '@/types/capsule';
 import type { Profile } from '@/types/profile';
+import type { AppNotification } from '@/hooks/useNotifications';
 
 interface PublicProfilePage {
   profile: Profile;
@@ -17,6 +18,13 @@ type PublicProfileInfinite = InfiniteData<PublicProfilePage>;
 type ProfilesListResponse = {
   profiles: Profile[];
 };
+
+interface NotificationsResponse {
+  notifications: AppNotification[];
+  unread_count: number;
+  total: number;
+  type?: string | null;
+}
 
 function updateProfileFollow(profile: Profile, followed: boolean): Profile {
   const delta = followed ? -1 : 1;
@@ -56,6 +64,26 @@ function bumpFeedFollowingCount(
   };
 }
 
+function patchNotificationActors(
+  old: InfiniteData<NotificationsResponse> | undefined,
+  username: string,
+  followed: boolean,
+): InfiniteData<NotificationsResponse> | undefined {
+  if (!old) return old;
+  const nextFollowed = !followed;
+  return {
+    ...old,
+    pages: old.pages.map((page) => ({
+      ...page,
+      notifications: page.notifications.map((n) =>
+        n.actor?.username === username
+          ? { ...n, actor: { ...n.actor, followed_by_me: nextFollowed } }
+          : n,
+      ),
+    })),
+  };
+}
+
 export function useToggleFollow(username: string) {
   const session = useAuthStore((s) => s.session);
   const queryClient = useQueryClient();
@@ -74,6 +102,7 @@ export function useToggleFollow(username: string) {
       await queryClient.cancelQueries({ queryKey: ['capsules', 'feed'] });
       await queryClient.cancelQueries({ queryKey: ['profile', 'search'] });
       await queryClient.cancelQueries({ queryKey: ['profile', 'discover'] });
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
 
       const previousProfiles = queryClient.getQueriesData<PublicProfileInfinite>({
         queryKey: ['profile', 'public', username],
@@ -84,6 +113,9 @@ export function useToggleFollow(username: string) {
       });
       const previousDiscover = queryClient.getQueriesData<ProfilesListResponse>({
         queryKey: ['profile', 'discover'],
+      });
+      const previousNotifications = queryClient.getQueriesData<InfiniteData<NotificationsResponse>>({
+        queryKey: ['notifications'],
       });
 
       queryClient.setQueriesData<PublicProfileInfinite>(
@@ -112,7 +144,18 @@ export function useToggleFollow(username: string) {
         patchProfilesList(old, username, followed),
       );
 
-      return { previousProfiles, previousFeed, previousSearch, previousDiscover };
+      queryClient.setQueriesData<InfiniteData<NotificationsResponse>>(
+        { queryKey: ['notifications'] },
+        (old) => patchNotificationActors(old, username, followed),
+      );
+
+      return {
+        previousProfiles,
+        previousFeed,
+        previousSearch,
+        previousDiscover,
+        previousNotifications,
+      };
     },
     onError: (_err, _vars, context) => {
       context?.previousProfiles?.forEach(([key, data]) => {
@@ -125,6 +168,9 @@ export function useToggleFollow(username: string) {
         queryClient.setQueryData(key, data);
       });
       context?.previousDiscover?.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
+      context?.previousNotifications?.forEach(([key, data]) => {
         queryClient.setQueryData(key, data);
       });
       toast.error('No se pudo actualizar el seguimiento');
@@ -143,6 +189,7 @@ export function useToggleFollow(username: string) {
       void queryClient.invalidateQueries({ queryKey: ['profile', 'discover'] });
       void queryClient.invalidateQueries({ queryKey: ['capsules', 'feed'] });
       void queryClient.invalidateQueries({ queryKey: ['capsules', 'public'] });
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 }
