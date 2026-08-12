@@ -9,9 +9,12 @@ import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { DateInput } from '@/components/ui/date-input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useDirtyLeave } from '@/hooks/useDirtyLeave';
+import {
+  CAPSULE_NOTE_MAX,
+  capsuleNoteLength,
+} from '@/lib/capsuleNote';
 import {
   clearDraftCapsuleMemory,
   readDraftCapsuleMemory,
@@ -26,7 +29,10 @@ import {
 
 const memorySchema = z.object({
   watched_at: z.string().date('Fecha inválida'),
-  note: z.string().max(2000).optional(),
+  note: z
+    .string()
+    .max(CAPSULE_NOTE_MAX, `Máximo ${CAPSULE_NOTE_MAX} caracteres`)
+    .optional(),
 });
 
 export type CapsuleMemoryFormValues = z.infer<typeof memorySchema>;
@@ -41,6 +47,16 @@ export type CapsuleMemorySubmitPayload = CapsuleMemoryFormValues & {
 };
 
 const NO_PHOTO_URLS: string[] = [];
+
+function chipClass(selected: boolean) {
+  return cn(
+    'min-h-10 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+    selected
+      ? 'bg-primary text-primary-foreground shadow-[0_0_20px_-10px_rgba(16,185,129,0.8)]'
+      : 'bg-secondary text-muted-foreground ring-1 ring-border hover:text-foreground hover:ring-primary/30',
+  );
+}
 
 interface CapsuleMemoryFormProps {
   defaultWatchedAt: string;
@@ -174,15 +190,6 @@ export function CapsuleMemoryForm({
     });
   };
 
-  const chipClass = (selected: boolean) =>
-    cn(
-      'min-h-10 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors',
-      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-      selected
-        ? 'bg-primary text-primary-foreground shadow-[0_0_20px_-10px_rgba(16,185,129,0.8)]'
-        : 'bg-secondary text-muted-foreground ring-1 ring-border hover:text-foreground hover:ring-primary/30',
-    );
-
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 sm:space-y-5">
       <SectionCard>
@@ -262,14 +269,23 @@ export function CapsuleMemoryForm({
           </fieldset>
 
           <div className="space-y-1.5">
-            <Label htmlFor="note">Nota (opcional)</Label>
-            <Textarea
-              id="note"
-              rows={4}
-              className="min-h-28 w-full resize-y text-base"
-              placeholder="Con quién lo viste, qué recuerdas..."
-              {...register('note')}
-            />
+            <FormField
+              label="Reseña corta (opcional)"
+              hint={`Texto libre además de las estrellas · máx. ${CAPSULE_NOTE_MAX} caracteres`}
+              error={errors.note?.message}
+            >
+              <Textarea
+                id="note"
+                rows={4}
+                maxLength={CAPSULE_NOTE_MAX}
+                className="min-h-28 w-full resize-y text-base"
+                placeholder="Qué sentiste, con quién lo viste, un detalle que no quieres olvidar…"
+                {...register('note')}
+              />
+            </FormField>
+            <p className="text-right text-xs tabular-nums text-muted-foreground" aria-live="polite">
+              {capsuleNoteLength(note)}/{CAPSULE_NOTE_MAX}
+            </p>
           </div>
         </div>
       </SectionCard>

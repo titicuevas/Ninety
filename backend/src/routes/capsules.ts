@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
+import { CAPSULE_NOTE_MAX, normalizeCapsuleNote } from '../lib/capsuleNote.js';
 import { deleteCapsulePhotoByUrl, deleteCapsulePhotosByUrls, uploadCapsulePhotoBuffer } from '../lib/ensureStorage.js';
 import {
   buildDiaryExportCsv,
@@ -67,7 +68,7 @@ const createCapsuleSchema = z.object({
   away_score: z.number().int().min(0).max(99).optional().nullable(),
   watched_at: z.string().date(),
   rating: z.number().int().min(1).max(5).optional().nullable(),
-  note: z.string().max(2000).optional().nullable(),
+  note: z.string().max(CAPSULE_NOTE_MAX).optional().nullable(),
   photo_urls: z.array(z.string().url().max(2048)).max(9).optional(),
   is_public: z.boolean().optional().default(true),
   watch_context: z.enum(['stadium', 'tv', 'pub', 'other']).optional().nullable(),
@@ -913,7 +914,7 @@ capsulesRouter.delete('/photos', requireAuth, async (req: AuthRequest, res) => {
 const updateCapsuleSchema = z.object({
   watched_at: z.string().date().optional(),
   rating: z.number().int().min(1).max(5).optional().nullable(),
-  note: z.string().max(2000).optional().nullable(),
+  note: z.string().max(CAPSULE_NOTE_MAX).optional().nullable(),
   photo_urls: z.array(z.string().url().max(2048)).max(9).optional(),
   is_public: z.boolean().optional(),
   watch_context: z.enum(['stadium', 'tv', 'pub', 'other']).optional().nullable(),
@@ -1462,6 +1463,7 @@ capsulesRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
     .insert({
       user_id: req.userId!,
       ...parsed.data,
+      note: normalizeCapsuleNote(parsed.data.note),
       photo_urls: parsed.data.photo_urls ?? [],
       is_public: parsed.data.is_public ?? true,
     })
@@ -1526,9 +1528,16 @@ capsulesRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
   }
 
   const supabase = createUserClient(token);
+  const patch = {
+    ...parsed.data,
+    ...(Object.prototype.hasOwnProperty.call(parsed.data, 'note')
+      ? { note: normalizeCapsuleNote(parsed.data.note) }
+      : {}),
+    updated_at: new Date().toISOString(),
+  };
   const { data, error } = await supabase
     .from('capsules')
-    .update({ ...parsed.data, updated_at: new Date().toISOString() })
+    .update(patch)
     .eq('id', req.params.id)
     .eq('user_id', req.userId!)
     .select()

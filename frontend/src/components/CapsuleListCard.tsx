@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { CapsuleNoteText } from '@/components/CapsuleNoteText';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { StarRating } from '@/components/StarRating';
 import { WatchContextBadge } from '@/components/WatchContextBadge';
@@ -94,9 +95,7 @@ export function CapsuleListCard({
             </div>
           ) : null}
 
-          {capsule.note ? (
-            <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">{capsule.note}</p>
-          ) : null}
+          {capsule.note ? <CapsuleNoteText note={capsule.note} compact /> : null}
         </Link>
 
         {footer ? (

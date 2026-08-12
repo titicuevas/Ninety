@@ -187,7 +187,7 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(page).toHaveURL(/\/capsules\/.+\/edit/);
     await expect(page.getByRole('heading', { name: /editar capsule/i })).toBeVisible();
 
-    const note = page.getByLabel('Nota (opcional)');
+    const note = page.getByLabel('Reseña corta (opcional)');
     await note.fill(`Cambio sin guardar ${Date.now()}`);
     await page.getByRole('button', { name: /^cancelar$/i }).click();
 
@@ -225,7 +225,7 @@ test.describe('Smoke — autenticado @smoke', () => {
     await editLink.click();
     await expect(page).toHaveURL(/\/capsules\/.+\/edit/);
 
-    const note = page.getByLabel('Nota (opcional)');
+    const note = page.getByLabel('Reseña corta (opcional)');
     const stamp = `Guardado E2E ${Date.now()}`;
     await note.fill(stamp);
     await page.getByRole('button', { name: /guardar cambios/i }).click();

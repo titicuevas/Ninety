@@ -83,13 +83,13 @@ test.describe('Crítico — creación de capsule con fotos @critical', () => {
 
     const draftNote = `Borrador E2E ${Date.now()}`;
     await page.getByRole('radio', { name: '3 de 5 estrellas' }).click();
-    await page.getByLabel('Nota (opcional)').fill(draftNote);
+    await page.getByLabel('Reseña corta (opcional)').fill(draftNote);
     await page.getByRole('radio', { name: /estadio/i }).click();
 
     // El borrador de memoria también sobrevive al refresh (fotos no)
     await page.reload();
     await expect(page).toHaveURL(/\/capsules\/new/);
-    await expect(page.getByLabel('Nota (opcional)')).toHaveValue(draftNote, { timeout: 10_000 });
+    await expect(page.getByLabel('Reseña corta (opcional)')).toHaveValue(draftNote, { timeout: 10_000 });
     await expect(page.getByRole('radio', { name: '3 de 5 estrellas' })).toHaveAttribute(
       'aria-checked',
       'true',
@@ -103,7 +103,7 @@ test.describe('Crítico — creación de capsule con fotos @critical', () => {
 
     await expect(page.getByText(/^2\/9\b/)).toBeVisible({ timeout: 20_000 });
     await page.getByRole('radio', { name: '4 de 5 estrellas' }).click();
-    await page.getByLabel('Nota (opcional)').fill(note);
+    await page.getByLabel('Reseña corta (opcional)').fill(note);
     await page.getByRole('button', { name: /guardar capsule/i }).click();
 
     await expect(page).toHaveURL(/\/c\/[0-9a-f-]{8,}/i, { timeout: 30_000 });

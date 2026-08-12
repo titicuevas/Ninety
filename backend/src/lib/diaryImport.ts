@@ -1,8 +1,12 @@
 import { z } from 'zod';
+import { CAPSULE_NOTE_MAX, normalizeCapsuleNote } from './capsuleNote.js';
 
 /** Límite duro por petición (abuso + payload). */
 export const DIARY_IMPORT_MAX_CAPSULES = 500;
 export const MAX_SOURCE_PHOTOS_PER_CAPSULE = 9;
+
+/** Acepta exports antiguos (DB ≤ 2000) y normaliza al límite de reseña corta. */
+const IMPORT_NOTE_MAX = Math.max(2000, CAPSULE_NOTE_MAX);
 
 const watchContextSchema = z.enum(['stadium', 'tv', 'pub', 'other']).nullable().optional();
 
@@ -20,7 +24,7 @@ const importCapsuleSchema = z.object({
   away_score: z.number().int().min(0).max(99).nullable().optional(),
   watched_at: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'watched_at debe ser YYYY-MM-DD'),
   rating: z.number().int().min(1).max(5).nullable().optional(),
-  note: z.string().max(2000).nullable().optional(),
+  note: z.string().max(IMPORT_NOTE_MAX).nullable().optional(),
   is_public: z.boolean().optional(),
   watch_context: watchContextSchema,
   photo_urls: z.array(z.string().max(2048)).max(9).optional(),
@@ -136,7 +140,7 @@ export function toImportRow(raw: unknown, options?: ToImportRowOptions): DiaryIm
     away_score: c.away_score ?? null,
     watched_at: c.watched_at,
     rating: c.rating ?? null,
-    note: c.note?.trim() || null,
+    note: normalizeCapsuleNote(c.note),
     photo_urls: [],
     source_photo_urls: sourcePhotoUrls,
     is_public: c.is_public !== false,

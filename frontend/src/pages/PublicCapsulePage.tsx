@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { AddToCollectionButton } from '@/components/AddToCollectionButton';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
+import { CapsuleNoteText } from '@/components/CapsuleNoteText';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { FollowButton } from '@/components/FollowButton';
 import { FollowsYouBadge } from '@/components/FollowsYouBadge';
@@ -257,7 +258,7 @@ export function PublicCapsulePage() {
               </div>
             ) : null}
 
-            {capsule.note ? <p className="mt-4 text-sm text-muted-foreground">{capsule.note}</p> : null}
+            {capsule.note ? <CapsuleNoteText note={capsule.note} /> : null}
 
             <CapsuleEngagementBar
               className="mt-5"

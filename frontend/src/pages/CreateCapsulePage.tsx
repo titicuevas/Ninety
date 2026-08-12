@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuthInit';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ApiError } from '@/lib/api';
 import { uploadCapsulePhotos } from '@/lib/capsulePhoto';
+import { normalizeCapsuleNote } from '@/lib/capsuleNote';
 import { clearDraftCapsuleMemory } from '@/lib/draftCapsuleMemory';
 import { clearDraftMatch, readDraftMatch, saveDraftMatch } from '@/lib/draftMatch';
 import { friendlyApiError } from '@/lib/friendlyErrors';
@@ -97,7 +98,7 @@ export function CreateCapsulePage() {
           ...footballMatchToCapsuleBase(match),
           watched_at: payload.watched_at,
           rating: payload.rating,
-          note: payload.note?.trim() || null,
+          note: normalizeCapsuleNote(payload.note),
           photo_urls: uploadedUrls,
           is_public: payload.is_public,
           watch_context: payload.watch_context,

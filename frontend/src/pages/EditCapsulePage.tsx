@@ -10,6 +10,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useCapsule, useDeleteCapsule, useUpdateCapsule } from '@/hooks/useCapsules';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { deleteCapsulePhotosByUrls, uploadCapsulePhotos } from '@/lib/capsulePhoto';
+import { normalizeCapsuleNote } from '@/lib/capsuleNote';
 import { friendlyApiError } from '@/lib/friendlyErrors';
 import { getCapsulePhotoUrls } from '@/lib/capsulePhotos';
 import { capsuleToFootballMatch } from '@/lib/matchCapsule';
@@ -94,7 +95,7 @@ export function EditCapsulePage() {
         {
           watched_at: payload.watched_at,
           rating: payload.rating,
-          note: payload.note?.trim() || null,
+          note: normalizeCapsuleNote(payload.note),
           photo_urls: [...payload.keptPhotoUrls, ...uploadedUrls],
           is_public: payload.is_public,
           watch_context: payload.watch_context,

@@ -12,6 +12,7 @@ export interface Capsule {
   away_score: number | null;
   watched_at: string;
   rating: number | null;
+  /** Reseña corta opcional (máx. 1000). */
   note: string | null;
   photo_urls: string[];
   /** false = solo el dueño; default true si la columna aún no existe en cache */
