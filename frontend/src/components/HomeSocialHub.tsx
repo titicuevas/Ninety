@@ -4,6 +4,7 @@ import { PeopleResultRow } from '@/components/PeopleSearchPanel';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCapsuleFeed } from '@/hooks/useCapsules';
+import { useDiscoverCollections } from '@/hooks/useDiscoverCollections';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { useUnreadCount } from '@/hooks/useNotifications';
 import { feedPath } from '@/lib/feedParams';
@@ -68,9 +69,11 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
   const preview = feedData?.pages[0]?.capsules.slice(0, PREVIEW_COUNT) ?? [];
   const feedEmpty = !feedLoading && preview.length === 0;
   const { data: discoverData } = useDiscoverProfiles(feedEmpty);
+  const { data: discoverCollectionsData } = useDiscoverCollections(feedEmpty);
   const suggestions = (discoverData?.profiles ?? [])
     .filter((p) => p.username && !p.followed_by_me)
     .slice(0, PREVIEW_COUNT);
+  const collectionPreview = (discoverCollectionsData?.collections ?? []).slice(0, PREVIEW_COUNT);
 
   const unreadLabel = unread > 9 ? '9+' : String(unread);
   const profileHref = publicProfilePath(username);
@@ -181,13 +184,57 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
         </div>
       ) : null}
 
+      {feedEmpty && collectionPreview.length > 0 ? (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold tracking-wide text-primary uppercase">
+            Listas para descubrir
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Colecciones públicas con Capsules para empezar sin follows.
+          </p>
+          <ul className="space-y-2">
+            {collectionPreview.map((collection) => {
+              const username = collection.author.username;
+              const href =
+                username && collection.slug
+                  ? `/u/${encodeURIComponent(username)}/lists/${encodeURIComponent(collection.slug)}`
+                  : null;
+              return (
+                <li
+                  key={collection.id}
+                  className="rounded-xl border border-border bg-card p-3 sm:p-3.5"
+                >
+                  {href ? (
+                    <Link
+                      to={href}
+                      className="block truncate font-medium hover:text-primary hover:underline"
+                    >
+                      {collection.name}
+                    </Link>
+                  ) : (
+                    <p className="truncate font-medium">{collection.name}</p>
+                  )}
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {collection.items_count ?? 0} Capsules
+                    {username ? ` · @${username}` : ''}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+          <Button asChild variant="ghost" size="sm" className="px-0 text-primary">
+            <Link to="/collections/explore">Ver más listas</Link>
+          </Button>
+        </div>
+      ) : null}
+
       {feedEmpty && suggestions.length > 0 ? (
         <div className="space-y-3">
           <h3 className="text-sm font-semibold tracking-wide text-primary uppercase">
             Aficionados sugeridos
           </h3>
           <p className="text-sm text-muted-foreground">
-            Priorizamos gente con tu mismo equipo o cercana.
+            Perfiles con actividad pública; si compartes equipo o ciudad, van primero.
           </p>
           <ul className="space-y-2">
             {suggestions.map((profile) => (
@@ -200,11 +247,15 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
         </div>
       ) : null}
 
-      {feedEmpty && suggestions.length === 0 ? (
+      {feedEmpty && suggestions.length === 0 && collectionPreview.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Sigue a otros aficionados para ver sus partidos aquí.{' '}
+          Descubre aficionados y listas públicas para llenar tu feed.{' '}
           <Link to={feedPath('explore')} className="text-primary hover:underline">
             Explorar comunidad
+          </Link>
+          {' · '}
+          <Link to="/collections/explore" className="text-primary hover:underline">
+            Explorar listas
           </Link>
           {' · '}
           <Link to="/search?tab=people" className="text-primary hover:underline">

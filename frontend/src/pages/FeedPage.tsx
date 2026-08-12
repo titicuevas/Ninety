@@ -1,4 +1,4 @@
-import { Compass, Users } from 'lucide-react';
+import { Compass, Library, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
@@ -11,19 +11,79 @@ import { PeopleResultRow } from '@/components/PeopleSearchPanel';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { Button } from '@/components/ui/button';
 import { useCapsuleFeed, type FeedScope, type FeedSort } from '@/hooks/useCapsules';
+import { useDiscoverCollections } from '@/hooks/useDiscoverCollections';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useFeedFilterParams } from '@/hooks/useFeedFilterParams';
+import { discoverCollectionMatchLabel } from '@/lib/discoverCollections';
 import { feedDocumentTitle, feedPath, hasFeedContentFilters } from '@/lib/feedParams';
 import { formatRelativeTime } from '@/lib/format';
 import {
   postImportFeedHint,
   readDiaryPostImportState,
 } from '@/lib/diaryPostImportMemory';
-import { publicProfilePath } from '@/lib/profilePath';
+import { profilePath, publicProfilePath } from '@/lib/profilePath';
 import { cn } from '@/lib/utils';
 import type { FeedCapsule } from '@/types/capsule';
+import type { DiscoverCollection } from '@/types/collection';
+
+function FeedDiscoverCollectionRow({ collection }: { collection: DiscoverCollection }) {
+  const author = collection.author;
+  const username = author.username;
+  const matchLabel = discoverCollectionMatchLabel(collection.match_reason);
+  const href =
+    username && collection.slug
+      ? `/u/${encodeURIComponent(username)}/lists/${encodeURIComponent(collection.slug)}`
+      : null;
+  const authorHref = username ? profilePath(username) : null;
+
+  return (
+    <li className="rounded-xl border border-border bg-card p-3 sm:p-3.5">
+      <div className="flex items-start gap-3">
+        {collection.cover_url ? (
+          <img
+            src={collection.cover_url}
+            alt=""
+            className="h-12 w-12 shrink-0 rounded-lg object-cover"
+          />
+        ) : (
+          <div
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+            aria-hidden
+          >
+            <Library className="h-4 w-4" />
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          {href ? (
+            <Link
+              to={href}
+              className="font-medium text-foreground hover:text-primary hover:underline"
+            >
+              {collection.name}
+            </Link>
+          ) : (
+            <p className="font-medium">{collection.name}</p>
+          )}
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {collection.items_count ?? 0}{' '}
+            {(collection.items_count ?? 0) === 1 ? 'Capsule' : 'Capsules'}
+            {matchLabel ? ` · ${matchLabel}` : ''}
+            {authorHref && username ? (
+              <>
+                {' · '}
+                <Link to={authorHref} className="text-primary hover:underline">
+                  @{username}
+                </Link>
+              </>
+            ) : null}
+          </p>
+        </div>
+      </div>
+    </li>
+  );
+}
 
 function AuthorName({ capsule, currentUserId }: { capsule: FeedCapsule; currentUserId?: string }) {
   const name = capsule.profiles?.display_name ?? capsule.profiles?.username ?? 'Aficionado';
@@ -175,7 +235,9 @@ export function FeedPage() {
   const filterEmpty = isEmpty && contentFiltersActive;
   const showDiscover = isEmpty && scope === 'following' && !contentFiltersActive;
   const { data: discoverData } = useDiscoverProfiles(showDiscover);
+  const { data: discoverCollectionsData } = useDiscoverCollections(showDiscover);
   const suggestions = discoverData?.profiles ?? [];
+  const collectionSuggestions = (discoverCollectionsData?.collections ?? []).slice(0, 3);
   const postImportHint = user?.id
     ? postImportFeedHint(readDiaryPostImportState(user.id))
     : null;
@@ -251,7 +313,7 @@ export function FeedPage() {
               description={
                 postImportHint ??
                 (followingCount === 0
-                  ? 'Sigue a otros aficionados para ver sus partidos aquí.'
+                  ? 'Aún no sigues a nadie. Explora aficionados activos y listas públicas para empezar.'
                   : 'La gente que sigues aún no ha publicado partidos, o aún no has guardado ninguno.')
               }
             >
@@ -259,6 +321,9 @@ export function FeedPage() {
                 <Link to={feedPath('explore', sort)}>Explorar comunidad</Link>
               </Button>
               <Button asChild>
+                <Link to="/collections/explore">Explorar listas</Link>
+              </Button>
+              <Button asChild variant="secondary">
                 <Link to="/search?tab=people">Buscar aficionados</Link>
               </Button>
               {postImportHint ? (
@@ -272,6 +337,28 @@ export function FeedPage() {
               )}
             </EmptyState>
 
+            {collectionSuggestions.length > 0 ? (
+              <section className="space-y-3">
+                <div>
+                  <h2 className="text-sm font-semibold tracking-wide text-primary uppercase">
+                    Listas para descubrir
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Colecciones públicas con Capsules — útiles aunque no tengas follows ni equipo
+                    favorito.
+                  </p>
+                </div>
+                <ul className="space-y-2">
+                  {collectionSuggestions.map((collection) => (
+                    <FeedDiscoverCollectionRow key={collection.id} collection={collection} />
+                  ))}
+                </ul>
+                <Button asChild variant="ghost" size="sm" className="px-0 text-primary">
+                  <Link to="/collections/explore">Ver más listas</Link>
+                </Button>
+              </section>
+            ) : null}
+
             {suggestions.length > 0 ? (
               <section className="space-y-3">
                 <div>
@@ -279,7 +366,8 @@ export function FeedPage() {
                     Aficionados sugeridos
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Priorizamos gente con tu mismo equipo o cercana.
+                    Priorizamos perfiles con Capsules públicas; si compartes equipo o ciudad, van
+                    primero.
                   </p>
                 </div>
                 <ul className="space-y-2">

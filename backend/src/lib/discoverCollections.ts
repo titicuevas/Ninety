@@ -23,7 +23,7 @@ export type DiscoverCollectionCandidate = {
   author: DiscoverCollectionAuthor;
 };
 
-export type DiscoverCollectionMatchReason = 'following' | 'favorite_team' | null;
+export type DiscoverCollectionMatchReason = 'following' | 'favorite_team' | 'active' | null;
 
 export type RankedDiscoverCollection = DiscoverCollectionCandidate & {
   match_reason: DiscoverCollectionMatchReason;
@@ -31,7 +31,8 @@ export type RankedDiscoverCollection = DiscoverCollectionCandidate & {
 
 /**
  * Ordena colecciones públicas ajenas: seguidos → mismo equipo favorito del autor →
- * con portada → más ítems → más recientes.
+ * con contenido (activas) → con portada → más ítems → más recientes.
+ * En frío (sin follows / sin equipo) prioriza listas con Capsules y actividad reciente.
  */
 export function rankDiscoverCollections(
   candidates: DiscoverCollectionCandidate[],
@@ -58,7 +59,7 @@ export function rankDiscoverCollections(
         ? 'following'
         : scoreTeam
           ? 'favorite_team'
-          : null;
+          : 'active';
 
       return {
         row,

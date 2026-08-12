@@ -2,9 +2,11 @@ import type { ProfileRow } from './profileNormalize.js';
 
 export type DiscoverCandidate = ProfileRow & {
   username: string;
+  /** Capsules públicas recientes del perfil (heurística en frío). */
+  public_capsules_count?: number;
 };
 
-export type DiscoverMatchReason = 'favorite_team' | 'city' | 'country' | null;
+export type DiscoverMatchReason = 'favorite_team' | 'city' | 'country' | 'active' | null;
 
 export type RankedDiscoverProfile = DiscoverCandidate & {
   match_reason: DiscoverMatchReason;
@@ -54,20 +56,22 @@ export function teamsMatch(a: string | null | undefined, b: string | null | unde
 }
 
 function primaryMatchReason(
-  row: DiscoverCandidate,
-  viewer: { favorite_team?: string | null; city?: string | null; country?: string | null },
   scoreTeam: boolean,
   scoreCity: boolean,
   scoreCountry: boolean,
+  hasActivity: boolean,
 ): DiscoverMatchReason {
   if (scoreTeam) return 'favorite_team';
   if (scoreCity) return 'city';
   if (scoreCountry) return 'country';
+  if (hasActivity) return 'active';
   return null;
 }
 
 /**
- * Ordena candidatos: mismo equipo favorito → misma ciudad → mismo país → más recientes.
+ * Ordena candidatos: mismo equipo favorito → misma ciudad → mismo país →
+ * actividad pública reciente → más recientes.
+ * Sirve en frío (sin follows / sin equipo favorito): prioriza perfiles con Capsules.
  */
 export function rankDiscoverProfiles(
   candidates: DiscoverCandidate[],
@@ -84,21 +88,29 @@ export function rankDiscoverProfiles(
       const scoreTeam = teamsMatch(viewer.favorite_team, row.favorite_team);
       const scoreCity = !!myCity && normalizeDiscoverText(row.city) === myCity;
       const scoreCountry = !!myCountry && normalizeDiscoverText(row.country) === myCountry;
+      const activityCount = Math.max(0, row.public_capsules_count ?? 0);
+      const hasActivity = activityCount > 0;
 
       let score = 0;
       if (scoreTeam) score += 100;
       if (scoreCity) score += 40;
       if (scoreCountry) score += 20;
+      // Hasta +30 por Capsules públicas recientes (descubrimiento en frío).
+      if (hasActivity) score += Math.min(activityCount, 10) * 3;
 
       const created = row.created_at ? new Date(row.created_at).getTime() : 0;
       return {
         row,
         score,
         created,
-        match_reason: primaryMatchReason(row, viewer, scoreTeam, scoreCity, scoreCountry),
+        activityCount,
+        match_reason: primaryMatchReason(scoreTeam, scoreCity, scoreCountry, hasActivity),
       };
     })
-    .sort((a, b) => b.score - a.score || b.created - a.created)
+    .sort(
+      (a, b) =>
+        b.score - a.score || b.activityCount - a.activityCount || b.created - a.created,
+    )
     .slice(0, limit)
     .map((entry) => ({ ...entry.row, match_reason: entry.match_reason }));
 }
@@ -108,4 +120,20 @@ export function favoriteTeamIlikePattern(team: string): string | null {
   const cleaned = team.replace(/[%_]/g, '').trim();
   if (cleaned.length < 2) return null;
   return `%${cleaned}%`;
+}
+
+/** Agrega conteos de Capsules públicas por autor (pool reciente). */
+export function tallyPublicCapsuleActivity(
+  rows: Array<{ user_id: string }>,
+  excludeUserId?: string,
+  blockedIds?: Set<string>,
+): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const id = row.user_id;
+    if (!id || id === excludeUserId) continue;
+    if (blockedIds?.has(id)) continue;
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  return counts;
 }

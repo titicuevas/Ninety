@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { MIN_PEOPLE_QUERY, useProfileSearch } from '@/hooks/useProfileSearch';
+import { discoverProfileMatchLabel } from '@/lib/discoverProfiles';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { profilePath } from '@/lib/profilePath';
 import type { Profile } from '@/types/profile';
@@ -22,6 +23,7 @@ export function PeopleResultRow({ profile }: { profile: Profile }) {
   const canLink = !isAutoUsername(username);
   const href = canLink ? profilePath(username) : null;
   const canCompare = canLink;
+  const matchLabel = discoverProfileMatchLabel(profile.match_reason);
 
   return (
     <li className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 sm:p-4">
@@ -46,13 +48,15 @@ export function PeopleResultRow({ profile }: { profile: Profile }) {
           ) : (
             <span className="font-medium text-foreground">{name}</span>
           )}
-          {profile.match_reason === 'favorite_team' ? (
-            <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-              Mismo equipo
-            </span>
-          ) : profile.match_reason === 'city' ? (
-            <span className="rounded-md bg-secondary px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Cerca
+          {matchLabel ? (
+            <span
+              className={
+                profile.match_reason === 'favorite_team'
+                  ? 'rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary'
+                  : 'rounded-md bg-secondary px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'
+              }
+            >
+              {matchLabel}
             </span>
           ) : null}
           {profile.follows_me ? <FollowsYouBadge /> : null}
@@ -172,8 +176,8 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
                 Aficionados sugeridos
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Priorizamos aficionados con tu mismo equipo o cercanos. Empieza a seguir gente para
-                llenar tu feed.
+                Sin follows aún: sugerimos aficionados activos y, si compartes equipo o ciudad, los
+                priorizamos. Síguelos para llenar tu feed.
               </p>
             </div>
             <ul className="space-y-2">
@@ -187,8 +191,12 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
             icon={Users}
             className="max-w-xl"
             title="Encuentra aficionados"
-            description="Busca por username o nombre, síguelos y verás sus partidos en tu feed."
-          />
+            description="Busca por username o nombre, o explora listas públicas mientras no tengas follows."
+          >
+            <Button asChild variant="secondary">
+              <Link to="/collections/explore">Explorar listas</Link>
+            </Button>
+          </EmptyState>
         )
       ) : null}
     </div>

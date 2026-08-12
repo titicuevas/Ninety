@@ -28,7 +28,7 @@ export interface PublicCollectionsResponse {
   collections: Collection[];
 }
 
-export type DiscoverCollectionMatchReason = 'following' | 'favorite_team' | null;
+export type DiscoverCollectionMatchReason = 'following' | 'favorite_team' | 'active' | null;
 
 export interface DiscoverCollectionAuthor extends CollectionAuthor {
   id: string;

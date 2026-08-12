@@ -370,7 +370,8 @@ Ninety/
 | GET | `/api/collections/me/containing/:capsuleId` | ✅ | Colecciones que ya incluyen una Capsule |
 | POST/PATCH/DELETE | `/api/collections`… | ✅ | CRUD colecciones + ítems (`cover_capsule_id` en PATCH) |
 | PUT | `/api/collections/:id/items/reorder` | ✅ | Reordenar Capsules (`position`) |
-| GET | `/api/collections/discover` | ✅ | Descubrir listas públicas ajenas (`match_reason`: `following` / `favorite_team`) |
+| GET | `/api/collections/discover` | ✅ | Descubrir listas públicas ajenas (`match_reason`: `following` / `favorite_team` / `active`) |
+| GET | `/api/profile/discover` | ✅ | Sugerir aficionados (`match_reason`: equipo / ciudad / país / `active`; filtra bloqueos) |
 | GET | `/api/collections/user/:username` | opcional | Colecciones públicas |
 | GET | `/api/collections/user/:username/:slug` | opcional | Detalle colección (`/u/:username/lists/:slug`) |
 | GET | `/api/football/matches/search` | ✅ | Buscar partidos |
@@ -453,13 +454,13 @@ Ninety/
 - [x] Explorar colecciones ajenas — descubrimiento de listas públicas más allá del perfil (`GET /api/collections/discover` + `/collections/explore`)
 - [x] Borrado de cuenta self-serve — eliminar cuenta desde Ajustes (`POST /api/auth/delete-account`; confirma email; cascade + limpieza Storage)
 
-### 🚧 v9 — Captura libre & cierre de loops
+### ✅ v9 — Captura libre & cierre de loops
 - [x] Partido manual — guardar Capsules fuera del catálogo football-data (amistosos, locales, torneos no indexados) con `match_id` negativo estable (`/search/manual` + CTAs en búsqueda)
 - [x] Deep links en push digest — like/comentario abren `/c/:id` (o `#comments`); follow único al perfil; resumen multi → `/notifications`
 - [x] Colecciones en la navegación principal — acceso a Mis listas / Explorar desde el shell (`Listas` en nav + subnav Mis listas / Explorar)
 - [x] Legales alineados con borrado self-serve — Privacidad y Términos ya no piden email manual tras `POST /api/auth/delete-account`
 - [x] Bloquear usuario — dejar de ver Capsules/perfil de alguien (más allá del mute de alertas) (`GET/POST/DELETE /api/profile/blocked`; migración `20250813100000_user_blocks.sql`; feed/discover/cápsula pública filtran bloqueos bidireccionales)
-- [ ] Discovery en frío — explorar perfiles/colecciones útiles sin follows ni equipo favorito
+- [x] Discovery en frío — perfiles/colecciones útiles sin follows ni equipo favorito (`match_reason: active` en discover; empty states del feed/Inicio enlazan a `/collections/explore`)
 
 ## 🎨 Identidad visual
 

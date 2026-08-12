@@ -130,7 +130,8 @@ export function ExploreCollectionsPage() {
             Explorar colecciones
           </h1>
           <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-            Listas públicas curadas por la comunidad — más allá del perfil de cada aficionado.
+            Listas públicas con Capsules — útiles aunque no tengas follows ni equipo favorito.
+            Priorizamos actividad reciente y autores que ya sigues o comparten equipo.
           </p>
         </section>
 
@@ -148,10 +149,16 @@ export function ExploreCollectionsPage() {
           <EmptyState
             icon={Compass}
             title="Aún no hay listas para explorar"
-            description="Cuando otros aficionados publiquen colecciones con Capsules, aparecerán aquí."
+            description="Cuando otros aficionados publiquen colecciones con Capsules, aparecerán aquí. Mientras tanto, puedes explorar el feed o buscar aficionados."
           >
             <Button asChild variant="secondary">
               <Link to="/collections">Crear tu primera colección</Link>
+            </Button>
+            <Button asChild>
+              <Link to="/feed?scope=explore">Explorar comunidad</Link>
+            </Button>
+            <Button asChild variant="secondary">
+              <Link to="/search?tab=people">Buscar aficionados</Link>
             </Button>
           </EmptyState>
         ) : null}

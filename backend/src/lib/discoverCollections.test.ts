@@ -92,4 +92,36 @@ describe('rankDiscoverCollections', () => {
 
     assert.equal(ranked.length, 0);
   });
+
+  it('en frío marca active y prioriza más Capsules', () => {
+    const ranked = rankDiscoverCollections(
+      [
+        {
+          ...base,
+          id: 'c1',
+          name: 'Corta',
+          user_id: 'u2',
+          items_count: 2,
+          updated_at: '2025-06-01T00:00:00Z',
+          author: { ...author, id: 'u2', username: 'corto', favorite_team: null },
+        },
+        {
+          ...base,
+          id: 'c2',
+          name: 'Larga',
+          user_id: 'u3',
+          items_count: 12,
+          updated_at: '2025-01-01T00:00:00Z',
+          author: { ...author, id: 'u3', username: 'largo', favorite_team: null },
+        },
+      ],
+      { id: 'viewer' },
+      new Set(),
+      2,
+    );
+
+    assert.equal(ranked[0]?.name, 'Larga');
+    assert.equal(ranked[0]?.match_reason, 'active');
+    assert.equal(ranked[1]?.match_reason, 'active');
+  });
 });

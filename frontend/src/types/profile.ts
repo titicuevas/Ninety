@@ -19,7 +19,7 @@ export interface Profile {
   /** true si el viewer bloqueó a este perfil (no ver Capsules/perfil). */
   blocked_by_me?: boolean;
   /** Motivo de sugerencia en discover (si aplica). */
-  match_reason?: 'favorite_team' | 'city' | 'country' | null;
+  match_reason?: 'favorite_team' | 'city' | 'country' | 'active' | null;
 }
 
 export interface UpdateProfileInput {

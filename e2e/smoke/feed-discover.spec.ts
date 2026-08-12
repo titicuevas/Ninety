@@ -63,10 +63,15 @@ test.describe('Smoke — feed y discover @smoke', () => {
 
     if (await empty.isVisible()) {
       await expect(page.getByRole('link', { name: /buscar aficionados/i })).toBeVisible();
+      await expect(page.getByRole('link', { name: /explorar listas/i })).toBeVisible();
 
       const suggestions = page.getByRole('heading', { name: /aficionados sugeridos/i });
+      const lists = page.getByRole('heading', { name: /listas para descubrir/i });
       if (await suggestions.isVisible()) {
         await expect(page.getByRole('button', { name: /^seguir$/i }).first()).toBeVisible();
+      }
+      if (await lists.isVisible()) {
+        await expect(page.getByRole('link', { name: /ver más listas/i })).toBeVisible();
       }
     }
   });
@@ -189,7 +194,29 @@ test.describe('Smoke — feed y discover @smoke', () => {
       expect(typeof profile.id).toBe('string');
       expect(typeof profile.username).toBe('string');
       if (profile.match_reason != null) {
-        expect(['favorite_team', 'city', 'country']).toContain(profile.match_reason);
+        expect(['favorite_team', 'city', 'country', 'active']).toContain(profile.match_reason);
+      }
+    }
+  });
+
+  test('API collections discover marca match_reason incluyendo active', async ({ page, request }) => {
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(`${API_BASE}/api/collections/discover?limit=6`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      collections?: Array<{ id?: string; match_reason?: string | null }>;
+    };
+    expect(Array.isArray(body.collections)).toBe(true);
+    expect(body.collections!.length).toBeLessThanOrEqual(6);
+    for (const collection of body.collections!) {
+      expect(typeof collection.id).toBe('string');
+      if (collection.match_reason != null) {
+        expect(['following', 'favorite_team', 'active']).toContain(collection.match_reason);
       }
     }
   });

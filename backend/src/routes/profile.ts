@@ -11,7 +11,11 @@ import { normalizeProfile, profileUpdatePayload } from '../lib/profileNormalize.
 import { syncUserProfile } from '../lib/syncUserProfile.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
 import { notifyUser } from '../lib/notifyUser.js';
-import { rankDiscoverProfiles, favoriteTeamIlikePattern } from '../lib/discoverProfiles.js';
+import {
+  rankDiscoverProfiles,
+  favoriteTeamIlikePattern,
+  tallyPublicCapsuleActivity,
+} from '../lib/discoverProfiles.js';
 import {
   followRelationFlags,
   isMissingFollowsTable,
@@ -479,7 +483,20 @@ profileRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {
         .limit(24)
     : Promise.resolve({ data: [] as DiscoverRow[], error: null });
 
-  const [recentResult, teamResult] = await Promise.all([recentQuery, teamQuery]);
+  // Pool de Capsules públicas recientes → perfiles con contenido (descubrimiento en frío).
+  const activeCapsulesQuery = supabase
+    .from('capsules')
+    .select('user_id')
+    .eq('is_public', true)
+    .neq('user_id', req.userId!)
+    .order('created_at', { ascending: false })
+    .limit(120);
+
+  const [recentResult, teamResult, activeCapsulesResult] = await Promise.all([
+    recentQuery,
+    teamQuery,
+    activeCapsulesQuery,
+  ]);
 
   if (recentResult.error) {
     res.status(400).json({ error: recentResult.error.message });
@@ -489,14 +506,46 @@ profileRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {
     res.status(400).json({ error: teamResult.error.message });
     return;
   }
+  if (activeCapsulesResult.error) {
+    res.status(400).json({ error: activeCapsulesResult.error.message });
+    return;
+  }
+
+  const activityByUser = tallyPublicCapsuleActivity(
+    (activeCapsulesResult.data ?? []) as Array<{ user_id: string }>,
+    req.userId!,
+    blockedIds,
+  );
 
   const byId = new Map<string, DiscoverRow>();
   for (const row of [...(teamResult.data ?? []), ...(recentResult.data ?? [])] as DiscoverRow[]) {
     byId.set(row.id, row);
   }
 
+  const missingActiveIds = [...activityByUser.keys()].filter((id) => !byId.has(id)).slice(0, 40);
+  if (missingActiveIds.length > 0) {
+    const { data: activeProfiles, error: activeProfilesError } = await supabase
+      .from('profiles')
+      .select(profileSelect)
+      .in('id', missingActiveIds)
+      .not('username', 'is', null);
+
+    if (activeProfilesError) {
+      res.status(400).json({ error: activeProfilesError.message });
+      return;
+    }
+    for (const row of (activeProfiles ?? []) as DiscoverRow[]) {
+      byId.set(row.id, row);
+    }
+  }
+
   const ranked = rankDiscoverProfiles(
-    [...byId.values()].filter((row): row is DiscoverRow & { username: string } => !!row.username),
+    [...byId.values()]
+      .filter((row): row is DiscoverRow & { username: string } => !!row.username)
+      .map((row) => ({
+        ...row,
+        public_capsules_count: activityByUser.get(row.id) ?? 0,
+      })),
     me ?? {},
     followingIds,
     limit,
@@ -517,7 +566,7 @@ profileRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {
     }
   }
 
-  const profiles = ranked.map(({ match_reason, ...row }) => ({
+  const profiles = ranked.map(({ match_reason, public_capsules_count: _count, ...row }) => ({
     ...normalizeProfile(row),
     followed_by_me: false,
     follows_me: followerSet.has(row.id),

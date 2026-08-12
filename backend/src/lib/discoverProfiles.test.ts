@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   favoriteTeamIlikePattern,
   rankDiscoverProfiles,
+  tallyPublicCapsuleActivity,
   teamsMatch,
 } from './discoverProfiles.js';
 
@@ -40,6 +41,26 @@ describe('favoriteTeamIlikePattern', () => {
     assert.equal(favoriteTeamIlikePattern('  Betis  '), '%Betis%');
     assert.equal(favoriteTeamIlikePattern('100%_Betis'), '%100Betis%');
     assert.equal(favoriteTeamIlikePattern('a'), null);
+  });
+});
+
+describe('tallyPublicCapsuleActivity', () => {
+  it('cuenta por autor y respeta exclusiones', () => {
+    const counts = tallyPublicCapsuleActivity(
+      [
+        { user_id: 'a' },
+        { user_id: 'a' },
+        { user_id: 'b' },
+        { user_id: 'viewer' },
+        { user_id: 'blocked' },
+      ],
+      'viewer',
+      new Set(['blocked']),
+    );
+    assert.equal(counts.get('a'), 2);
+    assert.equal(counts.get('b'), 1);
+    assert.equal(counts.has('viewer'), false);
+    assert.equal(counts.has('blocked'), false);
   });
 });
 
@@ -109,5 +130,33 @@ describe('rankDiscoverProfiles', () => {
 
     assert.equal(ranked[0]?.username, 'local');
     assert.equal(ranked[0]?.match_reason, 'city');
+  });
+
+  it('en frío prioriza perfiles con Capsules públicas', () => {
+    const ranked = rankDiscoverProfiles(
+      [
+        {
+          ...base,
+          id: '1',
+          username: 'vacio',
+          created_at: '2025-06-01T00:00:00Z',
+          public_capsules_count: 0,
+        },
+        {
+          ...base,
+          id: '2',
+          username: 'activo',
+          created_at: '2024-01-01T00:00:00Z',
+          public_capsules_count: 5,
+        },
+      ],
+      {},
+      new Set(),
+      2,
+    );
+
+    assert.equal(ranked[0]?.username, 'activo');
+    assert.equal(ranked[0]?.match_reason, 'active');
+    assert.equal(ranked[1]?.match_reason, null);
   });
 });

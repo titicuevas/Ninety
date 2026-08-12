@@ -5,5 +5,6 @@ export function discoverCollectionMatchLabel(
 ): string | null {
   if (reason === 'following') return 'Siguiendo';
   if (reason === 'favorite_team') return 'Mismo equipo';
+  if (reason === 'active') return 'Activa';
   return null;
 }
