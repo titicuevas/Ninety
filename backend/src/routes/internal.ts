@@ -3,6 +3,7 @@ import { env } from '../config/loadEnv.js';
 import { flushDiaryPushes } from '../lib/diaryPush.js';
 import { flushEmailDigests } from '../lib/emailDigest.js';
 import { flushPushDigests } from '../lib/pushDigest.js';
+import { flushWantToGoPushes } from '../lib/wantToGoPush.js';
 
 export const internalRouter = Router();
 
@@ -37,7 +38,7 @@ internalRouter.post('/cron/push-digest', async (req, res, next) => {
   }
 });
 
-/** Cron: push opt-in de aniversarios / hitos del diario. */
+/** Cron: push opt-in de aniversarios / hitos / Quiero ir. */
 internalRouter.post('/cron/push-diary', async (req, res, next) => {
   try {
     if (!cronAuthorized(req)) {
@@ -45,8 +46,9 @@ internalRouter.post('/cron/push-diary', async (req, res, next) => {
       return;
     }
 
-    const result = await flushDiaryPushes();
-    res.json({ ok: true, ...result });
+    const diary = await flushDiaryPushes();
+    const wantToGo = await flushWantToGoPushes();
+    res.json({ ok: true, diary, wantToGo });
   } catch (err) {
     next(err);
   }

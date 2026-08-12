@@ -12,6 +12,7 @@ import { DiaryAnniversaryPrefsPanel } from '@/components/DiaryAnniversaryPrefsPa
 import { DiaryDigestPrefsPanel } from '@/components/DiaryDigestPrefsPanel';
 import { DiaryMilestonePrefsPanel } from '@/components/DiaryMilestonePrefsPanel';
 import { EmailDigestPrefsPanel } from '@/components/EmailDigestPrefsPanel';
+import { WantToGoPushPrefsPanel } from '@/components/WantToGoPushPrefsPanel';
 import { NotificationTypePrefsPanel } from '@/components/NotificationTypePrefsPanel';
 import { PushQuietHoursPanel } from '@/components/PushQuietHoursPanel';
 import { MutedUsersPanel } from '@/components/MutedUsersPanel';
@@ -334,6 +335,7 @@ export function SettingsPage() {
             <MutedUsersPanel />
             <DiaryDigestPrefsPanel />
             <EmailDigestPrefsPanel />
+            <WantToGoPushPrefsPanel />
             <DiaryAnniversaryPrefsPanel />
             <DiaryMilestonePrefsPanel />
             <Button asChild variant="secondary" className="w-full sm:w-auto">

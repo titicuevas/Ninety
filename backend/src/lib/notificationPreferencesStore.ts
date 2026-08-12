@@ -27,6 +27,7 @@ type PrefsRow = {
   follows_enabled: boolean;
   push_anniversary_enabled?: boolean | null;
   push_milestone_enabled?: boolean | null;
+  push_want_to_go_enabled?: boolean | null;
   email_digest_enabled?: boolean | null;
   push_quiet_enabled?: boolean | null;
   push_quiet_start?: string | null;
@@ -35,6 +36,8 @@ type PrefsRow = {
 };
 
 const PREFS_SELECT =
+  'likes_enabled, comments_enabled, follows_enabled, push_anniversary_enabled, push_milestone_enabled, push_want_to_go_enabled, email_digest_enabled, push_quiet_enabled, push_quiet_start, push_quiet_end, push_quiet_timezone';
+const PREFS_SELECT_EMAIL =
   'likes_enabled, comments_enabled, follows_enabled, push_anniversary_enabled, push_milestone_enabled, email_digest_enabled, push_quiet_enabled, push_quiet_start, push_quiet_end, push_quiet_timezone';
 const PREFS_SELECT_DIARY =
   'likes_enabled, comments_enabled, follows_enabled, push_anniversary_enabled, push_milestone_enabled, push_quiet_enabled, push_quiet_start, push_quiet_end, push_quiet_timezone';
@@ -82,6 +85,19 @@ function isMissingEmailDigestColumn(
   );
 }
 
+function isMissingWantToGoPushColumn(
+  error: { message?: string; code?: string } | null | undefined,
+): boolean {
+  const message = error?.message ?? '';
+  return (
+    message.includes('push_want_to_go_enabled') ||
+    ((message.includes('schema cache') ||
+      message.includes('Could not find') ||
+      message.includes('column')) &&
+      message.includes('push_want_to_go'))
+  );
+}
+
 /** Lee preferencias del receptor. Sin fila / sin tabla → todo activado, quiet off, digest email off. */
 export async function getNotificationPreferences(
   userId: string,
@@ -98,6 +114,9 @@ export async function getNotificationPreferences(
   if (full.error) {
     if (isMissingPrefsTable(full.error)) {
       return { ...DEFAULT_NOTIFICATION_PREFERENCES, push_quiet: { ...DEFAULT_PUSH_QUIET_HOURS } };
+    }
+    if (isMissingWantToGoPushColumn(full.error)) {
+      return getPrefsWithoutWantToGo(supabaseAdmin, userId);
     }
     if (isMissingEmailDigestColumn(full.error)) {
       const diary = await supabaseAdmin
@@ -126,6 +145,44 @@ export async function getNotificationPreferences(
   }
 
   return mapNotificationPreferencesRow(full.data as PrefsRow | null);
+}
+
+async function getPrefsWithoutWantToGo(
+  supabaseAdmin: SupabaseClient,
+  userId: string,
+): Promise<NotificationPreferences> {
+  const emailOnly = await supabaseAdmin
+    .from('notification_preferences')
+    .select(PREFS_SELECT_EMAIL)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (emailOnly.error) {
+    if (isMissingEmailDigestColumn(emailOnly.error)) {
+      const diary = await supabaseAdmin
+        .from('notification_preferences')
+        .select(PREFS_SELECT_DIARY)
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (diary.error) {
+        if (isMissingDiaryPushColumns(diary.error)) {
+          return getPrefsWithoutDiary(supabaseAdmin, userId);
+        }
+        if (isMissingQuietColumns(diary.error)) {
+          return getPrefsLegacy(supabaseAdmin, userId);
+        }
+        return { ...DEFAULT_NOTIFICATION_PREFERENCES, push_quiet: { ...DEFAULT_PUSH_QUIET_HOURS } };
+      }
+      return mapNotificationPreferencesRow(diary.data as PrefsRow | null);
+    }
+    if (isMissingDiaryPushColumns(emailOnly.error)) {
+      return getPrefsWithoutDiary(supabaseAdmin, userId);
+    }
+    if (isMissingQuietColumns(emailOnly.error)) {
+      return getPrefsLegacy(supabaseAdmin, userId);
+    }
+    return { ...DEFAULT_NOTIFICATION_PREFERENCES, push_quiet: { ...DEFAULT_PUSH_QUIET_HOURS } };
+  }
+  return mapNotificationPreferencesRow(emailOnly.data as PrefsRow | null);
 }
 
 async function getPrefsWithoutDiary(
@@ -164,7 +221,13 @@ async function getPrefsLegacy(
 export type NotificationPreferencesPatch = Partial<
   Pick<
     NotificationPreferences,
-    'like' | 'comment' | 'follow' | 'push_anniversary' | 'push_milestone' | 'email_digest'
+    | 'like'
+    | 'comment'
+    | 'follow'
+    | 'push_anniversary'
+    | 'push_milestone'
+    | 'push_want_to_go'
+    | 'email_digest'
   >
 > & {
   push_quiet?: Partial<PushQuietHours>;
@@ -190,6 +253,7 @@ export async function upsertNotificationPreferences(
     follow: patch.follow ?? current.follow,
     push_anniversary: patch.push_anniversary ?? current.push_anniversary,
     push_milestone: patch.push_milestone ?? current.push_milestone,
+    push_want_to_go: patch.push_want_to_go ?? current.push_want_to_go,
     email_digest: patch.email_digest ?? current.email_digest,
     push_quiet: nextQuiet,
   };
@@ -201,6 +265,7 @@ export async function upsertNotificationPreferences(
     follows_enabled: next.follow,
     push_anniversary_enabled: next.push_anniversary,
     push_milestone_enabled: next.push_milestone,
+    push_want_to_go_enabled: next.push_want_to_go,
     email_digest_enabled: next.email_digest,
     push_quiet_enabled: next.push_quiet.enabled,
     push_quiet_start: next.push_quiet.start,
@@ -219,6 +284,12 @@ export async function upsertNotificationPreferences(
     if (isMissingPrefsTable(error)) {
       throw Object.assign(
         new Error('Ejecuta la migración notification_preferences en Supabase.'),
+        { status: 503 },
+      );
+    }
+    if (isMissingWantToGoPushColumn(error) && patch.push_want_to_go !== undefined) {
+      throw Object.assign(
+        new Error('Ejecuta la migración 20250819120000_want_to_go_push.sql en Supabase.'),
         { status: 503 },
       );
     }
@@ -245,7 +316,37 @@ export async function upsertNotificationPreferences(
         { status: 503 },
       );
     }
-    if (isMissingEmailDigestColumn(error)) {
+    if (isMissingWantToGoPushColumn(error)) {
+      const emailPayload = {
+        user_id: userId,
+        likes_enabled: next.like,
+        comments_enabled: next.comment,
+        follows_enabled: next.follow,
+        push_anniversary_enabled: next.push_anniversary,
+        push_milestone_enabled: next.push_milestone,
+        email_digest_enabled: next.email_digest,
+        push_quiet_enabled: next.push_quiet.enabled,
+        push_quiet_start: next.push_quiet.start,
+        push_quiet_end: next.push_quiet.end,
+        push_quiet_timezone: next.push_quiet.timezone,
+        updated_at: new Date().toISOString(),
+      };
+      const emailRow = await supabaseAdmin
+        .from('notification_preferences')
+        .upsert(emailPayload, { onConflict: 'user_id' })
+        .select(PREFS_SELECT_EMAIL)
+        .single();
+      if (emailRow.error) {
+        if (isMissingEmailDigestColumn(emailRow.error)) {
+          // fall through to email-missing path below by reusing diary upsert
+        } else {
+          throw emailRow.error;
+        }
+      } else {
+        return mapNotificationPreferencesRow(emailRow.data as PrefsRow);
+      }
+    }
+    if (isMissingEmailDigestColumn(error) || isMissingWantToGoPushColumn(error)) {
       const diaryPayload = {
         user_id: userId,
         likes_enabled: next.like,

@@ -6,6 +6,7 @@ import { flushEmailDigests } from './lib/emailDigest.js';
 import { ensureCapsulePhotosBucket } from './lib/ensureStorage.js';
 import { flushPushDigests } from './lib/pushDigest.js';
 import { isResendConfigured } from './lib/resendEmail.js';
+import { flushWantToGoPushes } from './lib/wantToGoPush.js';
 import { isPushConfigured } from './lib/webPush.js';
 
 const PUSH_DIGEST_INTERVAL_MS = 15 * 60 * 1000;
@@ -37,6 +38,9 @@ async function main() {
     const runDiaryFlush = () => {
       void flushDiaryPushes().catch((err) => {
         console.warn('⚠️  Push diary:', err instanceof Error ? err.message : err);
+      });
+      void flushWantToGoPushes().catch((err) => {
+        console.warn('⚠️  Push Quiero ir:', err instanceof Error ? err.message : err);
       });
     };
     setTimeout(runDiaryFlush, 90_000);

@@ -78,6 +78,22 @@ export function useUpdateNotificationAlertPreferences() {
         toast.success('Push de hitos desactivado');
         return;
       }
+      if (patch.push_want_to_go === true) {
+        toast.success('Recordatorio Quiero ir activado');
+        return;
+      }
+      if (patch.push_want_to_go === false) {
+        toast.success('Recordatorio Quiero ir desactivado');
+        return;
+      }
+      if (patch.email_digest === true) {
+        toast.success('Resumen semanal por email activado');
+        return;
+      }
+      if (patch.email_digest === false) {
+        toast.success('Resumen semanal por email desactivado');
+        return;
+      }
       if (patch.push_quiet) {
         if (patch.push_quiet.enabled === true) {
           toast.success('Horario silencioso activado');

@@ -23,6 +23,7 @@ describe('normalizeNotificationAlertPreferences', () => {
         follow: true,
         push_anniversary: true,
         push_milestone: true,
+        push_want_to_go: true,
         email_digest: true,
         push_quiet: { enabled: true, start: '23:00', end: '07:00', timezone: 'Europe/Madrid' },
       }),
@@ -32,6 +33,7 @@ describe('normalizeNotificationAlertPreferences', () => {
         follow: true,
         push_anniversary: true,
         push_milestone: true,
+        push_want_to_go: true,
         email_digest: true,
         push_quiet: {
           enabled: true,
@@ -43,9 +45,10 @@ describe('normalizeNotificationAlertPreferences', () => {
     );
   });
 
-  it('diary push y email digest son opt-in (false si no vienen)', () => {
+  it('diary push, Quiero ir y email digest son opt-in (false si no vienen)', () => {
     assert.equal(normalizeNotificationAlertPreferences({ like: true }).push_anniversary, false);
     assert.equal(normalizeNotificationAlertPreferences({ like: true }).push_milestone, false);
+    assert.equal(normalizeNotificationAlertPreferences({ like: true }).push_want_to_go, false);
     assert.equal(normalizeNotificationAlertPreferences({ like: true }).email_digest, false);
   });
 });

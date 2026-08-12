@@ -20,6 +20,7 @@ describe('mapNotificationPreferencesRow', () => {
         follows_enabled: false,
         push_anniversary_enabled: true,
         push_milestone_enabled: false,
+        push_want_to_go_enabled: true,
         email_digest_enabled: true,
         push_quiet_enabled: true,
         push_quiet_start: '23:00:00',
@@ -32,6 +33,7 @@ describe('mapNotificationPreferencesRow', () => {
         follow: false,
         push_anniversary: true,
         push_milestone: false,
+        push_want_to_go: true,
         email_digest: true,
         push_quiet: {
           enabled: true,
@@ -56,6 +58,7 @@ describe('mapNotificationPreferencesRow', () => {
         follow: true,
         push_anniversary: false,
         push_milestone: false,
+        push_want_to_go: false,
         email_digest: false,
         push_quiet: {
           enabled: false,
@@ -76,6 +79,7 @@ describe('isNotificationTypeEnabled', () => {
       follow: true,
       push_anniversary: false,
       push_milestone: false,
+      push_want_to_go: false,
       email_digest: false,
       push_quiet: DEFAULT_NOTIFICATION_PREFERENCES.push_quiet,
     };

@@ -377,12 +377,12 @@ Ninety/
 | GET | `/api/collections/user/:username/:slug` | opcional | Detalle colección (`/u/:username/lists/:slug`) |
 | GET | `/api/football/matches/search` | ✅ | Buscar partidos |
 | GET | `/api/football/competitions` | ✅ | Competiciones |
-| GET/PATCH | `/api/notifications/preferences` | ✅ | Preferencias por tipo + push aniversario/hito opt-in + digest email opt-in + horario silencioso (`push_quiet`) |
+| GET/PATCH | `/api/notifications/preferences` | ✅ | Preferencias por tipo + push aniversario/hito/Quiero ir opt-in + digest email opt-in + horario silencioso (`push_quiet`) |
 | GET/POST/DELETE | `/api/notifications/muted`… | ✅ | Silenciar / reactivar usuario (alertas in-app + push) |
 | GET/POST/DELETE | `/api/profile/blocked`… | ✅ | Bloquear / desbloquear usuario (ocultar perfil + Capsules) |
 | GET | `/api/notifications` | ✅ | Lista de alertas (`actor.followed_by_me` para seguir de vuelta) |
 | POST | `/api/internal/cron/push-digest` | cron | Digest push periódico (`CRON_SECRET`; agrupa likes/comentarios/follows) |
-| POST | `/api/internal/cron/push-diary` | cron | Push opt-in aniversarios/hitos (`CRON_SECRET`; `diary_push_sent` idempotente) |
+| POST | `/api/internal/cron/push-diary` | cron | Push opt-in aniversarios/hitos + recordatorio Quiero ir (`CRON_SECRET`; `diary_push_sent` idempotente) |
 | POST | `/api/internal/cron/email-digest` | cron | Digest email semanal del diario (`CRON_SECRET` + Resend; opt-in; lunes en TZ; `diary_email_digest_sent`) |
 | GET/POST | `/api/email-digest/unsubscribe` | público | Baja one-click del digest email (firma HMAC) |
 
@@ -474,6 +474,15 @@ Ninety/
 - [x] Push de aniversarios / hitos — opt-in en Ajustes (`push_anniversary` / `push_milestone`); cron `POST /api/internal/cron/push-diary` (+ intervalo 1h en prod); idempotencia `diary_push_sent`; migración `20250817120000_diary_push.sql`; cards on-device siguen independientes
 - [x] Página de equipo — fans del mismo club favorito (descubrimiento por equipo) (`/teams/:slug` + `GET /api/profile/by-team`; club favorito clickable en perfil/búsqueda; filtra bloqueos)
 - [x] Digest email semanal — resumen opt-in del diario vía Resend (`email_digest` en Ajustes; cron `POST /api/internal/cron/email-digest`; idempotencia `diary_email_digest_sent`; migración `20250818120000_email_digest.sql`; baja one-click; no mezcla con digest push social)
+
+### 🚧 v11 — Diario con más sustancia
+- [x] Recordatorio «Quiero ir» — push opt-in cuando se acerca un partido de la watchlist (ventana ~48 h; `push_want_to_go` en Ajustes; mismo cron `POST /api/internal/cron/push-diary`; idempotencia `diary_push_sent` kind `want_to_go`; deep link `/want-to-go`; migración `20250819120000_want_to_go_push.sql`; respeta quiet hours)
+- [ ] Notas / reseña corta en Capsule — texto libre además del rating implícito de la experiencia
+- [ ] Tags en Capsules — etiquetas propias (clásico, viaje, derbi…) filtrables en Mis Capsules
+- [ ] Me gusta en colecciones — señal social ligera en listas públicas
+- [ ] Compartir calendario / mes del diario — imagen o link shareable del mes
+- [ ] Mentions en comentarios — @usuario notifica y enlaza al perfil
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium
