@@ -6,6 +6,7 @@ import { FilterChip } from '@/components/FilterChip';
 import { MatchListSkeleton } from '@/components/ListSkeletons';
 import { MatchCard } from '@/components/MatchCard';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
+import { WantToGoButton } from '@/components/WantToGoButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +14,7 @@ import { useFootballCompetitions } from '@/hooks/useFootballCompetitions';
 import { useCapsules } from '@/hooks/useCapsules';
 import { MIN_QUERY_LENGTH, useMatchSearch } from '@/hooks/useMatchSearch';
 import { useProfile } from '@/hooks/useProfile';
+import { useWantToGoIds } from '@/hooks/useWantToGo';
 import { useTeamCompetitions } from '@/hooks/useTeamCompetitions';
 import { saveDraftMatch } from '@/lib/draftMatch';
 import { groupMatchesByCompetition } from '@/lib/groupMatches';
@@ -180,6 +182,7 @@ export function MatchSearchPanel() {
   const matchGroups = useMemo(() => groupMatchesByCompetition(matches), [matches]);
   const showGrouped = !activeCompetition && matchGroups.length > 1;
   const { data: capsulesData } = useCapsules();
+  const { data: wantToGoIdsData } = useWantToGoIds();
   const savedByMatchId = useMemo(() => {
     const map = new Map<number, string>();
     for (const capsule of capsulesData?.capsules ?? []) {
@@ -187,6 +190,10 @@ export function MatchSearchPanel() {
     }
     return map;
   }, [capsulesData?.capsules]);
+  const wantToGoIds = useMemo(
+    () => new Set(wantToGoIdsData?.match_ids ?? []),
+    [wantToGoIdsData?.match_ids],
+  );
 
   const canSearch =
     (activeCompetition && !requiresTeamQuery) || debouncedQuery.length >= MIN_QUERY_LENGTH;
@@ -363,12 +370,16 @@ export function MatchSearchPanel() {
                       </h2>
                       <ul className="space-y-3">
                         {group.matches.map((match) => (
-                          <li key={match.id}>
+                          <li key={match.id} className="space-y-2">
                             <MatchCard
                               match={match}
                               savedCapsuleId={savedByMatchId.get(match.id)}
+                              wantToGo={wantToGoIds.has(match.id)}
                               onSelect={() => selectMatch(match)}
                             />
+                            <div className="pl-1">
+                              <WantToGoButton match={match} saved={wantToGoIds.has(match.id)} />
+                            </div>
                           </li>
                         ))}
                       </ul>
@@ -377,12 +388,16 @@ export function MatchSearchPanel() {
                 : (
                     <ul className="space-y-3">
                       {matches.map((match) => (
-                        <li key={match.id}>
+                        <li key={match.id} className="space-y-2">
                           <MatchCard
                             match={match}
                             savedCapsuleId={savedByMatchId.get(match.id)}
+                            wantToGo={wantToGoIds.has(match.id)}
                             onSelect={() => selectMatch(match)}
                           />
+                          <div className="pl-1">
+                            <WantToGoButton match={match} saved={wantToGoIds.has(match.id)} />
+                          </div>
                         </li>
                       ))}
                     </ul>

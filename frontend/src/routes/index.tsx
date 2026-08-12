@@ -27,6 +27,7 @@ import { NotificationsPage } from '@/pages/NotificationsPage';
 import { SearchMatchPage } from '@/pages/SearchMatchPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { TermsPage } from '@/pages/TermsPage';
+import { WantToGoPage } from '@/pages/WantToGoPage';
 
 export const appRouter = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
@@ -65,6 +66,7 @@ export const appRouter = createBrowserRouter([
       { path: '/collections', element: <CollectionsPage /> },
       { path: '/collections/explore', element: <ExploreCollectionsPage /> },
       { path: '/collections/:id', element: <CollectionDetailPage /> },
+      { path: '/want-to-go', element: <WantToGoPage /> },
       { path: '/notifications', element: <NotificationsPage /> },
       { path: '/profile', element: <ProfilePage /> },
       { path: '/settings', element: <SettingsPage /> },

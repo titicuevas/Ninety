@@ -1,7 +1,12 @@
-/** Rutas de la sección colecciones en el shell autenticado. */
+/** Rutas de la sección colecciones / listas en el shell autenticado. */
 
 export function isCollectionsSectionPath(pathname: string): boolean {
-  return pathname === '/collections' || pathname.startsWith('/collections/');
+  return (
+    pathname === '/collections' ||
+    pathname.startsWith('/collections/') ||
+    pathname === '/want-to-go' ||
+    pathname.startsWith('/want-to-go/')
+  );
 }
 
 export function isCollectionsExplorePath(pathname: string): boolean {
@@ -10,7 +15,15 @@ export function isCollectionsExplorePath(pathname: string): boolean {
   );
 }
 
-/** Mis listas (índice + detalle propio), no descubrir. */
+export function isWantToGoPath(pathname: string): boolean {
+  return pathname === '/want-to-go' || pathname.startsWith('/want-to-go/');
+}
+
+/** Mis listas (índice + detalle propio), no descubrir ni Quiero ir. */
 export function isCollectionsMinePath(pathname: string): boolean {
-  return isCollectionsSectionPath(pathname) && !isCollectionsExplorePath(pathname);
+  return (
+    isCollectionsSectionPath(pathname) &&
+    !isCollectionsExplorePath(pathname) &&
+    !isWantToGoPath(pathname)
+  );
 }

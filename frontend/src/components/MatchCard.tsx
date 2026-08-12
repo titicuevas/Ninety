@@ -52,10 +52,18 @@ interface MatchCardProps {
   onSelect?: () => void;
   /** Si ya está en el diario, se muestra como “En tu diario”. */
   savedCapsuleId?: string | null;
+  /** Si está en la lista Quiero ir. */
+  wantToGo?: boolean;
   className?: string;
 }
 
-export function MatchCard({ match, onSelect, savedCapsuleId, className }: MatchCardProps) {
+export function MatchCard({
+  match,
+  onSelect,
+  savedCapsuleId,
+  wantToGo = false,
+  className,
+}: MatchCardProps) {
   const date = formatMatchDate(match.utcDate);
   const score = formatScore(match);
   const summary = matchSummary(match);
@@ -84,6 +92,11 @@ export function MatchCard({ match, onSelect, savedCapsuleId, className }: MatchC
               {saved ? (
                 <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
                   En tu diario
+                </span>
+              ) : null}
+              {wantToGo && !saved ? (
+                <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Quiero ir
                 </span>
               ) : null}
             </div>

@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Check, Library, Loader2, Settings, X } from 'lucide-react';
+import { Check, Bookmark, Library, Loader2, Settings, X } from 'lucide-react';
 import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
 import { FavoriteTeamField } from '@/components/FavoriteTeamField';
 import { Layout } from '@/components/Layout';
@@ -296,6 +296,13 @@ export function ProfilePage() {
                     Colecciones
                   </Link>
                   <Link
+                    to="/want-to-go"
+                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                  >
+                    <Bookmark className="h-3.5 w-3.5" aria-hidden />
+                    Quiero ir
+                  </Link>
+                  <Link
                     to={`/u/${encodeURIComponent(profile.username)}/followers`}
                     className="text-sm text-muted-foreground hover:text-foreground"
                   >
@@ -331,6 +338,13 @@ export function ProfilePage() {
                   >
                     <Library className="h-3.5 w-3.5" aria-hidden />
                     Colecciones
+                  </Link>
+                  <Link
+                    to="/want-to-go"
+                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                  >
+                    <Bookmark className="h-3.5 w-3.5" aria-hidden />
+                    Quiero ir
                   </Link>
                 </div>
               )}

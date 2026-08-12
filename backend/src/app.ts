@@ -14,6 +14,7 @@ import { authRouter } from './routes/auth.js';
 import { notificationsRouter } from './routes/notifications.js';
 import { reportsRouter } from './routes/reports.js';
 import { invitesRouter } from './routes/invites.js';
+import { wantToGoRouter } from './routes/wantToGo.js';
 import { internalRouter } from './routes/internal.js';
 
 const footballLimiter = rateLimit({
@@ -89,6 +90,7 @@ export function createApp() {
   app.use('/api/notifications', notificationsRouter);
   app.use('/api/reports', reportsRouter);
   app.use('/api/invites', invitesRouter);
+  app.use('/api/want-to-go', wantToGoRouter);
   app.use('/api/internal', internalRouter);
 
   app.use(errorHandler);

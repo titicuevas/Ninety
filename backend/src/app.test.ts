@@ -145,6 +145,28 @@ describe('API', () => {
     assert.ok([200, 404, 503].includes(res.status));
   });
 
+  it('GET /api/want-to-go/me requiere auth', async () => {
+    const res = await request(createApp()).get('/api/want-to-go/me');
+    assert.equal(res.status, 401);
+  });
+
+  it('GET /api/want-to-go/me/ids requiere auth', async () => {
+    const res = await request(createApp()).get('/api/want-to-go/me/ids');
+    assert.equal(res.status, 401);
+  });
+
+  it('POST /api/want-to-go requiere auth', async () => {
+    const res = await request(createApp())
+      .post('/api/want-to-go')
+      .send({ match_id: 1, home_team_name: 'A', away_team_name: 'B' });
+    assert.equal(res.status, 401);
+  });
+
+  it('DELETE /api/want-to-go/:matchId requiere auth', async () => {
+    const res = await request(createApp()).delete('/api/want-to-go/123');
+    assert.equal(res.status, 401);
+  });
+
   it('GET /api/capsules/me/export requiere auth', async () => {
     const res = await request(createApp()).get('/api/capsules/me/export');
     assert.equal(res.status, 401);

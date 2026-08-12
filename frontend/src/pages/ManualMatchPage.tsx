@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { Layout } from '@/components/Layout';
 import { MatchCard } from '@/components/MatchCard';
+import { WantToGoButton } from '@/components/WantToGoButton';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
@@ -197,6 +198,7 @@ export function ManualMatchPage() {
                 Vista previa
               </p>
               <MatchCard match={preview} />
+              <WantToGoButton match={preview} />
             </div>
           ) : null}
 
