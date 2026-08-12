@@ -64,7 +64,7 @@ test.describe('Smoke — colecciones @smoke', () => {
 
     await expect(page).toHaveURL(/\/collections\/[0-9a-f-]+/i, { timeout: 20_000 });
     await expect(page.getByRole('heading', { name: /editar colección/i })).toBeVisible();
-    await expect(page.getByDisplayValue(uniqueName)).toBeVisible();
+    await expect(page.getByLabel(/^nombre$/i)).toHaveValue(uniqueName);
 
     const publicLink = page.getByRole('link', { name: /ver pública/i });
     await expect(publicLink).toBeVisible({ timeout: 10_000 });

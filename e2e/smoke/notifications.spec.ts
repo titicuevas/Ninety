@@ -11,7 +11,7 @@ test.describe('Smoke — notificaciones @smoke', () => {
     await entry.click();
 
     await expect(page).toHaveURL(/\/notifications/);
-    await expect(page.getByRole('heading', { name: /notificaciones/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /notificaciones/i })).toBeVisible();
     await expect(page.locator('#main-content')).toBeVisible();
     await expect(page.getByRole('heading', { name: /alertas push/i })).toBeVisible();
   });

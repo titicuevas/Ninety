@@ -22,8 +22,22 @@ test.describe('Crítico — navegación móvil @critical @mobile', () => {
     const tabBar = page.getByRole('navigation', { name: /navegación principal/i });
     await tabBar.getByRole('link', { name: /buscar/i }).click();
     await expect(page).toHaveURL(/\/search/);
-    await page.getByRole('tab', { name: 'Aficionados' }).click();
-    await expect(page.getByText(/encuentra aficionados/i)).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Aficionados' })).toBeVisible();
+
+    // goto con query: el click de tab a veces no sincroniza URL↔UI en tablet
+    await page.goto('/search?tab=people');
+    await expect(page).toHaveURL(/tab=people/);
+    await expect(page.getByRole('tab', { name: 'Aficionados' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await expect(
+      page
+        .getByLabel(/nombre o username/i)
+        .or(page.getByRole('heading', { name: /aficionados sugeridos/i }))
+        .or(page.getByText(/encuentra aficionados/i))
+        .first(),
+    ).toBeVisible({ timeout: 15_000 });
   });
 
   test('Listas desde tab bar abre Mis listas', async ({ page }) => {

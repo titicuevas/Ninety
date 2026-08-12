@@ -16,6 +16,11 @@ test.describe('A11y — páginas públicas @a11y', () => {
 
   test('landing: skip link alcanzable con Tab', async ({ page }) => {
     await page.goto('/');
+    await expect(page.getByRole('heading', { name: /ninety/i })).toBeVisible();
+    await page.evaluate(() => {
+      const active = document.activeElement;
+      if (active instanceof HTMLElement) active.blur();
+    });
     await page.keyboard.press('Tab');
     const skip = page.getByRole('link', { name: /saltar al contenido/i });
     await expect(skip).toBeFocused();
@@ -31,6 +36,12 @@ test.describe('A11y — páginas públicas @a11y', () => {
 
   test('login: skip link alcanza el formulario', async ({ page }) => {
     await page.goto('/login');
+    await expect(page.getByRole('heading', { name: /bienvenido de vuelta/i })).toBeVisible();
+    // Autofill del navegador puede dejar el foco en el email; volver al documento
+    await page.evaluate(() => {
+      const active = document.activeElement;
+      if (active instanceof HTMLElement) active.blur();
+    });
     await page.keyboard.press('Tab');
     const skip = page.getByRole('link', { name: /saltar al contenido/i });
     await expect(skip).toBeFocused();

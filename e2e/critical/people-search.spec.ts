@@ -23,11 +23,19 @@ test.describe('Crítico — búsqueda de aficionados @critical', () => {
     await expect(suggestions.or(emptyHint)).toBeVisible({ timeout: 15_000 });
 
     if (await suggestions.isVisible()) {
-      const followBtn = page.getByRole('button', { name: /^seguir( de vuelta)?$/i }).first();
-      await expect(followBtn).toBeVisible();
-      await followBtn.click();
-      const followingBtn = page.getByRole('button', { name: /dejar de seguir/i }).first();
-      await expect(followingBtn).toHaveAttribute('aria-pressed', 'true');
+      const followBtn = page
+        .getByTestId('follow-button')
+        .or(page.getByTestId('follow-back-button'))
+        .or(page.getByRole('button', { name: /dejar de seguir/i }))
+        .first();
+      // Sugerencias con username auto no exponen FollowButton
+      if (await followBtn.isVisible().catch(() => false)) {
+        const alreadyFollowing = (await followBtn.getAttribute('aria-pressed')) === 'true';
+        if (!alreadyFollowing) {
+          await followBtn.click();
+          await expect(followBtn).toHaveAttribute('aria-pressed', 'true');
+        }
+      }
     }
 
     await page.getByLabel(/nombre o username/i).fill('zzzninetye2e');

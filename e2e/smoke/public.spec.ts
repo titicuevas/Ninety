@@ -53,7 +53,7 @@ test.describe('Smoke — público @smoke', () => {
     ).toBeVisible({
       timeout: 20_000,
     });
-    await expect(page.getByRole('link', { name: /seguidores/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /seguidor(es)?/i })).toBeVisible();
     await expect(page.getByText(/\d+ partidos? en su diario/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /compartir perfil/i })).toBeVisible();
 

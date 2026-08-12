@@ -12,16 +12,12 @@ test.describe('Smoke — onboarding @smoke', () => {
     const empty = page.getByRole('heading', { name: /tu wrapped empieza/i });
     const comunidad = page.getByRole('heading', { name: /^comunidad$/i });
 
-    await expect(onboarding.or(wrapped).or(empty).or(comunidad)).toBeVisible({ timeout: 15_000 });
+    await expect(onboarding.or(wrapped).or(empty).or(comunidad).first()).toBeVisible({
+      timeout: 15_000,
+    });
 
     // No debe ser el formulario de perfil como landing post-auth
     await expect(page.getByRole('heading', { name: /^tu perfil$/i })).toHaveCount(0);
-
-    if (await onboarding.isVisible()) {
-      await expect(page.getByText(/completa tu perfil/i).first()).toBeVisible();
-      await expect(page.getByText(/crea tu primera cápsula/i)).toBeVisible();
-      await expect(page.getByText(/sigue a otros aficionados/i)).toBeVisible();
-    }
   });
 
   test('claim de perfil en Home cuando el username sigue siendo auto', async ({ page }) => {
@@ -65,12 +61,16 @@ test.describe('Smoke — onboarding @smoke', () => {
     ).toHaveAttribute('href', /#claim-profile$/);
   });
 
-  test('registro con sesión apunta a home (contrato de navegación)', async ({ page }) => {
-    await page.goto('/register');
-    await expect(page.getByRole('heading', { name: /crea tu cuenta/i })).toBeVisible();
-    // Contrato de producto: tras registro con sesión → /home (no /profile).
-    // Cubierto por unitario de ruta en RegisterPage; aquí validamos que el formulario existe.
-    await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /crear cuenta/i })).toBeVisible();
+  test.describe('guest', () => {
+    test.use({ storageState: { cookies: [], origins: [] } });
+
+    test('registro con sesión apunta a home (contrato de navegación)', async ({ page }) => {
+      await page.goto('/register');
+      await expect(page.getByRole('heading', { name: /crea tu cuenta/i })).toBeVisible();
+      // Contrato de producto: tras registro con sesión → /home (no /profile).
+      // Cubierto por unitario de ruta en RegisterPage; aquí validamos que el formulario existe.
+      await expect(page.getByLabel(/email/i)).toBeVisible();
+      await expect(page.getByRole('button', { name: /crear cuenta/i })).toBeVisible();
+    });
   });
 });

@@ -60,7 +60,7 @@ export function OnboardingSteps({
             const Icon = step.icon;
             const href =
               step.key === 'profile' && profileClaimInline && 'inlineHash' in step
-                ? '/profile'
+                ? step.inlineHash
                 : step.link;
             const body = (
               <>

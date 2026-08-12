@@ -28,7 +28,8 @@ const footballLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60_000,
-  max: 40,
+  // Local/E2E: suites largas re-hidratan sesión; producción sigue estricta
+  max: env.NODE_ENV === 'production' ? 40 : 2_000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.' },

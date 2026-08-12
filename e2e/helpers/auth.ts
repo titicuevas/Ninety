@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 export function requireDemoCredentials() {
@@ -23,6 +23,9 @@ const SESSION_KEY = 'ninety.session:v1';
 const LEGACY_SESSION_KEY = 'ninety.session';
 const LOGIN_ATTEMPTS = 3;
 const AUTH_FILE = path.join('e2e', '.auth', 'user.json');
+const SESSION_CACHE_FILE = path.join('e2e', '.auth', 'session-cache.json');
+/** Margen antes de expires_at para forzar refresh (alineado con useAuthInit). */
+const REFRESH_MARGIN_SEC = 120;
 
 type AuthApiSession = {
   access_token: string;
@@ -30,6 +33,50 @@ type AuthApiSession = {
   expires_at?: number;
   user: { id: string; email?: string; user_metadata?: Record<string, unknown> };
 };
+
+/** Cache en proceso: evita martillar POST /login (rate limit) en suites largas. */
+let memorySession: AuthApiSession | null = null;
+
+function isAccessTokenFresh(session: AuthApiSession, marginSec = REFRESH_MARGIN_SEC) {
+  if (!session.expires_at) return true;
+  return session.expires_at * 1000 > Date.now() + marginSec * 1000;
+}
+
+function readDiskSession(): AuthApiSession | null {
+  try {
+    const raw = readFileSync(SESSION_CACHE_FILE, 'utf8');
+    const parsed = JSON.parse(raw) as AuthApiSession;
+    if (parsed?.access_token && parsed?.refresh_token) return parsed;
+  } catch {
+    /* sin cache */
+  }
+  return null;
+}
+
+function writeDiskSession(session: AuthApiSession) {
+  mkdirSync(path.dirname(SESSION_CACHE_FILE), { recursive: true });
+  writeFileSync(SESSION_CACHE_FILE, JSON.stringify(session), 'utf8');
+  memorySession = session;
+}
+
+async function refreshViaApi(
+  request: APIRequestContext,
+  refreshToken: string,
+): Promise<AuthApiSession> {
+  const res = await request.post(`${API_BASE}/api/auth/refresh`, {
+    data: { refresh_token: refreshToken },
+    timeout: 30_000,
+  });
+  const bodyText = await res.text();
+  if (!res.ok()) {
+    throw new Error(`API refresh ${res.status()}: ${bodyText.slice(0, 200)}`);
+  }
+  const body = JSON.parse(bodyText) as { session?: AuthApiSession };
+  if (!body.session?.access_token || !body.session.refresh_token) {
+    throw new Error('API refresh sin session válida');
+  }
+  return body.session;
+}
 
 async function loginViaApi(
   request: APIRequestContext,
@@ -63,6 +110,32 @@ async function loginViaApi(
   throw lastError ?? new Error('API login falló');
 }
 
+/**
+ * Sesión fresca priorizando refresh (no cuenta tanto en rate-limit de login)
+ * y reutilizando cache entre tests del mismo worker.
+ */
+export async function obtainApiSession(request: APIRequestContext): Promise<AuthApiSession> {
+  const candidates = [memorySession, readDiskSession()].filter(Boolean) as AuthApiSession[];
+
+  for (const candidate of candidates) {
+    if (isAccessTokenFresh(candidate)) {
+      memorySession = candidate;
+      return candidate;
+    }
+    try {
+      const refreshed = await refreshViaApi(request, candidate.refresh_token);
+      writeDiskSession(refreshed);
+      return refreshed;
+    } catch {
+      /* probar siguiente o login */
+    }
+  }
+
+  const session = await loginViaApi(request);
+  writeDiskSession(session);
+  return session;
+}
+
 const homeHeading = (page: Page) =>
   page.getByRole('heading', { name: /esto es tu fútbol|tu wrapped empieza/i });
 const loginHeading = (page: Page) =>
@@ -71,15 +144,24 @@ const loginHeading = (page: Page) =>
 async function persistAuthState(page: Page) {
   mkdirSync(path.dirname(AUTH_FILE), { recursive: true });
   await page.context().storageState({ path: AUTH_FILE });
+
+  const live = await page.evaluate((key) => {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as AuthApiSession;
+    } catch {
+      return null;
+    }
+  }, SESSION_KEY);
+  if (live?.access_token && live.refresh_token) {
+    writeDiskSession(live);
+  }
 }
 
-/**
- * Login fiable: POST /api/auth/login + seed localStorage vía addInitScript
- * (antes de que la app lea storageState muerto / rote refresh).
- */
-export async function establishAuthenticatedSession(page: Page) {
-  const session = await loginViaApi(page.request);
-
+async function seedSessionIntoContext(page: Page, session: AuthApiSession) {
+  // addInitScript se acumula: también escribimos en localStorage tras goto vía evaluate
+  // si la app ya arrancó. El init cubre la primera navegación del contexto.
   await page.context().addInitScript(
     ({ key, legacyKey, session: sess }) => {
       window.localStorage.setItem(key, JSON.stringify(sess));
@@ -87,12 +169,40 @@ export async function establishAuthenticatedSession(page: Page) {
     },
     { key: SESSION_KEY, legacyKey: LEGACY_SESSION_KEY, session },
   );
+}
+
+async function writeSessionToPage(page: Page, session: AuthApiSession) {
+  await page.evaluate(
+    ({ key, legacyKey, session: sess }) => {
+      window.localStorage.setItem(key, JSON.stringify(sess));
+      window.localStorage.removeItem(legacyKey);
+    },
+    { key: SESSION_KEY, legacyKey: LEGACY_SESSION_KEY, session },
+  );
+}
+
+/**
+ * Login fiable: POST login/refresh + seed localStorage vía addInitScript
+ * (antes de que la app lea storageState muerto / rote refresh).
+ */
+export async function establishAuthenticatedSession(page: Page) {
+  const session = await obtainApiSession(page.request);
+  await seedSessionIntoContext(page, session);
 
   await page.goto('/home');
-  // Esperar bootstrap real (spinner → Home o Login), no solo la URL intermedia
   await expect(homeHeading(page).or(loginHeading(page))).toBeVisible({ timeout: 25_000 });
 
   if (page.url().includes('/login') || (await loginHeading(page).isVisible().catch(() => false))) {
+    // Re-login API (evita UI: dispara rate-limit) + rehydrate + reload
+    memorySession = null;
+    const fresh = await obtainApiSession(page.request);
+    await writeSessionToPage(page, fresh);
+    await page.goto('/home');
+    await expect(homeHeading(page).or(loginHeading(page))).toBeVisible({ timeout: 25_000 });
+  }
+
+  if (page.url().includes('/login') || (await loginHeading(page).isVisible().catch(() => false))) {
+    // Último recurso: UI login (solo si API también falla)
     await loginAsDemo(page);
   }
 
@@ -114,10 +224,13 @@ export async function loginAsDemo(page: Page) {
 }
 
 /**
- * Abre Home con storageState si la app confirma sesión; si no, re-auth por API + inject.
- * Persiste storageState tras éxito para no reutilizar refresh ya rotado.
+ * Abre Home con sesión garantizada: siempre re-hidrata tokens frescos
+ * (API refresh/login) antes de confiar en storageState del setup.
  */
 export async function openAuthenticatedHome(page: Page) {
+  const session = await obtainApiSession(page.request);
+  await seedSessionIntoContext(page, session);
+
   await page.goto('/home');
   await expect(homeHeading(page).or(loginHeading(page))).toBeVisible({ timeout: 25_000 });
 
@@ -131,7 +244,6 @@ export async function openAuthenticatedHome(page: Page) {
 
   await expect(page).toHaveURL(/\/home/, { timeout: 20_000 });
   await expect(homeHeading(page)).toBeVisible({ timeout: 20_000 });
-  // Guardar tokens posiblemente refrescados por useAuthInit
   await persistAuthState(page);
 }
 

@@ -109,11 +109,6 @@ test.describe('Smoke — onboarding de valor @smoke', () => {
   test('atajo vs en gente y marca compare visitado', async ({ page, request }) => {
     await openAuthenticatedHome(page);
 
-    await page.goto('/search?tab=people');
-    const vsLink = page.getByRole('link', { name: /cara a cara con @/i }).first();
-    await expect(vsLink).toBeVisible({ timeout: 20_000 });
-    await expect(vsLink).toHaveAttribute('href', /\/u\/[^/]+\/vs$/);
-
     const token = await readAccessToken(page);
     expect(token).toBeTruthy();
 
@@ -122,42 +117,42 @@ test.describe('Smoke — onboarding de valor @smoke', () => {
     });
     expect(meRes.ok()).toBeTruthy();
     const me = (await meRes.json()) as { username?: string | null };
-    const meUsername = me.username ?? '';
+    const meUsername = (me.username ?? '').toLowerCase();
 
-    const discoverRes = await request.get(`${API_BASE}/api/profile/discover?limit=12`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(discoverRes.ok()).toBeTruthy();
-    const discover = (await discoverRes.json()) as {
-      profiles?: Array<{ username?: string | null }>;
-    };
-    const other = (discover.profiles ?? []).find(
-      (p) => p.username && p.username.toLowerCase() !== meUsername.toLowerCase(),
-    );
+    await page.goto('/search?tab=people');
+    await expect(page.getByRole('heading', { name: /^buscar$/i })).toBeVisible();
 
-    const targetUsername = other?.username ?? 'aficionado_demo';
-    if (targetUsername.toLowerCase() === meUsername.toLowerCase()) {
-      test.info().annotations.push({
-        type: 'note',
-        description: 'Sin rival distinto al perfil QA para cara a cara',
+    const vsLink = page.getByRole('link', { name: /cara a cara con @/i }).first();
+    const suggestions = page.getByRole('heading', { name: /aficionados sugeridos/i });
+    const emptyHint = page.getByText(/encuentra aficionados/i);
+    await expect(suggestions.or(emptyHint).or(vsLink)).toBeVisible({ timeout: 20_000 });
+
+    let targetUsername: string | null = null;
+    if (await vsLink.isVisible().catch(() => false)) {
+      await expect(vsLink).toHaveAttribute('href', /\/u\/[^/]+\/vs$/);
+      const href = await vsLink.getAttribute('href');
+      targetUsername = href?.match(/\/u\/([^/]+)\/vs/)?.[1] ?? null;
+      await vsLink.click();
+    } else {
+      const discoverRes = await request.get(`${API_BASE}/api/profile/discover?limit=12`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      return;
+      expect(discoverRes.ok()).toBeTruthy();
+      const discover = (await discoverRes.json()) as {
+        profiles?: Array<{ username?: string | null }>;
+      };
+      const rival = (discover.profiles ?? []).find(
+        (p) =>
+          p.username &&
+          !/^user_/i.test(p.username) &&
+          p.username.toLowerCase() !== meUsername,
+      );
+      test.skip(!rival?.username, 'Sin rival comparable en discover para cara a cara');
+      targetUsername = rival!.username!;
+      await page.goto(`/u/${encodeURIComponent(targetUsername)}/vs`);
     }
 
-    // Confirmar que el perfil público existe antes de vs
-    const publicRes = await request.get(
-      `${API_BASE}/api/capsules/user/${encodeURIComponent(targetUsername)}?limit=1`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
-    if (!publicRes.ok()) {
-      test.info().annotations.push({
-        type: 'note',
-        description: `Perfil @${targetUsername} no disponible (${publicRes.status()})`,
-      });
-      return;
-    }
-
-    await page.goto(`/u/${encodeURIComponent(targetUsername)}/vs`);
+    await expect(page).toHaveURL(/\/u\/[^/]+\/vs/);
     await expect(page.getByTestId('compare-face-off')).toBeVisible({ timeout: 25_000 });
     await expect(page.getByTestId('compare-bar-matches')).toBeVisible();
     await expect(

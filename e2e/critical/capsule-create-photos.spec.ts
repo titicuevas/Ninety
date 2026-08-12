@@ -86,6 +86,21 @@ test.describe('Crítico — creación de capsule con fotos @critical', () => {
     await page.getByLabel('Reseña corta (opcional)').fill(draftNote);
     await page.getByRole('radio', { name: /estadio/i }).click();
 
+    // Debounce 250ms en saveDraftCapsuleMemory — esperar persistencia real
+    await page.waitForFunction(
+      (note) => {
+        try {
+          const raw = sessionStorage.getItem('ninety.draftCapsuleMemory');
+          if (!raw) return false;
+          return (JSON.parse(raw) as { note?: string }).note === note;
+        } catch {
+          return false;
+        }
+      },
+      draftNote,
+      { timeout: 5_000 },
+    );
+
     // El borrador de memoria también sobrevive al refresh (fotos no)
     await page.reload();
     await expect(page).toHaveURL(/\/capsules\/new/);

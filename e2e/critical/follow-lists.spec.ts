@@ -13,7 +13,9 @@ test.describe('Crítico — perfiles públicos @critical', () => {
     const name = demoDisplayName(data);
 
     await page.goto(`/u/${DEMO_USERNAME}`);
-    await expect(page.getByRole('heading', { name: new RegExp(escapeRegExp(name), 'i') })).toBeVisible({
+    await expect(
+      page.getByRole('heading', { level: 1, name: new RegExp(escapeRegExp(name), 'i') }),
+    ).toBeVisible({
       timeout: 20_000,
     });
 
@@ -31,11 +33,13 @@ test.describe('Crítico — perfiles públicos @critical', () => {
     const name = demoDisplayName(data);
 
     await page.goto(`/u/${DEMO_USERNAME}`);
-    await expect(page.getByRole('heading', { name: new RegExp(escapeRegExp(name), 'i') })).toBeVisible({
+    await expect(
+      page.getByRole('heading', { level: 1, name: new RegExp(escapeRegExp(name), 'i') }),
+    ).toBeVisible({
       timeout: 20_000,
     });
 
-    await page.getByRole('link', { name: /seguidores/i }).click();
+    await page.getByRole('link', { name: /seguidor(es)?/i }).click();
     await expect(page).toHaveURL(/\/followers/);
     await expect(page.getByRole('heading', { name: /seguidores/i })).toBeVisible();
     await expect(page.getByText(/\d+ aficionados?/i)).toBeVisible();

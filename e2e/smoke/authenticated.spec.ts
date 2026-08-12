@@ -39,14 +39,15 @@ test.describe('Smoke — autenticado @smoke', () => {
     const allTab = tabs.getByRole('tab', { name: /^todo$/i });
     await allTab.click();
     await expect(page).toHaveURL(/wrapped=all/);
-    const shareBtn = page.getByRole('button', { name: /compartir wrapped|compartir|copiado|resumen copiado/i });
+    const shareBtn = page.getByRole('button', { name: /compartir wrapped|copiado|resumen copiado/i });
     await expect(shareBtn).toBeVisible();
     await shareBtn.click();
     // Web Share / clipboard / fallback manual: el CTA no debe romper
     await expect(
       page
-        .getByRole('button', { name: /compartir wrapped|compartir|copiado|resumen copiado/i })
-        .or(page.getByLabel(/texto del wrapped para copiar/i)),
+        .getByRole('button', { name: /compartir wrapped|copiado|resumen copiado/i })
+        .or(page.getByLabel(/texto del wrapped para copiar/i))
+        .first(),
     ).toBeVisible();
 
     // Collage, estadio o gráfico mensual si hay datos; el hero siempre tiene media ★
@@ -88,7 +89,17 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(page.getByRole('button', { name: /^cualquier mes$/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /^mar$/i })).toBeVisible();
 
+    // Forzar cambio de temporada vía año explícito (evita race URL en tablet)
+    const yearChip = page.getByRole('button', { name: /^2025$/ });
+    if (await yearChip.isVisible().catch(() => false)) {
+      await yearChip.click();
+      await expect(page).toHaveURL(/season=2025/);
+    }
     await page.getByRole('button', { name: /esta temporada/i }).click();
+    await expect(page.getByRole('button', { name: /esta temporada/i })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     await expect(page).toHaveURL(/season=/);
 
     await page.getByRole('button', { name: /^mar$/i }).click();
@@ -178,11 +189,12 @@ test.describe('Smoke — autenticado @smoke', () => {
       .click();
     await expect(page).toHaveURL(/\/capsules/);
 
-    const editLink = page.getByRole('link', { name: /editar/i }).first();
+    const editLink = page.locator('main a[href*="/capsules/"][href$="/edit"]').first();
     const empty = page.getByText(/aún no tienes capsules/i);
     await expect(editLink.or(empty)).toBeVisible({ timeout: 20_000 });
     if (await empty.isVisible().catch(() => false)) return;
 
+    await editLink.scrollIntoViewIfNeeded();
     await editLink.click();
     await expect(page).toHaveURL(/\/capsules\/.+\/edit/);
     await expect(page.getByRole('heading', { name: /editar capsule/i })).toBeVisible();
@@ -217,11 +229,12 @@ test.describe('Smoke — autenticado @smoke', () => {
       .click();
     await expect(page).toHaveURL(/\/capsules/);
 
-    const editLink = page.getByRole('link', { name: /editar/i }).first();
+    const editLink = page.locator('main a[href*="/capsules/"][href$="/edit"]').first();
     const empty = page.getByText(/aún no tienes capsules/i);
     await expect(editLink.or(empty)).toBeVisible({ timeout: 20_000 });
     if (await empty.isVisible().catch(() => false)) return;
 
+    await editLink.scrollIntoViewIfNeeded();
     await editLink.click();
     await expect(page).toHaveURL(/\/capsules\/.+\/edit/);
 

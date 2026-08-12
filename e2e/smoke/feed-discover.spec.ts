@@ -22,11 +22,12 @@ test.describe('Smoke — feed y discover @smoke', () => {
 
     await exploreTab.click();
     await expect(exploreTab).toHaveAttribute('aria-selected', 'true');
+    // Subtítulo + lista/empty: .first() evita strict mode si ambos coinciden
+    await expect(page.getByText(/partidos públicos de la comunidad/i)).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(
-      page
-        .getByText(/partidos públicos de la comunidad/i)
-        .or(page.getByText(/aún no hay cápsulas públicas/i))
-        .or(page.locator('ul li').first()),
+      page.getByText(/aún no hay cápsulas públicas/i).or(page.locator('main ul li').first()).first(),
     ).toBeVisible({ timeout: 15_000 });
 
     await popularTab.click();
@@ -36,8 +37,8 @@ test.describe('Smoke — feed y discover @smoke', () => {
     await expect(followingTab).toHaveAttribute('aria-selected', 'true');
 
     const empty = page.getByText(/tu feed está vacío/i);
-    const listItem = page.locator('ul li').first();
-    await expect(empty.or(listItem).or(recentTab)).toBeVisible({ timeout: 15_000 });
+    const listItem = page.locator('main ul li').first();
+    await expect(empty.or(listItem).or(recentTab).first()).toBeVisible({ timeout: 15_000 });
 
     if (await empty.isVisible()) {
       await expect(page.getByRole('button', { name: /explorar comunidad/i })).toBeVisible();
