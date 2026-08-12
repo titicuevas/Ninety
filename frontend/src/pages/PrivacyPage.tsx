@@ -122,22 +122,31 @@ export function PrivacyPage() {
           separados.
         </p>
         <p>
-          Para eliminar la cuenta, hoy el flujo es manual: desde Ajustes se abre un email a{' '}
+          Puedes <strong className="text-foreground">eliminar tu cuenta</strong> tú mismo desde{' '}
+          <Link to="/settings" className="text-primary underline-offset-2 hover:underline">
+            Ajustes
+          </Link>
+          : confirmas el email de la cuenta y el borrado es inmediato e irreversible (perfil, diario,
+          colecciones, alertas y fotos subidas). Si no puedes acceder a la cuenta, escribe a{' '}
           <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary underline-offset-2 hover:underline">
             {CONTACT_EMAIL}
-          </a>
-          . Conservamos los datos mientras la cuenta exista; al borrarla dejamos de usarlos salvo
-          obligaciones legales mínimas o copias de seguridad técnicas con retención corta.
+          </a>{' '}
+          como vía de ayuda secundaria. Conservamos los datos mientras la cuenta exista; al borrarla
+          dejamos de usarlos salvo obligaciones legales mínimas o copias de seguridad técnicas con
+          retención corta.
         </p>
       </LegalSection>
 
       <LegalSection title="7. Tus derechos">
         <p>
           Puedes acceder y corregir datos de perfil en la app, exportar el diario y las colecciones, y
-          solicitar
-          borrado por email. Si la normativa aplicable te otorga más derechos (oposición,
-          limitación, etc.), escríbenos y los atenderemos en la medida en que el producto y la ley
-          lo permitan. No afirmamos aquí una jurisdicción ni un DPO inventados.
+          eliminar la cuenta desde{' '}
+          <Link to="/settings" className="text-primary underline-offset-2 hover:underline">
+            Ajustes
+          </Link>
+          . Si la normativa aplicable te otorga más derechos (oposición, limitación, etc.),
+          escríbenos y los atenderemos en la medida en que el producto y la ley lo permitan. No
+          afirmamos aquí una jurisdicción ni un DPO inventados.
         </p>
       </LegalSection>
 

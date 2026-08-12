@@ -333,7 +333,7 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(page.locator('main').getByRole('button', { name: /^cerrar sesión$/i })).toBeVisible();
   });
 
-  test('Ajustes ofrece eliminar cuenta por email', async ({ page }) => {
+  test('Ajustes ofrece eliminar cuenta self-serve', async ({ page }) => {
     await openAuthenticatedHome(page);
     await page
       .getByRole('navigation', { name: /navegación principal/i })
@@ -347,17 +347,18 @@ test.describe('Smoke — autenticado @smoke', () => {
     await page.getByRole('button', { name: /eliminar cuenta/i }).click();
     const dialog = page.getByRole('dialog', { name: /eliminar cuenta/i });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByText(/hello@ninety\.app/i)).toBeVisible();
+    await expect(dialog.getByText(/escribe tu email de cuenta para confirmar/i)).toBeVisible();
 
     const confirmEmail = dialog.getByLabel(/confirmar email para eliminar cuenta/i);
     await expect(confirmEmail).toBeVisible();
-    await expect(dialog.getByRole('button', { name: /escribir email/i })).toBeDisabled();
+    const deleteBtn = dialog.getByRole('button', { name: /^eliminar cuenta$/i });
+    await expect(deleteBtn).toBeDisabled();
 
     const emailValue = await page.locator('main input[type="email"][disabled]').inputValue();
     await confirmEmail.fill(emailValue || 'test@example.com');
-    await expect(dialog.getByRole('button', { name: /escribir email/i })).toBeEnabled();
+    await expect(deleteBtn).toBeEnabled();
 
-    await dialog.getByRole('button', { name: /^cerrar$/i }).click();
+    await dialog.getByRole('button', { name: /^cancelar$/i }).click();
     await expect(dialog).toBeHidden();
   });
 });

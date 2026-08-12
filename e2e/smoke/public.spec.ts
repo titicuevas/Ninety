@@ -165,11 +165,16 @@ test.describe('Smoke — público @smoke', () => {
     await expect(page.getByRole('heading', { name: /política de privacidad/i })).toBeVisible();
     await expect(page.getByText(/getninety\.app/i).first()).toBeVisible();
     await expect(page.getByText(/públicas|privada/i).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: /ajustes/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /ajustes/i }).first()).toBeVisible();
+    await expect(page.getByText(/eliminar tu cuenta/i).first()).toBeVisible();
+    await expect(page.getByText(/vía de ayuda secundaria|vía secundaria/i)).toBeVisible();
 
     await page.goto('/terminos');
     await expect(page.getByRole('heading', { name: /términos de uso/i })).toBeVisible();
     await expect(page.getByText(/supabase/i).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /ajustes/i })).toBeVisible();
+    await expect(page.getByText(/eliminar tu cuenta/i).first()).toBeVisible();
+    await expect(page.getByText(/vía secundaria/i)).toBeVisible();
   });
 
   test('redirects EN de legales a rutas ES canónicas', async ({ page }) => {
