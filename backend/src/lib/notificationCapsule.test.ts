@@ -124,5 +124,13 @@ describe('buildNotificationPushBody', () => {
       buildNotificationPushBody({ type: 'follow', actorName: '@ana' }),
       '@ana te empezó a seguir',
     );
+    assert.equal(
+      buildNotificationPushBody({
+        type: 'mention',
+        actorName: 'Ana',
+        commentSnippet: 'Hola @tú',
+      }),
+      'Ana te mencionó: «Hola @tú»',
+    );
   });
 });

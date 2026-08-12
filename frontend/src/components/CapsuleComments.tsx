@@ -13,6 +13,7 @@ import {
   useUpdateCapsuleComment,
 } from '@/hooks/useCapsuleComments';
 import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
+import { splitCommentMentions } from '@/lib/commentMentions';
 import { formatRelativeTime } from '@/lib/format';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { publicProfilePath } from '@/lib/profilePath';
@@ -35,6 +36,32 @@ function CommentAvatar({ name, avatarUrl }: { name: string; avatarUrl: string | 
     <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-muted-foreground">
       {name.slice(0, 1).toUpperCase()}
     </div>
+  );
+}
+
+function CommentBodyText({ body }: { body: string }) {
+  const parts = splitCommentMentions(body);
+  return (
+    <p className="mt-0.5 whitespace-pre-wrap break-words text-muted-foreground">
+      {parts.map((part, index) => {
+        if (part.type === 'text') {
+          return <span key={index}>{part.value}</span>;
+        }
+        const href = publicProfilePath(part.username);
+        if (!href) {
+          return <span key={index}>@{part.raw}</span>;
+        }
+        return (
+          <Link
+            key={index}
+            to={href}
+            className="font-medium text-primary hover:underline"
+          >
+            @{part.raw}
+          </Link>
+        );
+      })}
+    </p>
   );
 }
 
@@ -141,7 +168,7 @@ function CommentItem({
             {editError ? <p className="text-xs text-destructive">{editError}</p> : null}
           </div>
         ) : (
-          <p className="mt-0.5 whitespace-pre-wrap break-words text-muted-foreground">{comment.body}</p>
+          <CommentBodyText body={comment.body} />
         )}
       </div>
       {!editing && (isOwn || canDelete) ? (

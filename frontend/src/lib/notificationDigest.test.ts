@@ -64,6 +64,7 @@ describe('formatDigestActorNames / digestActionText', () => {
     assert.equal(digestActionText('like', 1), 'le gustó tu cápsula');
     assert.equal(digestActionText('like', 3), 'les gustó tu cápsula');
     assert.equal(digestActionText('comment', 2), 'comentaron en tu cápsula');
+    assert.equal(digestActionText('mention', 1), 'te mencionó en un comentario');
     assert.equal(digestActionText('follow', 2), 'te empezaron a seguir');
   });
 });

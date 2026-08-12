@@ -1,6 +1,6 @@
 /** Agrupa notificaciones del mismo tipo/cápsula en el centro de alertas (digest V7). */
 
-export type DigestNotificationType = 'like' | 'follow' | 'comment';
+export type DigestNotificationType = 'like' | 'follow' | 'comment' | 'mention';
 
 export interface DigestActor {
   id: string;
@@ -45,7 +45,7 @@ export interface NotificationDigestGroup {
   unread: boolean;
   created_at: string;
   capsule: DigestNotificationInput['capsule'];
-  /** Snippet del comentario más reciente (solo type=comment). */
+  /** Snippet del comentario más reciente (comment | mention). */
   latestBody: string | null;
 }
 
@@ -87,6 +87,8 @@ export function digestActionText(type: DigestNotificationType, actorCount: numbe
       return plural ? 'les gustó tu cápsula' : 'le gustó tu cápsula';
     case 'comment':
       return plural ? 'comentaron en tu cápsula' : 'comentó en tu cápsula';
+    case 'mention':
+      return plural ? 'te mencionaron en un comentario' : 'te mencionó en un comentario';
     case 'follow':
       return plural ? 'te empezaron a seguir' : 'te empezó a seguir';
   }
@@ -134,7 +136,9 @@ export function groupNotificationsForDigest(
 
     const head = sorted[0]!;
     const latestBody =
-      head.type === 'comment' && head.body?.trim() ? head.body.trim() : null;
+      (head.type === 'comment' || head.type === 'mention') && head.body?.trim()
+        ? head.body.trim()
+        : null;
 
     groups.push({
       key,

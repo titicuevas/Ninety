@@ -86,5 +86,20 @@ describe('isNotificationTypeEnabled', () => {
     assert.equal(isNotificationTypeEnabled(prefs, 'like'), false);
     assert.equal(isNotificationTypeEnabled(prefs, 'comment'), true);
     assert.equal(isNotificationTypeEnabled(prefs, 'follow'), true);
+    assert.equal(isNotificationTypeEnabled(prefs, 'mention'), true);
+  });
+
+  it('menciones respetan preferencia de comentarios', () => {
+    const prefs = {
+      like: true,
+      comment: false,
+      follow: true,
+      push_anniversary: false,
+      push_milestone: false,
+      push_want_to_go: false,
+      email_digest: false,
+      push_quiet: DEFAULT_NOTIFICATION_PREFERENCES.push_quiet,
+    };
+    assert.equal(isNotificationTypeEnabled(prefs, 'mention'), false);
   });
 });

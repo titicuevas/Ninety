@@ -477,13 +477,13 @@ Ninety/
 - [x] Página de equipo — fans del mismo club favorito (descubrimiento por equipo) (`/teams/:slug` + `GET /api/profile/by-team`; club favorito clickable en perfil/búsqueda; filtra bloqueos)
 - [x] Digest email semanal — resumen opt-in del diario vía Resend (`email_digest` en Ajustes; cron `POST /api/internal/cron/email-digest`; idempotencia `diary_email_digest_sent`; migración `20250818120000_email_digest.sql`; baja one-click; no mezcla con digest push social)
 
-### 🚧 v11 — Diario con más sustancia
+### ✅ v11 — Diario con más sustancia
 - [x] Recordatorio «Quiero ir» — push opt-in cuando se acerca un partido de la watchlist (ventana ~48 h; `push_want_to_go` en Ajustes; mismo cron `POST /api/internal/cron/push-diary`; idempotencia `diary_push_sent` kind `want_to_go`; deep link `/want-to-go`; migración `20250819120000_want_to_go_push.sql`; respeta quiet hours)
 - [x] Notas / reseña corta en Capsule — texto libre además del rating (`note`, máx. 1000; crear/editar + detalle propio/público; sin migración nueva — columna desde `20250705120000_capsules.sql`)
 - [x] Tags en Capsules — etiquetas propias (clásico, viaje, derbi…) filtrables en Mis Capsules (`tags text[]` máx. 8×24; crear/editar + filtro `?tag=` en `GET /api/capsules/me`; visibles en detalle/listado; migración `20250820120000_capsule_tags.sql`)
 - [x] Me gusta en colecciones — señal social ligera en listas públicas (`POST/DELETE /api/collections/:id/like`, `GET /api/collections/:id/likes`; contador + lista; migración `20250821120000_collection_likes.sql`; respeta blocks; sin likes en privadas ajenas)
 - [x] Compartir calendario / mes del diario — link shareable + preview OG (`/u/:username/calendar/:year/:month` + `GET /api/capsules/user/:username/calendar`; solo Capsules públicas; botón compartir/copiar en `/diary/calendar`)
-- [ ] Mentions en comentarios — @usuario notifica y enlaza al perfil
+- [x] Mentions en comentarios — @usuario notifica y enlaza al perfil (tipo `mention`; máx. 5/comentario; sin self/blocked/dueño Capsule; prefs de comentarios; migración `20250822120000_notification_mentions.sql`)
 
 ## 🎨 Identidad visual
 

@@ -23,10 +23,10 @@ export type NotificationCapsule = NotificationCapsuleContext;
 
 export interface AppNotification {
   id: string;
-  type: 'like' | 'follow' | 'comment';
+  type: 'like' | 'follow' | 'comment' | 'mention';
   actor_id: string;
   capsule_id: string | null;
-  /** Snippet del comentario (si type=comment). */
+  /** Snippet del comentario (si type=comment | mention). */
   body?: string | null;
   read: boolean;
   created_at: string;

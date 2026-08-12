@@ -10,10 +10,11 @@ import {
 } from './notificationTypeFilter.ts';
 
 describe('parseNotificationTypeParam', () => {
-  it('acepta like / comment / follow', () => {
+  it('acepta like / comment / follow / mention', () => {
     assert.equal(parseNotificationTypeParam('like'), 'like');
     assert.equal(parseNotificationTypeParam('COMMENT'), 'comment');
     assert.equal(parseNotificationTypeParam(' follow '), 'follow');
+    assert.equal(parseNotificationTypeParam('MENTION'), 'mention');
   });
 
   it('rechaza vacío o desconocidos', () => {
@@ -42,11 +43,13 @@ describe('hasNotificationTypeFilter / empty / title', () => {
   it('copia de empty por tipo', () => {
     assert.match(notificationTypeEmptyCopy('like').title, /me gusta/i);
     assert.match(notificationTypeEmptyCopy('comment').title, /comentarios/i);
+    assert.match(notificationTypeEmptyCopy('mention').title, /menciones/i);
     assert.match(notificationTypeEmptyCopy('follow').title, /seguidores/i);
   });
 
   it('título de documento', () => {
     assert.equal(notificationDocumentTitle(null), 'Notificaciones');
     assert.equal(notificationDocumentTitle('comment'), 'Notificaciones · Comentarios');
+    assert.equal(notificationDocumentTitle('mention'), 'Notificaciones · Menciones');
   });
 });

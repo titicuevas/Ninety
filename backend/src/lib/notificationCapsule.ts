@@ -69,7 +69,7 @@ export function formatMatchContext(capsule: {
   return competition ? `${match} · ${competition}` : match;
 }
 
-type PushType = 'like' | 'follow' | 'comment';
+type PushType = 'like' | 'follow' | 'comment' | 'mention';
 
 /**
  * Cuerpo del push. Si hay partido, lo incluye para que el inbox del SO
@@ -93,6 +93,13 @@ export function buildNotificationPushBody(params: {
     return match
       ? `A ${actorName} le gustó ${match}`
       : `A ${actorName} le gustó tu cápsula`;
+  }
+
+  if (type === 'mention') {
+    if (match && snippet) return `${actorName} te mencionó en ${match}: «${snippet}»`;
+    if (match) return `${actorName} te mencionó en ${match}`;
+    if (snippet) return `${actorName} te mencionó: «${snippet}»`;
+    return `${actorName} te mencionó en un comentario`;
   }
 
   // comment

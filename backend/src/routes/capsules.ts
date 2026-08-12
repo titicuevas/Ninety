@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import { z } from 'zod';
 import { CAPSULE_NOTE_MAX, normalizeCapsuleNote } from '../lib/capsuleNote.js';
@@ -22,6 +23,7 @@ import {
 import { restorePhotosForCapsules } from '../lib/diaryImportPhotos.js';
 import { validateCommentBody, validateImageBuffer } from '../lib/contentModeration.js';
 import { attachCommentCounts, fetchCommentsWithAuthors, isMissingCommentsTable } from '../lib/capsuleComments.js';
+import { notifyCommentMentions } from '../lib/commentMentions.js';
 import { attachLikeStats, fetchLikesWithProfiles, isMissingLikesTable } from '../lib/capsuleLikes.js';
 import { applyFeedContentFilters, resolveFeedContentFilters } from '../lib/feedFilters.js';
 import { attachFollowStats, getFollowingIds } from '../lib/userFollows.js';
@@ -48,6 +50,14 @@ import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.j
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
 export const capsulesRouter = Router();
+
+const commentLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiados comentarios. Inténtalo en un minuto.' },
+});
 
 const photoUpload = multer({
   storage: multer.memoryStorage(),
@@ -1244,7 +1254,7 @@ capsulesRouter.get('/:id/comments', optionalAuth, async (req: AuthRequest, res) 
   }
 });
 
-capsulesRouter.post('/:id/comments', requireAuth, async (req: AuthRequest, res) => {
+capsulesRouter.post('/:id/comments', requireAuth, commentLimiter, async (req: AuthRequest, res) => {
   const token = getAccessToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
@@ -1309,6 +1319,13 @@ capsulesRouter.post('/:id/comments', requireAuth, async (req: AuthRequest, res) 
     body: parsed.data.body,
   });
 
+  void notifyCommentMentions({
+    body: parsed.data.body,
+    actorId: req.userId!,
+    capsuleId: capsule.id,
+    capsuleOwnerId: capsule.user_id,
+  });
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('username, full_name, avatar_url')
@@ -1327,7 +1344,7 @@ capsulesRouter.post('/:id/comments', requireAuth, async (req: AuthRequest, res) 
   });
 });
 
-capsulesRouter.patch('/:id/comments/:commentId', requireAuth, async (req: AuthRequest, res) => {
+capsulesRouter.patch('/:id/comments/:commentId', requireAuth, commentLimiter, async (req: AuthRequest, res) => {
   const token = getAccessToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });

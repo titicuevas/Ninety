@@ -31,7 +31,7 @@ export async function notifyUser(params: {
   actorId: string;
   type: NotificationType;
   capsuleId?: string;
-  /** Snapshot del comentario (solo type=comment). */
+  /** Snapshot del comentario (type=comment | mention). */
   body?: string;
 }) {
   if (params.userId === params.actorId) return;
@@ -47,7 +47,10 @@ export async function notifyUser(params: {
     const block = await getBlockRelation(params.userId, params.actorId);
     if (isBlockActive(block)) return;
 
-    const snippet = params.type === 'comment' ? truncateBody(params.body) : null;
+    const snippet =
+      params.type === 'comment' || params.type === 'mention'
+        ? truncateBody(params.body)
+        : null;
     const row: Record<string, unknown> = {
       user_id: params.userId,
       actor_id: params.actorId,

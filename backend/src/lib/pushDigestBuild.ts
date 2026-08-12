@@ -1,6 +1,6 @@
 import { buildNotificationPushBody } from './notificationCapsule.js';
 
-export type DigestNotificationType = 'like' | 'follow' | 'comment';
+export type DigestNotificationType = 'like' | 'follow' | 'comment' | 'mention';
 
 export type PendingNotificationRow = {
   id: string;
@@ -16,18 +16,21 @@ const PUSH_TITLE: Record<DigestNotificationType, string> = {
   like: 'Nuevo like',
   follow: 'Nuevo seguidor',
   comment: 'Nuevo comentario',
+  mention: 'Te mencionaron',
 };
 
 const TYPE_LABEL: Record<DigestNotificationType, string> = {
   like: 'like',
   follow: 'follow',
   comment: 'comentario',
+  mention: 'mención',
 };
 
 const TYPE_LABEL_PLURAL: Record<DigestNotificationType, string> = {
   like: 'likes',
   follow: 'follows',
   comment: 'comentarios',
+  mention: 'menciones',
 };
 
 export function notificationDigestKey(
@@ -55,13 +58,20 @@ function digestActionText(type: DigestNotificationType, actorCount: number): str
       return plural ? 'les gustó tu cápsula' : 'le gustó tu cápsula';
     case 'comment':
       return plural ? 'comentaron en tu cápsula' : 'comentó en tu cápsula';
+    case 'mention':
+      return plural ? 'te mencionaron en un comentario' : 'te mencionó en un comentario';
     case 'follow':
       return plural ? 'te empezaron a seguir' : 'te empezó a seguir';
   }
 }
 
 function countByType(notifications: PendingNotificationRow[]): Record<DigestNotificationType, number> {
-  const counts: Record<DigestNotificationType, number> = { like: 0, comment: 0, follow: 0 };
+  const counts: Record<DigestNotificationType, number> = {
+    like: 0,
+    comment: 0,
+    follow: 0,
+    mention: 0,
+  };
   for (const n of notifications) {
     counts[n.type] += 1;
   }
@@ -70,7 +80,7 @@ function countByType(notifications: PendingNotificationRow[]): Record<DigestNoti
 
 function formatTypeBreakdown(counts: Record<DigestNotificationType, number>): string {
   const parts: string[] = [];
-  for (const type of ['like', 'comment', 'follow'] as const) {
+  for (const type of ['like', 'comment', 'mention', 'follow'] as const) {
     const n = counts[type];
     if (n <= 0) continue;
     parts.push(`${n} ${n === 1 ? TYPE_LABEL[type] : TYPE_LABEL_PLURAL[type]}`);
@@ -117,7 +127,10 @@ function groupNotificationsForDigest(notifications: PendingNotificationRow[]): D
       capsule_id: head.capsule_id,
       notifications: sorted,
       actorNames,
-      latestBody: head.type === 'comment' && head.body?.trim() ? head.body.trim() : null,
+      latestBody:
+        (head.type === 'comment' || head.type === 'mention') && head.body?.trim()
+          ? head.body.trim()
+          : null,
     });
   }
 
@@ -149,7 +162,9 @@ export function resolvePushDigestUrl(params: {
   }
 
   if (capsule_id) {
-    return type === 'comment' ? `/c/${capsule_id}#comments` : `/c/${capsule_id}`;
+    return type === 'comment' || type === 'mention'
+      ? `/c/${capsule_id}#comments`
+      : `/c/${capsule_id}`;
   }
 
   return '/notifications';
@@ -189,7 +204,8 @@ export function buildPushDigestPayload(params: {
     const n = sorted[0]!;
     const name = resolveActorName(n.actor_id, actorNames);
     const matchLabel = n.capsule_id ? matchLabels.get(n.capsule_id) ?? null : null;
-    const snippet = n.type === 'comment' ? n.body?.trim() || null : null;
+    const snippet =
+      n.type === 'comment' || n.type === 'mention' ? n.body?.trim() || null : null;
     return {
       title: PUSH_TITLE[n.type],
       body: buildNotificationPushBody({

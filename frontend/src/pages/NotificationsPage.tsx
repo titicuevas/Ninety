@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
-import { Bell, Heart, UserPlus, MessageCircle } from 'lucide-react';
+import { AtSign, Bell, Heart, UserPlus, MessageCircle } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
@@ -55,6 +55,7 @@ const iconMap = {
   like: Heart,
   follow: UserPlus,
   comment: MessageCircle,
+  mention: AtSign,
 } as const;
 
 function StackedAvatars({ actors, type }: { actors: DigestActor[]; type: NotificationDigestGroup['type'] }) {
@@ -134,11 +135,12 @@ function DigestNotificationItem({
   const link =
     followHref ??
     (group.capsule_id
-      ? group.type === 'comment'
+      ? group.type === 'comment' || group.type === 'mention'
         ? `/c/${group.capsule_id}#comments`
         : `/c/${group.capsule_id}`
       : undefined);
-  const snippet = group.type === 'comment' ? group.latestBody : null;
+  const snippet =
+    group.type === 'comment' || group.type === 'mention' ? group.latestBody : null;
   const matchLine = group.capsule ? formatNotificationMatchContext(group.capsule) : null;
   const ariaLabel = formatNotificationAriaLabel({
     actorName: actorNames,

@@ -69,6 +69,18 @@ describe('buildPushDigestPayload', () => {
     assert.equal(payload?.url, '/c/c9#comments');
   });
 
+  it('mención única enlaza a #comments', () => {
+    const payload = buildPushDigestPayload({
+      notifications: [
+        base({ type: 'mention', capsule_id: 'c9', actor_id: 'a1', body: 'Hola @pepe' }),
+      ],
+      ...baseParams,
+    });
+    assert.equal(payload?.title, 'Te mencionaron');
+    assert.equal(payload?.url, '/c/c9#comments');
+    assert.match(payload?.body ?? '', /mencionó/);
+  });
+
   it('follow único enlaza al perfil', () => {
     const payload = buildPushDigestPayload({
       notifications: [base({ type: 'follow', capsule_id: null, actor_id: 'a1' })],

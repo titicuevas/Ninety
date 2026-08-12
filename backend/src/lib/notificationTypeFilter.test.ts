@@ -3,10 +3,11 @@ import { describe, it } from 'node:test';
 import { parseNotificationTypeFilter } from './notificationTypeFilter.js';
 
 describe('parseNotificationTypeFilter', () => {
-  it('acepta like / comment / follow (case-insensitive)', () => {
+  it('acepta like / comment / follow / mention (case-insensitive)', () => {
     assert.equal(parseNotificationTypeFilter('like'), 'like');
     assert.equal(parseNotificationTypeFilter('COMMENT'), 'comment');
     assert.equal(parseNotificationTypeFilter(' Follow '), 'follow');
+    assert.equal(parseNotificationTypeFilter('mention'), 'mention');
   });
 
   it('rechaza vacío, basura o tipos desconocidos', () => {

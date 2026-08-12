@@ -1,8 +1,8 @@
-/** Filtro de listado del centro de alertas por tipo (like / comment / follow). */
+/** Filtro de listado del centro de alertas por tipo (like / comment / follow / mention). */
 
-export type NotificationTypeFilter = 'like' | 'comment' | 'follow';
+export type NotificationTypeFilter = 'like' | 'comment' | 'follow' | 'mention';
 
-const ALLOWED = new Set<NotificationTypeFilter>(['like', 'comment', 'follow']);
+const ALLOWED = new Set<NotificationTypeFilter>(['like', 'comment', 'follow', 'mention']);
 
 /** `type` de query; inválido o vacío → sin filtro. */
 export function parseNotificationTypeFilter(raw: unknown): NotificationTypeFilter | null {

@@ -1,6 +1,6 @@
 /** Filtro del centro de alertas por tipo (URL `?type=`). */
 
-export type NotificationTypeFilter = 'like' | 'comment' | 'follow';
+export type NotificationTypeFilter = 'like' | 'comment' | 'follow' | 'mention';
 
 export type NotificationListFilter = NotificationTypeFilter | null;
 
@@ -11,13 +11,14 @@ export const NOTIFICATION_TYPE_FILTER_CHIPS: ReadonlyArray<{
   { value: null, label: 'Todas' },
   { value: 'like', label: 'Me gusta' },
   { value: 'comment', label: 'Comentarios' },
+  { value: 'mention', label: 'Menciones' },
   { value: 'follow', label: 'Seguidores' },
 ];
 
 export function parseNotificationTypeParam(value: string | null): NotificationListFilter {
   if (!value) return null;
   const v = value.trim().toLowerCase();
-  if (v === 'like' || v === 'comment' || v === 'follow') return v;
+  if (v === 'like' || v === 'comment' || v === 'follow' || v === 'mention') return v;
   return null;
 }
 
@@ -50,6 +51,11 @@ export function notificationTypeEmptyCopy(type: NotificationTypeFilter): {
         title: 'Sin comentarios',
         description: 'Cuando comenten tu cápsula, lo verás en este filtro.',
       };
+    case 'mention':
+      return {
+        title: 'Sin menciones',
+        description: 'Cuando te mencionen con @usuario en un comentario, aparecerá aquí.',
+      };
     case 'follow':
       return {
         title: 'Sin seguidores nuevos',
@@ -62,6 +68,7 @@ export function notificationTypeEmptyCopy(type: NotificationTypeFilter): {
 export function notificationDocumentTitle(type: NotificationListFilter): string {
   if (type === 'like') return 'Notificaciones · Me gusta';
   if (type === 'comment') return 'Notificaciones · Comentarios';
+  if (type === 'mention') return 'Notificaciones · Menciones';
   if (type === 'follow') return 'Notificaciones · Seguidores';
   return 'Notificaciones';
 }

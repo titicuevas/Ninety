@@ -5,7 +5,7 @@ import {
   type PushQuietHours,
 } from './notificationQuietHours.js';
 
-export type NotificationType = 'like' | 'follow' | 'comment';
+export type NotificationType = 'like' | 'follow' | 'comment' | 'mention';
 
 export type NotificationPreferences = {
   like: boolean;
@@ -75,5 +75,7 @@ export function isNotificationTypeEnabled(
   prefs: NotificationPreferences,
   type: NotificationType,
 ): boolean {
+  // Mentions reutilizan la preferencia de comentarios (sin columna nueva).
+  if (type === 'mention') return prefs.comment !== false;
   return prefs[type] !== false;
 }
