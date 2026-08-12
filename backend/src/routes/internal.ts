@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { env } from '../config/loadEnv.js';
+import { flushDiaryPushes } from '../lib/diaryPush.js';
 import { flushPushDigests } from '../lib/pushDigest.js';
 
 export const internalRouter = Router();
@@ -29,6 +30,21 @@ internalRouter.post('/cron/push-digest', async (req, res, next) => {
     }
 
     const result = await flushPushDigests();
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** Cron: push opt-in de aniversarios / hitos del diario. */
+internalRouter.post('/cron/push-diary', async (req, res, next) => {
+  try {
+    if (!cronAuthorized(req)) {
+      res.status(401).json({ error: 'No autorizado' });
+      return;
+    }
+
+    const result = await flushDiaryPushes();
     res.json({ ok: true, ...result });
   } catch (err) {
     next(err);

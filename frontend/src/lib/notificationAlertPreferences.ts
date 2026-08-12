@@ -8,6 +8,10 @@ export type PushQuietHours = {
 };
 
 export type NotificationAlertPreferences = Record<NotificationAlertType, boolean> & {
+  /** Opt-in push «Tal día como hoy» (default off). */
+  push_anniversary: boolean;
+  /** Opt-in push de hitos del diario (default off). */
+  push_milestone: boolean;
   push_quiet: PushQuietHours;
 };
 
@@ -22,6 +26,8 @@ export const DEFAULT_NOTIFICATION_ALERT_PREFERENCES: NotificationAlertPreference
   like: true,
   comment: true,
   follow: true,
+  push_anniversary: false,
+  push_milestone: false,
   push_quiet: { ...DEFAULT_PUSH_QUIET_HOURS },
 };
 
@@ -84,12 +90,17 @@ export function normalizeNotificationAlertPreferences(
     like: raw?.like !== false,
     comment: raw?.comment !== false,
     follow: raw?.follow !== false,
+    push_anniversary: raw?.push_anniversary === true,
+    push_milestone: raw?.push_milestone === true,
     push_quiet: normalizePushQuietHours(raw?.push_quiet),
   };
 }
 
 export type NotificationAlertPreferencesPatch = Partial<
-  Pick<NotificationAlertPreferences, NotificationAlertType>
+  Pick<
+    NotificationAlertPreferences,
+    NotificationAlertType | 'push_anniversary' | 'push_milestone'
+  >
 > & {
   push_quiet?: Partial<PushQuietHours>;
 };

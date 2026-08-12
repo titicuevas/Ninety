@@ -16,17 +16,21 @@ describe('normalizeNotificationAlertPreferences', () => {
     );
   });
 
-  it('conserva silenciados explícitos y quiet hours', () => {
+  it('conserva silenciados explícitos, diary push y quiet hours', () => {
     assert.deepEqual(
       normalizeNotificationAlertPreferences({
         like: false,
         follow: true,
+        push_anniversary: true,
+        push_milestone: true,
         push_quiet: { enabled: true, start: '23:00', end: '07:00', timezone: 'Europe/Madrid' },
       }),
       {
         like: false,
         comment: true,
         follow: true,
+        push_anniversary: true,
+        push_milestone: true,
         push_quiet: {
           enabled: true,
           start: '23:00',
@@ -35,6 +39,11 @@ describe('normalizeNotificationAlertPreferences', () => {
         },
       },
     );
+  });
+
+  it('diary push es opt-in (false si no viene)', () => {
+    assert.equal(normalizeNotificationAlertPreferences({ like: true }).push_anniversary, false);
+    assert.equal(normalizeNotificationAlertPreferences({ like: true }).push_milestone, false);
   });
 });
 

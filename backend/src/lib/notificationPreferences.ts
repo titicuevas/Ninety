@@ -11,6 +11,10 @@ export type NotificationPreferences = {
   like: boolean;
   comment: boolean;
   follow: boolean;
+  /** Opt-in push «Tal día como hoy» (default off). */
+  push_anniversary: boolean;
+  /** Opt-in push de hitos 5/10/25… (default off). */
+  push_milestone: boolean;
   push_quiet: PushQuietHours;
 };
 
@@ -21,6 +25,8 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   like: true,
   comment: true,
   follow: true,
+  push_anniversary: false,
+  push_milestone: false,
   push_quiet: { ...DEFAULT_PUSH_QUIET_HOURS },
 };
 
@@ -28,6 +34,8 @@ type PrefsRow = {
   likes_enabled: boolean;
   comments_enabled: boolean;
   follows_enabled: boolean;
+  push_anniversary_enabled?: boolean | null;
+  push_milestone_enabled?: boolean | null;
   push_quiet_enabled?: boolean | null;
   push_quiet_start?: string | null;
   push_quiet_end?: string | null;
@@ -37,11 +45,18 @@ type PrefsRow = {
 export function mapNotificationPreferencesRow(
   row: PrefsRow | null | undefined,
 ): NotificationPreferences {
-  if (!row) return { ...DEFAULT_NOTIFICATION_PREFERENCES, push_quiet: { ...DEFAULT_PUSH_QUIET_HOURS } };
+  if (!row) {
+    return {
+      ...DEFAULT_NOTIFICATION_PREFERENCES,
+      push_quiet: { ...DEFAULT_PUSH_QUIET_HOURS },
+    };
+  }
   return {
     like: row.likes_enabled !== false,
     comment: row.comments_enabled !== false,
     follow: row.follows_enabled !== false,
+    push_anniversary: row.push_anniversary_enabled === true,
+    push_milestone: row.push_milestone_enabled === true,
     push_quiet: mapPushQuietHoursRow(row),
   };
 }

@@ -51,6 +51,8 @@ const preferencesPatchSchema = z
     like: z.boolean().optional(),
     comment: z.boolean().optional(),
     follow: z.boolean().optional(),
+    push_anniversary: z.boolean().optional(),
+    push_milestone: z.boolean().optional(),
     push_quiet: pushQuietPatchSchema.optional(),
   })
   .refine(
@@ -58,6 +60,8 @@ const preferencesPatchSchema = z
       body.like !== undefined ||
       body.comment !== undefined ||
       body.follow !== undefined ||
+      body.push_anniversary !== undefined ||
+      body.push_milestone !== undefined ||
       body.push_quiet !== undefined,
     { message: 'Indica al menos un campo' },
   );

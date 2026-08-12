@@ -62,6 +62,22 @@ export function useUpdateNotificationAlertPreferences() {
     },
     onSuccess: (data, patch) => {
       queryClient.setQueryData(QUERY_KEY, data);
+      if (patch.push_anniversary === true) {
+        toast.success('Push de aniversarios activado');
+        return;
+      }
+      if (patch.push_anniversary === false) {
+        toast.success('Push de aniversarios desactivado');
+        return;
+      }
+      if (patch.push_milestone === true) {
+        toast.success('Push de hitos activado');
+        return;
+      }
+      if (patch.push_milestone === false) {
+        toast.success('Push de hitos desactivado');
+        return;
+      }
       if (patch.push_quiet) {
         if (patch.push_quiet.enabled === true) {
           toast.success('Horario silencioso activado');
