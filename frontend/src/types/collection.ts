@@ -28,6 +28,23 @@ export interface PublicCollectionsResponse {
   collections: Collection[];
 }
 
+export type DiscoverCollectionMatchReason = 'following' | 'favorite_team' | null;
+
+export interface DiscoverCollectionAuthor extends CollectionAuthor {
+  id: string;
+  followed_by_me?: boolean;
+  follows_me?: boolean;
+}
+
+export interface DiscoverCollection extends Collection {
+  author: DiscoverCollectionAuthor;
+  match_reason: DiscoverCollectionMatchReason;
+}
+
+export interface DiscoverCollectionsResponse {
+  collections: DiscoverCollection[];
+}
+
 export interface CollectionDetailResponse {
   profile: CollectionAuthor | null;
   collection: Collection;

@@ -149,6 +149,11 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/collections/discover requiere auth', async () => {
+    const res = await request(createApp()).get('/api/collections/discover');
+    assert.equal(res.status, 401);
+  });
+
   it('GET /api/collections/user/:username no requiere auth', async () => {
     const res = await request(createApp()).get('/api/collections/user/demo');
     assert.notEqual(res.status, 401);

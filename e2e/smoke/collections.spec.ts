@@ -22,6 +22,15 @@ test.describe('Smoke — colecciones @smoke', () => {
     });
     await expect(page.locator('#main-content')).toBeVisible();
 
+    await page.getByRole('link', { name: /^explorar$/i }).click();
+    await expect(page).toHaveURL(/\/collections\/explore/);
+    await expect(page.getByRole('heading', { name: /explorar colecciones/i })).toBeVisible({
+      timeout: 20_000,
+    });
+
+    await page.getByRole('link', { name: /mis colecciones/i }).click();
+    await expect(page).toHaveURL(/\/collections$/);
+
     const uniqueName = `E2E ${Date.now()}`;
     const newBtn = page.getByRole('button', { name: /nueva colección|crear la primera/i }).first();
     await newBtn.click();

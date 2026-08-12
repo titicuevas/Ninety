@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Library, Lock, Plus } from 'lucide-react';
+import { Compass, Library, Lock, Plus } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
 import { NinetyLoader } from '@/components/NinetyLoader';
@@ -92,16 +92,24 @@ export function CollectionsPage() {
               Listas curadas de Capsules — Clásicos, viajes, noches de Champions…
             </p>
           </div>
-          <Button
-            type="button"
-            className="shrink-0"
-            aria-expanded={formOpen}
-            aria-controls="create-collection-panel"
-            onClick={() => openForm(!formOpen)}
-          >
-            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-            Nueva colección
-          </Button>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <Button asChild variant="secondary">
+              <Link to="/collections/explore">
+                <Compass className="mr-1.5 h-4 w-4" aria-hidden />
+                Explorar
+              </Link>
+            </Button>
+            <Button
+              type="button"
+              className="shrink-0"
+              aria-expanded={formOpen}
+              aria-controls="create-collection-panel"
+              onClick={() => openForm(!formOpen)}
+            >
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              Nueva colección
+            </Button>
+          </div>
         </section>
 
         {formOpen ? (

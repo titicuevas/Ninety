@@ -6,6 +6,7 @@ import { CollectionDetailPage } from '@/pages/CollectionDetailPage';
 import { CollectionsPage } from '@/pages/CollectionsPage';
 import { CreateCapsulePage } from '@/pages/CreateCapsulePage';
 import { EditCapsulePage } from '@/pages/EditCapsulePage';
+import { ExploreCollectionsPage } from '@/pages/ExploreCollectionsPage';
 import { FeedPage } from '@/pages/FeedPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { HomePage } from '@/pages/HomePage';
@@ -58,6 +59,7 @@ export const appRouter = createBrowserRouter([
       { path: '/capsules/new', element: <CreateCapsulePage /> },
       { path: '/capsules/:id/edit', element: <EditCapsulePage /> },
       { path: '/collections', element: <CollectionsPage /> },
+      { path: '/collections/explore', element: <ExploreCollectionsPage /> },
       { path: '/collections/:id', element: <CollectionDetailPage /> },
       { path: '/notifications', element: <NotificationsPage /> },
       { path: '/profile', element: <ProfilePage /> },

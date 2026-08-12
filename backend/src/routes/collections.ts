@@ -15,7 +15,13 @@ import {
   formatCollectionsImportSummary,
   parseCollectionsImportPayload,
 } from '../lib/collectionsImport.js';
+import { rankDiscoverCollections } from '../lib/discoverCollections.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
+import {
+  followRelationFlags,
+  isMissingFollowsTable,
+  loadFollowRelationSets,
+} from '../lib/userFollows.js';
 import { normalizeUsernameParam } from '../lib/usernameParam.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
@@ -764,6 +770,164 @@ collectionsRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
       items_count: 0,
       cover_url: null,
     }),
+  });
+});
+
+/** GET /api/collections/discover — listas públicas ajenas (descubrimiento V8). */
+collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const limit = Math.min(Math.max(Number(req.query.limit) || 12, 1), 24);
+  const supabase = createUserClient(token);
+
+  const [{ data: me }, { data: followingRows }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('favorite_team')
+      .eq('id', req.userId!)
+      .maybeSingle(),
+    supabase.from('user_follows').select('following_id').eq('follower_id', req.userId!),
+  ]);
+
+  const followingIds = new Set((followingRows ?? []).map((row) => row.following_id as string));
+
+  const recentQuery = supabase
+    .from('collections')
+    .select('*')
+    .eq('is_public', true)
+    .neq('user_id', req.userId!)
+    .order('updated_at', { ascending: false })
+    .limit(Math.max(limit * 8, 40));
+
+  const followedQuery =
+    followingIds.size > 0
+      ? supabase
+          .from('collections')
+          .select('*')
+          .eq('is_public', true)
+          .in('user_id', [...followingIds])
+          .order('updated_at', { ascending: false })
+          .limit(30)
+      : Promise.resolve({ data: [] as CollectionRow[], error: null });
+
+  const [recentResult, followedResult] = await Promise.all([recentQuery, followedQuery]);
+
+  if (recentResult.error) {
+    if (isMissingCollectionsTable(recentResult.error)) {
+      res.status(503).json({ error: collectionsMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: recentResult.error.message });
+    return;
+  }
+  if (followedResult.error) {
+    if (isMissingCollectionsTable(followedResult.error)) {
+      res.status(503).json({ error: collectionsMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: followedResult.error.message });
+    return;
+  }
+
+  const byId = new Map<string, CollectionRow>();
+  for (const row of [...(followedResult.data ?? []), ...(recentResult.data ?? [])] as CollectionRow[]) {
+    byId.set(row.id, row);
+  }
+
+  const rows = [...byId.values()];
+  if (rows.length === 0) {
+    res.json({ collections: [] });
+    return;
+  }
+
+  const authorIds = [...new Set(rows.map((row) => row.user_id))];
+  const { data: profiles, error: profilesError } = await supabase
+    .from('profiles')
+    .select('id, username, full_name, avatar_url, favorite_team')
+    .in('id', authorIds)
+    .not('username', 'is', null);
+
+  if (profilesError) {
+    res.status(400).json({ error: profilesError.message });
+    return;
+  }
+
+  type ProfileLite = {
+    id: string;
+    username: string;
+    full_name: string | null;
+    avatar_url: string | null;
+    favorite_team: string | null;
+  };
+
+  const profileById = new Map<string, ProfileLite>();
+  for (const profile of (profiles ?? []) as ProfileLite[]) {
+    if (profile.username) profileById.set(profile.id, profile);
+  }
+
+  const ids = rows.map((row) => row.id);
+  const counts = await loadItemCounts(supabase, ids);
+  const coverUrls = await loadCoverUrls(supabase, rows, { onlyPublicCapsules: true });
+
+  const candidates = rows
+    .map((row) => {
+      const profile = profileById.get(row.user_id);
+      if (!profile?.username) return null;
+      return {
+        ...row,
+        items_count: counts.get(row.id) ?? 0,
+        cover_url: coverUrls.get(row.id) ?? null,
+        author: {
+          id: profile.id,
+          username: profile.username,
+          display_name: profile.full_name,
+          avatar_url: profile.avatar_url,
+          favorite_team: profile.favorite_team,
+        },
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => !!row);
+
+  const ranked = rankDiscoverCollections(
+    candidates,
+    { id: req.userId!, favorite_team: me?.favorite_team },
+    followingIds,
+    limit,
+  );
+
+  const authorIdsRanked = [...new Set(ranked.map((row) => row.author.id))];
+  let followedSet = new Set<string>();
+  let followerSet = new Set<string>();
+  if (authorIdsRanked.length > 0) {
+    try {
+      const relations = await loadFollowRelationSets(supabase, req.userId!, authorIdsRanked);
+      followedSet = relations.followedSet;
+      followerSet = relations.followerSet;
+    } catch (err) {
+      if (!isMissingFollowsTable(err)) {
+        const message = err instanceof Error ? err.message : String(err);
+        res.status(400).json({ error: message });
+        return;
+      }
+    }
+  }
+
+  res.json({
+    collections: ranked.map(({ author, match_reason, ...collection }) => ({
+      ...serializeCollection(collection, {
+        items_count: collection.items_count,
+        cover_url: collection.cover_url ?? null,
+      }),
+      author: {
+        ...author,
+        ...followRelationFlags(author.id, req.userId!, followedSet, followerSet),
+      },
+      match_reason,
+    })),
   });
 });
 

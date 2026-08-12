@@ -370,6 +370,7 @@ Ninety/
 | GET | `/api/collections/me/containing/:capsuleId` | ✅ | Colecciones que ya incluyen una Capsule |
 | POST/PATCH/DELETE | `/api/collections`… | ✅ | CRUD colecciones + ítems (`cover_capsule_id` en PATCH) |
 | PUT | `/api/collections/:id/items/reorder` | ✅ | Reordenar Capsules (`position`) |
+| GET | `/api/collections/discover` | ✅ | Descubrir listas públicas ajenas (`match_reason`: `following` / `favorite_team`) |
 | GET | `/api/collections/user/:username` | opcional | Colecciones públicas |
 | GET | `/api/collections/user/:username/:slug` | opcional | Detalle colección (`/u/:username/lists/:slug`) |
 | GET | `/api/football/matches/search` | ✅ | Buscar partidos |
@@ -447,7 +448,7 @@ Ninety/
 - [x] Exportar / importar colecciones — incluir listas curadas en el backup GDPR (Ajustes + `GET/POST /api/collections/me/export|import`; ítems por `match_id`)
 - [ ] Digest de push — agrupar likes/comentarios/follows en un push periódico en lugar de uno por evento (complemento al digest in-app de v7)
 - [ ] Restaurar fotos al importar el diario — re-subida opcional de `photo_urls` del export (hoy el import v1 las omite)
-- [ ] Explorar colecciones ajenas — descubrimiento de listas públicas más allá del perfil
+- [x] Explorar colecciones ajenas — descubrimiento de listas públicas más allá del perfil (`GET /api/collections/discover` + `/collections/explore`)
 - [x] Borrado de cuenta self-serve — eliminar cuenta desde Ajustes (`POST /api/auth/delete-account`; confirma email; cascade + limpieza Storage)
 
 ## 🎨 Identidad visual
