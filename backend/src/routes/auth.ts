@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Router } from 'express';
 import { z } from 'zod';
 import { env } from '../config/loadEnv.js';
+import { deleteUserAccount, isAccountDeleteEmailConfirmed } from '../lib/deleteAccount.js';
 import { createPkceStorage, removePkceStorage } from '../lib/pkceStorage.js';
 import { syncUserProfile } from '../lib/syncUserProfile.js';
 import { createServiceClient, createUserClient, supabaseAnon } from '../lib/supabase.js';
@@ -35,6 +36,10 @@ const emailSchema = z.object({
 
 const passwordSchema = z.object({
   password: z.string().min(6).max(72),
+});
+
+const deleteAccountSchema = z.object({
+  confirm_email: z.string().email(),
 });
 
 const sessionFromTokensSchema = z.object({
@@ -373,4 +378,38 @@ authRouter.post('/reset-password', async (req, res) => {
   }
 
   res.json({ message: 'Contraseña actualizada. Ya puedes iniciar sesión.' });
+});
+
+/** Borrado self-serve de cuenta (GDPR). Requiere confirmar el email de la sesión. */
+authRouter.post('/delete-account', requireAuth, async (req: AuthRequest, res) => {
+  const token = getBearerToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const parsed = deleteAccountSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Email de confirmación inválido' });
+    return;
+  }
+
+  const { data: userData, error: userError } = await supabaseAnon.auth.getUser(token);
+  if (userError || !userData.user) {
+    res.status(401).json({ error: 'Sesión inválida' });
+    return;
+  }
+
+  if (!isAccountDeleteEmailConfirmed(userData.user.email, parsed.data.confirm_email)) {
+    res.status(400).json({ error: 'El email no coincide con tu cuenta' });
+    return;
+  }
+
+  const result = await deleteUserAccount(req.userId!);
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error });
+    return;
+  }
+
+  res.status(204).end();
 });

@@ -347,6 +347,7 @@ Ninety/
 | POST | `/api/auth/refresh` | — | Renovar sesión con refresh_token |
 | POST | `/api/auth/oauth/google` | — | Iniciar OAuth Google |
 | POST | `/api/auth/oauth/exchange` | — | Intercambio PKCE OAuth |
+| POST | `/api/auth/delete-account` | ✅ | Borrado self-serve (confirma `confirm_email`; irreversible) |
 | GET | `/api/profile/me` | ✅ | Perfil propio |
 | PATCH | `/api/profile/me` | ✅ | Actualizar perfil |
 | GET | `/api/profile/:username` | — | Perfil público (metadatos) |
@@ -447,7 +448,7 @@ Ninety/
 - [ ] Digest de push — agrupar likes/comentarios/follows en un push periódico en lugar de uno por evento (complemento al digest in-app de v7)
 - [ ] Restaurar fotos al importar el diario — re-subida opcional de `photo_urls` del export (hoy el import v1 las omite)
 - [ ] Explorar colecciones ajenas — descubrimiento de listas públicas más allá del perfil
-- [ ] Borrado de cuenta self-serve — eliminar cuenta desde Ajustes (hoy solo mailto)
+- [x] Borrado de cuenta self-serve — eliminar cuenta desde Ajustes (`POST /api/auth/delete-account`; confirma email; cascade + limpieza Storage)
 
 ## 🎨 Identidad visual
 

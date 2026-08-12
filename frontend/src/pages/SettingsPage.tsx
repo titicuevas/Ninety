@@ -30,6 +30,7 @@ import { downloadCollectionsExport } from '@/lib/collectionsExport';
 import { readCollectionsImportFile, uploadCollectionsImport } from '@/lib/collectionsImport';
 import { downloadDiaryExport, type DiaryExportFormat } from '@/lib/diaryExport';
 import { readDiaryImportFile, uploadDiaryImport } from '@/lib/diaryImport';
+import { deleteAccount } from '@/lib/deleteAccount';
 import { markDiaryImported } from '@/lib/diaryPostImportMemory';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
@@ -53,6 +54,8 @@ export function SettingsPage() {
   const [collectionsImportSuccess, setCollectionsImportSuccess] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const importInputId = useId();
   const collectionsImportInputRef = useRef<HTMLInputElement>(null);
@@ -80,6 +83,24 @@ export function SettingsPage() {
   const closeDeleteDialog = () => {
     setDeleteOpen(false);
     setDeleteConfirm('');
+    setDeleteError(null);
+  };
+
+  const onDeleteAccount = async () => {
+    if (!deleteReady || !session?.access_token) return;
+    setDeleteError(null);
+    setDeleteBusy(true);
+    try {
+      await deleteAccount(deleteConfirm, session.access_token);
+      closeDeleteDialog();
+      await signOut();
+      navigate('/login', { replace: true });
+      toast.success('Cuenta eliminada');
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'No se pudo eliminar la cuenta');
+    } finally {
+      setDeleteBusy(false);
+    }
   };
 
   const onChangePassword = async (data: PasswordConfirmForm) => {
@@ -181,24 +202,8 @@ export function SettingsPage() {
   const portabilityBusy =
     exportBusy != null || importBusy || collectionsExportBusy || collectionsImportBusy;
 
-  const openDeleteMailto = () => {
-    if (!deleteReady) return;
-    const email = user?.email ?? '';
-    const subject = encodeURIComponent('Solicitud de eliminación de cuenta — Ninety');
-    const body = encodeURIComponent(
-      [
-        'Hola,',
-        '',
-        'Quiero eliminar mi cuenta de Ninety.',
-        email ? `Email de la cuenta: ${email}` : '',
-        '',
-        'Gracias.',
-      ]
-        .filter(Boolean)
-        .join('\n'),
-    );
-    window.location.href = `mailto:hello@getninety.app?subject=${subject}&body=${body}`;
-    closeDeleteDialog();
+  const onDeleteAccountClick = () => {
+    void onDeleteAccount();
   };
 
   return (
@@ -437,9 +442,8 @@ export function SettingsPage() {
       <Modal open={deleteOpen} title="Eliminar cuenta" onClose={closeDeleteDialog}>
         <div className="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
           <p className="text-sm text-muted-foreground">
-            Todavía no hay borrado automático. Para abrir el email a{' '}
-            <span className="text-foreground">hello@getninety.app</span>, escribe tu email de cuenta
-            debajo.
+            Se borrarán tu perfil, diario, colecciones, alertas y fotos subidas. Esta acción no se
+            puede deshacer. Escribe tu email de cuenta para confirmar.
           </p>
           <FormField label="Escribe tu email para confirmar">
             <Input
@@ -451,17 +455,26 @@ export function SettingsPage() {
               aria-label="Confirmar email para eliminar cuenta"
             />
           </FormField>
+          {deleteError ? <FormAlert>{deleteError}</FormAlert> : null}
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="secondary" className="min-h-11" onClick={closeDeleteDialog}>
-              Cerrar
+            <Button
+              type="button"
+              variant="secondary"
+              className="min-h-11"
+              disabled={deleteBusy}
+              onClick={closeDeleteDialog}
+            >
+              Cancelar
             </Button>
             <Button
               type="button"
+              variant="destructive"
               className="min-h-11"
               disabled={!deleteReady}
-              onClick={openDeleteMailto}
+              loading={deleteBusy}
+              onClick={onDeleteAccountClick}
             >
-              Escribir email
+              Eliminar cuenta
             </Button>
           </div>
         </div>

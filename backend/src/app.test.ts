@@ -248,6 +248,13 @@ describe('API', () => {
     assert.equal(res.status, 400);
   });
 
+  it('POST /api/auth/delete-account requiere auth', async () => {
+    const res = await request(createApp())
+      .post('/api/auth/delete-account')
+      .send({ confirm_email: 'user@example.com' });
+    assert.equal(res.status, 401);
+  });
+
   it('GET / responde página de bienvenida', async () => {
     const res = await request(createApp()).get('/');
     assert.equal(res.status, 200);
