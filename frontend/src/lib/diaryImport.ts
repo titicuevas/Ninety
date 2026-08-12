@@ -6,6 +6,10 @@ export type DiaryImportResult = {
   skipped_invalid: number;
   skipped_duplicate_in_file: number;
   total_in_file: number;
+  photos_restored?: number;
+  photos_failed?: number;
+  photos_skipped_limit?: number;
+  capsules_with_photos?: number;
   message: string;
 };
 
@@ -48,10 +52,19 @@ export async function readDiaryImportFile(file: File): Promise<unknown> {
 export async function uploadDiaryImport(
   payload: unknown,
   accessToken: string,
+  options?: { restorePhotos?: boolean },
 ): Promise<DiaryImportResult> {
+  const body =
+    options?.restorePhotos &&
+    payload != null &&
+    typeof payload === 'object' &&
+    !Array.isArray(payload)
+      ? { ...(payload as Record<string, unknown>), restore_photos: true }
+      : payload;
+
   return apiFetch<DiaryImportResult>(
     '/api/capsules/me/import',
-    { method: 'POST', body: JSON.stringify(payload) },
+    { method: 'POST', body: JSON.stringify(body) },
     accessToken,
   );
 }

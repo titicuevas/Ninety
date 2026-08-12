@@ -46,6 +46,7 @@ export function SettingsPage() {
   const [signOutBusy, setSignOutBusy] = useState(false);
   const [exportBusy, setExportBusy] = useState<DiaryExportFormat | null>(null);
   const [importBusy, setImportBusy] = useState(false);
+  const [importRestorePhotos, setImportRestorePhotos] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
   const [collectionsExportBusy, setCollectionsExportBusy] = useState(false);
@@ -152,7 +153,9 @@ export function SettingsPage() {
     setImportBusy(true);
     try {
       const payload = await readDiaryImportFile(file);
-      const result = await uploadDiaryImport(payload, session.access_token);
+      const result = await uploadDiaryImport(payload, session.access_token, {
+        restorePhotos: importRestorePhotos,
+      });
       if (user?.id && result.imported > 0) {
         markDiaryImported(user.id, { importedCount: result.imported });
       }
@@ -293,11 +296,27 @@ export function SettingsPage() {
             <CardDescription>
               Descarga tus Capsules en JSON o CSV, o restaura desde un export JSON. Solo tus datos;
               sin contraseñas ni tokens. Las colecciones van en la sección de abajo. Las Capsules con
-              el mismo partido ya guardado se omiten. En v1 no se re-suben fotos remotas (quedan
-              vacías al importar).
+              el mismo partido ya guardado se omiten. Opcionalmente puedes restaurar fotos desde las
+              URLs del export (solo http/https accesibles; máx. 9 por Capsule y 200 por import).
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={importRestorePhotos}
+                onChange={(e) => setImportRestorePhotos(e.target.checked)}
+                disabled={portabilityBusy}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-border"
+              />
+              <span>
+                Restaurar fotos desde URLs del export{' '}
+                <span className="text-muted-foreground">
+                  (re-sube imágenes remotas; URLs caducadas o privadas se omiten sin bloquear el
+                  import)
+                </span>
+              </span>
+            </label>
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Button
                 type="button"

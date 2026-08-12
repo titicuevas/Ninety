@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 /** Límite duro por petición (abuso + payload). */
 export const DIARY_IMPORT_MAX_CAPSULES = 500;
+export const MAX_SOURCE_PHOTOS_PER_CAPSULE = 9;
 
 const watchContextSchema = z.enum(['stadium', 'tv', 'pub', 'other']).nullable().optional();
 
@@ -21,12 +22,13 @@ const importCapsuleSchema = z.object({
   note: z.string().max(2000).nullable().optional(),
   is_public: z.boolean().optional(),
   watch_context: watchContextSchema,
-  // id / photo_urls / timestamps del export se ignoran a propósito (v1 sin fotos remotas)
+  photo_urls: z.array(z.string().max(2048)).max(9).optional(),
 });
 
 const diaryImportPayloadSchema = z.object({
   format_version: z.literal(1),
   capsules: z.array(z.unknown()).max(DIARY_IMPORT_MAX_CAPSULES),
+  restore_photos: z.boolean().optional(),
 });
 
 export type DiaryImportRow = {
@@ -42,13 +44,22 @@ export type DiaryImportRow = {
   watched_at: string;
   rating: number | null;
   note: string | null;
+  /** Siempre vacío al insertar; se rellena tras restaurar fotos opcionales. */
   photo_urls: string[];
+  /** URLs del export cuando `restore_photos` está activo. */
+  source_photo_urls: string[];
   is_public: boolean;
   watch_context: 'stadium' | 'tv' | 'pub' | 'other' | null;
 };
 
 export type DiaryImportParseResult =
-  | { ok: true; rows: DiaryImportRow[]; skipped_invalid: number; skipped_duplicate_in_file: number }
+  | {
+      ok: true;
+      rows: DiaryImportRow[];
+      skipped_invalid: number;
+      skipped_duplicate_in_file: number;
+      restore_photos: boolean;
+    }
   | { ok: false; error: string };
 
 export type DiaryImportSummary = {
@@ -57,9 +68,13 @@ export type DiaryImportSummary = {
   skipped_invalid: number;
   skipped_duplicate_in_file: number;
   total_in_file: number;
+  photos_restored?: number;
+  photos_failed?: number;
+  photos_skipped_limit?: number;
+  capsules_with_photos?: number;
 };
 
-function optionalHttpUrl(value: string | null | undefined): string | null {
+export function optionalHttpUrl(value: string | null | undefined): string | null {
   if (value == null || value === '') return null;
   try {
     const parsed = new URL(value);
@@ -70,6 +85,25 @@ function optionalHttpUrl(value: string | null | undefined): string | null {
   }
 }
 
+/** Normaliza `photo_urls` del export: http(s), dedupe, máx. 9. */
+export function normalizeSourcePhotoUrls(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+
+  const seen = new Set<string>();
+  const out: string[] = [];
+
+  for (const item of raw) {
+    if (typeof item !== 'string') continue;
+    const url = optionalHttpUrl(item.trim());
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    out.push(url);
+    if (out.length >= MAX_SOURCE_PHOTOS_PER_CAPSULE) break;
+  }
+
+  return out;
+}
+
 function normalizeMatchPlayedAt(value: string | null | undefined): string | null {
   if (value == null || value === '') return null;
   const ms = Date.parse(value.trim());
@@ -77,12 +111,18 @@ function normalizeMatchPlayedAt(value: string | null | undefined): string | null
   return new Date(ms).toISOString();
 }
 
-/** Normaliza una Capsule del export JSON a fila insertable (sin fotos en v1). */
-export function toImportRow(raw: unknown): DiaryImportRow | null {
+export type ToImportRowOptions = {
+  restorePhotos?: boolean;
+};
+
+/** Normaliza una Capsule del export JSON a fila insertable. */
+export function toImportRow(raw: unknown, options?: ToImportRowOptions): DiaryImportRow | null {
   const parsed = importCapsuleSchema.safeParse(raw);
   if (!parsed.success) return null;
 
   const c = parsed.data;
+  const sourcePhotoUrls = options?.restorePhotos ? normalizeSourcePhotoUrls(c.photo_urls) : [];
+
   return {
     match_id: c.match_id,
     match_played_at: normalizeMatchPlayedAt(c.match_played_at ?? null),
@@ -97,6 +137,7 @@ export function toImportRow(raw: unknown): DiaryImportRow | null {
     rating: c.rating ?? null,
     note: c.note?.trim() || null,
     photo_urls: [],
+    source_photo_urls: sourcePhotoUrls,
     is_public: c.is_public !== false,
     watch_context: c.watch_context ?? null,
   };
@@ -104,7 +145,7 @@ export function toImportRow(raw: unknown): DiaryImportRow | null {
 
 /**
  * Valida el payload de export Ninety (`format_version: 1`) y prepara filas.
- * Dedup interno por match_id; fotos omitidas (GDPR restore sin re-fetch remoto).
+ * Dedup interno por match_id; fotos opcionales vía `restore_photos`.
  */
 export function parseDiaryImportPayload(raw: unknown): DiaryImportParseResult {
   if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) {
@@ -130,13 +171,14 @@ export function parseDiaryImportPayload(raw: unknown): DiaryImportParseResult {
     return { ok: false, error: `JSON de export inválido: ${issue?.message ?? 'formato inválido'}` };
   }
 
+  const restorePhotos = envelope.data.restore_photos === true;
   const seen = new Set<number>();
   const rows: DiaryImportRow[] = [];
   let skipped_invalid = 0;
   let skipped_duplicate_in_file = 0;
 
   for (const item of envelope.data.capsules) {
-    const row = toImportRow(item);
+    const row = toImportRow(item, { restorePhotos });
     if (!row) {
       skipped_invalid += 1;
       continue;
@@ -149,7 +191,7 @@ export function parseDiaryImportPayload(raw: unknown): DiaryImportParseResult {
     rows.push(row);
   }
 
-  return { ok: true, rows, skipped_invalid, skipped_duplicate_in_file };
+  return { ok: true, rows, skipped_invalid, skipped_duplicate_in_file, restore_photos: restorePhotos };
 }
 
 export function buildImportSummary(params: DiaryImportSummary): DiaryImportSummary {
@@ -167,6 +209,15 @@ export function formatDiaryImportSummary(summary: DiaryImportSummary): string {
   }
   if (summary.skipped_invalid > 0) {
     parts.push(`inválidas omitidas: ${summary.skipped_invalid}`);
+  }
+  if (summary.photos_restored != null && summary.photos_restored > 0) {
+    parts.push(`fotos restauradas: ${summary.photos_restored}`);
+  }
+  if (summary.photos_failed != null && summary.photos_failed > 0) {
+    parts.push(`fotos no recuperadas: ${summary.photos_failed}`);
+  }
+  if (summary.photos_skipped_limit != null && summary.photos_skipped_limit > 0) {
+    parts.push(`fotos omitidas por límite: ${summary.photos_skipped_limit}`);
   }
   parts.push(`en archivo: ${summary.total_in_file}`);
   return parts.join(' · ');

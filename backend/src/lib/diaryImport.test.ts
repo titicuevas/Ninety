@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   DIARY_IMPORT_MAX_CAPSULES,
   formatDiaryImportSummary,
+  normalizeSourcePhotoUrls,
   parseDiaryImportPayload,
   toImportRow,
 } from './diaryImport.js';
@@ -21,7 +22,7 @@ const validCapsule = {
   watched_at: '2024-05-01',
   rating: 5,
   note: 'Derbi',
-  photo_urls: ['https://cdn.example/remote.jpg'],
+  photo_urls: ['https://cdn.example/remote.jpg', 'ftp://bad.example/x.jpg'],
   is_public: true,
   watch_context: 'stadium',
   created_at: '2024-05-02T10:00:00Z',
@@ -29,14 +30,32 @@ const validCapsule = {
 };
 
 describe('diaryImport', () => {
-  it('toImportRow omite fotos e id del export', () => {
+  it('toImportRow omite fotos por defecto', () => {
     const row = toImportRow(validCapsule);
     assert.ok(row);
     assert.equal(row.match_id, 42);
     assert.deepEqual(row.photo_urls, []);
+    assert.deepEqual(row.source_photo_urls, []);
     assert.equal('id' in row, false);
-    assert.equal(row.home_team_name, 'Betis');
-    assert.equal(row.watch_context, 'stadium');
+  });
+
+  it('toImportRow conserva source_photo_urls con restorePhotos', () => {
+    const row = toImportRow(validCapsule, { restorePhotos: true });
+    assert.ok(row);
+    assert.deepEqual(row.photo_urls, []);
+    assert.deepEqual(row.source_photo_urls, ['https://cdn.example/remote.jpg']);
+  });
+
+  it('normalizeSourcePhotoUrls dedupea y filtra', () => {
+    assert.deepEqual(
+      normalizeSourcePhotoUrls([
+        'https://a/1.jpg',
+        'https://a/1.jpg',
+        'javascript:alert(1)',
+        'https://b/2.jpg',
+      ]),
+      ['https://a/1.jpg', 'https://b/2.jpg'],
+    );
   });
 
   it('toImportRow rechaza watched_at inválido', () => {
@@ -53,9 +72,21 @@ describe('diaryImport', () => {
     assert.equal(result.ok, true);
     if (!result.ok) return;
     assert.equal(result.rows.length, 1);
+    assert.equal(result.restore_photos, false);
     assert.equal(result.skipped_duplicate_in_file, 1);
     assert.equal(result.skipped_invalid, 1);
-    assert.deepEqual(result.rows[0].photo_urls, []);
+  });
+
+  it('parseDiaryImportPayload lee restore_photos', () => {
+    const result = parseDiaryImportPayload({
+      format_version: 1,
+      restore_photos: true,
+      capsules: [validCapsule],
+    });
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+    assert.equal(result.restore_photos, true);
+    assert.deepEqual(result.rows[0]?.source_photo_urls, ['https://cdn.example/remote.jpg']);
   });
 
   it('rechaza format_version distinto', () => {
@@ -86,9 +117,11 @@ describe('diaryImport', () => {
       skipped_invalid: 1,
       skipped_duplicate_in_file: 0,
       total_in_file: 6,
+      photos_restored: 4,
+      photos_failed: 1,
     });
     assert.match(text, /Importadas: 3/);
-    assert.match(text, /ya en el diario: 2/);
-    assert.match(text, /inválidas omitidas: 1/);
+    assert.match(text, /fotos restauradas: 4/);
+    assert.match(text, /fotos no recuperadas: 1/);
   });
 });

@@ -357,7 +357,7 @@ Ninety/
 | POST/DELETE | `/api/profile/:username/follow` | ✅ | Seguir / dejar de seguir |
 | GET | `/api/capsules/me` | ✅ | Mis capsules |
 | GET | `/api/capsules/me/export` | ✅ | Export diario JSON/CSV (GDPR) |
-| POST | `/api/capsules/me/import` | ✅ | Import diario desde export JSON (omite `match_id` existentes; v1 sin re-subida de fotos) |
+| POST | `/api/capsules/me/import` | ✅ | Import diario desde export JSON (omite `match_id` existentes; `restore_photos` opcional re-sube `photo_urls` remotas) |
 | GET | `/api/capsules/feed` | ✅ | Feed (seguidos + tuyo); `scope`, `sort`, `photos=1`, `competition` |
 | GET | `/api/capsules/user/:username` | opcional | Perfil + capsules + stats (base del cara a cara `/u/:username/vs`) |
 | GET | `/api/capsules/:id` | opcional | Capsule pública (compartir) |
@@ -431,7 +431,7 @@ Ninety/
 ### ✅ v6 — Diario curado & profundidad social
 - [x] Reordenar Capsules en colecciones — subir/bajar sobre la columna `position` (ya en schema); el orden se refleja en la lista pública (`PUT /api/collections/:id/items/reorder`)
 - [x] Portada de colección — destacar una Capsule o usar la primera foto como cover en listas públicas
-- [x] Importar diario desde export JSON — complemento GDPR al backup actual (sin fotos remotas obligatorias en v1 del import; Ajustes + `POST /api/capsules/me/import`)
+- [x] Importar diario desde export JSON — complemento GDPR al backup actual (Ajustes + `POST /api/capsules/me/import`; fotos opcionales vía `restore_photos`)
 - [x] Preferencias de alertas por tipo — silenciar likes / comentarios / follows (in-app + push), sin emails (`GET/PATCH /api/notifications/preferences`; migración `20250811143000_notification_preferences.sql`)
 - [x] Filtros del feed — competición o «solo con fotos» sobre Siguiendo / Explorar (`photos=1`, `competition` en `/api/capsules/feed` + chips en `/feed`)
 - [x] Pulido a11y en flujos clave — foco, landmarks y labels en colecciones y notificaciones
@@ -444,11 +444,11 @@ Ninety/
 - [x] Horario silencioso de push — franja local (timezone del dispositivo) sin push; in-app sí (`push_quiet` en `GET/PATCH /api/notifications/preferences`; migración `20250811180000_notification_push_quiet_hours.sql`)
 - [x] Seguir de vuelta desde un follow — acción rápida en la fila del digest (`followed_by_me` en actores de `GET /api/notifications` + CTA en follows de un solo actor)
 
-### 🚧 v8 — Reciprocidad social & portabilidad profunda
+### ✅ v8 — Reciprocidad social & portabilidad profunda
 - [x] Badge «Te sigue» + seguir de vuelta fuera del digest — `follows_me` en perfil, listas, búsqueda, me gusta y Capsule pública; CTA «Seguir de vuelta» cuando aún no hay follow mutuo
 - [x] Exportar / importar colecciones — incluir listas curadas en el backup GDPR (Ajustes + `GET/POST /api/collections/me/export|import`; ítems por `match_id`)
 - [x] Digest de push — agrupar likes/comentarios/follows en un push periódico en lugar de uno por evento (`push_sent_at` + `flushPushDigests`; cron `POST /api/internal/cron/push-digest` o intervalo 15 min en prod)
-- [ ] Restaurar fotos al importar el diario — re-subida opcional de `photo_urls` del export (hoy el import v1 las omite)
+- [x] Restaurar fotos al importar el diario — re-subida opcional de `photo_urls` del export (`restore_photos` en Ajustes + `POST /api/capsules/me/import`; solo URLs http/https accesibles, máx. 9/Capsule y 200/import)
 - [x] Explorar colecciones ajenas — descubrimiento de listas públicas más allá del perfil (`GET /api/collections/discover` + `/collections/explore`)
 - [x] Borrado de cuenta self-serve — eliminar cuenta desde Ajustes (`POST /api/auth/delete-account`; confirma email; cascade + limpieza Storage)
 

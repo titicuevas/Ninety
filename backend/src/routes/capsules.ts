@@ -12,6 +12,7 @@ import {
   formatDiaryImportSummary,
   parseDiaryImportPayload,
 } from '../lib/diaryImport.js';
+import { restorePhotosForCapsules } from '../lib/diaryImportPhotos.js';
 import { validateCommentBody, validateImageBuffer } from '../lib/contentModeration.js';
 import { attachCommentCounts, fetchCommentsWithAuthors, isMissingCommentsTable } from '../lib/capsuleComments.js';
 import { attachLikeStats, fetchLikesWithProfiles, isMissingLikesTable } from '../lib/capsuleLikes.js';
@@ -496,6 +497,8 @@ capsulesRouter.post('/me/import', requireAuth, async (req: AuthRequest, res) => 
   let skippedDuplicate = parsed.rows.length - toInsert.length;
 
   let imported = 0;
+  const insertedForPhotos: { id: string; source_photo_urls: string[] }[] = [];
+
   if (toInsert.length > 0) {
     const rows = toInsert.map((capsule) => ({
       user_id: req.userId!,
@@ -523,11 +526,20 @@ capsulesRouter.post('/me/import', requireAuth, async (req: AuthRequest, res) => 
 
     if (insertError) {
       if (insertError.code === '23505') {
-        for (const row of rows) {
-          const { error: oneError } = await supabase.from('capsules').insert(row).select('id').single();
-          if (!oneError) {
+        for (let i = 0; i < rows.length; i += 1) {
+          const row = rows[i]!;
+          const { data: oneRow, error: oneError } = await supabase
+            .from('capsules')
+            .insert(row)
+            .select('id')
+            .single();
+          if (!oneError && oneRow) {
             imported += 1;
-          } else if (oneError.code !== '23505') {
+            insertedForPhotos.push({
+              id: oneRow.id as string,
+              source_photo_urls: toInsert[i]?.source_photo_urls ?? [],
+            });
+          } else if (oneError && oneError.code !== '23505') {
             if (isMissingPrivacyColumn(oneError)) {
               res.status(503).json({ error: privacyMigrationHint() });
               return;
@@ -538,7 +550,7 @@ capsulesRouter.post('/me/import', requireAuth, async (req: AuthRequest, res) => 
             }
             res.status(400).json({ error: oneError.message });
             return;
-          } else {
+          } else if (oneError?.code === '23505') {
             skippedDuplicate += 1;
           }
         }
@@ -554,6 +566,46 @@ capsulesRouter.post('/me/import', requireAuth, async (req: AuthRequest, res) => 
       }
     } else {
       imported = inserted?.length ?? toInsert.length;
+      for (let i = 0; i < (inserted?.length ?? 0); i += 1) {
+        const row = inserted![i];
+        if (!row) continue;
+        insertedForPhotos.push({
+          id: row.id as string,
+          source_photo_urls: toInsert[i]?.source_photo_urls ?? [],
+        });
+      }
+    }
+  }
+
+  let photoSummary: {
+    photos_restored: number;
+    photos_failed: number;
+    photos_skipped_limit: number;
+    capsules_with_photos: number;
+  } | null = null;
+
+  if (parsed.restore_photos && insertedForPhotos.length > 0) {
+    const candidates = insertedForPhotos.filter((c) => c.source_photo_urls.length > 0);
+    if (candidates.length > 0) {
+      const { byCapsuleId, summary } = await restorePhotosForCapsules(
+        candidates.map((c) => ({ capsuleId: c.id, sourceUrls: c.source_photo_urls })),
+        req.userId!,
+      );
+
+      for (const [capsuleId, urls] of byCapsuleId) {
+        const { error: updateError } = await supabase
+          .from('capsules')
+          .update({ photo_urls: urls })
+          .eq('id', capsuleId)
+          .eq('user_id', req.userId!);
+
+        if (updateError) {
+          res.status(400).json({ error: updateError.message });
+          return;
+        }
+      }
+
+      photoSummary = summary;
     }
   }
 
@@ -563,6 +615,7 @@ capsulesRouter.post('/me/import', requireAuth, async (req: AuthRequest, res) => 
     skipped_invalid: parsed.skipped_invalid,
     skipped_duplicate_in_file: parsed.skipped_duplicate_in_file,
     total_in_file: totalInFile,
+    ...(photoSummary ?? {}),
   });
 
   res.json({ ...summary, message: formatDiaryImportSummary(summary) });
