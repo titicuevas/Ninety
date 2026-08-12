@@ -378,6 +378,7 @@ Ninety/
 | GET/PATCH | `/api/notifications/preferences` | ✅ | Preferencias por tipo + horario silencioso de push (`push_quiet`) |
 | GET/POST/DELETE | `/api/notifications/muted`… | ✅ | Silenciar / reactivar usuario (alertas in-app + push) |
 | GET | `/api/notifications` | ✅ | Lista de alertas (`actor.followed_by_me` para seguir de vuelta) |
+| POST | `/api/internal/cron/push-digest` | cron | Digest push periódico (`CRON_SECRET`; agrupa likes/comentarios/follows) |
 
 <a id="roadmap"></a>
 ## 📅 Roadmap
@@ -446,7 +447,7 @@ Ninety/
 ### 🚧 v8 — Reciprocidad social & portabilidad profunda
 - [x] Badge «Te sigue» + seguir de vuelta fuera del digest — `follows_me` en perfil, listas, búsqueda, me gusta y Capsule pública; CTA «Seguir de vuelta» cuando aún no hay follow mutuo
 - [x] Exportar / importar colecciones — incluir listas curadas en el backup GDPR (Ajustes + `GET/POST /api/collections/me/export|import`; ítems por `match_id`)
-- [ ] Digest de push — agrupar likes/comentarios/follows en un push periódico en lugar de uno por evento (complemento al digest in-app de v7)
+- [x] Digest de push — agrupar likes/comentarios/follows en un push periódico en lugar de uno por evento (`push_sent_at` + `flushPushDigests`; cron `POST /api/internal/cron/push-digest` o intervalo 15 min en prod)
 - [ ] Restaurar fotos al importar el diario — re-subida opcional de `photo_urls` del export (hoy el import v1 las omite)
 - [x] Explorar colecciones ajenas — descubrimiento de listas públicas más allá del perfil (`GET /api/collections/discover` + `/collections/explore`)
 - [x] Borrado de cuenta self-serve — eliminar cuenta desde Ajustes (`POST /api/auth/delete-account`; confirma email; cascade + limpieza Storage)

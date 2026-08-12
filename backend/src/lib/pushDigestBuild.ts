@@ -1,0 +1,203 @@
+import { buildNotificationPushBody } from './notificationCapsule.js';
+
+export type DigestNotificationType = 'like' | 'follow' | 'comment';
+
+export type PendingNotificationRow = {
+  id: string;
+  user_id: string;
+  type: DigestNotificationType;
+  actor_id: string;
+  capsule_id: string | null;
+  body?: string | null;
+  created_at: string;
+};
+
+const PUSH_TITLE: Record<DigestNotificationType, string> = {
+  like: 'Nuevo like',
+  follow: 'Nuevo seguidor',
+  comment: 'Nuevo comentario',
+};
+
+const TYPE_LABEL: Record<DigestNotificationType, string> = {
+  like: 'like',
+  follow: 'follow',
+  comment: 'comentario',
+};
+
+const TYPE_LABEL_PLURAL: Record<DigestNotificationType, string> = {
+  like: 'likes',
+  follow: 'follows',
+  comment: 'comentarios',
+};
+
+export function notificationDigestKey(
+  n: Pick<PendingNotificationRow, 'type' | 'capsule_id'>,
+): string {
+  if (n.type === 'follow') return 'follow';
+  const capsule = n.capsule_id?.trim();
+  return capsule ? `${n.type}:${capsule}` : `${n.type}:none`;
+}
+
+function formatDigestActorNames(names: string[], maxNamed = 2): string {
+  if (names.length === 0) return 'Alguien';
+  if (names.length === 1) return names[0]!;
+  if (names.length === 2) return `${names[0]} y ${names[1]}`;
+  const shown = names.slice(0, maxNamed);
+  const rest = names.length - shown.length;
+  if (shown.length === 1) return `${shown[0]} y ${rest} más`;
+  return `${shown.slice(0, -1).join(', ')}, ${shown[shown.length - 1]} y ${rest} más`;
+}
+
+function digestActionText(type: DigestNotificationType, actorCount: number): string {
+  const plural = actorCount > 1;
+  switch (type) {
+    case 'like':
+      return plural ? 'les gustó tu cápsula' : 'le gustó tu cápsula';
+    case 'comment':
+      return plural ? 'comentaron en tu cápsula' : 'comentó en tu cápsula';
+    case 'follow':
+      return plural ? 'te empezaron a seguir' : 'te empezó a seguir';
+  }
+}
+
+function countByType(notifications: PendingNotificationRow[]): Record<DigestNotificationType, number> {
+  const counts: Record<DigestNotificationType, number> = { like: 0, comment: 0, follow: 0 };
+  for (const n of notifications) {
+    counts[n.type] += 1;
+  }
+  return counts;
+}
+
+function formatTypeBreakdown(counts: Record<DigestNotificationType, number>): string {
+  const parts: string[] = [];
+  for (const type of ['like', 'comment', 'follow'] as const) {
+    const n = counts[type];
+    if (n <= 0) continue;
+    parts.push(`${n} ${n === 1 ? TYPE_LABEL[type] : TYPE_LABEL_PLURAL[type]}`);
+  }
+  return parts.join(', ');
+}
+
+type DigestGroup = {
+  key: string;
+  type: DigestNotificationType;
+  capsule_id: string | null;
+  notifications: PendingNotificationRow[];
+  actorNames: string[];
+  latestBody: string | null;
+};
+
+function groupNotificationsForDigest(notifications: PendingNotificationRow[]): DigestGroup[] {
+  const buckets = new Map<string, PendingNotificationRow[]>();
+
+  for (const n of notifications) {
+    const key = notificationDigestKey(n);
+    const list = buckets.get(key);
+    if (list) list.push(n);
+    else buckets.set(key, [n]);
+  }
+
+  const groups: DigestGroup[] = [];
+
+  for (const [key, list] of buckets) {
+    const sorted = [...list].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+    const seenActors = new Set<string>();
+    const actorNames: string[] = [];
+    for (const n of sorted) {
+      if (seenActors.has(n.actor_id)) continue;
+      seenActors.add(n.actor_id);
+      actorNames.push(n.actor_id);
+    }
+    const head = sorted[0]!;
+    groups.push({
+      key,
+      type: head.type,
+      capsule_id: head.capsule_id,
+      notifications: sorted,
+      actorNames,
+      latestBody: head.type === 'comment' && head.body?.trim() ? head.body.trim() : null,
+    });
+  }
+
+  groups.sort(
+    (a, b) =>
+      new Date(b.notifications[0]!.created_at).getTime() -
+      new Date(a.notifications[0]!.created_at).getTime(),
+  );
+
+  return groups;
+}
+
+function resolveActorName(actorId: string, actorNames: Map<string, string>): string {
+  return actorNames.get(actorId) ?? 'Alguien';
+}
+
+/**
+ * Construye título/cuerpo/url del push digest.
+ * Una alerta → mismo formato que el push instantáneo anterior.
+ * Varios grupos → resumen compacto con desglose por tipo.
+ */
+export function buildPushDigestPayload(params: {
+  notifications: PendingNotificationRow[];
+  actorNames: Map<string, string>;
+  matchLabels: Map<string, string>;
+}): { title: string; body: string; url: string } | null {
+  const { notifications, actorNames, matchLabels } = params;
+  if (notifications.length === 0) return null;
+
+  const sorted = [...notifications].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
+
+  if (sorted.length === 1) {
+    const n = sorted[0]!;
+    const name = resolveActorName(n.actor_id, actorNames);
+    const matchLabel = n.capsule_id ? matchLabels.get(n.capsule_id) ?? null : null;
+    const snippet = n.type === 'comment' ? n.body?.trim() || null : null;
+    return {
+      title: PUSH_TITLE[n.type],
+      body: buildNotificationPushBody({
+        type: n.type,
+        actorName: name,
+        matchLabel,
+        commentSnippet: snippet,
+      }),
+      url: '/notifications',
+    };
+  }
+
+  const groups = groupNotificationsForDigest(sorted);
+
+  if (groups.length === 1) {
+    const group = groups[0]!;
+    const names = group.actorNames.map((id) => resolveActorName(id, actorNames));
+    const actorsText = formatDigestActorNames(names);
+    const action = digestActionText(group.type, names.length);
+    const matchLabel = group.capsule_id ? matchLabels.get(group.capsule_id) ?? null : null;
+
+    let body: string;
+    if (group.type === 'follow') {
+      body = `${actorsText} ${action}`;
+    } else if (matchLabel) {
+      body = `${actorsText} ${action} (${matchLabel})`;
+    } else {
+      body = `${actorsText} ${action}`;
+    }
+
+    return {
+      title: PUSH_TITLE[group.type],
+      body,
+      url: '/notifications',
+    };
+  }
+
+  const total = sorted.length;
+  const breakdown = formatTypeBreakdown(countByType(sorted));
+  return {
+    title: 'Ninety',
+    body: `${total} alertas nuevas${breakdown ? `: ${breakdown}` : ''}`,
+    url: '/notifications',
+  };
+}

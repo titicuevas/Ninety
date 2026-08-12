@@ -1,26 +1,11 @@
 import { supabaseAdmin } from './supabase.js';
-import {
-  buildNotificationPushBody,
-  formatMatchLabel,
-  mapNotificationCapsule,
-  type CapsuleNotificationRow,
-} from './notificationCapsule.js';
 import { isActorMuted } from './notificationMutes.js';
 import {
   getNotificationPreferences,
   isNotificationTypeEnabled,
   type NotificationType,
 } from './notificationPreferencesStore.js';
-import { isWithinPushQuietHours } from './notificationQuietHours.js';
-import { sendPushToUser } from './webPush.js';
-
 const BODY_MAX = 120;
-
-const PUSH_TITLE: Record<NotificationType, string> = {
-  like: 'Nuevo like',
-  follow: 'Nuevo seguidor',
-  comment: 'Nuevo comentario',
-};
 
 function truncateBody(raw: string | undefined): string | null {
   const text = raw?.trim();
@@ -76,50 +61,7 @@ export async function notifyUser(params: {
 
     if (error) return;
 
-    const [actorResult, capsuleResult] = await Promise.all([
-      supabaseAdmin
-        .from('profiles')
-        .select('username, full_name')
-        .eq('id', params.actorId)
-        .maybeSingle(),
-      params.capsuleId
-        ? supabaseAdmin
-            .from('capsules')
-            .select('id, home_team_name, away_team_name, competition_name, photo_urls')
-            .eq('id', params.capsuleId)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
-    ]);
-
-    const actor = actorResult.data;
-    const name = actor?.full_name || (actor?.username ? `@${actor.username}` : 'Alguien');
-    const capsule = mapNotificationCapsule(
-      (capsuleResult.data as CapsuleNotificationRow | null) ?? null,
-    );
-    const matchLabel = capsule ? formatMatchLabel(capsule) : null;
-
-    const url =
-      params.type === 'follow' && actor?.username
-        ? `/u/${actor.username}`
-        : params.capsuleId
-          ? params.type === 'comment'
-            ? `/c/${params.capsuleId}#comments`
-            : `/c/${params.capsuleId}`
-          : '/notifications';
-
-    // In-app siempre; push solo fuera del horario silencioso (timezone del dispositivo).
-    if (!isWithinPushQuietHours(prefs.push_quiet)) {
-      void sendPushToUser(params.userId, {
-        title: PUSH_TITLE[params.type],
-        body: buildNotificationPushBody({
-          type: params.type,
-          actorName: name,
-          matchLabel,
-          commentSnippet: snippet,
-        }),
-        url,
-      });
-    }
+    // In-app siempre; push vía digest periódico (flushPushDigests / cron).
   } catch {
     // Non-critical — don't break the main flow
   }

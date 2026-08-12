@@ -260,6 +260,12 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('POST /api/internal/cron/push-digest requiere CRON_SECRET', async () => {
+    const res = await request(createApp()).post('/api/internal/cron/push-digest');
+    assert.equal(res.status, 401);
+    assert.match(res.body.error, /autorizado/i);
+  });
+
   it('GET / responde página de bienvenida', async () => {
     const res = await request(createApp()).get('/');
     assert.equal(res.status, 200);

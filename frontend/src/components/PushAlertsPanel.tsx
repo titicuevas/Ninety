@@ -44,7 +44,7 @@ export function PushAlertsPanel({ variant = 'card', className }: Props) {
     mode === 'ready_on'
       ? 'Alertas activadas en este dispositivo'
       : mode === 'ready_off'
-        ? 'Recibe avisos cuando te sigan, comenten o den me gusta'
+        ? 'Recibe avisos agrupados cuando te sigan, comenten o den me gusta'
         : mode === 'permission_denied'
           ? 'El permiso está bloqueado en el navegador'
           : mode === 'unsupported'
