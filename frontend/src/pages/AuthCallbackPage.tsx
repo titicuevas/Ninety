@@ -16,6 +16,7 @@ import {
   loginPath,
   peekAuthReturnPath,
 } from '@/lib/authReturn';
+import { claimPendingInvite } from '@/lib/inviteReferral';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -51,6 +52,7 @@ export function AuthCallbackPage() {
           const session = await establishSessionFromTokens(parsed.accessToken, parsed.refreshToken);
           if (!active) return;
           setSession(session);
+          await claimPendingInvite(session.access_token);
           const isEmailConfirm =
             parsed.type === 'signup' || parsed.type === 'email' || parsed.type === null;
           navigate(DEFAULT_POST_AUTH_PATH, {
@@ -73,6 +75,7 @@ export function AuthCallbackPage() {
           const session = await verifyEmailTokenHash(parsed.tokenHash, parsed.type);
           if (!active) return;
           setSession(session);
+          await claimPendingInvite(session.access_token);
           navigate(DEFAULT_POST_AUTH_PATH, {
             replace: true,
             state: { emailConfirmed: true, fromRegister: true },
@@ -85,6 +88,7 @@ export function AuthCallbackPage() {
           const session = await completeOAuthCallback(parsed.code);
           if (!active) return;
           setSession(session);
+          await claimPendingInvite(session.access_token);
           navigate(consumeAuthReturnPath(), { replace: true });
           return;
         }

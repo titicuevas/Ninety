@@ -10,6 +10,7 @@ import { ExploreCollectionsPage } from '@/pages/ExploreCollectionsPage';
 import { FeedPage } from '@/pages/FeedPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { HomePage } from '@/pages/HomePage';
+import { InvitePage } from '@/pages/InvitePage';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { ManualMatchPage } from '@/pages/ManualMatchPage';
@@ -42,6 +43,7 @@ export const appRouter = createBrowserRouter([
   { path: '/u/:username/lists/:slug', element: <PublicCollectionPage /> },
   { path: '/u/:username', element: <PublicProfilePage /> },
   { path: '/c/:id', element: <PublicCapsulePage /> },
+  { path: '/invite/:code', element: <InvitePage /> },
   {
     element: <GuestRoute />,
     children: [

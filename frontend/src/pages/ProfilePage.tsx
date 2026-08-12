@@ -8,6 +8,7 @@ import { Check, Library, Loader2, Settings, X } from 'lucide-react';
 import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
 import { FavoriteTeamField } from '@/components/FavoriteTeamField';
 import { Layout } from '@/components/Layout';
+import { ShareInviteButton } from '@/components/ShareInviteButton';
 import { ShareProfileButton } from '@/components/ShareProfileButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -307,6 +308,12 @@ export function ProfilePage() {
                     Siguiendo
                   </Link>
                   <ShareProfileButton
+                    username={profile.username}
+                    displayName={profile.display_name}
+                    size="sm"
+                    variant="outline"
+                  />
+                  <ShareInviteButton
                     username={profile.username}
                     displayName={profile.display_name}
                     size="sm"

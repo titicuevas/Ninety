@@ -19,6 +19,11 @@ export function publicProfileUrl(username: string): string {
   return `${siteUrl()}/u/${encodeURIComponent(username)}`;
 }
 
+/** Enlace de invitación (`/invite/:username`). */
+export function inviteShareUrl(username: string): string {
+  return `${siteUrl()}/invite/${encodeURIComponent(username)}`;
+}
+
 /** Cara a cara vs otro aficionado (`/u/:username/vs`). */
 export function compareProfileUrl(username: string): string {
   return `${siteUrl()}/u/${encodeURIComponent(username)}/vs`;

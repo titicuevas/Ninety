@@ -5,6 +5,7 @@ import { env } from '../config/loadEnv.js';
 import { deleteUserAccount, isAccountDeleteEmailConfirmed } from '../lib/deleteAccount.js';
 import { createPkceStorage, removePkceStorage } from '../lib/pkceStorage.js';
 import { syncUserProfile } from '../lib/syncUserProfile.js';
+import { claimInviteAttribution, normalizeInviteCode } from '../lib/invites.js';
 import { createServiceClient, createUserClient, supabaseAnon } from '../lib/supabase.js';
 import { requireAuth, type AuthRequest } from '../middleware/auth.js';
 
@@ -19,6 +20,8 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   display_name: z.string().min(2).max(100),
+  /** Username del invitador (`/invite/:code`). Opcional. */
+  invite_code: z.string().trim().min(3).max(40).optional(),
 });
 
 const oauthExchangeSchema = z.object({
@@ -146,6 +149,19 @@ authRouter.post('/register', async (req, res) => {
       full_name: parsed.data.display_name,
     },
   });
+
+  const inviteCode = normalizeInviteCode(parsed.data.invite_code);
+  if (inviteCode) {
+    try {
+      await claimInviteAttribution({
+        inviteeId: data.session.user.id,
+        code: inviteCode,
+        inviteeCreatedAt: data.session.user.created_at,
+      });
+    } catch {
+      // Atribución best-effort: no bloquea el registro.
+    }
+  }
 
   res.json({ session: serializeSession(data.session) });
 });

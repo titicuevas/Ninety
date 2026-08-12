@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,6 +19,12 @@ import {
   saveAuthReturnPath,
 } from '@/lib/authReturn';
 import { registerSchema, type RegisterForm } from '@/lib/authSchemas';
+import {
+  claimPendingInvite,
+  parseRefParam,
+  peekInviteCode,
+  saveInviteCode,
+} from '@/lib/inviteReferral';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -37,6 +43,11 @@ export function RegisterPage() {
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    const fromRef = parseRefParam(location.search);
+    if (fromRef) saveInviteCode(fromRef);
+  }, [location.search]);
 
   const handleGoogleSignIn = async () => {
     setError(null);
@@ -61,9 +72,17 @@ export function RegisterPage() {
     setLoading(true);
 
     try {
-      const result = await registerWithPassword(data.email, data.password, data.display_name);
+      const inviteCode = peekInviteCode();
+      const result = await registerWithPassword(
+        data.email,
+        data.password,
+        data.display_name,
+        inviteCode,
+      );
       if (result.session) {
         setSession(result.session);
+        // Servidor ya atribuyó si había sesión; consume el código pendiente.
+        await claimPendingInvite(result.session.access_token);
         navigate(postAuthPath, {
           replace: true,
           state: isHomePath(postAuthPath) ? { fromRegister: true } : undefined,

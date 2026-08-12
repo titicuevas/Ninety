@@ -135,6 +135,16 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('POST /api/invites/claim requiere auth', async () => {
+    const res = await request(createApp()).post('/api/invites/claim').send({ code: 'demo' });
+    assert.equal(res.status, 401);
+  });
+
+  it('GET /api/invites/:code no requiere auth', async () => {
+    const res = await request(createApp()).get('/api/invites/demo_user');
+    assert.ok([200, 404, 503].includes(res.status));
+  });
+
   it('GET /api/capsules/me/export requiere auth', async () => {
     const res = await request(createApp()).get('/api/capsules/me/export');
     assert.equal(res.status, 401);

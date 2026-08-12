@@ -17,6 +17,7 @@ import { MutedUsersPanel } from '@/components/MutedUsersPanel';
 import { BlockedUsersPanel } from '@/components/BlockedUsersPanel';
 import { PushAlertsPanel } from '@/components/PushAlertsPanel';
 import { InstallAppPanel } from '@/components/InstallAppPanel';
+import { ShareInviteButton } from '@/components/ShareInviteButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField } from '@/components/ui/form-field';
@@ -25,7 +26,10 @@ import { Modal } from '@/components/ui/modal';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useDirtyLeave } from '@/hooks/useDirtyLeave';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useProfile } from '@/hooks/useProfile';
 import { apiFetch } from '@/lib/api';
+import { inviteUrl } from '@/lib/inviteReferral';
+import { isAutoUsername } from '@/lib/profileHelpers';
 import { passwordConfirmSchema, type PasswordConfirmForm } from '@/lib/authSchemas';
 import { downloadCollectionsExport } from '@/lib/collectionsExport';
 import { readCollectionsImportFile, uploadCollectionsImport } from '@/lib/collectionsImport';
@@ -42,6 +46,7 @@ export function SettingsPage() {
   const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
   const session = useAuthStore((s) => s.session);
+  const { data: profile } = useProfile();
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [signOutBusy, setSignOutBusy] = useState(false);
@@ -265,6 +270,38 @@ export function SettingsPage() {
         </Card>
 
         <InstallAppPanel />
+
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="text-base">Invitar a Ninety</CardTitle>
+            <CardDescription>
+              Comparte tu enlace. Quien se registre desde él quedará atribuido a tu invitación.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {profile?.username && !isAutoUsername(profile.username) ? (
+              <>
+                <p className="break-all rounded-md border border-border bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
+                  {inviteUrl(profile.username)}
+                </p>
+                <ShareInviteButton
+                  username={profile.username}
+                  displayName={profile.display_name}
+                  size="default"
+                  variant="default"
+                />
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Elige un username en{' '}
+                <Link to="/profile" className="text-primary hover:underline">
+                  Perfil
+                </Link>{' '}
+                para generar tu enlace de invitación.
+              </p>
+            )}
+          </CardContent>
+        </Card>
 
         <Card className="border-border">
           <CardHeader>

@@ -20,12 +20,20 @@ export async function loginWithPassword(email: string, password: string) {
   return session;
 }
 
-export async function registerWithPassword(email: string, password: string, display_name: string) {
+export async function registerWithPassword(
+  email: string,
+  password: string,
+  display_name: string,
+  invite_code?: string | null,
+) {
+  const body: Record<string, string> = { email, password, display_name };
+  if (invite_code) body.invite_code = invite_code;
+
   const data = await apiFetch<AuthResponse & { message?: string; session: AuthSession | null }>(
     '/api/auth/register',
     {
       method: 'POST',
-      body: JSON.stringify({ email, password, display_name }),
+      body: JSON.stringify(body),
     },
   );
 

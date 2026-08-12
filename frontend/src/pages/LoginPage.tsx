@@ -17,6 +17,7 @@ import {
   safeReturnPath,
   saveAuthReturnPath,
 } from '@/lib/authReturn';
+import { claimPendingInvite } from '@/lib/inviteReferral';
 import { loginSchema, type LoginForm } from '@/lib/authSchemas';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/stores/authStore';
@@ -67,6 +68,7 @@ export function LoginPage() {
     try {
       const session = await loginWithPassword(data.email, data.password);
       setSession(session);
+      await claimPendingInvite(session.access_token);
       navigate(postAuthPath);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión');
