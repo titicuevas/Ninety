@@ -30,9 +30,13 @@ function isMissingPushSentColumn(error: { message?: string; code?: string } | nu
   );
 }
 
-async function loadActorNames(actorIds: string[]): Promise<Map<string, string>> {
-  const map = new Map<string, string>();
-  if (!supabaseAdmin || actorIds.length === 0) return map;
+async function loadActorProfiles(actorIds: string[]): Promise<{
+  names: Map<string, string>;
+  usernames: Map<string, string>;
+}> {
+  const names = new Map<string, string>();
+  const usernames = new Map<string, string>();
+  if (!supabaseAdmin || actorIds.length === 0) return { names, usernames };
 
   const { data } = await supabaseAdmin
     .from('profiles')
@@ -42,10 +46,12 @@ async function loadActorNames(actorIds: string[]): Promise<Map<string, string>> 
   if (data) {
     for (const p of data) {
       const name = p.full_name?.trim() || (p.username ? `@${p.username}` : 'Alguien');
-      map.set(p.id, name);
+      names.set(p.id, name);
+      const username = p.username?.trim();
+      if (username) usernames.set(p.id, username);
     }
   }
-  return map;
+  return { names, usernames };
 }
 
 async function loadMatchLabels(capsuleIds: string[]): Promise<Map<string, string>> {
@@ -125,12 +131,17 @@ async function flushUserPushDigest(
     ...new Set(rows.map((r) => r.capsule_id).filter((id): id is string => Boolean(id))),
   ];
 
-  const [actorNames, matchLabels] = await Promise.all([
-    loadActorNames(actorIds),
+  const [{ names: actorNames, usernames: actorUsernames }, matchLabels] = await Promise.all([
+    loadActorProfiles(actorIds),
     loadMatchLabels(capsuleIds),
   ]);
 
-  const payload = buildPushDigestPayload({ notifications: rows, actorNames, matchLabels });
+  const payload = buildPushDigestPayload({
+    notifications: rows,
+    actorNames,
+    actorUsernames,
+    matchLabels,
+  });
   if (!payload) return { sent: 0, skipped: 1, marked: 0 };
 
   const result = await sendPushToUser(userId, payload);

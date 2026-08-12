@@ -134,6 +134,39 @@ function resolveActorName(actorId: string, actorNames: Map<string, string>): str
   return actorNames.get(actorId) ?? 'Alguien';
 }
 
+/** Deep link al pulsar el push (espejo de NotificationsPage). */
+export function resolvePushDigestUrl(params: {
+  type: DigestNotificationType;
+  capsule_id: string | null;
+  actorIds: string[];
+  actorUsernames: Map<string, string>;
+}): string {
+  const { type, capsule_id, actorIds, actorUsernames } = params;
+
+  if (type === 'follow' && actorIds.length === 1) {
+    const username = actorUsernames.get(actorIds[0]!);
+    return username ? `/u/${username}` : '/notifications';
+  }
+
+  if (capsule_id) {
+    return type === 'comment' ? `/c/${capsule_id}#comments` : `/c/${capsule_id}`;
+  }
+
+  return '/notifications';
+}
+
+function resolveGroupPushUrl(
+  group: DigestGroup,
+  actorUsernames: Map<string, string>,
+): string {
+  return resolvePushDigestUrl({
+    type: group.type,
+    capsule_id: group.capsule_id,
+    actorIds: group.actorNames,
+    actorUsernames,
+  });
+}
+
 /**
  * Construye título/cuerpo/url del push digest.
  * Una alerta → mismo formato que el push instantáneo anterior.
@@ -142,9 +175,10 @@ function resolveActorName(actorId: string, actorNames: Map<string, string>): str
 export function buildPushDigestPayload(params: {
   notifications: PendingNotificationRow[];
   actorNames: Map<string, string>;
+  actorUsernames: Map<string, string>;
   matchLabels: Map<string, string>;
 }): { title: string; body: string; url: string } | null {
-  const { notifications, actorNames, matchLabels } = params;
+  const { notifications, actorNames, actorUsernames, matchLabels } = params;
   if (notifications.length === 0) return null;
 
   const sorted = [...notifications].sort(
@@ -164,7 +198,12 @@ export function buildPushDigestPayload(params: {
         matchLabel,
         commentSnippet: snippet,
       }),
-      url: '/notifications',
+      url: resolvePushDigestUrl({
+        type: n.type,
+        capsule_id: n.capsule_id,
+        actorIds: [n.actor_id],
+        actorUsernames,
+      }),
     };
   }
 
@@ -189,7 +228,7 @@ export function buildPushDigestPayload(params: {
     return {
       title: PUSH_TITLE[group.type],
       body,
-      url: '/notifications',
+      url: resolveGroupPushUrl(group, actorUsernames),
     };
   }
 
