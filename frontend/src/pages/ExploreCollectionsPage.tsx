@@ -13,6 +13,7 @@ import { discoverCollectionMatchLabel } from '@/lib/discoverCollections';
 import { profilePath } from '@/lib/profilePath';
 import type { DiscoverCollection } from '@/types/collection';
 
+
 function DiscoverCollectionCard({ collection }: { collection: DiscoverCollection }) {
   const author = collection.author;
   const username = author.username;
@@ -120,25 +121,17 @@ export function ExploreCollectionsPage() {
   return (
     <Layout>
       <div className="mx-auto max-w-2xl space-y-8">
-        <section
-          className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
-          aria-labelledby="explore-collections-heading"
-        >
-          <div>
-            <h1
-              id="explore-collections-heading"
-              className="flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl"
-            >
-              <Compass className="h-7 w-7 text-primary" aria-hidden />
-              Explorar colecciones
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-              Listas públicas curadas por la comunidad — más allá del perfil de cada aficionado.
-            </p>
-          </div>
-          <Button asChild variant="secondary" className="shrink-0">
-            <Link to="/collections">Mis colecciones</Link>
-          </Button>
+        <section aria-labelledby="explore-collections-heading">
+          <h1
+            id="explore-collections-heading"
+            className="flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl"
+          >
+            <Compass className="h-7 w-7 text-primary" aria-hidden />
+            Explorar colecciones
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+            Listas públicas curadas por la comunidad — más allá del perfil de cada aficionado.
+          </p>
         </section>
 
         {isLoading ? <NinetyLoader variant="panel" className="py-10" /> : null}

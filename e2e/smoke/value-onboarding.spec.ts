@@ -59,7 +59,7 @@ test.describe('Smoke — onboarding de valor @smoke', () => {
 
     await card.getByRole('link', { name: /crea tu primera colección/i }).click();
     await expect(page).toHaveURL(/\/collections(\?new=1)?/);
-    await expect(page.getByRole('heading', { name: /^colecciones$/i })).toBeVisible({
+    await expect(page.getByRole('heading', { name: /^mis listas$/i })).toBeVisible({
       timeout: 15_000,
     });
     await expect(page.getByLabel(/^nombre$/i)).toBeVisible({ timeout: 10_000 });

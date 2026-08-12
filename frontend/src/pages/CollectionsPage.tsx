@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Compass, Library, Lock, Plus } from 'lucide-react';
+import { Library, Lock, Plus } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
 import { NinetyLoader } from '@/components/NinetyLoader';
@@ -22,7 +22,7 @@ import {
 import { toast } from '@/lib/toast';
 
 export function CollectionsPage() {
-  useDocumentTitle('Colecciones');
+  useDocumentTitle('Mis listas');
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -86,30 +86,22 @@ export function CollectionsPage() {
               className="flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl"
             >
               <Library className="h-7 w-7 text-primary" aria-hidden />
-              Colecciones
+              Mis listas
             </h1>
             <p className="mt-2 text-sm text-muted-foreground sm:text-base">
               Listas curadas de Capsules — Clásicos, viajes, noches de Champions…
             </p>
           </div>
-          <div className="flex shrink-0 flex-wrap gap-2">
-            <Button asChild variant="secondary">
-              <Link to="/collections/explore">
-                <Compass className="mr-1.5 h-4 w-4" aria-hidden />
-                Explorar
-              </Link>
-            </Button>
-            <Button
-              type="button"
-              className="shrink-0"
-              aria-expanded={formOpen}
-              aria-controls="create-collection-panel"
-              onClick={() => openForm(!formOpen)}
-            >
-              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-              Nueva colección
-            </Button>
-          </div>
+          <Button
+            type="button"
+            className="shrink-0"
+            aria-expanded={formOpen}
+            aria-controls="create-collection-panel"
+            onClick={() => openForm(!formOpen)}
+          >
+            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+            Nueva colección
+          </Button>
         </section>
 
         {formOpen ? (

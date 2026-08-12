@@ -26,13 +26,13 @@ test.describe('Crítico — navegación móvil @critical @mobile', () => {
     await expect(page.getByText(/encuentra aficionados/i)).toBeVisible();
   });
 
-  test('Alertas desde tab bar abre notificaciones', async ({ page }) => {
+  test('Listas desde tab bar abre Mis listas', async ({ page }) => {
     await openAuthenticatedHome(page);
     const tabBar = page.getByRole('navigation', { name: /navegación principal/i });
-    const alerts = tabBar.getByRole('link', { name: /alertas|notificaciones/i });
-    await expect(alerts).toBeVisible();
-    await alerts.click();
-    await expect(page).toHaveURL(/\/notifications/);
-    await expect(page.getByRole('heading', { name: /notificaciones/i })).toBeVisible();
+    await tabBar.getByRole('link', { name: /listas/i }).click();
+    await expect(page).toHaveURL(/\/collections/);
+    await expect(page.getByRole('heading', { name: /^mis listas$/i })).toBeVisible();
+    const collectionsNav = page.getByRole('navigation', { name: /^colecciones$/i });
+    await expect(collectionsNav.getByRole('link', { name: /^explorar$/i })).toBeVisible();
   });
 });

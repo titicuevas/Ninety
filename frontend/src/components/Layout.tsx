@@ -1,9 +1,11 @@
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
-import { Bell, Home, LogOut, Newspaper, Search, Ticket, User } from 'lucide-react';
+import { Bell, Home, Library, LogOut, Newspaper, Search, Ticket, User } from 'lucide-react';
+import { CollectionsShellNav } from '@/components/CollectionsShellNav';
 import { SkipLink } from '@/components/SkipLink';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useUnreadCount } from '@/hooks/useNotifications';
+import { isCollectionsSectionPath } from '@/lib/collectionsNav';
 import { cn } from '@/lib/utils';
 
 type NavItem = {
@@ -13,6 +15,8 @@ type NavItem = {
   end?: boolean;
   /** Solo tab bar móvil (desktop usa campana en header). */
   mobileOnly?: boolean;
+  /** Activo en cualquier ruta bajo `to` (p. ej. /collections/*). */
+  section?: boolean;
 };
 
 const NAV_ITEMS: NavItem[] = [
@@ -20,10 +24,17 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/feed', label: 'Feed', icon: Newspaper },
   { to: '/search', label: 'Buscar', icon: Search },
   { to: '/capsules', label: 'Capsules', icon: Ticket },
+  { to: '/collections', label: 'Listas', icon: Library, section: true },
   { to: '/notifications', label: 'Alertas', icon: Bell, mobileOnly: true },
   { to: '/profile', label: 'Perfil', icon: User },
 ];
 
+function navItemActive(pathname: string, item: NavItem, routerActive: boolean): boolean {
+  if (item.section && item.to === '/collections') {
+    return isCollectionsSectionPath(pathname);
+  }
+  return routerActive;
+}
 /**
  * Breakpoint de shell:
  * - < lg (1024px): tab bar inferior (móvil + tablet portrait) — uso principal
@@ -91,6 +102,7 @@ function MobileNavIcon({
 export function Layout({ children }: { children: React.ReactNode }) {
   const { signOut } = useAuth();
   const unread = useUnreadCount();
+  const { pathname } = useLocation();
   const desktopItems = NAV_ITEMS.filter((item) => !item.mobileOnly);
 
   return (
@@ -115,7 +127,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 key={item.to}
                 to={item.to}
                 end={item.end}
-                className={({ isActive }) => desktopNavClass(isActive)}
+                className={({ isActive }) =>
+                  desktopNavClass(navItemActive(pathname, item, isActive))
+                }
               >
                 <item.icon className="h-4 w-4 shrink-0" aria-hidden />
                 <span>{item.label}</span>
@@ -143,6 +157,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </div>
+        <CollectionsShellNav />
       </header>
 
       <main
@@ -166,24 +181,29 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <NavLink
                 to={item.to}
                 end={item.end}
-                className={({ isActive }) => mobileTabClass(isActive)}
+                className={({ isActive }) =>
+                  mobileTabClass(navItemActive(pathname, item, isActive))
+                }
                 aria-label={
                   item.to === '/notifications' && unread > 0
                     ? `Alertas (${unread} sin leer)`
                     : undefined
                 }
               >
-                {({ isActive }) => (
-                  <>
-                    <MobileNavIcon
-                      icon={item.icon}
-                      isActive={isActive}
-                      badge={item.to === '/notifications' ? unread : undefined}
-                    />
-                    <span>{item.label}</span>
-                    {isActive ? <span className="sr-only">(página actual)</span> : null}
-                  </>
-                )}
+                {({ isActive }) => {
+                  const active = navItemActive(pathname, item, isActive);
+                  return (
+                    <>
+                      <MobileNavIcon
+                        icon={item.icon}
+                        isActive={active}
+                        badge={item.to === '/notifications' ? unread : undefined}
+                      />
+                      <span>{item.label}</span>
+                      {active ? <span className="sr-only">(página actual)</span> : null}
+                    </>
+                  );
+                }}
               </NavLink>
             </li>
           ))}

@@ -455,7 +455,7 @@ Ninety/
 ### 🚧 v9 — Captura libre & cierre de loops
 - [x] Partido manual — guardar Capsules fuera del catálogo football-data (amistosos, locales, torneos no indexados) con `match_id` negativo estable (`/search/manual` + CTAs en búsqueda)
 - [x] Deep links en push digest — like/comentario abren `/c/:id` (o `#comments`); follow único al perfil; resumen multi → `/notifications`
-- [ ] Colecciones en la navegación principal — acceso a Mis listas / Explorar desde el shell (hoy solo links secundarios)
+- [x] Colecciones en la navegación principal — acceso a Mis listas / Explorar desde el shell (`Listas` en nav + subnav Mis listas / Explorar)
 - [ ] Legales alineados con borrado self-serve — Privacidad y Términos ya no piden email manual tras `POST /api/auth/delete-account`
 - [ ] Bloquear usuario — dejar de ver Capsules/perfil de alguien (más allá del mute de alertas)
 - [ ] Discovery en frío — explorar perfiles/colecciones útiles sin follows ni equipo favorito

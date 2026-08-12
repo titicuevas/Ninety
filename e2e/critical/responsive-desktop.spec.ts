@@ -13,7 +13,9 @@ test.describe('Responsive shell desktop @critical', () => {
     // Header arriba
     expect(box!.y).toBeLessThan(120);
 
-    await nav.getByRole('link', { name: /feed/i }).click();
-    await expect(page).toHaveURL(/\/feed/);
+    await nav.getByRole('link', { name: /listas/i }).click();
+    await expect(page).toHaveURL(/\/collections/);
+    await expect(page.getByRole('heading', { name: /^mis listas$/i })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: /^colecciones$/i })).toBeVisible();
   });
 });
