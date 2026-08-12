@@ -48,7 +48,9 @@ test.describe('Smoke — público @smoke', () => {
     const name = demoDisplayName(data);
 
     await page.goto(`/u/${DEMO_USERNAME}`);
-    await expect(page.getByRole('heading', { name: new RegExp(escapeRegExp(name), 'i') })).toBeVisible({
+    await expect(
+      page.getByRole('heading', { level: 1, name: new RegExp(escapeRegExp(name), 'i') }),
+    ).toBeVisible({
       timeout: 20_000,
     });
     await expect(page.getByRole('link', { name: /seguidores/i })).toBeVisible();
@@ -61,7 +63,7 @@ test.describe('Smoke — público @smoke', () => {
       await expect(page.getByText(/wrapped público/i)).toBeVisible();
       const monthChart = page.getByLabel(/gráfico de partidos por mes/i);
       const bestRated = page.getByText(/mejor valorado/i);
-      await expect(monthChart.or(bestRated).or(page.getByText(/media ★/i).first())).toBeVisible();
+      await expect(monthChart.or(bestRated).or(page.getByText(/media ★/i)).first()).toBeVisible();
       await expect(page.getByLabel(/buscar en el diario público/i)).toBeVisible();
       await expect(page.getByRole('group', { name: /filtrar por valoración/i })).toBeVisible();
     } else {

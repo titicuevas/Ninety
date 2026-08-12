@@ -43,7 +43,9 @@ test.describe('A11y — páginas públicas @a11y', () => {
     const name = demoDisplayName(data);
 
     await page.goto(`/u/${DEMO_USERNAME}`);
-    await expect(page.getByRole('heading', { name: new RegExp(escapeRegExp(name), 'i') })).toBeVisible({
+    await expect(
+      page.getByRole('heading', { level: 1, name: new RegExp(escapeRegExp(name), 'i') }),
+    ).toBeVisible({
       timeout: 20_000,
     });
     await expectNoA11yViolations(page, 'public-profile');
