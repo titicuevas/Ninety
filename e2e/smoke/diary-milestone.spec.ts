@@ -1,7 +1,7 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { openAuthenticatedHome } from '../helpers/auth';
 
-async function readSessionUserId(page: import('@playwright/test').Page) {
+async function readSessionUserId(page: Page) {
   return page.evaluate(() => {
     const raw = localStorage.getItem('ninety.session:v1') ?? localStorage.getItem('ninety.session');
     if (!raw) return null;
@@ -45,31 +45,70 @@ function milestoneCapsule(opts: {
   };
 }
 
+/** Core onboarding oculto: perfil completo + ≥1 follow (hito solo si coreComplete). */
+async function forceCoreComplete(page: Page, userId: string) {
+  await page.evaluate((id) => {
+    localStorage.setItem(
+      `ninety.valueOnboarding:v1:${id}`,
+      JSON.stringify({ dismissPermanent: true }),
+    );
+    localStorage.removeItem(`ninety.diaryAnniversary:v1:${id}`);
+    localStorage.removeItem(`ninety.diaryMilestone:v1:${id}`);
+    localStorage.removeItem(`ninety.diaryDigest:v1:${id}`);
+  }, userId);
+
+  await page.route('**/api/profile/me', async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.continue();
+      return;
+    }
+    const res = await route.fetch();
+    const body = (await res.json()) as {
+      display_name?: string | null;
+      username?: string | null;
+      [key: string]: unknown;
+    };
+    const username = body.username ?? '';
+    const auto = /^user_[a-f0-9]{8}$/i.test(username);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...body,
+        display_name:
+          typeof body.display_name === 'string' && body.display_name.length >= 2
+            ? body.display_name
+            : 'QA Demo',
+        username: auto || !username ? 'qa_e2e_demo' : username,
+      }),
+    });
+  });
+
+  await page.route('**/api/profile/*/following**', async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.continue();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        profiles: [{ username: 'rival_e2e', display_name: 'Rival E2E' }],
+        total: 1,
+        kind: 'following',
+        username: 'qa_e2e_demo',
+      }),
+    });
+  });
+}
+
 test.describe('Smoke — hitos del diario @smoke', () => {
   test('card de hito aparece, prioriza sobre digest y se puede dismiss', async ({ page }) => {
     await openAuthenticatedHome(page);
     const userId = await readSessionUserId(page);
     expect(userId).toBeTruthy();
 
-    const onboardingCore = page.getByRole('heading', { name: /primeros pasos/i });
-    if (await onboardingCore.isVisible().catch(() => false)) {
-      test.info().annotations.push({
-        type: 'note',
-        description: 'Onboarding core activo — hito no aplica',
-      });
-      test.skip();
-      return;
-    }
-
-    await page.evaluate((id) => {
-      localStorage.setItem(
-        `ninety.valueOnboarding:v1:${id}`,
-        JSON.stringify({ dismissPermanent: true }),
-      );
-      localStorage.removeItem(`ninety.diaryAnniversary:v1:${id}`);
-      localStorage.removeItem(`ninety.diaryMilestone:v1:${id}`);
-      localStorage.removeItem(`ninety.diaryDigest:v1:${id}`);
-    }, userId!);
+    await forceCoreComplete(page, userId!);
 
     const capsules = Array.from({ length: 5 }, (_, i) =>
       milestoneCapsule({
@@ -95,6 +134,7 @@ test.describe('Smoke — hitos del diario @smoke', () => {
     });
 
     await page.reload();
+    await expect(page.getByRole('heading', { name: /primeros pasos/i })).toHaveCount(0);
 
     const card = page.getByTestId('diary-milestone-card');
     await expect(card).toBeVisible({ timeout: 15_000 });
