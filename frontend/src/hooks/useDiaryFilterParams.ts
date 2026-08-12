@@ -2,6 +2,7 @@ import { useDeferredValue, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   parseRatingMin,
+  parseTag,
   parseVisibility,
   parseWatchContext,
   parseYear,
@@ -21,6 +22,7 @@ export type DiaryFilterParams = {
   year: number | undefined;
   ratingMin: number | undefined;
   watchContext: WatchContext | undefined;
+  tag: string | undefined;
   visibility: DiaryVisibility;
   hasFilters: boolean;
   patchParams: (patch: Record<string, string | null>) => void;
@@ -38,6 +40,7 @@ export function useDiaryFilterParams(
   const year = parseYear(searchParams.get('year'));
   const ratingMin = parseRatingMin(searchParams.get('rating'));
   const watchContext = parseWatchContext(searchParams.get('context'));
+  const tag = parseTag(searchParams.get('tag'));
   const visibility = withVisibility
     ? parseVisibility(searchParams.get('visibility'))
     : ('all' as const);
@@ -48,6 +51,7 @@ export function useDiaryFilterParams(
     year != null ||
     ratingMin != null ||
     watchContext != null ||
+    tag != null ||
     (withVisibility && visibility !== 'all');
 
   const patchParams = (patch: Record<string, string | null>) => {
@@ -71,6 +75,7 @@ export function useDiaryFilterParams(
     year,
     ratingMin,
     watchContext,
+    tag,
     visibility,
     hasFilters,
     patchParams,

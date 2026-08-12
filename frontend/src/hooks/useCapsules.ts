@@ -18,6 +18,7 @@ export type MyCapsulesFilters = {
   ratingMin?: number;
   visibility?: MyCapsulesVisibility;
   watchContext?: 'stadium' | 'tv' | 'pub' | 'other';
+  tag?: string;
 };
 
 function buildMyCapsulesQuery(filters: MyCapsulesFilters, offset: number): string {
@@ -32,6 +33,7 @@ function buildMyCapsulesQuery(filters: MyCapsulesFilters, offset: number): strin
     params.set('visibility', filters.visibility);
   }
   if (filters.watchContext) params.set('watch_context', filters.watchContext);
+  if (filters.tag) params.set('tag', filters.tag);
   return `/api/capsules/me?${params.toString()}`;
 }
 
@@ -53,12 +55,13 @@ export function useMyCapsulesInfinite(filters: MyCapsulesFilters = {}) {
   const ratingMin = filters.ratingMin;
   const visibility = filters.visibility ?? 'all';
   const watchContext = filters.watchContext;
+  const tag = filters.tag;
 
   return useInfiniteQuery({
-    queryKey: ['capsules', 'me', 'page', { q, year, ratingMin, visibility, watchContext }],
+    queryKey: ['capsules', 'me', 'page', { q, year, ratingMin, visibility, watchContext, tag }],
     queryFn: ({ pageParam }) =>
       apiFetch<CapsulesResponse>(
-        buildMyCapsulesQuery({ q, year, ratingMin, visibility, watchContext }, pageParam),
+        buildMyCapsulesQuery({ q, year, ratingMin, visibility, watchContext, tag }, pageParam),
         {},
         session?.access_token,
       ),

@@ -11,6 +11,8 @@ import {
 
 type CapsuleDiaryFiltersProps = {
   years: number[];
+  /** Etiquetas disponibles en el diario (solo Mis Capsules). */
+  availableTags?: string[];
   showVisibility?: boolean;
   searchAriaLabel: string;
   ariaLabel?: string;
@@ -19,6 +21,7 @@ type CapsuleDiaryFiltersProps = {
   year: number | undefined;
   ratingMin: number | undefined;
   watchContext: WatchContext | undefined;
+  tag?: string | undefined;
   visibility?: DiaryVisibility;
   hasFilters: boolean;
   onQDraftChange: (value: string) => void;
@@ -28,6 +31,7 @@ type CapsuleDiaryFiltersProps = {
 
 export function CapsuleDiaryFilters({
   years,
+  availableTags = [],
   showVisibility = false,
   searchAriaLabel,
   ariaLabel = 'Filtros del diario',
@@ -36,6 +40,7 @@ export function CapsuleDiaryFilters({
   year,
   ratingMin,
   watchContext,
+  tag,
   visibility = 'all',
   hasFilters,
   onQDraftChange,
@@ -139,6 +144,23 @@ export function CapsuleDiaryFilters({
           </FilterChip>
         ))}
       </div>
+
+      {availableTags.length > 0 ? (
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por etiqueta">
+          <FilterChip active={tag == null} onClick={() => patchParams({ tag: null })}>
+            Cualquier etiqueta
+          </FilterChip>
+          {availableTags.map((value) => (
+            <FilterChip
+              key={value}
+              active={tag === value}
+              onClick={() => patchParams({ tag: tag === value ? null : value })}
+            >
+              {value}
+            </FilterChip>
+          ))}
+        </div>
+      ) : null}
 
       {hasFilters ? (
         <div className="flex items-center gap-3">

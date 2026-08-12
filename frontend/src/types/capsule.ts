@@ -14,6 +14,8 @@ export interface Capsule {
   rating: number | null;
   /** Reseña corta opcional (máx. 1000). */
   note: string | null;
+  /** Etiquetas propias (máx. 8, filtrables en Mis Capsules). */
+  tags?: string[];
   photo_urls: string[];
   /** false = solo el dueño; default true si la columna aún no existe en cache */
   is_public?: boolean;
@@ -38,6 +40,7 @@ export interface CreateCapsuleInput {
   watched_at: string;
   rating?: number | null;
   note?: string | null;
+  tags?: string[];
   photo_urls?: string[];
   is_public?: boolean;
   watch_context?: 'stadium' | 'tv' | 'pub' | 'other' | null;
@@ -47,6 +50,7 @@ export interface UpdateCapsuleInput {
   watched_at?: string;
   rating?: number | null;
   note?: string | null;
+  tags?: string[];
   photo_urls?: string[];
   is_public?: boolean;
   watch_context?: 'stadium' | 'tv' | 'pub' | 'other' | null;

@@ -4,6 +4,7 @@ import { AddToCollectionButton } from '@/components/AddToCollectionButton';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsuleNoteText } from '@/components/CapsuleNoteText';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
+import { CapsuleTagsList } from '@/components/CapsuleTags';
 import { FollowButton } from '@/components/FollowButton';
 import { FollowsYouBadge } from '@/components/FollowsYouBadge';
 import { FormSuccess } from '@/components/FormAlert';
@@ -259,6 +260,8 @@ export function PublicCapsulePage() {
             ) : null}
 
             {capsule.note ? <CapsuleNoteText note={capsule.note} /> : null}
+
+            <CapsuleTagsList tags={capsule.tags} />
 
             <CapsuleEngagementBar
               className="mt-5"

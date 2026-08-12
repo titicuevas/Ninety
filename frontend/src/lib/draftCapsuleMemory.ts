@@ -1,4 +1,5 @@
 import { isWatchContext, type WatchContext } from '@/lib/watchContext';
+import { normalizeCapsuleTags } from '@/lib/capsuleTags';
 
 const DRAFT_MEMORY_KEY = 'ninety.draftCapsuleMemory';
 
@@ -9,6 +10,7 @@ export type CapsuleMemoryDraft = {
   rating: number | null;
   is_public: boolean;
   watch_context: WatchContext | null;
+  tags: string[];
 };
 
 function isMemoryDraft(value: unknown): value is CapsuleMemoryDraft {
@@ -21,7 +23,8 @@ function isMemoryDraft(value: unknown): value is CapsuleMemoryDraft {
     typeof draft.note === 'string' &&
     (draft.rating === null || (typeof draft.rating === 'number' && draft.rating >= 1 && draft.rating <= 5)) &&
     typeof draft.is_public === 'boolean' &&
-    (draft.watch_context === null || isWatchContext(draft.watch_context))
+    (draft.watch_context === null || isWatchContext(draft.watch_context)) &&
+    (draft.tags === undefined || Array.isArray(draft.tags))
   );
 }
 
@@ -39,7 +42,10 @@ export function readDraftCapsuleMemory(matchId: number): CapsuleMemoryDraft | nu
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
     if (!isMemoryDraft(parsed) || parsed.matchId !== matchId) return null;
-    return parsed;
+    return {
+      ...parsed,
+      tags: normalizeCapsuleTags(parsed.tags ?? []),
+    };
   } catch {
     return null;
   }

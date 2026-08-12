@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, Star } from 'lucide-react';
 import { CapsulePhotosField } from '@/components/CapsulePhotosField';
+import { CapsuleTagsField } from '@/components/CapsuleTags';
 import { FormAlert } from '@/components/FormAlert';
 import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,13 @@ import {
   CAPSULE_NOTE_MAX,
   capsuleNoteLength,
 } from '@/lib/capsuleNote';
+import {
+  CAPSULE_TAGS_MAX,
+  CAPSULE_TAG_MAX_LEN,
+  CAPSULE_TAG_SUGGESTIONS,
+  normalizeCapsuleTag,
+  normalizeCapsuleTags,
+} from '@/lib/capsuleTags';
 import {
   clearDraftCapsuleMemory,
   readDraftCapsuleMemory,
@@ -41,6 +49,7 @@ export type CapsuleMemorySubmitPayload = CapsuleMemoryFormValues & {
   rating: number | null;
   is_public: boolean;
   watch_context: WatchContext | null;
+  tags: string[];
   newFiles: File[];
   keptPhotoUrls: string[];
   removedPhotoUrls: string[];
@@ -64,8 +73,9 @@ interface CapsuleMemoryFormProps {
   defaultRating?: number | null;
   defaultIsPublic?: boolean;
   defaultWatchContext?: WatchContext | null;
+  defaultTags?: string[];
   existingPhotoUrls?: string[];
-  /** Si se pasa, persiste nota/rating/contexto/visibilidad en sessionStorage (crear Capsule). */
+  /** Si se pasa, persiste nota/rating/contexto/visibilidad/tags en sessionStorage (crear Capsule). */
   draftMatchId?: number;
   submitLabel: string;
   isBusy?: boolean;
@@ -104,6 +114,7 @@ export function CapsuleMemoryForm({
   defaultRating = null,
   defaultIsPublic = true,
   defaultWatchContext = null,
+  defaultTags = [],
   existingPhotoUrls = NO_PHOTO_URLS,
   draftMatchId,
   submitLabel,
@@ -119,6 +130,10 @@ export function CapsuleMemoryForm({
   const [watchContext, setWatchContext] = useState<WatchContext | null>(
     draft?.watch_context ?? defaultWatchContext,
   );
+  const [tags, setTags] = useState<string[]>(() =>
+    normalizeCapsuleTags(draft?.tags ?? defaultTags),
+  );
+  const [tagError, setTagError] = useState<string | null>(null);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [removedPhotoUrls, setRemovedPhotoUrls] = useState<string[]>([]);
 
@@ -127,6 +142,7 @@ export function CapsuleMemoryForm({
   const initialRating = draft?.rating ?? defaultRating;
   const initialIsPublic = draft?.is_public ?? defaultIsPublic;
   const initialWatchContext = draft?.watch_context ?? defaultWatchContext;
+  const initialTags = normalizeCapsuleTags(draft?.tags ?? defaultTags);
 
   const {
     register,
@@ -144,12 +160,16 @@ export function CapsuleMemoryForm({
   const watchedAt = useWatch({ control, name: 'watched_at' });
   const note = useWatch({ control, name: 'note' });
 
+  const tagsChanged =
+    tags.length !== initialTags.length || tags.some((t, i) => t !== initialTags[i]);
+
   const isDirty =
     (watchedAt || defaultWatchedAt) !== initialWatchedAt ||
     (note ?? '') !== initialNote ||
     rating !== initialRating ||
     isPublic !== initialIsPublic ||
     watchContext !== initialWatchContext ||
+    tagsChanged ||
     newFiles.length > 0 ||
     removedPhotoUrls.length > 0;
 
@@ -172,10 +192,29 @@ export function CapsuleMemoryForm({
         rating,
         is_public: isPublic,
         watch_context: watchContext,
+        tags,
       });
     }, 250);
     return () => window.clearTimeout(timer);
-  }, [draftMatchId, watchedAt, note, rating, isPublic, watchContext, defaultWatchedAt]);
+  }, [draftMatchId, watchedAt, note, rating, isPublic, watchContext, tags, defaultWatchedAt]);
+
+  const tryAddTag = (raw: string): { ok: true; tags: string[] } | { ok: false; error: string } => {
+    const tag = normalizeCapsuleTag(raw);
+    if (!tag) {
+      setTagError('Etiqueta inválida (letras/números, máx. 24).');
+      return { ok: false, error: 'invalid' };
+    }
+    if (tags.includes(tag)) {
+      setTagError('Ya tienes esa etiqueta.');
+      return { ok: false, error: 'duplicate' };
+    }
+    if (tags.length >= CAPSULE_TAGS_MAX) {
+      setTagError(`Máximo ${CAPSULE_TAGS_MAX} etiquetas.`);
+      return { ok: false, error: 'max' };
+    }
+    setTagError(null);
+    return { ok: true, tags: [...tags, tag] };
+  };
 
   const handleFormSubmit = (data: CapsuleMemoryFormValues) => {
     const removed = new Set(removedPhotoUrls);
@@ -184,6 +223,7 @@ export function CapsuleMemoryForm({
       rating,
       is_public: isPublic,
       watch_context: watchContext,
+      tags,
       newFiles,
       keptPhotoUrls: existingPhotoUrls.filter((url) => !removed.has(url)),
       removedPhotoUrls,
@@ -287,6 +327,20 @@ export function CapsuleMemoryForm({
               {capsuleNoteLength(note)}/{CAPSULE_NOTE_MAX}
             </p>
           </div>
+
+          <CapsuleTagsField
+            tags={tags}
+            onChange={(next) => {
+              setTagError(null);
+              setTags(next);
+            }}
+            suggestions={CAPSULE_TAG_SUGGESTIONS}
+            maxTags={CAPSULE_TAGS_MAX}
+            maxLen={CAPSULE_TAG_MAX_LEN}
+            disabled={isBusy}
+            error={tagError}
+            tryAdd={tryAddTag}
+          />
         </div>
       </SectionCard>
 

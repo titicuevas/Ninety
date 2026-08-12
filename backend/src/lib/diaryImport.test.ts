@@ -22,6 +22,7 @@ const validCapsule = {
   watched_at: '2024-05-01',
   rating: 5,
   note: 'Derbi',
+  tags: ['derbi', 'viaje'],
   photo_urls: ['https://cdn.example/remote.jpg', 'ftp://bad.example/x.jpg'],
   is_public: true,
   watch_context: 'stadium',
@@ -36,6 +37,7 @@ describe('diaryImport', () => {
     assert.equal(row.match_id, 42);
     assert.deepEqual(row.photo_urls, []);
     assert.deepEqual(row.source_photo_urls, []);
+    assert.deepEqual(row.tags, ['derbi', 'viaje']);
     assert.equal('id' in row, false);
   });
 

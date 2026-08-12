@@ -16,6 +16,7 @@ import { useCapsules, useDeleteCapsule, useMyCapsulesInfinite } from '@/hooks/us
 import { useDiaryFilterParams } from '@/hooks/useDiaryFilterParams';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { listCapsuleYears } from '@/lib/capsuleStats';
+import { listCapsuleTags } from '@/lib/capsuleTags';
 import type { Capsule } from '@/types/capsule';
 
 function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: string) => void }) {
@@ -73,6 +74,7 @@ export function CapsulesPage() {
     year,
     ratingMin,
     watchContext,
+    tag,
     visibility,
     hasFilters,
     patchParams,
@@ -83,6 +85,10 @@ export function CapsulesPage() {
   const { data: allCapsulesData } = useCapsules();
   const years = useMemo(
     () => listCapsuleYears(allCapsulesData?.capsules ?? []),
+    [allCapsulesData?.capsules],
+  );
+  const availableTags = useMemo(
+    () => listCapsuleTags(allCapsulesData?.capsules ?? []),
     [allCapsulesData?.capsules],
   );
 
@@ -97,7 +103,7 @@ export function CapsulesPage() {
     isFetching,
     refetch,
     isRefetching,
-  } = useMyCapsulesInfinite({ q, year, ratingMin, visibility, watchContext });
+  } = useMyCapsulesInfinite({ q, year, ratingMin, visibility, watchContext, tag });
   const deleteCapsule = useDeleteCapsule();
   const capsules = useMemo(
     () => data?.pages.flatMap((page) => page.capsules) ?? [],
@@ -160,12 +166,14 @@ export function CapsulesPage() {
 
         <CapsuleDiaryFilters
           years={years}
+          availableTags={availableTags}
           showVisibility
           searchAriaLabel="Buscar en tus Capsules"
           qDraft={qDraft}
           year={year}
           ratingMin={ratingMin}
           watchContext={watchContext}
+          tag={tag}
           visibility={visibility}
           hasFilters={hasFilters}
           isUpdating={isFetching && !isFetchingNextPage}

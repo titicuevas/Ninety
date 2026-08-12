@@ -1,4 +1,5 @@
 import { isWatchContext, type WatchContext } from '@/lib/watchContext';
+import { normalizeCapsuleTag } from '@/lib/capsuleTags';
 
 export type DiaryVisibility = 'all' | 'public' | 'private';
 
@@ -23,4 +24,9 @@ export function parseVisibility(value: string | null): DiaryVisibility {
 
 export function parseWatchContext(value: string | null): WatchContext | undefined {
   return isWatchContext(value) ? value : undefined;
+}
+
+export function parseTag(value: string | null): string | undefined {
+  if (!value) return undefined;
+  return normalizeCapsuleTag(value) ?? undefined;
 }

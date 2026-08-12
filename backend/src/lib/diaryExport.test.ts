@@ -21,6 +21,7 @@ const sample: ExportCapsule = {
   watched_at: '2024-05-01',
   rating: 5,
   note: 'Derbi, "noche" épica',
+  tags: ['derbi', 'clásico'],
   photo_urls: ['https://example.com/a.jpg'],
   is_public: true,
   watch_context: 'stadium',

@@ -13,6 +13,7 @@ export type ExportCapsule = {
   watched_at: string;
   rating: number | null;
   note: string | null;
+  tags: string[];
   photo_urls: string[];
   is_public: boolean;
   watch_context: string | null;
@@ -42,6 +43,7 @@ const CSV_COLUMNS = [
   'watched_at',
   'rating',
   'note',
+  'tags',
   'photo_urls',
   'is_public',
   'watch_context',
@@ -79,6 +81,9 @@ export function toExportCapsule(row: Record<string, unknown>): ExportCapsule {
     watched_at: String(row.watched_at ?? ''),
     rating: (row.rating as number | null) ?? null,
     note: (row.note as string | null) ?? null,
+    tags: Array.isArray(row.tags)
+      ? (row.tags as unknown[]).filter((t): t is string => typeof t === 'string')
+      : [],
     photo_urls: Array.isArray(row.photo_urls) ? (row.photo_urls as string[]) : [],
     is_public: row.is_public !== false,
     watch_context: (row.watch_context as string | null) ?? null,

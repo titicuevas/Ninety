@@ -478,7 +478,7 @@ Ninety/
 ### 🚧 v11 — Diario con más sustancia
 - [x] Recordatorio «Quiero ir» — push opt-in cuando se acerca un partido de la watchlist (ventana ~48 h; `push_want_to_go` en Ajustes; mismo cron `POST /api/internal/cron/push-diary`; idempotencia `diary_push_sent` kind `want_to_go`; deep link `/want-to-go`; migración `20250819120000_want_to_go_push.sql`; respeta quiet hours)
 - [x] Notas / reseña corta en Capsule — texto libre además del rating (`note`, máx. 1000; crear/editar + detalle propio/público; sin migración nueva — columna desde `20250705120000_capsules.sql`)
-- [ ] Tags en Capsules — etiquetas propias (clásico, viaje, derbi…) filtrables en Mis Capsules
+- [x] Tags en Capsules — etiquetas propias (clásico, viaje, derbi…) filtrables en Mis Capsules (`tags text[]` máx. 8×24; crear/editar + filtro `?tag=` en `GET /api/capsules/me`; visibles en detalle/listado; migración `20250820120000_capsule_tags.sql`)
 - [ ] Me gusta en colecciones — señal social ligera en listas públicas
 - [ ] Compartir calendario / mes del diario — imagen o link shareable del mes
 - [ ] Mentions en comentarios — @usuario notifica y enlaza al perfil

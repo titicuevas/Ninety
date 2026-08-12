@@ -11,6 +11,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ApiError } from '@/lib/api';
 import { uploadCapsulePhotos } from '@/lib/capsulePhoto';
 import { normalizeCapsuleNote } from '@/lib/capsuleNote';
+import { normalizeCapsuleTags } from '@/lib/capsuleTags';
 import { clearDraftCapsuleMemory } from '@/lib/draftCapsuleMemory';
 import { clearDraftMatch, readDraftMatch, saveDraftMatch } from '@/lib/draftMatch';
 import { friendlyApiError } from '@/lib/friendlyErrors';
@@ -70,6 +71,7 @@ export function CreateCapsulePage() {
     watched_at: string;
     rating: number | null;
     note?: string;
+    tags?: string[];
     is_public: boolean;
     watch_context: 'stadium' | 'tv' | 'pub' | 'other' | null;
     newFiles: File[];
@@ -99,6 +101,7 @@ export function CreateCapsulePage() {
           watched_at: payload.watched_at,
           rating: payload.rating,
           note: normalizeCapsuleNote(payload.note),
+          tags: normalizeCapsuleTags(payload.tags),
           photo_urls: uploadedUrls,
           is_public: payload.is_public,
           watch_context: payload.watch_context,

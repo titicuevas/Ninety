@@ -2,6 +2,12 @@ import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
 import { CAPSULE_NOTE_MAX, normalizeCapsuleNote } from '../lib/capsuleNote.js';
+import {
+  CAPSULE_TAGS_MAX,
+  CAPSULE_TAG_MAX_LEN,
+  normalizeCapsuleTags,
+  parseCapsuleTagFilter,
+} from '../lib/capsuleTags.js';
 import { deleteCapsulePhotoByUrl, deleteCapsulePhotosByUrls, uploadCapsulePhotoBuffer } from '../lib/ensureStorage.js';
 import {
   buildDiaryExportCsv,
@@ -69,6 +75,7 @@ const createCapsuleSchema = z.object({
   watched_at: z.string().date(),
   rating: z.number().int().min(1).max(5).optional().nullable(),
   note: z.string().max(CAPSULE_NOTE_MAX).optional().nullable(),
+  tags: z.array(z.string().max(CAPSULE_TAG_MAX_LEN)).max(CAPSULE_TAGS_MAX).optional(),
   photo_urls: z.array(z.string().url().max(2048)).max(9).optional(),
   is_public: z.boolean().optional().default(true),
   watch_context: z.enum(['stadium', 'tv', 'pub', 'other']).optional().nullable(),
@@ -101,6 +108,8 @@ const meQuerySchema = z.object({
   rating_min: z.coerce.number().int().min(1).max(5).optional(),
   visibility: z.enum(['all', 'public', 'private']).optional().default('all'),
   watch_context: z.enum(['stadium', 'tv', 'pub', 'other']).optional(),
+  /** Una etiqueta exacta (normalizada) para filtrar Mis Capsules. */
+  tag: z.string().trim().max(CAPSULE_TAG_MAX_LEN).optional(),
 });
 
 const publicProfileQuerySchema = z.object({
@@ -161,12 +170,27 @@ function isMissingWatchContextColumn(error: { message?: string } | null | undefi
   );
 }
 
+function isMissingTagsColumn(error: { message?: string } | null | undefined): boolean {
+  const message = error?.message ?? '';
+  return (
+    message.includes('tags') &&
+    (message.includes('schema cache') ||
+      message.includes('Could not find') ||
+      message.includes('column') ||
+      message.includes('does not exist'))
+  );
+}
+
 function privacyMigrationHint() {
   return 'Ejecuta la migración 20250730140000_capsule_privacy.sql en Supabase.';
 }
 
 function watchContextMigrationHint() {
   return 'Ejecuta la migración 20250730160000_watch_context.sql en Supabase.';
+}
+
+function tagsMigrationHint() {
+  return 'Ejecuta la migración 20250820120000_capsule_tags.sql en Supabase.';
 }
 
 function canViewCapsule(
@@ -345,6 +369,7 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
 
   const { limit, offset, year, rating_min, visibility, watch_context } = parsed.data;
   const safeQ = sanitizeSearchQ(parsed.data.q);
+  const tagFilter = parseCapsuleTagFilter(parsed.data.tag);
 
   const supabase = createUserClient(token);
   let query = supabase
@@ -372,6 +397,10 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
     query = query.eq('watch_context', watch_context);
   }
 
+  if (tagFilter) {
+    query = query.contains('tags', [tagFilter]);
+  }
+
   if (safeQ.length >= 2) {
     const pattern = `%${safeQ}%`;
     query = query.or(
@@ -392,6 +421,10 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
     }
     if (watch_context && isMissingWatchContextColumn(error)) {
       res.status(503).json({ error: watchContextMigrationHint() });
+      return;
+    }
+    if (tagFilter && isMissingTagsColumn(error)) {
+      res.status(503).json({ error: tagsMigrationHint() });
       return;
     }
     res.status(400).json({ error: error.message });
@@ -483,18 +516,34 @@ capsulesRouter.get('/me/export', requireAuth, async (req: AuthRequest, res) => {
   const { data, error } = await supabase
     .from('capsules')
     .select(
-      'id, match_id, match_played_at, home_team_name, away_team_name, home_team_crest, away_team_crest, competition_name, home_score, away_score, watched_at, rating, note, photo_urls, is_public, watch_context, created_at, updated_at',
+      'id, match_id, match_played_at, home_team_name, away_team_name, home_team_crest, away_team_crest, competition_name, home_score, away_score, watched_at, rating, note, tags, photo_urls, is_public, watch_context, created_at, updated_at',
     )
     .eq('user_id', req.userId!)
     .order('watched_at', { ascending: false })
     .order('created_at', { ascending: false });
 
-  if (error) {
-    res.status(400).json({ error: error.message });
+  let exportRows: Record<string, unknown>[] | null = (data ?? null) as Record<string, unknown>[] | null;
+  let exportError = error;
+
+  if (exportError && isMissingTagsColumn(exportError)) {
+    const fallback = await supabase
+      .from('capsules')
+      .select(
+        'id, match_id, match_played_at, home_team_name, away_team_name, home_team_crest, away_team_crest, competition_name, home_score, away_score, watched_at, rating, note, photo_urls, is_public, watch_context, created_at, updated_at',
+      )
+      .eq('user_id', req.userId!)
+      .order('watched_at', { ascending: false })
+      .order('created_at', { ascending: false });
+    exportRows = (fallback.data ?? null) as Record<string, unknown>[] | null;
+    exportError = fallback.error;
+  }
+
+  if (exportError) {
+    res.status(400).json({ error: exportError.message });
     return;
   }
 
-  const capsules = (data ?? []).map((row) => toExportCapsule(row as Record<string, unknown>));
+  const capsules = (exportRows ?? []).map((row) => toExportCapsule(row));
   const stamp = new Date().toISOString().slice(0, 10);
   const username = (profile?.username as string | null) ?? 'ninety';
 
@@ -593,6 +642,7 @@ capsulesRouter.post('/me/import', requireAuth, async (req: AuthRequest, res) => 
       watched_at: capsule.watched_at,
       rating: capsule.rating,
       note: capsule.note,
+      tags: capsule.tags,
       photo_urls: capsule.photo_urls,
       is_public: capsule.is_public,
       watch_context: capsule.watch_context,
@@ -915,6 +965,7 @@ const updateCapsuleSchema = z.object({
   watched_at: z.string().date().optional(),
   rating: z.number().int().min(1).max(5).optional().nullable(),
   note: z.string().max(CAPSULE_NOTE_MAX).optional().nullable(),
+  tags: z.array(z.string().max(CAPSULE_TAG_MAX_LEN)).max(CAPSULE_TAGS_MAX).optional(),
   photo_urls: z.array(z.string().url().max(2048)).max(9).optional(),
   is_public: z.boolean().optional(),
   watch_context: z.enum(['stadium', 'tv', 'pub', 'other']).optional().nullable(),
@@ -1464,6 +1515,7 @@ capsulesRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
       user_id: req.userId!,
       ...parsed.data,
       note: normalizeCapsuleNote(parsed.data.note),
+      tags: normalizeCapsuleTags(parsed.data.tags),
       photo_urls: parsed.data.photo_urls ?? [],
       is_public: parsed.data.is_public ?? true,
     })
@@ -1491,6 +1543,10 @@ capsulesRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
     }
     if (isMissingWatchContextColumn(error)) {
       res.status(503).json({ error: watchContextMigrationHint() });
+      return;
+    }
+    if (isMissingTagsColumn(error)) {
+      res.status(503).json({ error: tagsMigrationHint() });
       return;
     }
     if (error.message.includes('schema cache') || error.message.includes('Could not find')) {
@@ -1533,6 +1589,9 @@ capsulesRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
     ...(Object.prototype.hasOwnProperty.call(parsed.data, 'note')
       ? { note: normalizeCapsuleNote(parsed.data.note) }
       : {}),
+    ...(Object.prototype.hasOwnProperty.call(parsed.data, 'tags')
+      ? { tags: normalizeCapsuleTags(parsed.data.tags) }
+      : {}),
     updated_at: new Date().toISOString(),
   };
   const { data, error } = await supabase
@@ -1550,6 +1609,10 @@ capsulesRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
     }
     if (isMissingWatchContextColumn(error)) {
       res.status(503).json({ error: watchContextMigrationHint() });
+      return;
+    }
+    if (isMissingTagsColumn(error)) {
+      res.status(503).json({ error: tagsMigrationHint() });
       return;
     }
     res.status(404).json({ error: 'Capsule no encontrada' });

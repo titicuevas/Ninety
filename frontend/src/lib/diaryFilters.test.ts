@@ -5,6 +5,7 @@ import {
   parseVisibility,
   parseWatchContext,
   parseYear,
+  parseTag,
 } from './diaryFilters.ts';
 
 describe('parseYear', () => {
@@ -59,5 +60,18 @@ describe('parseWatchContext', () => {
   it('rechaza inválidos', () => {
     assert.equal(parseWatchContext(null), undefined);
     assert.equal(parseWatchContext('cinema'), undefined);
+  });
+});
+
+describe('parseTag', () => {
+  it('normaliza etiquetas válidas', () => {
+    assert.equal(parseTag('Clásico'), 'clásico');
+    assert.equal(parseTag('viaje'), 'viaje');
+  });
+
+  it('rechaza inválidos', () => {
+    assert.equal(parseTag(null), undefined);
+    assert.equal(parseTag(''), undefined);
+    assert.equal(parseTag('bad!'), undefined);
   });
 });

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { CapsuleNoteText } from '@/components/CapsuleNoteText';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
+import { CapsuleTagsList } from '@/components/CapsuleTags';
 import { StarRating } from '@/components/StarRating';
 import { WatchContextBadge } from '@/components/WatchContextBadge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -96,6 +97,8 @@ export function CapsuleListCard({
           ) : null}
 
           {capsule.note ? <CapsuleNoteText note={capsule.note} compact /> : null}
+
+          <CapsuleTagsList tags={capsule.tags} compact />
         </Link>
 
         {footer ? (

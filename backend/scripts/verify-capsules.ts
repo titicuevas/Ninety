@@ -41,6 +41,7 @@ const REQUIRED_COLUMNS = [
   'watched_at',
   'rating',
   'note',
+  'tags',
   'photo_urls',
   'is_public',
   'watch_context',

@@ -11,6 +11,7 @@ import { useCapsule, useDeleteCapsule, useUpdateCapsule } from '@/hooks/useCapsu
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { deleteCapsulePhotosByUrls, uploadCapsulePhotos } from '@/lib/capsulePhoto';
 import { normalizeCapsuleNote } from '@/lib/capsuleNote';
+import { normalizeCapsuleTags } from '@/lib/capsuleTags';
 import { friendlyApiError } from '@/lib/friendlyErrors';
 import { getCapsulePhotoUrls } from '@/lib/capsulePhotos';
 import { capsuleToFootballMatch } from '@/lib/matchCapsule';
@@ -67,6 +68,7 @@ export function EditCapsulePage() {
     watched_at: string;
     rating: number | null;
     note?: string;
+    tags?: string[];
     is_public: boolean;
     watch_context: 'stadium' | 'tv' | 'pub' | 'other' | null;
     newFiles: File[];
@@ -96,6 +98,7 @@ export function EditCapsulePage() {
           watched_at: payload.watched_at,
           rating: payload.rating,
           note: normalizeCapsuleNote(payload.note),
+          tags: normalizeCapsuleTags(payload.tags),
           photo_urls: [...payload.keptPhotoUrls, ...uploadedUrls],
           is_public: payload.is_public,
           watch_context: payload.watch_context,
@@ -141,6 +144,7 @@ export function EditCapsulePage() {
           defaultRating={capsule.rating}
           defaultIsPublic={capsule.is_public !== false}
           defaultWatchContext={capsule.watch_context ?? null}
+          defaultTags={capsule.tags ?? []}
           existingPhotoUrls={getCapsulePhotoUrls(capsule)}
           submitLabel={uploading ? 'Subiendo fotos…' : 'Guardar cambios'}
           isBusy={uploading || updateCapsule.isPending}

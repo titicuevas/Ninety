@@ -1,5 +1,10 @@
 import { z } from 'zod';
 import { CAPSULE_NOTE_MAX, normalizeCapsuleNote } from './capsuleNote.js';
+import {
+  CAPSULE_TAGS_MAX,
+  CAPSULE_TAG_MAX_LEN,
+  normalizeCapsuleTags,
+} from './capsuleTags.js';
 
 /** Límite duro por petición (abuso + payload). */
 export const DIARY_IMPORT_MAX_CAPSULES = 500;
@@ -25,6 +30,7 @@ const importCapsuleSchema = z.object({
   watched_at: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'watched_at debe ser YYYY-MM-DD'),
   rating: z.number().int().min(1).max(5).nullable().optional(),
   note: z.string().max(IMPORT_NOTE_MAX).nullable().optional(),
+  tags: z.array(z.string().max(CAPSULE_TAG_MAX_LEN)).max(CAPSULE_TAGS_MAX).optional(),
   is_public: z.boolean().optional(),
   watch_context: watchContextSchema,
   photo_urls: z.array(z.string().max(2048)).max(9).optional(),
@@ -49,6 +55,7 @@ export type DiaryImportRow = {
   watched_at: string;
   rating: number | null;
   note: string | null;
+  tags: string[];
   /** Siempre vacío al insertar; se rellena tras restaurar fotos opcionales. */
   photo_urls: string[];
   /** URLs del export cuando `restore_photos` está activo. */
@@ -141,6 +148,7 @@ export function toImportRow(raw: unknown, options?: ToImportRowOptions): DiaryIm
     watched_at: c.watched_at,
     rating: c.rating ?? null,
     note: normalizeCapsuleNote(c.note),
+    tags: normalizeCapsuleTags(c.tags),
     photo_urls: [],
     source_photo_urls: sourcePhotoUrls,
     is_public: c.is_public !== false,
