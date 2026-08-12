@@ -12,6 +12,7 @@ import { indexRouter } from './routes/index.js';
 import { profileRouter } from './routes/profile.js';
 import { authRouter } from './routes/auth.js';
 import { notificationsRouter } from './routes/notifications.js';
+import { reportsRouter } from './routes/reports.js';
 import { internalRouter } from './routes/internal.js';
 
 const footballLimiter = rateLimit({
@@ -85,6 +86,7 @@ export function createApp() {
   app.use('/api/collections', collectionsRouter);
   app.use('/api/football', footballLimiter, footballRouter);
   app.use('/api/notifications', notificationsRouter);
+  app.use('/api/reports', reportsRouter);
   app.use('/api/internal', internalRouter);
 
   app.use(errorHandler);

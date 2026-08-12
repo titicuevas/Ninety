@@ -9,6 +9,7 @@ import { FollowButton } from '@/components/FollowButton';
 import { FollowsYouBadge } from '@/components/FollowsYouBadge';
 import { BlockUserButton } from '@/components/BlockUserButton';
 import { MuteUserButton } from '@/components/MuteUserButton';
+import { ReportContentButton } from '@/components/ReportContentButton';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { Layout } from '@/components/Layout';
 import { ProfileLoadingSkeleton } from '@/components/ListSkeletons';
@@ -250,11 +251,19 @@ export function PublicProfilePage() {
               </Button>
             ) : profile.username && user ? (
               isBlockedByMe ? (
-                <BlockUserButton
-                  username={profile.username}
-                  blockedByMe
-                  className="w-full sm:w-auto"
-                />
+                <>
+                  <BlockUserButton
+                    username={profile.username}
+                    blockedByMe
+                    className="w-full sm:w-auto"
+                  />
+                  <ReportContentButton
+                    targetType="user"
+                    targetId={profile.id}
+                    username={profile.username}
+                    className="w-full sm:w-auto"
+                  />
+                </>
               ) : (
                 <>
                   <FollowButton
@@ -271,6 +280,12 @@ export function PublicProfilePage() {
                   <BlockUserButton
                     username={profile.username}
                     blockedByMe={profile.blocked_by_me}
+                    className="w-full sm:w-auto"
+                  />
+                  <ReportContentButton
+                    targetType="user"
+                    targetId={profile.id}
+                    username={profile.username}
                     className="w-full sm:w-auto"
                   />
                 </>

@@ -10,6 +10,7 @@ import { Layout } from '@/components/Layout';
 import { CapsuleListSkeleton } from '@/components/ListSkeletons';
 import { PublicLayout } from '@/components/PublicLayout';
 import { PushActivationBanner } from '@/components/PushActivationBanner';
+import { ReportContentButton } from '@/components/ReportContentButton';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { StarRating } from '@/components/StarRating';
 import { WatchContextBadge } from '@/components/WatchContextBadge';
@@ -146,6 +147,13 @@ export function PublicCapsulePage() {
               <Button asChild size="sm" variant="secondary">
                 <Link to={loginTo}>Inicia sesión para seguir</Link>
               </Button>
+            ) : null}
+            {user && !isOwn ? (
+              <ReportContentButton
+                targetType="capsule"
+                targetId={capsule.id}
+                size="compact"
+              />
             ) : null}
             <ShareCapsuleButton
               capsuleId={capsule.id}

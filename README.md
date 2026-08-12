@@ -462,6 +462,14 @@ Ninety/
 - [x] Bloquear usuario — dejar de ver Capsules/perfil de alguien (más allá del mute de alertas) (`GET/POST/DELETE /api/profile/blocked`; migración `20250813100000_user_blocks.sql`; feed/discover/cápsula pública filtran bloqueos bidireccionales)
 - [x] Discovery en frío — perfiles/colecciones útiles sin follows ni equipo favorito (`match_reason: active` en discover; empty states del feed/Inicio enlazan a `/collections/explore`)
 
+### 🚧 v10 — Confianza & crecimiento
+- [x] Reportar usuario / Capsule — denunciar abuso; complementa bloquear (migración `20250814120000_content_reports.sql` + `POST/GET /api/reports` + UI en perfil/cápsula pública; cola admin-ready vía service role, sin panel admin)
+- [ ] Enlace de invitación — compartir Ninety con deep link/código que atribuya o lleve a registro
+- [ ] Lista «Quiero ir» — partidos futuros/interesantes tipo watchlist Letterboxd
+- [ ] Calendario del diario — vista mes de Capsules por fecha
+- [ ] Push de aniversarios / hitos — reutilizar cards on-device existentes hacia push opcional
+- [ ] Página de equipo — fans del mismo club favorito (descubrimiento por equipo)
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

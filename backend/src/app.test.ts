@@ -116,6 +116,25 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('POST /api/reports requiere auth', async () => {
+    const res = await request(createApp())
+      .post('/api/reports')
+      .send({ target_type: 'user', username: 'demo', reason: 'spam' });
+    assert.equal(res.status, 401);
+  });
+
+  it('GET /api/reports/me requiere auth', async () => {
+    const res = await request(createApp()).get('/api/reports/me');
+    assert.equal(res.status, 401);
+  });
+
+  it('GET /api/reports/status requiere auth', async () => {
+    const res = await request(createApp()).get(
+      '/api/reports/status?target_type=user&target_id=00000000-0000-4000-8000-000000000001',
+    );
+    assert.equal(res.status, 401);
+  });
+
   it('GET /api/capsules/me/export requiere auth', async () => {
     const res = await request(createApp()).get('/api/capsules/me/export');
     assert.equal(res.status, 401);
