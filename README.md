@@ -466,7 +466,7 @@ Ninety/
 - [x] Reportar usuario / Capsule — denunciar abuso; complementa bloquear (migración `20250814120000_content_reports.sql` + `POST/GET /api/reports` + UI en perfil/cápsula pública; cola admin-ready vía service role, sin panel admin)
 - [x] Enlace de invitación — compartir Ninety con deep link/código que atribuya o lleve a registro (`/invite/:username` + `?ref=`; migración `20250815120000_invite_attributions.sql`; `GET/POST /api/invites`; UI Perfil/Ajustes)
 - [x] Lista «Quiero ir» — partidos futuros/interesantes tipo watchlist Letterboxd (`/want-to-go` + `GET/POST/DELETE /api/want-to-go`; migración `20250816120000_want_to_go_matches.sql`; CTA en búsqueda/partido manual; subnav Listas + Perfil)
-- [ ] Calendario del diario — vista mes de Capsules por fecha
+- [x] Calendario del diario — vista mes de Capsules por fecha (`/diary/calendar` + `GET /api/capsules/me/calendar` por `watched_at`; acceso desde Mis Capsules / Perfil)
 - [ ] Push de aniversarios / hitos — reutilizar cards on-device existentes hacia push opcional
 - [ ] Página de equipo — fans del mismo club favorito (descubrimiento por equipo)
 - [ ] Digest email semanal — resumen opt-in del diario (Resend); dejar para el cierre de v10

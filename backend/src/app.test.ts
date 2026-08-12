@@ -74,6 +74,11 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/capsules/me/calendar requiere auth', async () => {
+    const res = await request(createApp()).get('/api/capsules/me/calendar?year=2026&month=8');
+    assert.equal(res.status, 401);
+  });
+
   it('GET /api/notifications/preferences requiere auth', async () => {
     const res = await request(createApp()).get('/api/notifications/preferences');
     assert.equal(res.status, 401);

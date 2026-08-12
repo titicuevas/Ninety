@@ -1,0 +1,231 @@
+import { useMemo } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { CalendarDays, ChevronLeft, ChevronRight, Ticket } from 'lucide-react';
+import { CapsuleListCard } from '@/components/CapsuleListCard';
+import { EmptyState } from '@/components/EmptyState';
+import { Layout } from '@/components/Layout';
+import { NinetyLoader } from '@/components/NinetyLoader';
+import { QueryErrorCard } from '@/components/QueryErrorCard';
+import { Button } from '@/components/ui/button';
+import { useDiaryCalendar } from '@/hooks/useDiaryCalendar';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import {
+  buildMonthGrid,
+  capsulesForDate,
+  countCapsulesByWatchedDate,
+  formatCalendarMonthTitle,
+  parseCalendarMonthParam,
+  shiftCalendarMonth,
+  weekdayLabels,
+} from '@/lib/diaryCalendar';
+import { formatWatchedDate } from '@/lib/format';
+import { cn } from '@/lib/utils';
+
+export function DiaryCalendarPage() {
+  useDocumentTitle('Calendario del diario');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { year, month } = parseCalendarMonthParam(
+    searchParams.get('year'),
+    searchParams.get('month'),
+  );
+  const selectedDate = searchParams.get('day');
+
+  const { data, isLoading, isError, error, refetch, isRefetching } = useDiaryCalendar(year, month);
+
+  const title = formatCalendarMonthTitle(year, month);
+  const counts = useMemo(
+    () => countCapsulesByWatchedDate(data?.capsules ?? []),
+    [data?.capsules],
+  );
+  const grid = useMemo(() => buildMonthGrid(year, month, counts), [year, month, counts]);
+  const dayCapsules = useMemo(() => {
+    if (!selectedDate || !data?.capsules) return [];
+    return capsulesForDate(data.capsules, selectedDate);
+  }, [data?.capsules, selectedDate]);
+
+  const goMonth = (delta: number) => {
+    const next = shiftCalendarMonth({ year, month }, delta);
+    const params = new URLSearchParams();
+    params.set('year', String(next.year));
+    params.set('month', String(next.month));
+    setSearchParams(params, { replace: false });
+  };
+
+  const selectDay = (date: string, count: number) => {
+    if (count <= 0) return;
+    const params = new URLSearchParams(searchParams);
+    params.set('year', String(year));
+    params.set('month', String(month));
+    params.set('day', date);
+    setSearchParams(params, { replace: false });
+  };
+
+  const clearDay = () => {
+    const params = new URLSearchParams();
+    params.set('year', String(year));
+    params.set('month', String(month));
+    setSearchParams(params, { replace: false });
+  };
+
+  const total = data?.total ?? 0;
+  const todayKey = new Date().toISOString().slice(0, 10);
+
+  return (
+    <Layout>
+      <div className="mx-auto max-w-2xl space-y-8">
+        <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Diario</p>
+            <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight sm:text-3xl">
+              Calendario
+            </h1>
+            <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
+              Vista mensual de tus Capsules por fecha de visionado.
+            </p>
+          </div>
+          <Button asChild variant="secondary" className="shrink-0">
+            <Link to="/capsules">
+              <Ticket className="mr-1.5 h-4 w-4" aria-hidden />
+              Mis Capsules
+            </Link>
+          </Button>
+        </section>
+
+        <div className="flex items-center justify-between gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Mes anterior"
+            onClick={() => goMonth(-1)}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <h2 className="text-center text-lg font-semibold tracking-tight">{title}</h2>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Mes siguiente"
+            onClick={() => goMonth(1)}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {isLoading ? <NinetyLoader label="Cargando calendario…" /> : null}
+
+        {isError ? (
+          <QueryErrorCard
+            message={error instanceof Error ? error.message : 'No se pudo cargar el calendario'}
+            loading={isRefetching}
+            onRetry={() => void refetch()}
+          />
+        ) : null}
+
+        {!isLoading && !isError ? (
+          <>
+            <div
+              className="rounded-xl border border-border/60 bg-card/40 p-3 sm:p-4"
+              role="grid"
+              aria-label={`Calendario ${title}`}
+            >
+              <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                {weekdayLabels().map((label) => (
+                  <div key={label} role="columnheader">
+                    {label}
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {grid.map((cell, idx) => {
+                  if (cell.kind === 'pad') {
+                    return <div key={`pad-${idx}`} className="aspect-square" aria-hidden />;
+                  }
+                  const has = cell.count > 0;
+                  const selected = selectedDate === cell.date;
+                  const isToday = cell.date === todayKey;
+                  return (
+                    <button
+                      key={cell.date}
+                      type="button"
+                      role="gridcell"
+                      disabled={!has}
+                      aria-label={
+                        has
+                          ? `${cell.day}: ${cell.count} ${cell.count === 1 ? 'Capsule' : 'Capsules'}`
+                          : `${cell.day}: sin Capsules`
+                      }
+                      aria-pressed={selected || undefined}
+                      onClick={() => selectDay(cell.date, cell.count)}
+                      className={cn(
+                        'relative flex aspect-square flex-col items-center justify-center rounded-lg text-sm transition-colors',
+                        has
+                          ? 'bg-primary/15 font-semibold text-foreground hover:bg-primary/25'
+                          : 'text-muted-foreground/70',
+                        selected && 'ring-2 ring-primary ring-offset-2 ring-offset-background',
+                        isToday && !selected && 'outline outline-1 outline-primary/40',
+                      )}
+                    >
+                      <span className="tabular-nums">{cell.day}</span>
+                      {has ? (
+                        <span
+                          className="mt-0.5 h-1 w-1 rounded-full bg-primary"
+                          aria-hidden
+                        />
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {total === 0 ? (
+              <EmptyState
+                icon={CalendarDays}
+                title="Sin Capsules este mes"
+                description="Guarda un partido visto en este mes o navega a otro mes del diario."
+              >
+                <Button asChild>
+                  <Link to="/search">Buscar partido</Link>
+                </Button>
+                <Button asChild variant="secondary">
+                  <Link to="/capsules">Ver Mis Capsules</Link>
+                </Button>
+              </EmptyState>
+            ) : (
+              <p className="text-center text-sm text-muted-foreground">
+                {total} {total === 1 ? 'Capsule' : 'Capsules'} en {title.toLowerCase()}
+                {!selectedDate ? ' · Toca un día marcado para ver el detalle' : null}
+              </p>
+            )}
+
+            {selectedDate ? (
+              <section className="space-y-4" aria-live="polite">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-base font-semibold tracking-tight">
+                    {formatWatchedDate(selectedDate)}
+                  </h3>
+                  <Button type="button" variant="ghost" size="sm" onClick={clearDay}>
+                    Cerrar
+                  </Button>
+                </div>
+                {dayCapsules.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No hay Capsules este día.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {dayCapsules.map((capsule) => (
+                      <li key={capsule.id}>
+                        <CapsuleListCard capsule={capsule} showWatchedDate />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            ) : null}
+          </>
+        ) : null}
+      </div>
+    </Layout>
+  );
+}

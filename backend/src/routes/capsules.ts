@@ -33,6 +33,10 @@ import {
   profilesAlignMigrationHint,
 } from '../lib/profileLookup.js';
 import { computePublicProfileStats, type PublicProfileStatsRow } from '../lib/publicProfileStats.js';
+import {
+  buildCalendarDayCounts,
+  resolveCalendarMonth,
+} from '../lib/diaryCalendar.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
@@ -394,6 +398,59 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   }
 
   res.json({ capsules: data ?? [], total: count ?? data?.length ?? 0 });
+});
+
+const calendarQuerySchema = z.object({
+  year: z.coerce.number().int().min(1990).max(2100),
+  month: z.coerce.number().int().min(1).max(12),
+});
+
+/** GET /api/capsules/me/calendar — Capsules del mes por watched_at (vista diario). */
+capsulesRouter.get('/me/calendar', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const parsed = calendarQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Parámetros year y month requeridos (mes 1–12).' });
+    return;
+  }
+
+  const range = resolveCalendarMonth(parsed.data.year, parsed.data.month);
+  if (!range) {
+    res.status(400).json({ error: 'Mes inválido.' });
+    return;
+  }
+
+  const supabase = createUserClient(token);
+  const { data, error } = await supabase
+    .from('capsules')
+    .select('*')
+    .eq('user_id', req.userId!)
+    .gte('watched_at', range.from)
+    .lte('watched_at', range.to)
+    .order('watched_at', { ascending: true })
+    .order('created_at', { ascending: true })
+    .limit(200);
+
+  if (error) {
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  const capsules = data ?? [];
+  res.json({
+    year: range.year,
+    month: range.month,
+    from: range.from,
+    to: range.to,
+    days: buildCalendarDayCounts(capsules),
+    capsules,
+    total: capsules.length,
+  });
 });
 
 const exportQuerySchema = z.object({
