@@ -17,6 +17,13 @@ import {
   tallyPublicCapsuleActivity,
 } from '../lib/discoverProfiles.js';
 import {
+  isValidTeamSlug,
+  profileMatchesTeamSlug,
+  rankTeamFans,
+  resolveTeamDisplayName,
+  teamSlugIlikePattern,
+} from '../lib/teamFans.js';
+import {
   followRelationFlags,
   isMissingFollowsTable,
   listFollowProfiles,
@@ -71,6 +78,12 @@ const updateProfileSchema = z.object({
 });
 
 const followListQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).default(30),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+const byTeamQuerySchema = z.object({
+  slug: z.string().trim().min(2).max(80),
   limit: z.coerce.number().int().min(1).max(50).default(30),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -425,6 +438,132 @@ profileRouter.get('/search', requireAuth, async (req: AuthRequest, res) => {
       ...followRelationFlags(profile.id, req.userId!, followedSet, followerSet),
     })),
     query: parsed.data.q,
+  });
+});
+
+profileRouter.get('/by-team', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const parsed = byTeamQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Parámetros inválidos', details: parsed.error.flatten() });
+    return;
+  }
+
+  const slug = parsed.data.slug.trim().toLowerCase();
+  if (!isValidTeamSlug(slug)) {
+    res.status(400).json({ error: 'Slug de equipo inválido' });
+    return;
+  }
+
+  const pattern = teamSlugIlikePattern(slug);
+  if (!pattern) {
+    res.status(400).json({ error: 'Slug de equipo inválido' });
+    return;
+  }
+
+  const supabase = createUserClient(token);
+  const profileSelect =
+    'id, username, full_name, avatar_url, favorite_team, country, city, created_at';
+
+  const [{ data: followingRows }, blockedIdsList, teamResult, activeCapsulesResult] =
+    await Promise.all([
+      supabase.from('user_follows').select('following_id').eq('follower_id', req.userId!),
+      listBlockedEitherWayIds(req.userId!),
+      supabase
+        .from('profiles')
+        .select(profileSelect)
+        .not('username', 'is', null)
+        .ilike('favorite_team', pattern)
+        .limit(200),
+      supabase
+        .from('capsules')
+        .select('user_id')
+        .eq('is_public', true)
+        .order('created_at', { ascending: false })
+        .limit(120),
+    ]);
+
+  if (teamResult.error) {
+    res.status(400).json({ error: teamResult.error.message });
+    return;
+  }
+  if (activeCapsulesResult.error) {
+    res.status(400).json({ error: activeCapsulesResult.error.message });
+    return;
+  }
+
+  const blockedIds = new Set(blockedIdsList);
+  const followingIds = new Set((followingRows ?? []).map((row) => row.following_id));
+  const activityByUser = tallyPublicCapsuleActivity(
+    (activeCapsulesResult.data ?? []) as Array<{ user_id: string }>,
+    undefined,
+    blockedIds,
+  );
+
+  type TeamRow = {
+    id: string;
+    username: string | null;
+    full_name: string | null;
+    avatar_url: string | null;
+    favorite_team: string | null;
+    country: string | null;
+    city: string | null;
+    created_at: string;
+  };
+
+  const candidates = ((teamResult.data ?? []) as TeamRow[])
+    .filter((row): row is TeamRow & { username: string } => !!row.username)
+    .map((row) => ({
+      ...row,
+      public_capsules_count: activityByUser.get(row.id) ?? 0,
+    }));
+
+  const { profiles: pageRows, total } = rankTeamFans(candidates, slug, {
+    viewerId: req.userId!,
+    blockedIds,
+    followingIds,
+    limit: parsed.data.limit,
+    offset: parsed.data.offset,
+  });
+
+  const teamName = resolveTeamDisplayName(
+    slug,
+    candidates.filter(
+      (row) => profileMatchesTeamSlug(row.favorite_team, slug) && !blockedIds.has(row.id),
+    ),
+  );
+
+  const ids = pageRows.map((row) => row.id);
+  let followedSet = new Set<string>();
+  let followerSet = new Set<string>();
+  if (ids.length > 0) {
+    try {
+      const relations = await loadFollowRelationSets(supabase, req.userId!, ids);
+      followedSet = relations.followedSet;
+      followerSet = relations.followerSet;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (!isMissingFollowsTable(err)) {
+        res.status(400).json({ error: message });
+        return;
+      }
+    }
+  }
+
+  res.json({
+    team: teamName,
+    slug,
+    total,
+    profiles: pageRows.map(({ public_capsules_count, ...row }) => ({
+      ...normalizeProfile(row),
+      public_capsules_count,
+      ...followRelationFlags(row.id, req.userId!, followedSet, followerSet),
+    })),
   });
 });
 

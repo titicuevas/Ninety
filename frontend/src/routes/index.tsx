@@ -29,6 +29,7 @@ import { SearchMatchPage } from '@/pages/SearchMatchPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { TermsPage } from '@/pages/TermsPage';
 import { WantToGoPage } from '@/pages/WantToGoPage';
+import { TeamPage } from '@/pages/TeamPage';
 
 export const appRouter = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
@@ -69,6 +70,7 @@ export const appRouter = createBrowserRouter([
       { path: '/collections/explore', element: <ExploreCollectionsPage /> },
       { path: '/collections/:id', element: <CollectionDetailPage /> },
       { path: '/want-to-go', element: <WantToGoPage /> },
+      { path: '/teams/:slug', element: <TeamPage /> },
       { path: '/notifications', element: <NotificationsPage /> },
       { path: '/profile', element: <ProfilePage /> },
       { path: '/settings', element: <SettingsPage /> },

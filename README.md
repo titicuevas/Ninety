@@ -372,6 +372,7 @@ Ninety/
 | PUT | `/api/collections/:id/items/reorder` | ✅ | Reordenar Capsules (`position`) |
 | GET | `/api/collections/discover` | ✅ | Descubrir listas públicas ajenas (`match_reason`: `following` / `favorite_team` / `active`) |
 | GET | `/api/profile/discover` | ✅ | Sugerir aficionados (`match_reason`: equipo / ciudad / país / `active`; filtra bloqueos) |
+| GET | `/api/profile/by-team` | ✅ | Fans del mismo club favorito (`?slug=` + paginación; filtra `user_blocks`) |
 | GET | `/api/collections/user/:username` | opcional | Colecciones públicas |
 | GET | `/api/collections/user/:username/:slug` | opcional | Detalle colección (`/u/:username/lists/:slug`) |
 | GET | `/api/football/matches/search` | ✅ | Buscar partidos |
@@ -469,7 +470,7 @@ Ninety/
 - [x] Lista «Quiero ir» — partidos futuros/interesantes tipo watchlist Letterboxd (`/want-to-go` + `GET/POST/DELETE /api/want-to-go`; migración `20250816120000_want_to_go_matches.sql`; CTA en búsqueda/partido manual; subnav Listas + Perfil)
 - [x] Calendario del diario — vista mes de Capsules por fecha (`/diary/calendar` + `GET /api/capsules/me/calendar` por `watched_at`; acceso desde Mis Capsules / Perfil)
 - [x] Push de aniversarios / hitos — opt-in en Ajustes (`push_anniversary` / `push_milestone`); cron `POST /api/internal/cron/push-diary` (+ intervalo 1h en prod); idempotencia `diary_push_sent`; migración `20250817120000_diary_push.sql`; cards on-device siguen independientes
-- [ ] Página de equipo — fans del mismo club favorito (descubrimiento por equipo)
+- [x] Página de equipo — fans del mismo club favorito (descubrimiento por equipo) (`/teams/:slug` + `GET /api/profile/by-team`; club favorito clickable en perfil/búsqueda; filtra bloqueos)
 - [ ] Digest email semanal — resumen opt-in del diario (Resend); dejar para el cierre de v10
 
 ## 🎨 Identidad visual

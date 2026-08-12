@@ -102,6 +102,7 @@ export function useToggleFollow(username: string) {
       await queryClient.cancelQueries({ queryKey: ['capsules', 'feed'] });
       await queryClient.cancelQueries({ queryKey: ['profile', 'search'] });
       await queryClient.cancelQueries({ queryKey: ['profile', 'discover'] });
+      await queryClient.cancelQueries({ queryKey: ['profile', 'by-team'] });
       await queryClient.cancelQueries({ queryKey: ['notifications'] });
 
       const previousProfiles = queryClient.getQueriesData<PublicProfileInfinite>({
@@ -187,6 +188,7 @@ export function useToggleFollow(username: string) {
       void queryClient.invalidateQueries({ queryKey: ['profile', 'following'] });
       void queryClient.invalidateQueries({ queryKey: ['profile', 'search'] });
       void queryClient.invalidateQueries({ queryKey: ['profile', 'discover'] });
+      void queryClient.invalidateQueries({ queryKey: ['profile', 'by-team'] });
       void queryClient.invalidateQueries({ queryKey: ['collections', 'discover'] });
       void queryClient.invalidateQueries({ queryKey: ['capsules', 'feed'] });
       void queryClient.invalidateQueries({ queryKey: ['capsules', 'public'] });

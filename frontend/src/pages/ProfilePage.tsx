@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Check, Bookmark, CalendarDays, Library, Loader2, Settings, X } from 'lucide-react';
+import { Check, Bookmark, CalendarDays, Library, Loader2, Settings, Trophy, X } from 'lucide-react';
 import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
 import { FavoriteTeamField } from '@/components/FavoriteTeamField';
 import { Layout } from '@/components/Layout';
@@ -31,6 +31,7 @@ import { toast } from '@/lib/toast';
 import { AVATAR_ACCEPT, removeProfileAvatar, uploadProfileAvatar } from '@/lib/profileAvatar';
 import { isAutoUsername, suggestUsername } from '@/lib/profileHelpers';
 import { profilePath } from '@/lib/profilePath';
+import { teamPath } from '@/lib/teamPath';
 import type { Profile, UpdateProfileInput } from '@/types/profile';
 import { cn } from '@/lib/utils';
 
@@ -309,6 +310,15 @@ export function ProfilePage() {
                     <CalendarDays className="h-3.5 w-3.5" aria-hidden />
                     Calendario
                   </Link>
+                  {profile.favorite_team?.trim() ? (
+                    <Link
+                      to={teamPath(profile.favorite_team)}
+                      className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                    >
+                      <Trophy className="h-3.5 w-3.5" aria-hidden />
+                      Fans de {profile.favorite_team.trim()}
+                    </Link>
+                  ) : null}
                   <Link
                     to={`/u/${encodeURIComponent(profile.username)}/followers`}
                     className="text-sm text-muted-foreground hover:text-foreground"

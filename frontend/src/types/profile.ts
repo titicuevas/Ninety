@@ -20,6 +20,8 @@ export interface Profile {
   blocked_by_me?: boolean;
   /** Motivo de sugerencia en discover (si aplica). */
   match_reason?: 'favorite_team' | 'city' | 'country' | 'active' | null;
+  /** Capsules públicas recientes (página de equipo / heurística ligera). */
+  public_capsules_count?: number;
 }
 
 export interface UpdateProfileInput {

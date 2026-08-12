@@ -32,6 +32,7 @@ import {
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { isPublicProfileNotFound } from '@/lib/publicProfileError';
 import { publicProfileUrl } from '@/lib/siteUrl';
+import { teamPathFromFavorite } from '@/lib/teamPath';
 import type { Capsule } from '@/types/capsule';
 
 function PublicCapsuleCard({
@@ -192,11 +193,14 @@ export function PublicProfilePage() {
             {profile.username ? <p className="text-muted-foreground">@{profile.username}</p> : null}
 
             <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground sm:justify-start">
-              {profile.favorite_team ? (
-                <span className="inline-flex items-center gap-1">
+              {profile.favorite_team && teamPathFromFavorite(profile.favorite_team) ? (
+                <Link
+                  to={teamPathFromFavorite(profile.favorite_team)!}
+                  className="inline-flex items-center gap-1 hover:text-foreground hover:underline"
+                >
                   <Trophy className="h-3.5 w-3.5" aria-hidden="true" />
                   {profile.favorite_team}
-                </span>
+                </Link>
               ) : null}
               {location ? (
                 <span className="inline-flex items-center gap-1">

@@ -3,6 +3,7 @@ import type { CapsuleStats, WrappedScope } from '@/lib/capsuleStats';
 import { MONTH_NAMES_ES, formatRating } from '@/lib/capsuleStats';
 import type { AdvancedStats } from '@/lib/advancedStats';
 import type { StadiumMapResult } from '@/lib/stadiumMap';
+import { teamPath } from '@/lib/teamPath';
 
 export type InsightKind = 'summary' | 'match' | 'people' | 'tip';
 
@@ -118,14 +119,16 @@ function buildPeopleRecommendation(input: InsightsInput): Insight | null {
     return null;
   }
 
+  const teamHref = teamPath(team);
+
   if (following === 0) {
     return {
       id: 'people-rec',
       kind: 'people',
       title: 'Aficionados de tu equipo',
-      body: `Busca perfiles que también vivan ${team}. El discover prioriza el mismo equipo favorito.`,
-      href: '/search?tab=people',
-      hrefLabel: `Buscar fans de ${team}`,
+      body: `Descubre perfiles que también viven ${team}.`,
+      href: teamHref,
+      hrefLabel: `Fans de ${team}`,
     };
   }
 
@@ -134,8 +137,8 @@ function buildPeopleRecommendation(input: InsightsInput): Insight | null {
     kind: 'people',
     title: 'Amplía tu círculo',
     body: `Ya sigues a ${following} aficionado${following === 1 ? '' : 's'}. Explora más perfiles ligados a ${team}.`,
-    href: '/feed?scope=explore',
-    hrefLabel: 'Explorar feed',
+    href: teamHref,
+    hrefLabel: `Fans de ${team}`,
   };
 }
 

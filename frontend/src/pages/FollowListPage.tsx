@@ -16,6 +16,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useFollowListInfinite, type FollowListKind } from '@/hooks/useFollowList';
 import { useProfile } from '@/hooks/useProfile';
 import { profilePath, publicProfilePath } from '@/lib/profilePath';
+import { teamPathFromFavorite } from '@/lib/teamPath';
 import type { Profile } from '@/types/profile';
 
 function FollowListRow({
@@ -30,6 +31,7 @@ function FollowListRow({
   const location = [profile.city, profile.country].filter(Boolean).join(', ');
   const isSelf = !!currentUserId && profile.id === currentUserId;
   const href = publicProfilePath(username);
+  const teamHref = teamPathFromFavorite(profile.favorite_team);
   const { loginTo } = useAuthReturnLinks();
 
   return (
@@ -57,7 +59,16 @@ function FollowListRow({
         {href ? <p className="text-sm text-muted-foreground">@{username}</p> : null}
         <p className="mt-0.5 flex flex-wrap items-center gap-1.5 truncate text-xs text-muted-foreground">
           <span className="truncate">
-            {[profile.favorite_team, location].filter(Boolean).join(' · ') || 'Aficionado Ninety'}
+            {teamHref && profile.favorite_team ? (
+              <>
+                <Link to={teamHref} className="hover:text-foreground hover:underline">
+                  {profile.favorite_team}
+                </Link>
+                {location ? ` · ${location}` : null}
+              </>
+            ) : (
+              [profile.favorite_team, location].filter(Boolean).join(' · ') || 'Aficionado Ninety'
+            )}
           </span>
           {!isSelf && currentUserId && profile.follows_me ? <FollowsYouBadge /> : null}
         </p>

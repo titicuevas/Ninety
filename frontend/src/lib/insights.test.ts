@@ -97,7 +97,7 @@ describe('computeInsights', () => {
 
     const people = insights.find((i) => i.id === 'people-rec');
     assert.ok(people);
-    assert.equal(people!.href, '/search?tab=people');
+    assert.equal(people!.href, '/teams/betis');
 
     // Sin valoraciones ni estadio → tip de valorar o estadio
     assert.ok(insights.some((i) => i.kind === 'tip'));
@@ -131,6 +131,6 @@ describe('computeInsights', () => {
 
     const people = insights.find((i) => i.id === 'people-rec');
     assert.ok(people);
-    assert.equal(people!.href, '/feed?scope=explore');
+    assert.equal(people!.href, '/teams/betis');
   });
 });

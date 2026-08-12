@@ -11,9 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { MIN_PEOPLE_QUERY, useProfileSearch } from '@/hooks/useProfileSearch';
+import { useProfile } from '@/hooks/useProfile';
 import { discoverProfileMatchLabel } from '@/lib/discoverProfiles';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { profilePath } from '@/lib/profilePath';
+import { teamPathFromFavorite } from '@/lib/teamPath';
 import type { Profile } from '@/types/profile';
 
 export function PeopleResultRow({ profile }: { profile: Profile }) {
@@ -24,6 +26,7 @@ export function PeopleResultRow({ profile }: { profile: Profile }) {
   const href = canLink ? profilePath(username) : null;
   const canCompare = canLink;
   const matchLabel = discoverProfileMatchLabel(profile.match_reason);
+  const teamHref = teamPathFromFavorite(profile.favorite_team);
 
   return (
     <li className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 sm:p-4">
@@ -63,7 +66,16 @@ export function PeopleResultRow({ profile }: { profile: Profile }) {
         </div>
         {canLink ? <p className="text-sm text-muted-foreground">@{username}</p> : null}
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {[profile.favorite_team, location].filter(Boolean).join(' · ') || 'Aficionado Ninety'}
+          {teamHref && profile.favorite_team ? (
+            <>
+              <Link to={teamHref} className="hover:text-foreground hover:underline">
+                {profile.favorite_team}
+              </Link>
+              {location ? ` · ${location}` : null}
+            </>
+          ) : (
+            [profile.favorite_team, location].filter(Boolean).join(' · ') || 'Aficionado Ninety'
+          )}
         </p>
       </div>
 
@@ -96,6 +108,8 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
   const [query, setQuery] = useState(initialQuery);
   const [debounced, setDebounced] = useState(() => initialQuery.trim());
   const showSuggestions = !query.trim();
+  const { data: me } = useProfile();
+  const myTeamHref = teamPathFromFavorite(me?.favorite_team);
 
   useEffect(() => {
     const t = window.setTimeout(() => setDebounced(query.trim()), 350);
@@ -130,6 +144,15 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
         </div>
         {query.trim().length > 0 && query.trim().length < MIN_PEOPLE_QUERY ? (
           <p className="text-sm text-muted-foreground">Escribe al menos {MIN_PEOPLE_QUERY} caracteres.</p>
+        ) : null}
+        {myTeamHref && me?.favorite_team?.trim() ? (
+          <p className="text-sm text-muted-foreground">
+            O explora{' '}
+            <Link to={myTeamHref} className="text-primary hover:underline">
+              fans de {me.favorite_team.trim()}
+            </Link>
+            .
+          </p>
         ) : null}
       </div>
 

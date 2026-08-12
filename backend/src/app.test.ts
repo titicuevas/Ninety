@@ -299,6 +299,11 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/profile/by-team requiere auth', async () => {
+    const res = await request(createApp()).get('/api/profile/by-team?slug=betis');
+    assert.equal(res.status, 401);
+  });
+
   it('GET /api/profile/:username/followers no requiere auth', async () => {
     const res = await request(createApp()).get('/api/profile/demo/followers');
     assert.notEqual(res.status, 401);
