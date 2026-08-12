@@ -61,6 +61,9 @@ function DiscoverCollectionCard({ collection }: { collection: DiscoverCollection
             <p className="mt-2 text-xs text-muted-foreground">
               {collection.items_count ?? 0}{' '}
               {(collection.items_count ?? 0) === 1 ? 'Capsule' : 'Capsules'}
+              {(collection.likes_count ?? 0) > 0
+                ? ` · ${collection.likes_count} me gusta`
+                : ''}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
               {author.avatar_url ? (

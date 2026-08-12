@@ -1,6 +1,13 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { resolveCollectionCoverUrl } from '../lib/collectionCover.js';
+import {
+  attachCollectionLikeStats,
+  canEngageCollectionLikes,
+  collectionLikesMigrationHint,
+  fetchCollectionLikesWithProfiles,
+  isMissingCollectionLikesTable,
+} from '../lib/collectionLikes.js';
 import { buildCollectionReorder } from '../lib/collectionReorder.js';
 import { nextUniqueSlug, slugifyCollectionName } from '../lib/collectionSlug.js';
 import {
@@ -249,13 +256,20 @@ async function loadCoverUrls(
 
 function serializeCollection(
   row: CollectionRow,
-  extras: { items_count?: number; cover_url?: string | null },
+  extras: {
+    items_count?: number;
+    cover_url?: string | null;
+    likes_count?: number;
+    liked_by_me?: boolean;
+  },
 ) {
   return {
     ...row,
     cover_capsule_id: row.cover_capsule_id ?? null,
     items_count: extras.items_count ?? 0,
     cover_url: extras.cover_url ?? null,
+    likes_count: extras.likes_count ?? 0,
+    liked_by_me: extras.liked_by_me ?? false,
   };
 }
 
@@ -333,12 +347,15 @@ collectionsRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   const ids = rows.map((r) => r.id);
   const counts = await loadItemCounts(supabase, ids);
   const coverUrls = await loadCoverUrls(supabase, rows);
+  const withLikes = await attachCollectionLikeStats(supabase, req.userId!, rows);
 
   res.json({
-    collections: rows.map((row) =>
+    collections: withLikes.map((row) =>
       serializeCollection(row, {
         items_count: counts.get(row.id) ?? 0,
         cover_url: coverUrls.get(row.id) ?? null,
+        likes_count: row.likes_count,
+        liked_by_me: row.liked_by_me,
       }),
     ),
   });
@@ -924,18 +941,39 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
     }
   }
 
+  let likeById = new Map<string, { likes_count: number; liked_by_me: boolean }>();
+  try {
+    const withLikes = await attachCollectionLikeStats(
+      supabase,
+      req.userId!,
+      ranked.map((row) => ({ id: row.id })),
+    );
+    likeById = new Map(withLikes.map((row) => [row.id, row]));
+  } catch (err) {
+    if (!isMissingCollectionLikesTable(err)) {
+      const message = err instanceof Error ? err.message : String(err);
+      res.status(400).json({ error: message });
+      return;
+    }
+  }
+
   res.json({
-    collections: ranked.map(({ author, match_reason, ...collection }) => ({
-      ...serializeCollection(collection, {
-        items_count: collection.items_count,
-        cover_url: collection.cover_url ?? null,
-      }),
-      author: {
-        ...author,
-        ...followRelationFlags(author.id, req.userId!, followedSet, followerSet),
-      },
-      match_reason,
-    })),
+    collections: ranked.map(({ author, match_reason, ...collection }) => {
+      const likes = likeById.get(collection.id);
+      return {
+        ...serializeCollection(collection, {
+          items_count: collection.items_count,
+          cover_url: collection.cover_url ?? null,
+          likes_count: likes?.likes_count ?? 0,
+          liked_by_me: likes?.liked_by_me ?? false,
+        }),
+        author: {
+          ...author,
+          ...followRelationFlags(author.id, req.userId!, followedSet, followerSet),
+        },
+        match_reason,
+      };
+    }),
   });
 });
 
@@ -996,13 +1034,16 @@ collectionsRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, 
   const counts = await loadItemCounts(reader, ids);
   const coverUrls = await loadCoverUrls(reader, rows, { onlyPublicCapsules: !isOwner });
   const author = collectionAuthor(profile);
+  const withLikes = await attachCollectionLikeStats(reader, req.userId ?? '', rows);
 
   res.json({
     profile: author,
-    collections: rows.map((row) =>
+    collections: withLikes.map((row) =>
       serializeCollection(row, {
         items_count: counts.get(row.id) ?? 0,
         cover_url: coverUrls.get(row.id) ?? null,
+        likes_count: row.likes_count,
+        liked_by_me: row.liked_by_me,
       }),
     ),
   });
@@ -1076,15 +1117,18 @@ collectionsRouter.get('/user/:username/:slug', optionalAuth, async (req: AuthReq
     onlyPublicCapsules: !isOwner,
   });
   const row = collection as CollectionRow;
+  const [withLikes] = await attachCollectionLikeStats(reader, req.userId ?? '', [row]);
 
   res.json({
     profile: collectionAuthor(profile),
-    collection: serializeCollection(row, {
+    collection: serializeCollection(withLikes ?? row, {
       items_count: capsules.length,
       cover_url: resolveCollectionCoverUrl({
         coverCapsuleId: row.cover_capsule_id ?? null,
         capsules,
       }),
+      likes_count: withLikes?.likes_count ?? 0,
+      liked_by_me: withLikes?.liked_by_me ?? false,
     }),
     capsules,
   });
@@ -1123,6 +1167,14 @@ collectionsRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
     return;
   }
 
+  if (req.userId && !isOwner) {
+    const block = await getBlockRelation(req.userId, collection.user_id as string);
+    if (isBlockActive(block)) {
+      res.status(404).json({ error: 'Colección no encontrada' });
+      return;
+    }
+  }
+
   const capsules = await loadCollectionItems(reader, collection.id as string, {
     onlyPublicCapsules: !isOwner,
   });
@@ -1134,17 +1186,207 @@ collectionsRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
     .maybeSingle();
 
   const row = collection as CollectionRow;
+  const [withLikes] = await attachCollectionLikeStats(reader, req.userId ?? '', [row]);
   res.json({
     profile: profile ? collectionAuthor(profile) : null,
-    collection: serializeCollection(row, {
+    collection: serializeCollection(withLikes ?? row, {
       items_count: capsules.length,
       cover_url: resolveCollectionCoverUrl({
         coverCapsuleId: row.cover_capsule_id ?? null,
         capsules,
       }),
+      likes_count: withLikes?.likes_count ?? 0,
+      liked_by_me: withLikes?.liked_by_me ?? false,
     }),
     capsules,
   });
+});
+
+const collectionLikesQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+/** POST /api/collections/:id/like — me gusta (solo listas públicas o propias) */
+collectionsRouter.post('/:id/like', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const id = routeParam(req.params.id);
+  const supabase = createUserClient(token);
+  const { data: collection, error: collectionError } = await supabase
+    .from('collections')
+    .select('id, user_id, is_public')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (collectionError) {
+    if (isMissingCollectionsTable(collectionError)) {
+      res.status(503).json({ error: collectionsMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: collectionError.message });
+    return;
+  }
+
+  if (!collection || !canEngageCollectionLikes(collection, req.userId)) {
+    res.status(404).json({ error: 'Colección no encontrada' });
+    return;
+  }
+
+  if (req.userId !== collection.user_id) {
+    const block = await getBlockRelation(req.userId!, collection.user_id);
+    if (isBlockActive(block)) {
+      res.status(404).json({ error: 'Colección no encontrada' });
+      return;
+    }
+  }
+
+  const { error } = await supabase.from('collection_likes').insert({
+    user_id: req.userId!,
+    collection_id: collection.id,
+  });
+
+  if (error) {
+    if (error.code === '23505') {
+      res.status(409).json({ error: 'Ya diste like a esta colección' });
+      return;
+    }
+    if (isMissingCollectionLikesTable(error)) {
+      res.status(503).json({ error: collectionLikesMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  res.status(201).json({ liked: true });
+});
+
+/** DELETE /api/collections/:id/like */
+collectionsRouter.delete('/:id/like', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const id = routeParam(req.params.id);
+  const supabase = createUserClient(token);
+
+  const { data: collection, error: collectionError } = await supabase
+    .from('collections')
+    .select('id, user_id, is_public')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (collectionError) {
+    if (isMissingCollectionsTable(collectionError)) {
+      res.status(503).json({ error: collectionsMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: collectionError.message });
+    return;
+  }
+
+  if (!collection || !canEngageCollectionLikes(collection, req.userId)) {
+    res.status(404).json({ error: 'Colección no encontrada' });
+    return;
+  }
+
+  if (req.userId !== collection.user_id) {
+    const block = await getBlockRelation(req.userId!, collection.user_id);
+    if (isBlockActive(block)) {
+      res.status(404).json({ error: 'Colección no encontrada' });
+      return;
+    }
+  }
+
+  const { error, count } = await supabase
+    .from('collection_likes')
+    .delete({ count: 'exact' })
+    .eq('collection_id', collection.id)
+    .eq('user_id', req.userId!);
+
+  if (error) {
+    if (isMissingCollectionLikesTable(error)) {
+      res.status(503).json({ error: collectionLikesMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  if (!count) {
+    res.status(404).json({ error: 'No había like en esta colección' });
+    return;
+  }
+
+  res.status(204).end();
+});
+
+/** GET /api/collections/:id/likes — quién dio me gusta */
+collectionsRouter.get('/:id/likes', optionalAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  const reader = getReaderClient(token);
+
+  if (!reader) {
+    res.status(503).json({ error: 'Likes no disponibles temporalmente' });
+    return;
+  }
+
+  const parsed = collectionLikesQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const id = routeParam(req.params.id);
+  const { data: collection, error: collectionError } = await reader
+    .from('collections')
+    .select('id, user_id, is_public')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (collectionError) {
+    if (isMissingCollectionsTable(collectionError)) {
+      res.status(503).json({ error: collectionsMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: collectionError.message });
+    return;
+  }
+
+  if (!collection || !canEngageCollectionLikes(collection, req.userId)) {
+    res.status(404).json({ error: 'Colección no encontrada' });
+    return;
+  }
+
+  if (req.userId && req.userId !== collection.user_id) {
+    const block = await getBlockRelation(req.userId, collection.user_id);
+    if (isBlockActive(block)) {
+      res.status(404).json({ error: 'Colección no encontrada' });
+      return;
+    }
+  }
+
+  try {
+    const page = await fetchCollectionLikesWithProfiles(reader, collection.id, {
+      limit: parsed.data.limit,
+      offset: parsed.data.offset,
+      viewerId: req.userId,
+    });
+    res.json(page);
+  } catch (err) {
+    if (isMissingCollectionLikesTable(err)) {
+      res.status(503).json({ error: collectionLikesMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: err instanceof Error ? err.message : 'Error al cargar likes' });
+  }
 });
 
 /** PATCH /api/collections/:id */

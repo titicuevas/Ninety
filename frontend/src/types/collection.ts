@@ -10,6 +10,8 @@ export interface Collection {
   created_at: string;
   updated_at: string;
   items_count?: number;
+  likes_count?: number;
+  liked_by_me?: boolean;
 }
 
 export interface CollectionAuthor {

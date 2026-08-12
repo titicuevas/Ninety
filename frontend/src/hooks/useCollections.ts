@@ -248,3 +248,71 @@ export function useRemoveCapsuleFromCollection() {
     },
   });
 }
+
+export function useToggleCollectionLike() {
+  const session = useAuthStore((s) => s.session);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ collectionId, liked }: { collectionId: string; liked: boolean }) => {
+      const path = `/api/collections/${collectionId}/like`;
+      if (liked) {
+        await apiFetch<void>(path, { method: 'DELETE' }, session?.access_token);
+        return;
+      }
+      await apiFetch<{ liked: boolean }>(path, { method: 'POST' }, session?.access_token);
+    },
+    onMutate: async ({ collectionId, liked }) => {
+      await queryClient.cancelQueries({ queryKey: ['collections'] });
+
+      const previous = queryClient.getQueriesData({ queryKey: ['collections'] });
+
+      const patchCollection = <T extends { id: string; likes_count?: number; liked_by_me?: boolean }>(
+        c: T,
+      ): T =>
+        c.id === collectionId
+          ? {
+              ...c,
+              liked_by_me: !liked,
+              likes_count: Math.max(0, (c.likes_count ?? 0) + (liked ? -1 : 1)),
+            }
+          : c;
+
+      for (const [key, data] of previous) {
+        if (!data || typeof data !== 'object') continue;
+
+        if ('collection' in data && data.collection && typeof data.collection === 'object') {
+          const detail = data as CollectionDetailResponse;
+          queryClient.setQueryData(key, {
+            ...detail,
+            collection: patchCollection(detail.collection),
+          });
+          continue;
+        }
+
+        if ('collections' in data && Array.isArray((data as { collections: unknown }).collections)) {
+          const list = data as { collections: Collection[] };
+          queryClient.setQueryData(key, {
+            ...list,
+            collections: list.collections.map(patchCollection),
+          });
+        }
+      }
+
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (!context) return;
+      for (const [key, data] of context.previous) {
+        queryClient.setQueryData(key, data);
+      }
+      toast.error('No se pudo actualizar el me gusta');
+    },
+    onSuccess: (_data, { liked }) => {
+      if (!liked) toast.success('Me gusta añadido');
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ['collections'] });
+    },
+  });
+}

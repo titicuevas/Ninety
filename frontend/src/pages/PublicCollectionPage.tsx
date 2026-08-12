@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Library } from 'lucide-react';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
+import { CollectionLikeButton } from '@/components/CollectionLikeButton';
+import { CollectionLikersDialog } from '@/components/CollectionLikersDialog';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
 import { NinetyLoader } from '@/components/NinetyLoader';
@@ -9,13 +12,17 @@ import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { ShareCollectionButton } from '@/components/ShareCollectionButton';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuthInit';
+import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { usePublicCollection } from '@/hooks/useCollections';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { formatLikesPanelTitle } from '@/lib/collectionLikes';
 import { publicProfilePath } from '@/lib/profilePath';
 
 export function PublicCollectionPage() {
   const { username, slug } = useParams<{ username: string; slug: string }>();
   const { user } = useAuth();
+  const { loginTo } = useAuthReturnLinks();
+  const [guestLikersOpen, setGuestLikersOpen] = useState(false);
   const { data, isLoading, isError, error, refetch, isRefetching } = usePublicCollection(
     username,
     slug,
@@ -67,6 +74,7 @@ export function PublicCollectionPage() {
   }
 
   const capsules = data?.capsules ?? [];
+  const likesCount = collection.likes_count ?? 0;
   const coverUrl =
     collection.cover_url ??
     (capsules.find((c) => c.id === collection.cover_capsule_id)?.photo_urls?.[0] ??
@@ -115,10 +123,25 @@ export function PublicCollectionPage() {
             {capsules.length} {capsules.length === 1 ? 'partido' : 'partidos'}
           </p>
           <div
-            className="flex flex-wrap justify-center gap-2 sm:justify-start"
+            className="flex flex-wrap items-center justify-center gap-2 sm:justify-start"
             role="group"
             aria-label="Acciones de la colección"
           >
+            {user ? (
+              <CollectionLikeButton
+                collectionId={collection.id}
+                likesCount={likesCount}
+                likedByMe={collection.liked_by_me}
+              />
+            ) : likesCount > 0 ? (
+              <button
+                type="button"
+                className="text-sm text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => setGuestLikersOpen(true)}
+              >
+                {formatLikesPanelTitle(likesCount)}
+              </button>
+            ) : null}
             {authorHref && profile?.username ? (
               <ShareCollectionButton
                 username={profile.username}
@@ -132,6 +155,14 @@ export function PublicCollectionPage() {
               </Button>
             ) : null}
           </div>
+          {!user ? (
+            <p className="text-sm text-muted-foreground">
+              <Link to={loginTo} className="text-primary hover:underline">
+                Inicia sesión
+              </Link>{' '}
+              para dar me gusta a esta lista.
+            </p>
+          ) : null}
         </section>
 
         {capsules.length === 0 ? (
@@ -154,6 +185,15 @@ export function PublicCollectionPage() {
           </section>
         )}
       </div>
+
+      {!user ? (
+        <CollectionLikersDialog
+          open={guestLikersOpen}
+          collectionId={collection.id}
+          likesCount={likesCount}
+          onClose={() => setGuestLikersOpen(false)}
+        />
+      ) : null}
     </Shell>
   );
 }

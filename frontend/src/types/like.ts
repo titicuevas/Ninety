@@ -17,3 +17,7 @@ export interface CapsuleLikesResponse {
   likes: CapsuleLikeRow[];
   total: number;
 }
+
+export type CollectionLikerProfile = CapsuleLikerProfile;
+export type CollectionLikeRow = CapsuleLikeRow;
+export type CollectionLikesResponse = CapsuleLikesResponse;

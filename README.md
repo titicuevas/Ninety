@@ -95,7 +95,7 @@ cd Ninety
 4. Copia las credenciales del proyecto
 5. Ejecuta las migraciones de `supabase/migrations/` en el **SQL Editor** (en orden por fecha)
    - Incluye `20250724140000_capsule_photos_limit_9.sql` (límite de fotos 6 → 9)
-   - Incluye `20250802120000_collections.sql` (colecciones del diario; `position` para orden curado) y `20250810160000_collection_cover.sql` (portada / Capsule destacada)
+   - Incluye `20250802120000_collections.sql` (colecciones del diario; `position` para orden curado), `20250810160000_collection_cover.sql` (portada / Capsule destacada) y `20250821120000_collection_likes.sql` (me gusta en listas públicas)
 6. Verifica con `npm run verify:capsules --prefix backend`
 
 ### 3. Variables de entorno
@@ -375,6 +375,8 @@ Ninety/
 | GET | `/api/profile/by-team` | ✅ | Fans del mismo club favorito (`?slug=` + paginación; filtra `user_blocks`) |
 | GET | `/api/collections/user/:username` | opcional | Colecciones públicas |
 | GET | `/api/collections/user/:username/:slug` | opcional | Detalle colección (`/u/:username/lists/:slug`) |
+| POST/DELETE | `/api/collections/:id/like` | ✅ | Me gusta en colección (pública o propia; respeta blocks) |
+| GET | `/api/collections/:id/likes` | opcional | Quién dio me gusta |
 | GET | `/api/football/matches/search` | ✅ | Buscar partidos |
 | GET | `/api/football/competitions` | ✅ | Competiciones |
 | GET/PATCH | `/api/notifications/preferences` | ✅ | Preferencias por tipo + push aniversario/hito/Quiero ir opt-in + digest email opt-in + horario silencioso (`push_quiet`) |
@@ -479,7 +481,7 @@ Ninety/
 - [x] Recordatorio «Quiero ir» — push opt-in cuando se acerca un partido de la watchlist (ventana ~48 h; `push_want_to_go` en Ajustes; mismo cron `POST /api/internal/cron/push-diary`; idempotencia `diary_push_sent` kind `want_to_go`; deep link `/want-to-go`; migración `20250819120000_want_to_go_push.sql`; respeta quiet hours)
 - [x] Notas / reseña corta en Capsule — texto libre además del rating (`note`, máx. 1000; crear/editar + detalle propio/público; sin migración nueva — columna desde `20250705120000_capsules.sql`)
 - [x] Tags en Capsules — etiquetas propias (clásico, viaje, derbi…) filtrables en Mis Capsules (`tags text[]` máx. 8×24; crear/editar + filtro `?tag=` en `GET /api/capsules/me`; visibles en detalle/listado; migración `20250820120000_capsule_tags.sql`)
-- [ ] Me gusta en colecciones — señal social ligera en listas públicas
+- [x] Me gusta en colecciones — señal social ligera en listas públicas (`POST/DELETE /api/collections/:id/like`, `GET /api/collections/:id/likes`; contador + lista; migración `20250821120000_collection_likes.sql`; respeta blocks; sin likes en privadas ajenas)
 - [ ] Compartir calendario / mes del diario — imagen o link shareable del mes
 - [ ] Mentions en comentarios — @usuario notifica y enlaza al perfil
 

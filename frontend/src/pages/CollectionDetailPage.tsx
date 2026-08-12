@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowDown, ArrowLeft, ArrowUp, ImageIcon, Plus, Trash2 } from 'lucide-react';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
+import { CollectionLikeButton } from '@/components/CollectionLikeButton';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
 import { NinetyLoader } from '@/components/NinetyLoader';
@@ -140,6 +141,13 @@ export function CollectionDetailPage() {
               Colecciones
             </Link>
           </Button>
+          {collection.is_public ? (
+            <CollectionLikeButton
+              collectionId={collection.id}
+              likesCount={collection.likes_count}
+              likedByMe={collection.liked_by_me}
+            />
+          ) : null}
           {username && collection.is_public ? (
             <ShareCollectionButton
               username={username}
