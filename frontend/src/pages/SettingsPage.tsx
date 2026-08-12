@@ -14,6 +14,7 @@ import { DiaryMilestonePrefsPanel } from '@/components/DiaryMilestonePrefsPanel'
 import { NotificationTypePrefsPanel } from '@/components/NotificationTypePrefsPanel';
 import { PushQuietHoursPanel } from '@/components/PushQuietHoursPanel';
 import { MutedUsersPanel } from '@/components/MutedUsersPanel';
+import { BlockedUsersPanel } from '@/components/BlockedUsersPanel';
 import { PushAlertsPanel } from '@/components/PushAlertsPanel';
 import { InstallAppPanel } from '@/components/InstallAppPanel';
 import { Button } from '@/components/ui/button';
@@ -287,6 +288,18 @@ export function SettingsPage() {
                 Ver centro de alertas
               </Link>
             </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="text-base">Bloqueos</CardTitle>
+            <CardDescription>
+              Deja de ver el perfil y las Capsules de alguien. Más fuerte que silenciar alertas.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BlockedUsersPanel />
           </CardContent>
         </Card>
 

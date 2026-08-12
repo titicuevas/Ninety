@@ -20,6 +20,15 @@ import {
   type FollowListKind,
 } from '../lib/userFollows.js';
 import {
+  blockUserById,
+  getBlockRelation,
+  isBlockActive,
+  listBlockedEitherWayIds,
+  listBlockedProfiles,
+  resolveBlockTargetByUsername,
+  unblockUserById,
+} from '../lib/userBlocks.js';
+import {
   fetchProfileByUsername,
   isMissingProfileColumn,
   profilesAlignMigrationHint,
@@ -384,8 +393,9 @@ profileRouter.get('/search', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
+  const blockedIds = new Set(await listBlockedEitherWayIds(req.userId!));
   const profiles = (data ?? [])
-    .filter((row) => row.username)
+    .filter((row) => row.username && !blockedIds.has(row.id))
     .map((row) => normalizeProfile(row));
 
   const ids = profiles.map((profile) => profile.id);
@@ -436,6 +446,8 @@ profileRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {
   ]);
 
   const followingIds = new Set((followingRows ?? []).map((row) => row.following_id));
+  const blockedIds = new Set(await listBlockedEitherWayIds(req.userId!));
+  for (const id of blockedIds) followingIds.add(id);
   const teamPattern = me?.favorite_team ? favoriteTeamIlikePattern(me.favorite_team) : null;
 
   type DiscoverRow = {
@@ -515,6 +527,67 @@ profileRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {
   res.json({ profiles });
 });
 
+function blockErrorStatus(err: unknown): number | undefined {
+  return typeof (err as { status?: unknown })?.status === 'number'
+    ? (err as { status: number }).status
+    : undefined;
+}
+
+profileRouter.get('/blocked', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 30, 50);
+    const offset = Number(req.query.offset) || 0;
+    const result = await listBlockedProfiles(req.userId!, { limit, offset });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+profileRouter.post('/blocked/:username', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const target = await resolveBlockTargetByUsername(String(req.params.username ?? ''));
+    if (!target) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    const result = await blockUserById(req.userId!, target.id);
+    res.status(201).json(result);
+  } catch (err) {
+    const status = blockErrorStatus(err);
+    if (status === 400 || status === 409 || status === 503) {
+      res.status(status).json({
+        error: err instanceof Error ? err.message : 'No se pudo bloquear',
+      });
+      return;
+    }
+    next(err);
+  }
+});
+
+profileRouter.delete('/blocked/:username', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const target = await resolveBlockTargetByUsername(String(req.params.username ?? ''));
+    if (!target) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    const result = await unblockUserById(req.userId!, target.id);
+    res.json(result);
+  } catch (err) {
+    const status = blockErrorStatus(err);
+    if (status === 404 || status === 503) {
+      res.status(status).json({
+        error: err instanceof Error ? err.message : 'No se pudo desbloquear',
+      });
+      return;
+    }
+    next(err);
+  }
+});
+
 profileRouter.get('/:username/followers', optionalAuth, (req: AuthRequest, res) => {
   void handleFollowList(req, res, 'followers');
 });
@@ -539,6 +612,12 @@ profileRouter.post('/:username/follow', requireAuth, async (req: AuthRequest, re
 
   if (target.id === req.userId) {
     res.status(400).json({ error: 'No puedes seguirte a ti mismo' });
+    return;
+  }
+
+  const block = await getBlockRelation(req.userId!, target.id);
+  if (isBlockActive(block)) {
+    res.status(403).json({ error: 'No puedes seguir a este usuario' });
     return;
   }
 

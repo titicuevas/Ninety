@@ -21,6 +21,8 @@ interface UserCapsulesResponse {
   total: number;
   stats?: PublicProfileStats;
   years?: number[];
+  /** true cuando el viewer bloqueó a este perfil (sin Capsules). */
+  blocked?: boolean;
 }
 
 function buildPublicProfileQuery(username: string, filters: PublicProfileFilters, offset: number): string {

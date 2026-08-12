@@ -101,6 +101,21 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/profile/blocked requiere auth', async () => {
+    const res = await request(createApp()).get('/api/profile/blocked');
+    assert.equal(res.status, 401);
+  });
+
+  it('POST /api/profile/blocked/:username requiere auth', async () => {
+    const res = await request(createApp()).post('/api/profile/blocked/demo');
+    assert.equal(res.status, 401);
+  });
+
+  it('DELETE /api/profile/blocked/:username requiere auth', async () => {
+    const res = await request(createApp()).delete('/api/profile/blocked/demo');
+    assert.equal(res.status, 401);
+  });
+
   it('GET /api/capsules/me/export requiere auth', async () => {
     const res = await request(createApp()).get('/api/capsules/me/export');
     assert.equal(res.status, 401);

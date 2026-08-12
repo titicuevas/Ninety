@@ -19,6 +19,13 @@ import { attachLikeStats, fetchLikesWithProfiles, isMissingLikesTable } from '..
 import { applyFeedContentFilters, resolveFeedContentFilters } from '../lib/feedFilters.js';
 import { attachFollowStats, getFollowingIds } from '../lib/userFollows.js';
 import { attachMutedByMe } from '../lib/notificationMutes.js';
+import {
+  attachBlockedByMe,
+  excludeBlockedIds,
+  getBlockRelation,
+  isBlockActive,
+  listBlockedEitherWayIds,
+} from '../lib/userBlocks.js';
 import { notifyUser } from '../lib/notifyUser.js';
 import { normalizeProfile } from '../lib/profileNormalize.js';
 import {
@@ -182,18 +189,31 @@ capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
   const contentFilters = resolveFeedContentFilters({ photos, competition });
   const supabase = createUserClient(token);
   const userId = req.userId!;
-  const followingIds = await getFollowingIds(supabase, userId);
+  const [followingIds, blockedIdsList] = await Promise.all([
+    getFollowingIds(supabase, userId),
+    listBlockedEitherWayIds(userId),
+  ]);
+  const blockedIds = new Set(blockedIdsList);
 
   /** Aplica Siguiendo (tú+seguidos) o Explorar (públicas) + filtros de contenido. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const applyFeedScope = (query: any) => {
     if (scope === 'explore') {
-      return applyFeedContentFilters(query.eq('is_public', true), contentFilters);
+      let scoped = applyFeedContentFilters(query.eq('is_public', true), contentFilters);
+      if (blockedIds.size > 0) {
+        scoped = scoped.not('user_id', 'in', `(${[...blockedIds].join(',')})`);
+      }
+      return scoped;
     }
     let scoped = query.or(`is_public.eq.true,user_id.eq.${userId}`);
     if (followingIds !== null) {
-      const feedUserIds = [...new Set([userId, ...followingIds])];
+      const feedUserIds = excludeBlockedIds(
+        [...new Set([userId, ...followingIds])],
+        blockedIds,
+      );
       scoped = scoped.in('user_id', feedUserIds);
+    } else if (blockedIds.size > 0) {
+      scoped = scoped.not('user_id', 'in', `(${[...blockedIds].join(',')})`);
     }
     return applyFeedContentFilters(scoped, contentFilters);
   };
@@ -647,6 +667,28 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
 
   const profile = profileResult.profile;
 
+  const viewerId = req.userId ?? '';
+  if (viewerId && viewerId !== profile.id) {
+    const block = await getBlockRelation(viewerId, profile.id);
+    if (block.blocked_me) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+    if (block.blocked_by_me) {
+      const normalizedProfile = normalizeProfile(profile);
+      const profileWithFollows = await attachFollowStats(reader, viewerId, normalizedProfile);
+      const profileWithMute = await attachMutedByMe(reader, viewerId, profileWithFollows);
+      const profileWithBlock = await attachBlockedByMe(reader, viewerId, profileWithMute);
+      res.json({
+        profile: profileWithBlock,
+        capsules: [],
+        total: 0,
+        blocked: true,
+      });
+      return;
+    }
+  }
+
   const parsed = publicProfileQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -663,7 +705,6 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
     .order('watched_at', { ascending: false })
     .order('created_at', { ascending: false });
 
-  const viewerId = req.userId ?? '';
   if (viewerId !== profile.id) {
     query = query.eq('is_public', true);
   }
@@ -752,9 +793,10 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
   const normalizedProfile = normalizeProfile(profile);
   const profileWithFollows = await attachFollowStats(reader, viewerId, normalizedProfile);
   const profileWithMute = await attachMutedByMe(reader, viewerId, profileWithFollows);
+  const profileWithBlock = await attachBlockedByMe(reader, viewerId, profileWithMute);
 
   res.json({
-    profile: profileWithMute,
+    profile: profileWithBlock,
     capsules: capsulesWithLikes,
     total: count ?? capsulesWithLikes.length,
     ...(stats ? { stats } : {}),
@@ -1289,6 +1331,14 @@ capsulesRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
   if (!canViewCapsule(data, viewerId || undefined)) {
     res.status(404).json({ error: 'Capsule no encontrada' });
     return;
+  }
+
+  if (viewerId && viewerId !== data.user_id) {
+    const block = await getBlockRelation(viewerId, data.user_id as string);
+    if (isBlockActive(block)) {
+      res.status(404).json({ error: 'Capsule no encontrada' });
+      return;
+    }
   }
 
   const [withLikes] = await attachLikeStats(reader, viewerId, [data]);

@@ -5,6 +5,7 @@ import {
   isNotificationTypeEnabled,
   type NotificationType,
 } from './notificationPreferencesStore.js';
+import { getBlockRelation, isBlockActive } from './userBlocks.js';
 const BODY_MAX = 120;
 
 function truncateBody(raw: string | undefined): string | null {
@@ -42,6 +43,9 @@ export async function notifyUser(params: {
     if (!isNotificationTypeEnabled(prefs, params.type)) return;
 
     if (await isActorMuted(params.userId, params.actorId)) return;
+
+    const block = await getBlockRelation(params.userId, params.actorId);
+    if (isBlockActive(block)) return;
 
     const snippet = params.type === 'comment' ? truncateBody(params.body) : null;
     const row: Record<string, unknown> = {

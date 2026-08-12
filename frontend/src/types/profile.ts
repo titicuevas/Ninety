@@ -16,6 +16,8 @@ export interface Profile {
   follows_me?: boolean;
   /** true si el viewer silenció alertas de este perfil. */
   muted_by_me?: boolean;
+  /** true si el viewer bloqueó a este perfil (no ver Capsules/perfil). */
+  blocked_by_me?: boolean;
   /** Motivo de sugerencia en discover (si aplica). */
   match_reason?: 'favorite_team' | 'city' | 'country' | null;
 }

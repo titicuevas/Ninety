@@ -7,6 +7,7 @@ import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
 import { FollowsYouBadge } from '@/components/FollowsYouBadge';
+import { BlockUserButton } from '@/components/BlockUserButton';
 import { MuteUserButton } from '@/components/MuteUserButton';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { Layout } from '@/components/Layout';
@@ -96,6 +97,7 @@ export function PublicProfilePage() {
   const { data: collectionsData } = usePublicCollections(username);
 
   const profile = data?.pages[0]?.profile;
+  const isBlockedByMe = !!profile?.blocked_by_me || !!data?.pages[0]?.blocked;
   const notFound = !username || (isError && isPublicProfileNotFound(error));
   useDocumentTitle(
     profile?.username
@@ -106,10 +108,10 @@ export function PublicProfilePage() {
           ? 'Perfil no encontrado'
           : 'Perfil',
   );
-  const capsules = data?.pages.flatMap((page) => page.capsules) ?? [];
-  const total = data?.pages[0]?.total ?? capsules.length;
-  const stats = data?.pages[0]?.stats;
-  const years = data?.pages[0]?.years ?? [];
+  const capsules = isBlockedByMe ? [] : (data?.pages.flatMap((page) => page.capsules) ?? []);
+  const total = isBlockedByMe ? 0 : (data?.pages[0]?.total ?? capsules.length);
+  const stats = isBlockedByMe ? undefined : data?.pages[0]?.stats;
+  const years = isBlockedByMe ? [] : (data?.pages[0]?.years ?? []);
   const isOwnProfile = !!user && profile?.id === user.id;
   const Shell = user ? Layout : PublicLayout;
 
@@ -247,25 +249,38 @@ export function PublicProfilePage() {
                 <Link to="/profile">Editar perfil</Link>
               </Button>
             ) : profile.username && user ? (
-              <>
-                <FollowButton
+              isBlockedByMe ? (
+                <BlockUserButton
                   username={profile.username}
-                  followedByMe={profile.followed_by_me}
-                  followsMe={profile.follows_me}
+                  blockedByMe
                   className="w-full sm:w-auto"
                 />
-                <MuteUserButton
-                  username={profile.username}
-                  mutedByMe={profile.muted_by_me}
-                  className="w-full sm:w-auto"
-                />
-              </>
+              ) : (
+                <>
+                  <FollowButton
+                    username={profile.username}
+                    followedByMe={profile.followed_by_me}
+                    followsMe={profile.follows_me}
+                    className="w-full sm:w-auto"
+                  />
+                  <MuteUserButton
+                    username={profile.username}
+                    mutedByMe={profile.muted_by_me}
+                    className="w-full sm:w-auto"
+                  />
+                  <BlockUserButton
+                    username={profile.username}
+                    blockedByMe={profile.blocked_by_me}
+                    className="w-full sm:w-auto"
+                  />
+                </>
+              )
             ) : profile.username ? (
               <Button asChild className="w-full sm:w-auto">
                 <Link to={loginTo}>Inicia sesión para seguir</Link>
               </Button>
             ) : null}
-            {!isOwnProfile && profile.username && !isAutoUsername(profile.username) ? (
+            {!isOwnProfile && !isBlockedByMe && profile.username && !isAutoUsername(profile.username) ? (
               <Button asChild variant="outline" className="w-full sm:w-auto">
                 <Link to={`/u/${encodeURIComponent(profile.username)}/vs`}>
                   <Swords className="mr-1.5 h-3.5 w-3.5" aria-hidden />
@@ -273,7 +288,7 @@ export function PublicProfilePage() {
                 </Link>
               </Button>
             ) : null}
-            {profile.username && !isAutoUsername(profile.username) ? (
+            {!isBlockedByMe && profile.username && !isAutoUsername(profile.username) ? (
               <ShareProfileButton
                 username={profile.username}
                 displayName={displayName}
@@ -283,11 +298,18 @@ export function PublicProfilePage() {
           </div>
         </section>
 
-        {stats && stats.totalMatches > 0 ? (
+        {isBlockedByMe ? (
+          <EmptyState
+            title="Has bloqueado a este usuario"
+            description="No verás su perfil ni Capsules. Puedes desbloquearlo cuando quieras."
+          />
+        ) : null}
+
+        {!isBlockedByMe && stats && stats.totalMatches > 0 ? (
           <PublicWrappedSummary name={displayName} stats={stats} />
         ) : null}
 
-        {achievements.length > 0 ? (
+        {!isBlockedByMe && achievements.length > 0 ? (
           <AchievementsSection
             achievements={achievements}
             title="Logros"
@@ -299,7 +321,7 @@ export function PublicProfilePage() {
           />
         ) : null}
 
-        {(collectionsData?.collections.length ?? 0) > 0 ? (
+        {!isBlockedByMe && (collectionsData?.collections.length ?? 0) > 0 ? (
           <section className="space-y-3" aria-labelledby="public-collections-heading">
             <div>
               <h2
@@ -351,7 +373,7 @@ export function PublicProfilePage() {
               </Button>
             ) : null}
           </section>
-        ) : isOwnProfile ? (
+        ) : !isBlockedByMe && isOwnProfile ? (
           <section className="space-y-3" aria-labelledby="public-collections-empty-heading">
             <div>
               <h2
@@ -374,7 +396,7 @@ export function PublicProfilePage() {
           </section>
         ) : null}
 
-        {!diaryEmpty ? (
+        {!isBlockedByMe && !diaryEmpty ? (
           <CapsuleDiaryFilters
             years={years}
             searchAriaLabel="Buscar en el diario público"
@@ -391,7 +413,7 @@ export function PublicProfilePage() {
           />
         ) : null}
 
-        {filterEmpty ? (
+        {!isBlockedByMe && filterEmpty ? (
           <EmptyState
             title="Ningún partido con estos filtros"
             description="Prueba otro año, valoración o limpia la búsqueda."
@@ -402,7 +424,7 @@ export function PublicProfilePage() {
           </EmptyState>
         ) : null}
 
-        {capsules.length > 0 ? (
+        {!isBlockedByMe && capsules.length > 0 ? (
           <section className="space-y-4">
             <h2 className="text-lg font-semibold">
               Capsules
@@ -423,7 +445,7 @@ export function PublicProfilePage() {
           </section>
         ) : null}
 
-        {diaryEmpty ? (
+        {!isBlockedByMe && diaryEmpty ? (
           <EmptyState
             title={isOwnProfile ? 'Aún no has guardado partidos' : 'Diario vacío'}
             description={
@@ -440,7 +462,7 @@ export function PublicProfilePage() {
           </EmptyState>
         ) : null}
 
-        {profile.username ? (
+        {!isBlockedByMe && profile.username ? (
           <p className="text-center text-xs text-muted-foreground">
             Perfil público ·{' '}
             <a href={publicProfileUrl(profile.username)} className="text-primary hover:underline">

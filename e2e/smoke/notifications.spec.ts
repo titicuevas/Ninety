@@ -150,6 +150,21 @@ test.describe('Smoke — notificaciones @smoke', () => {
     ).toBeVisible();
   });
 
+  test('Ajustes expone usuarios bloqueados', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page.goto('/settings');
+    await page.waitForURL(/\/settings/);
+
+    const blocked = page.getByTestId('blocked-users-panel');
+    await expect(blocked).toBeVisible({ timeout: 15_000 });
+    await expect(blocked.getByText('Usuarios bloqueados', { exact: true })).toBeVisible();
+    await expect(
+      blocked
+        .getByTestId('blocked-users-empty')
+        .or(blocked.getByRole('list', { name: /usuarios bloqueados/i })),
+    ).toBeVisible();
+  });
+
   test('Ajustes expone horario silencioso de push', async ({ page }) => {
     await openAuthenticatedHome(page);
     await page.goto('/settings');

@@ -22,6 +22,11 @@ import {
   isMissingFollowsTable,
   loadFollowRelationSets,
 } from '../lib/userFollows.js';
+import {
+  getBlockRelation,
+  isBlockActive,
+  listBlockedEitherWayIds,
+} from '../lib/userBlocks.js';
 import { normalizeUsernameParam } from '../lib/usernameParam.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
@@ -794,6 +799,8 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
   ]);
 
   const followingIds = new Set((followingRows ?? []).map((row) => row.following_id as string));
+  const blockedIds = new Set(await listBlockedEitherWayIds(req.userId!));
+  const followedAuthorIds = [...followingIds].filter((id) => !blockedIds.has(id));
 
   const recentQuery = supabase
     .from('collections')
@@ -804,12 +811,12 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
     .limit(Math.max(limit * 8, 40));
 
   const followedQuery =
-    followingIds.size > 0
+    followedAuthorIds.length > 0
       ? supabase
           .from('collections')
           .select('*')
           .eq('is_public', true)
-          .in('user_id', [...followingIds])
+          .in('user_id', followedAuthorIds)
           .order('updated_at', { ascending: false })
           .limit(30)
       : Promise.resolve({ data: [] as CollectionRow[], error: null });
@@ -875,6 +882,7 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
 
   const candidates = rows
     .map((row) => {
+      if (blockedIds.has(row.user_id)) return null;
       const profile = profileById.get(row.user_id);
       if (!profile?.username) return null;
       return {
@@ -958,6 +966,14 @@ collectionsRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, 
     return;
   }
 
+  if (req.userId && req.userId !== profile.id) {
+    const block = await getBlockRelation(req.userId, profile.id);
+    if (isBlockActive(block)) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+  }
+
   const isOwner = req.userId === profile.id;
   let query = reader.from('collections').select('*').eq('user_id', profile.id);
   if (!isOwner) {
@@ -1018,6 +1034,14 @@ collectionsRouter.get('/user/:username/:slug', optionalAuth, async (req: AuthReq
   if (profileError || !profile) {
     res.status(404).json({ error: 'Usuario no encontrado' });
     return;
+  }
+
+  if (req.userId && req.userId !== profile.id) {
+    const block = await getBlockRelation(req.userId, profile.id);
+    if (isBlockActive(block)) {
+      res.status(404).json({ error: 'Colección no encontrada' });
+      return;
+    }
   }
 
   const isOwner = req.userId === profile.id;

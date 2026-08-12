@@ -321,6 +321,10 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(muted).toBeVisible();
     await expect(muted.getByText('Usuarios silenciados', { exact: true })).toBeVisible();
 
+    const blocked = page.getByTestId('blocked-users-panel');
+    await expect(blocked).toBeVisible();
+    await expect(blocked.getByText('Usuarios bloqueados', { exact: true })).toBeVisible();
+
     await expect(page.getByRole('link', { name: /ver centro de alertas/i })).toBeVisible();
     await expect(page.getByRole('heading', { name: /exportar e importar diario/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /descargar json/i })).toBeVisible();

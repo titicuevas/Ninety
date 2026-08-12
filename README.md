@@ -377,6 +377,7 @@ Ninety/
 | GET | `/api/football/competitions` | ✅ | Competiciones |
 | GET/PATCH | `/api/notifications/preferences` | ✅ | Preferencias por tipo + horario silencioso de push (`push_quiet`) |
 | GET/POST/DELETE | `/api/notifications/muted`… | ✅ | Silenciar / reactivar usuario (alertas in-app + push) |
+| GET/POST/DELETE | `/api/profile/blocked`… | ✅ | Bloquear / desbloquear usuario (ocultar perfil + Capsules) |
 | GET | `/api/notifications` | ✅ | Lista de alertas (`actor.followed_by_me` para seguir de vuelta) |
 | POST | `/api/internal/cron/push-digest` | cron | Digest push periódico (`CRON_SECRET`; agrupa likes/comentarios/follows) |
 
@@ -457,7 +458,7 @@ Ninety/
 - [x] Deep links en push digest — like/comentario abren `/c/:id` (o `#comments`); follow único al perfil; resumen multi → `/notifications`
 - [x] Colecciones en la navegación principal — acceso a Mis listas / Explorar desde el shell (`Listas` en nav + subnav Mis listas / Explorar)
 - [x] Legales alineados con borrado self-serve — Privacidad y Términos ya no piden email manual tras `POST /api/auth/delete-account`
-- [ ] Bloquear usuario — dejar de ver Capsules/perfil de alguien (más allá del mute de alertas)
+- [x] Bloquear usuario — dejar de ver Capsules/perfil de alguien (más allá del mute de alertas) (`GET/POST/DELETE /api/profile/blocked`; migración `20250813100000_user_blocks.sql`; feed/discover/cápsula pública filtran bloqueos bidireccionales)
 - [ ] Discovery en frío — explorar perfiles/colecciones útiles sin follows ni equipo favorito
 
 ## 🎨 Identidad visual
