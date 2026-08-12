@@ -20,6 +20,7 @@ import { FollowersPage, FollowingPage } from '@/pages/FollowListPage';
 import { CompareProfilePage } from '@/pages/CompareProfilePage';
 import { PublicCapsulePage } from '@/pages/PublicCapsulePage';
 import { PublicCollectionPage } from '@/pages/PublicCollectionPage';
+import { PublicDiaryMonthPage } from '@/pages/PublicDiaryMonthPage';
 import { PublicProfilePage } from '@/pages/PublicProfilePage';
 import { PrivacyPage } from '@/pages/PrivacyPage';
 import { RegisterPage } from '@/pages/RegisterPage';
@@ -44,6 +45,7 @@ export const appRouter = createBrowserRouter([
   { path: '/u/:username/following', element: <FollowingPage /> },
   { path: '/u/:username/vs', element: <CompareProfilePage /> },
   { path: '/u/:username/lists/:slug', element: <PublicCollectionPage /> },
+  { path: '/u/:username/calendar/:year/:month', element: <PublicDiaryMonthPage /> },
   { path: '/u/:username', element: <PublicProfilePage /> },
   { path: '/c/:id', element: <PublicCapsulePage /> },
   { path: '/invite/:code', element: <InvitePage /> },

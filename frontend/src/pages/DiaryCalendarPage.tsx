@@ -6,13 +6,16 @@ import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
 import { NinetyLoader } from '@/components/NinetyLoader';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
+import { ShareDiaryMonthButton } from '@/components/ShareDiaryMonthButton';
 import { Button } from '@/components/ui/button';
 import { useDiaryCalendar } from '@/hooks/useDiaryCalendar';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useProfile } from '@/hooks/useProfile';
 import {
   buildMonthGrid,
   capsulesForDate,
   countCapsulesByWatchedDate,
+  countPublicCapsules,
   formatCalendarMonthTitle,
   parseCalendarMonthParam,
   shiftCalendarMonth,
@@ -29,6 +32,7 @@ export function DiaryCalendarPage() {
     searchParams.get('month'),
   );
   const selectedDate = searchParams.get('day');
+  const { data: profile } = useProfile();
 
   const { data, isLoading, isError, error, refetch, isRefetching } = useDiaryCalendar(year, month);
 
@@ -42,6 +46,10 @@ export function DiaryCalendarPage() {
     if (!selectedDate || !data?.capsules) return [];
     return capsulesForDate(data.capsules, selectedDate);
   }, [data?.capsules, selectedDate]);
+  const publicTotal =
+    typeof data?.public_total === 'number'
+      ? data.public_total
+      : countPublicCapsules(data?.capsules ?? []);
 
   const goMonth = (delta: number) => {
     const next = shiftCalendarMonth({ year, month }, delta);
@@ -80,15 +88,27 @@ export function DiaryCalendarPage() {
               Calendario
             </h1>
             <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-              Vista mensual de tus Capsules por fecha de visionado.
+              Vista mensual de tus Capsules por fecha de visionado. Comparte solo meses con Capsules
+              públicas.
             </p>
           </div>
-          <Button asChild variant="secondary" className="shrink-0">
-            <Link to="/capsules">
-              <Ticket className="mr-1.5 h-4 w-4" aria-hidden />
-              Mis Capsules
-            </Link>
-          </Button>
+          <div className="flex flex-col gap-2 sm:items-end">
+            {profile?.username ? (
+              <ShareDiaryMonthButton
+                username={profile.username}
+                year={year}
+                month={month}
+                publicTotal={publicTotal}
+                displayName={profile.display_name}
+              />
+            ) : null}
+            <Button asChild variant="secondary" className="shrink-0">
+              <Link to="/capsules">
+                <Ticket className="mr-1.5 h-4 w-4" aria-hidden />
+                Mis Capsules
+              </Link>
+            </Button>
+          </div>
         </section>
 
         <div className="flex items-center justify-between gap-3">
@@ -156,7 +176,7 @@ export function DiaryCalendarPage() {
                           ? `${cell.day}: ${cell.count} ${cell.count === 1 ? 'Capsule' : 'Capsules'}`
                           : `${cell.day}: sin Capsules`
                       }
-                      aria-pressed={selected || undefined}
+                      aria-selected={selected || undefined}
                       onClick={() => selectDay(cell.date, cell.count)}
                       className={cn(
                         'relative flex aspect-square flex-col items-center justify-center rounded-lg text-sm transition-colors',
@@ -196,6 +216,9 @@ export function DiaryCalendarPage() {
             ) : (
               <p className="text-center text-sm text-muted-foreground">
                 {total} {total === 1 ? 'Capsule' : 'Capsules'} en {title.toLowerCase()}
+                {publicTotal > 0 && publicTotal < total
+                  ? ` · ${publicTotal} públicas para compartir`
+                  : null}
                 {!selectedDate ? ' · Toca un día marcado para ver el detalle' : null}
               </p>
             )}

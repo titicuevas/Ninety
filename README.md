@@ -482,7 +482,7 @@ Ninety/
 - [x] Notas / reseña corta en Capsule — texto libre además del rating (`note`, máx. 1000; crear/editar + detalle propio/público; sin migración nueva — columna desde `20250705120000_capsules.sql`)
 - [x] Tags en Capsules — etiquetas propias (clásico, viaje, derbi…) filtrables en Mis Capsules (`tags text[]` máx. 8×24; crear/editar + filtro `?tag=` en `GET /api/capsules/me`; visibles en detalle/listado; migración `20250820120000_capsule_tags.sql`)
 - [x] Me gusta en colecciones — señal social ligera en listas públicas (`POST/DELETE /api/collections/:id/like`, `GET /api/collections/:id/likes`; contador + lista; migración `20250821120000_collection_likes.sql`; respeta blocks; sin likes en privadas ajenas)
-- [ ] Compartir calendario / mes del diario — imagen o link shareable del mes
+- [x] Compartir calendario / mes del diario — link shareable + preview OG (`/u/:username/calendar/:year/:month` + `GET /api/capsules/user/:username/calendar`; solo Capsules públicas; botón compartir/copiar en `/diary/calendar`)
 - [ ] Mentions en comentarios — @usuario notifica y enlaza al perfil
 
 ## 🎨 Identidad visual

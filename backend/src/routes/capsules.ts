@@ -476,6 +476,7 @@ capsulesRouter.get('/me/calendar', requireAuth, async (req: AuthRequest, res) =>
   }
 
   const capsules = data ?? [];
+  const publicTotal = capsules.filter((c) => c.is_public !== false).length;
   res.json({
     year: range.year,
     month: range.month,
@@ -484,6 +485,7 @@ capsulesRouter.get('/me/calendar', requireAuth, async (req: AuthRequest, res) =>
     days: buildCalendarDayCounts(capsules),
     capsules,
     total: capsules.length,
+    public_total: publicTotal,
   });
 });
 
@@ -748,6 +750,97 @@ capsulesRouter.post('/me/import', requireAuth, async (req: AuthRequest, res) => 
   });
 
   res.json({ ...summary, message: formatDiaryImportSummary(summary) });
+});
+
+/**
+ * GET /api/capsules/user/:username/calendar — mes shareable del diario.
+ * Solo Capsules públicas; 404 si el mes no tiene ninguna (privacidad).
+ */
+capsulesRouter.get('/user/:username/calendar', optionalAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  const reader = getReaderClient(token);
+
+  if (!reader) {
+    res.status(503).json({ error: 'Calendario público no disponible temporalmente' });
+    return;
+  }
+
+  const parsed = calendarQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Parámetros year y month requeridos (mes 1–12).' });
+    return;
+  }
+
+  const range = resolveCalendarMonth(parsed.data.year, parsed.data.month);
+  if (!range) {
+    res.status(400).json({ error: 'Mes inválido.' });
+    return;
+  }
+
+  const profileResult = await fetchProfileByUsername(supabaseAnon, req.params.username);
+  if (profileResult.error === 'schema') {
+    res.status(503).json({ error: profileResult.message ?? profilesAlignMigrationHint() });
+    return;
+  }
+  if (profileResult.error === 'query') {
+    res.status(400).json({ error: profileResult.message ?? 'No se pudo cargar el perfil' });
+    return;
+  }
+  if (profileResult.error === 'not_found' || !profileResult.profile) {
+    res.status(404).json({ error: 'Usuario no encontrado' });
+    return;
+  }
+
+  const profile = profileResult.profile;
+  const viewerId = req.userId ?? '';
+  if (viewerId && viewerId !== profile.id) {
+    const block = await getBlockRelation(viewerId, profile.id);
+    if (isBlockActive(block)) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+  }
+
+  const { data, error } = await reader
+    .from('capsules')
+    .select('*')
+    .eq('user_id', profile.id)
+    .eq('is_public', true)
+    .gte('watched_at', range.from)
+    .lte('watched_at', range.to)
+    .order('watched_at', { ascending: true })
+    .order('created_at', { ascending: true })
+    .limit(200);
+
+  if (error) {
+    if (isMissingPrivacyColumn(error)) {
+      res.status(503).json({ error: privacyMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  const capsules = data ?? [];
+  if (capsules.length === 0) {
+    res.status(404).json({ error: 'Este mes no tiene Capsules públicas para compartir.' });
+    return;
+  }
+
+  const withLikes = await attachLikeStats(reader, viewerId, capsules);
+  const capsulesWithLikes = await attachCommentCounts(reader, withLikes);
+  const normalizedProfile = normalizeProfile(profile);
+
+  res.json({
+    profile: normalizedProfile,
+    year: range.year,
+    month: range.month,
+    from: range.from,
+    to: range.to,
+    days: buildCalendarDayCounts(capsules),
+    capsules: capsulesWithLikes,
+    total: capsules.length,
+  });
 });
 
 capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res) => {

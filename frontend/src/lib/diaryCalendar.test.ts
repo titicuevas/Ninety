@@ -4,6 +4,7 @@ import {
   buildMonthGrid,
   capsulesForDate,
   countCapsulesByWatchedDate,
+  countPublicCapsules,
   formatCalendarMonthTitle,
   parseCalendarMonthParam,
   shiftCalendarMonth,
@@ -82,5 +83,17 @@ describe('diaryCalendar frontend', () => {
     const title = formatCalendarMonthTitle(2026, 8);
     assert.match(title, /2026/);
     assert.equal(title[0], title[0]?.toUpperCase());
+  });
+
+  it('countPublicCapsules ignora privadas', () => {
+    assert.equal(
+      countPublicCapsules([
+        { is_public: true },
+        { is_public: false },
+        { is_public: undefined },
+        {},
+      ]),
+      3,
+    );
   });
 });

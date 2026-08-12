@@ -79,6 +79,11 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/capsules/user/:username/calendar valida year/month', async () => {
+    const res = await request(createApp()).get('/api/capsules/user/demo/calendar');
+    assert.equal(res.status, 400);
+  });
+
   it('GET /api/notifications/preferences requiere auth', async () => {
     const res = await request(createApp()).get('/api/notifications/preferences');
     assert.equal(res.status, 401);

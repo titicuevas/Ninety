@@ -56,14 +56,17 @@ describe('PWA shell', () => {
     assert.match(sw, /icon-192\.png/);
   });
 
-  it('serve.mjs cubre OG de colecciones y cara a cara', () => {
+  it('serve.mjs cubre OG de colecciones, cara a cara y mes del diario', () => {
     const serve = readFileSync(servePath, 'utf8');
     assert.match(serve, /async function ogForCollection/);
     assert.match(serve, /async function ogForCompare/);
+    assert.match(serve, /async function ogForDiaryMonth/);
     assert.match(serve, /\/api\/collections\/user\//);
+    assert.match(serve, /\/calendar\?year=/);
     assert.match(serve, /Cara a cara con/);
     assert.ok(serve.includes('/lists/'));
     assert.ok(serve.includes('/vs$/i') || serve.includes('\\/vs$/i'));
+    assert.ok(serve.includes('/calendar/'));
     assert.match(serve, /cover_url/);
   });
 });

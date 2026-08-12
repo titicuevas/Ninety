@@ -37,3 +37,8 @@ export function publicCapsuleUrl(capsuleId: string): string {
 export function publicCollectionUrl(username: string, slug: string): string {
   return `${siteUrl()}/u/${encodeURIComponent(username)}/lists/${encodeURIComponent(slug)}`;
 }
+
+/** Mes del diario público (`/u/:username/calendar/:year/:month`). */
+export function publicDiaryMonthUrl(username: string, year: number, month: number): string {
+  return `${siteUrl()}/u/${encodeURIComponent(username)}/calendar/${year}/${month}`;
+}

@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   buildCalendarDayCounts,
+  buildPublicDiaryMonthShareCopy,
   daysInMonth,
+  formatDiaryMonthTitle,
   isValidIsoDate,
   resolveCalendarMonth,
   watchedAtToDateKey,
@@ -56,5 +58,23 @@ describe('diaryCalendar', () => {
       { date: '2026-08-03', count: 2 },
       { date: '2026-08-05', count: 1 },
     ]);
+  });
+
+  it('formatDiaryMonthTitle y share copy del mes público', () => {
+    const title = formatDiaryMonthTitle(2026, 8);
+    assert.match(title, /2026/);
+    assert.equal(title[0], title[0]?.toUpperCase());
+
+    const share = buildPublicDiaryMonthShareCopy({
+      displayName: 'Ana',
+      username: 'ana',
+      year: 2026,
+      month: 8,
+      total: 3,
+    });
+    assert.match(share.title, /Ana/);
+    assert.match(share.title, /Ninety/);
+    assert.match(share.description, /3 Capsules públicas/);
+    assert.match(share.description, /@ana/);
   });
 });

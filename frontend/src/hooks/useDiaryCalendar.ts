@@ -16,6 +16,8 @@ export type DiaryCalendarResponse = {
   days: DiaryCalendarDay[];
   capsules: Capsule[];
   total: number;
+  /** Capsules públicas del mes (para compartir). */
+  public_total?: number;
 };
 
 export function useDiaryCalendar(year: number, month: number) {

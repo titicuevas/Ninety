@@ -65,3 +65,32 @@ export function buildCalendarDayCounts(
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, count]) => ({ date, count }));
 }
+
+const monthTitleFormatter = new Intl.DateTimeFormat('es-ES', {
+  month: 'long',
+  year: 'numeric',
+});
+
+/** Título de mes capitalizado (p. ej. «Agosto de 2026»). */
+export function formatDiaryMonthTitle(year: number, month: number): string {
+  const raw = monthTitleFormatter.format(new Date(year, month - 1, 1));
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
+/** Copy OG / share del mes público del diario. */
+export function buildPublicDiaryMonthShareCopy(options: {
+  displayName: string;
+  username: string;
+  year: number;
+  month: number;
+  total: number;
+}): { title: string; description: string } {
+  const monthTitle = formatDiaryMonthTitle(options.year, options.month);
+  const name = options.displayName.trim() || `@${options.username}`;
+  const countLabel =
+    options.total === 1 ? '1 Capsule pública' : `${options.total} Capsules públicas`;
+  return {
+    title: `${monthTitle} de ${name} | Ninety`,
+    description: `${countLabel} en el diario futbolero de @${options.username}`.slice(0, 180),
+  };
+}

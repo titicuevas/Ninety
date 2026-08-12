@@ -291,6 +291,52 @@ async function ogForCompare(username) {
   });
 }
 
+function formatDiaryMonthTitle(year, month) {
+  const raw = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(
+    new Date(year, month - 1, 1),
+  );
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
+async function ogForDiaryMonth(username, year, month) {
+  const y = Number(year);
+  const m = Number(month);
+  if (!Number.isInteger(y) || y < 1990 || y > 2100 || !Number.isInteger(m) || m < 1 || m > 12) {
+    return null;
+  }
+
+  const data = await fetchJson(
+    `/api/capsules/user/${encodeURIComponent(username)}/calendar?year=${y}&month=${m}`,
+  );
+  if (!data?.profile || !data.total) return null;
+
+  const profile = data.profile;
+  const name = profile.display_name || profile.username || username;
+  const handle = profile.username || username;
+  const monthTitle = formatDiaryMonthTitle(y, m);
+  const count = typeof data.total === 'number' ? data.total : 0;
+
+  const title = `${monthTitle} de ${name} | Ninety`;
+  const description = [
+    count === 1 ? '1 Capsule pública' : `${count} Capsules públicas`,
+    `en el diario futbolero de @${handle}`,
+  ]
+    .join(' ')
+    .slice(0, 180);
+
+  const firstCapsule = Array.isArray(data.capsules) ? data.capsules[0] : null;
+  const photos = Array.isArray(firstCapsule?.photo_urls) ? firstCapsule.photo_urls : [];
+  const image = photos[0] || firstCapsule?.photo_url || profile.avatar_url || defaultImage();
+
+  return renderOgHtml({
+    title,
+    description: description || `Mes del diario de @${handle} en Ninety.`,
+    url: `${SITE_URL}/u/${encodeURIComponent(username)}/calendar/${y}/${m}`,
+    image,
+    type: 'website',
+  });
+}
+
 const SECURITY_HEADERS = {
   'X-Frame-Options': 'SAMEORIGIN',
   'X-Content-Type-Options': 'nosniff',
@@ -418,6 +464,15 @@ const server = http.createServer(async (req, res) => {
     const compareMatch = pathname.match(/^\/u\/([a-z0-9_]+)\/vs$/i);
     if (compareMatch) {
       const html = await ogForCompare(compareMatch[1]);
+      if (html) {
+        sendCompressed(req, res, 200, Buffer.from(html), { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' });
+        return;
+      }
+    }
+
+    const diaryMonthMatch = pathname.match(/^\/u\/([a-z0-9_]+)\/calendar\/(\d{4})\/(\d{1,2})$/i);
+    if (diaryMonthMatch) {
+      const html = await ogForDiaryMonth(diaryMonthMatch[1], diaryMonthMatch[2], diaryMonthMatch[3]);
       if (html) {
         sendCompressed(req, res, 200, Buffer.from(html), { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' });
         return;
