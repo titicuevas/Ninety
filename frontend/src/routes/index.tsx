@@ -12,6 +12,7 @@ import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { HomePage } from '@/pages/HomePage';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/LoginPage';
+import { ManualMatchPage } from '@/pages/ManualMatchPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { FollowersPage, FollowingPage } from '@/pages/FollowListPage';
 import { CompareProfilePage } from '@/pages/CompareProfilePage';
@@ -55,6 +56,7 @@ export const appRouter = createBrowserRouter([
       { path: '/home', element: <HomePage /> },
       { path: '/feed', element: <FeedPage /> },
       { path: '/search', element: <SearchMatchPage /> },
+      { path: '/search/manual', element: <ManualMatchPage /> },
       { path: '/capsules', element: <CapsulesPage /> },
       { path: '/capsules/new', element: <CreateCapsulePage /> },
       { path: '/capsules/:id/edit', element: <EditCapsulePage /> },

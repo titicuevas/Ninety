@@ -6,8 +6,10 @@ export const COLLECTIONS_IMPORT_MAX = 50;
 /** Alineado con MAX_ITEMS_PER_COLLECTION. */
 export const COLLECTIONS_IMPORT_MAX_ITEMS = 100;
 
+const nonzeroMatchId = z.coerce.number().int().refine((n) => n !== 0, 'match_id no puede ser 0');
+
 const importItemSchema = z.object({
-  match_id: z.coerce.number().int().positive(),
+  match_id: nonzeroMatchId,
   position: z.coerce.number().int().min(0).max(10_000).optional(),
 });
 
@@ -22,7 +24,7 @@ const importCollectionSchema = z.object({
     .optional(),
   description: z.string().trim().max(500).nullable().optional(),
   is_public: z.boolean().optional(),
-  cover_match_id: z.coerce.number().int().positive().nullable().optional(),
+  cover_match_id: nonzeroMatchId.nullable().optional(),
   items: z.array(z.unknown()).max(COLLECTIONS_IMPORT_MAX_ITEMS).optional(),
 });
 

@@ -110,6 +110,28 @@ describe('diaryImport', () => {
     assert.match(result.error, /Demasiadas/);
   });
 
+  it('acepta match_id negativo (partido manual)', () => {
+    const result = parseDiaryImportPayload({
+      format_version: 1,
+      capsules: [{ ...validCapsule, match_id: -12345 }],
+    });
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+    assert.equal(result.rows.length, 1);
+    assert.equal(result.rows[0]?.match_id, -12345);
+  });
+
+  it('rechaza match_id 0', () => {
+    const result = parseDiaryImportPayload({
+      format_version: 1,
+      capsules: [{ ...validCapsule, match_id: 0 }],
+    });
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+    assert.equal(result.rows.length, 0);
+    assert.equal(result.skipped_invalid, 1);
+  });
+
   it('formatDiaryImportSummary es un solo mensaje', () => {
     const text = formatDiaryImportSummary({
       imported: 3,

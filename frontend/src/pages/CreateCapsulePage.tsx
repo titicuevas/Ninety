@@ -13,6 +13,7 @@ import { uploadCapsulePhotos } from '@/lib/capsulePhoto';
 import { clearDraftCapsuleMemory } from '@/lib/draftCapsuleMemory';
 import { clearDraftMatch, readDraftMatch, saveDraftMatch } from '@/lib/draftMatch';
 import { friendlyApiError } from '@/lib/friendlyErrors';
+import { isManualMatchId } from '@/lib/manualMatch';
 import { defaultWatchedAt, footballMatchToCapsuleBase } from '@/lib/matchCapsule';
 import { markPushPromptEligible } from '@/lib/pushPromptMemory';
 import { useAuthStore } from '@/stores/authStore';
@@ -141,7 +142,9 @@ export function CreateCapsulePage() {
             Nueva Capsule
           </h1>
           <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-            Guarda el partido con fotos y recuerdos en tu diario.
+            {isManualMatchId(match.id)
+              ? 'Partido añadido a mano — guarda fotos y recuerdos en tu diario.'
+              : 'Guarda el partido con fotos y recuerdos en tu diario.'}
           </p>
         </header>
 

@@ -21,6 +21,14 @@ import { monthChipOptions, monthHintLabel, parseMonthParam } from '@/lib/monthCh
 import type { CuratedCompetition, FootballMatch } from '@/types/football';
 import { cn } from '@/lib/utils';
 
+function ManualMatchCta() {
+  return (
+    <Button asChild type="button" variant="secondary">
+      <Link to="/search/manual">Añadir partido manual</Link>
+    </Button>
+  );
+}
+
 const NO_COMPETITIONS: CuratedCompetition[] = [];
 const NO_MATCHES: FootballMatch[] = [];
 const MONTH_CHIPS = monthChipOptions();
@@ -328,11 +336,19 @@ export function MatchSearchPanel() {
       {isSearching ? <MatchListSkeleton count={4} /> : null}
 
       {isError ? (
-        <QueryErrorCard
-          message={error instanceof Error ? error.message : 'No se pudo buscar partidos'}
-          loading={isRefetching}
-          onRetry={() => void refetch()}
-        />
+        <div className="space-y-3">
+          <QueryErrorCard
+            message={error instanceof Error ? error.message : 'No se pudo buscar partidos'}
+            loading={isRefetching}
+            onRetry={() => void refetch()}
+          />
+          <p className="text-center text-sm text-muted-foreground">
+            ¿El partido no está en el catálogo?{' '}
+            <Link to="/search/manual" className="font-medium text-primary underline-offset-4 hover:underline">
+              Añádelo a mano
+            </Link>
+          </p>
+        </div>
       ) : null}
 
       {!isSearching && canSearch && !isError ? (
@@ -378,11 +394,13 @@ export function MatchSearchPanel() {
               description={
                 activeCompetition
                   ? requiresTeamQuery
-                    ? `No hay partidos de «${debouncedQuery}» en ${selectedCompetition?.name ?? 'este torneo'}${activeSeason != null ? ` (${activeSeason})` : ''}${activeMonth != null ? ` · ${monthHintLabel(activeMonth, activeSeason, selectedCompetition)}` : ''}. Prueba otro nombre, temporada o mes.`
-                    : `No hay partidos en ${selectedCompetition?.name ?? 'esta competición'}${activeSeason != null ? ` ${activeSeason}` : ''}${activeMonth != null ? ` · ${monthHintLabel(activeMonth, activeSeason, selectedCompetition)}` : ''} para «${debouncedQuery || 'tu búsqueda'}». Prueba otro mes o temporada.`
-                  : `No encontramos partidos para «${debouncedQuery}»${activeSeason != null ? ` en ${activeSeason}` : ''}${activeMonth != null ? ` · ${monthHintLabel(activeMonth, activeSeason, selectedCompetition)}` : ''}. Prueba otra temporada, mes, equipo o competición.`
+                    ? `No hay partidos de «${debouncedQuery}» en ${selectedCompetition?.name ?? 'este torneo'}${activeSeason != null ? ` (${activeSeason})` : ''}${activeMonth != null ? ` · ${monthHintLabel(activeMonth, activeSeason, selectedCompetition)}` : ''}. Prueba otro nombre, temporada o mes — o añádelo a mano.`
+                    : `No hay partidos en ${selectedCompetition?.name ?? 'esta competición'}${activeSeason != null ? ` ${activeSeason}` : ''}${activeMonth != null ? ` · ${monthHintLabel(activeMonth, activeSeason, selectedCompetition)}` : ''} para «${debouncedQuery || 'tu búsqueda'}». Prueba otro mes o temporada — o añádelo a mano.`
+                  : `No encontramos partidos para «${debouncedQuery}»${activeSeason != null ? ` en ${activeSeason}` : ''}${activeMonth != null ? ` · ${monthHintLabel(activeMonth, activeSeason, selectedCompetition)}` : ''}. Prueba otra temporada, mes, equipo o competición — o añádelo a mano.`
               }
-            />
+            >
+              <ManualMatchCta />
+            </EmptyState>
           )}
         </div>
       ) : null}
@@ -393,8 +411,8 @@ export function MatchSearchPanel() {
           title="¿Qué partido viste?"
           description={
             favoriteTeam
-              ? `Empieza por tu equipo (${favoriteTeam}) o escribe otro rival, selección o apodo.`
-              : 'Escribe un apodo o parte del nombre (Betis, Madrid, España…). No hace falta el nombre completo.'
+              ? `Empieza por tu equipo (${favoriteTeam}) o escribe otro rival, selección o apodo. Si no está en el catálogo, añádelo a mano.`
+              : 'Escribe un apodo o parte del nombre (Betis, Madrid, España…). Si no aparece, puedes añadirlo a mano.'
           }
         >
           {favoriteTeam ? (
@@ -406,6 +424,7 @@ export function MatchSearchPanel() {
               <Link to="/profile">Añadir equipo favorito</Link>
             </Button>
           )}
+          <ManualMatchCta />
         </EmptyState>
       ) : null}
     </div>

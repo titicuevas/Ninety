@@ -44,7 +44,8 @@ const photoUpload = multer({
 });
 
 const createCapsuleSchema = z.object({
-  match_id: z.number().int().positive(),
+  /** Positivo = football-data; negativo = partido manual. */
+  match_id: z.number().int().refine((n) => n !== 0, 'match_id no puede ser 0'),
   match_played_at: z.string().datetime().optional().nullable(),
   home_team_name: z.string().min(1).max(200),
   away_team_name: z.string().min(1).max(200),

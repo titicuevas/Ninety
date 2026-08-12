@@ -1,5 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { formatMatchDate } from '@/lib/format';
+import { isManualMatchId } from '@/lib/manualMatch';
 import type { FootballMatch } from '@/types/football';
 import { cn } from '@/lib/utils';
 
@@ -75,6 +76,11 @@ export function MatchCard({ match, onSelect, savedCapsuleId, className }: MatchC
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <p className="truncate text-sm font-medium sm:text-base">{match.homeTeam.name}</p>
+              {isManualMatchId(match.id) ? (
+                <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Manual
+                </span>
+              ) : null}
               {saved ? (
                 <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
                   En tu diario

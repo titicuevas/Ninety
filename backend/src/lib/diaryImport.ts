@@ -7,7 +7,8 @@ export const MAX_SOURCE_PHOTOS_PER_CAPSULE = 9;
 const watchContextSchema = z.enum(['stadium', 'tv', 'pub', 'other']).nullable().optional();
 
 const importCapsuleSchema = z.object({
-  match_id: z.coerce.number().int().positive(),
+  /** Positivo = football-data; negativo = partido manual. */
+  match_id: z.coerce.number().int().refine((n) => n !== 0, 'match_id no puede ser 0'),
   match_played_at: z.string().min(1).max(64).nullable().optional(),
   home_team_name: z.string().min(1).max(200),
   away_team_name: z.string().min(1).max(200),
