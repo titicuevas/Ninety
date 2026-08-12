@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { env } from '../config/loadEnv.js';
 import { flushDiaryPushes } from '../lib/diaryPush.js';
+import { flushEmailDigests } from '../lib/emailDigest.js';
 import { flushPushDigests } from '../lib/pushDigest.js';
 
 export const internalRouter = Router();
@@ -45,6 +46,21 @@ internalRouter.post('/cron/push-diary', async (req, res, next) => {
     }
 
     const result = await flushDiaryPushes();
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** Cron: digest email semanal del diario (opt-in; lunes en TZ usuario). */
+internalRouter.post('/cron/email-digest', async (req, res, next) => {
+  try {
+    if (!cronAuthorized(req)) {
+      res.status(401).json({ error: 'No autorizado' });
+      return;
+    }
+
+    const result = await flushEmailDigests();
     res.json({ ok: true, ...result });
   } catch (err) {
     next(err);

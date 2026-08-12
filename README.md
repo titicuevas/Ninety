@@ -377,12 +377,14 @@ Ninety/
 | GET | `/api/collections/user/:username/:slug` | opcional | Detalle colección (`/u/:username/lists/:slug`) |
 | GET | `/api/football/matches/search` | ✅ | Buscar partidos |
 | GET | `/api/football/competitions` | ✅ | Competiciones |
-| GET/PATCH | `/api/notifications/preferences` | ✅ | Preferencias por tipo + push aniversario/hito opt-in + horario silencioso (`push_quiet`) |
+| GET/PATCH | `/api/notifications/preferences` | ✅ | Preferencias por tipo + push aniversario/hito opt-in + digest email opt-in + horario silencioso (`push_quiet`) |
 | GET/POST/DELETE | `/api/notifications/muted`… | ✅ | Silenciar / reactivar usuario (alertas in-app + push) |
 | GET/POST/DELETE | `/api/profile/blocked`… | ✅ | Bloquear / desbloquear usuario (ocultar perfil + Capsules) |
 | GET | `/api/notifications` | ✅ | Lista de alertas (`actor.followed_by_me` para seguir de vuelta) |
 | POST | `/api/internal/cron/push-digest` | cron | Digest push periódico (`CRON_SECRET`; agrupa likes/comentarios/follows) |
 | POST | `/api/internal/cron/push-diary` | cron | Push opt-in aniversarios/hitos (`CRON_SECRET`; `diary_push_sent` idempotente) |
+| POST | `/api/internal/cron/email-digest` | cron | Digest email semanal del diario (`CRON_SECRET` + Resend; opt-in; lunes en TZ; `diary_email_digest_sent`) |
+| GET/POST | `/api/email-digest/unsubscribe` | público | Baja one-click del digest email (firma HMAC) |
 
 <a id="roadmap"></a>
 ## 📅 Roadmap
@@ -464,15 +466,14 @@ Ninety/
 - [x] Bloquear usuario — dejar de ver Capsules/perfil de alguien (más allá del mute de alertas) (`GET/POST/DELETE /api/profile/blocked`; migración `20250813100000_user_blocks.sql`; feed/discover/cápsula pública filtran bloqueos bidireccionales)
 - [x] Discovery en frío — perfiles/colecciones útiles sin follows ni equipo favorito (`match_reason: active` en discover; empty states del feed/Inicio enlazan a `/collections/explore`)
 
-### 🚧 v10 — Confianza & crecimiento
+### ✅ v10 — Confianza & crecimiento
 - [x] Reportar usuario / Capsule — denunciar abuso; complementa bloquear (migración `20250814120000_content_reports.sql` + `POST/GET /api/reports` + UI en perfil/cápsula pública; cola admin-ready vía service role, sin panel admin)
 - [x] Enlace de invitación — compartir Ninety con deep link/código que atribuya o lleve a registro (`/invite/:username` + `?ref=`; migración `20250815120000_invite_attributions.sql`; `GET/POST /api/invites`; UI Perfil/Ajustes)
 - [x] Lista «Quiero ir» — partidos futuros/interesantes tipo watchlist Letterboxd (`/want-to-go` + `GET/POST/DELETE /api/want-to-go`; migración `20250816120000_want_to_go_matches.sql`; CTA en búsqueda/partido manual; subnav Listas + Perfil)
 - [x] Calendario del diario — vista mes de Capsules por fecha (`/diary/calendar` + `GET /api/capsules/me/calendar` por `watched_at`; acceso desde Mis Capsules / Perfil)
 - [x] Push de aniversarios / hitos — opt-in en Ajustes (`push_anniversary` / `push_milestone`); cron `POST /api/internal/cron/push-diary` (+ intervalo 1h en prod); idempotencia `diary_push_sent`; migración `20250817120000_diary_push.sql`; cards on-device siguen independientes
 - [x] Página de equipo — fans del mismo club favorito (descubrimiento por equipo) (`/teams/:slug` + `GET /api/profile/by-team`; club favorito clickable en perfil/búsqueda; filtra bloqueos)
-- [ ] Digest email semanal — resumen opt-in del diario (Resend); dejar para el cierre de v10
-
+- [x] Digest email semanal — resumen opt-in del diario vía Resend (`email_digest` en Ajustes; cron `POST /api/internal/cron/email-digest`; idempotencia `diary_email_digest_sent`; migración `20250818120000_email_digest.sql`; baja one-click; no mezcla con digest push social)
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

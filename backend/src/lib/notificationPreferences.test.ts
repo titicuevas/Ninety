@@ -20,6 +20,7 @@ describe('mapNotificationPreferencesRow', () => {
         follows_enabled: false,
         push_anniversary_enabled: true,
         push_milestone_enabled: false,
+        email_digest_enabled: true,
         push_quiet_enabled: true,
         push_quiet_start: '23:00:00',
         push_quiet_end: '07:00:00',
@@ -31,6 +32,7 @@ describe('mapNotificationPreferencesRow', () => {
         follow: false,
         push_anniversary: true,
         push_milestone: false,
+        email_digest: true,
         push_quiet: {
           enabled: true,
           start: '23:00',
@@ -54,6 +56,7 @@ describe('mapNotificationPreferencesRow', () => {
         follow: true,
         push_anniversary: false,
         push_milestone: false,
+        email_digest: false,
         push_quiet: {
           enabled: false,
           start: '22:00',
@@ -73,6 +76,7 @@ describe('isNotificationTypeEnabled', () => {
       follow: true,
       push_anniversary: false,
       push_milestone: false,
+      email_digest: false,
       push_quiet: DEFAULT_NOTIFICATION_PREFERENCES.push_quiet,
     };
     assert.equal(isNotificationTypeEnabled(prefs, 'like'), false);

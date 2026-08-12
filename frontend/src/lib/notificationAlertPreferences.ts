@@ -12,6 +12,8 @@ export type NotificationAlertPreferences = Record<NotificationAlertType, boolean
   push_anniversary: boolean;
   /** Opt-in push de hitos del diario (default off). */
   push_milestone: boolean;
+  /** Opt-in digest email semanal del diario (default off). */
+  email_digest: boolean;
   push_quiet: PushQuietHours;
 };
 
@@ -28,6 +30,7 @@ export const DEFAULT_NOTIFICATION_ALERT_PREFERENCES: NotificationAlertPreference
   follow: true,
   push_anniversary: false,
   push_milestone: false,
+  email_digest: false,
   push_quiet: { ...DEFAULT_PUSH_QUIET_HOURS },
 };
 
@@ -92,6 +95,7 @@ export function normalizeNotificationAlertPreferences(
     follow: raw?.follow !== false,
     push_anniversary: raw?.push_anniversary === true,
     push_milestone: raw?.push_milestone === true,
+    email_digest: raw?.email_digest === true,
     push_quiet: normalizePushQuietHours(raw?.push_quiet),
   };
 }
@@ -99,7 +103,7 @@ export function normalizeNotificationAlertPreferences(
 export type NotificationAlertPreferencesPatch = Partial<
   Pick<
     NotificationAlertPreferences,
-    NotificationAlertType | 'push_anniversary' | 'push_milestone'
+    NotificationAlertType | 'push_anniversary' | 'push_milestone' | 'email_digest'
   >
 > & {
   push_quiet?: Partial<PushQuietHours>;

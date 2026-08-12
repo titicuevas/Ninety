@@ -10,6 +10,7 @@ import {
   DEFAULT_PUSH_QUIET_HOURS,
   normalizePushQuietHours,
 } from './notificationQuietHours.js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export type { NotificationPreferences, NotificationType, PushQuietHours };
 export {
@@ -26,6 +27,7 @@ type PrefsRow = {
   follows_enabled: boolean;
   push_anniversary_enabled?: boolean | null;
   push_milestone_enabled?: boolean | null;
+  email_digest_enabled?: boolean | null;
   push_quiet_enabled?: boolean | null;
   push_quiet_start?: string | null;
   push_quiet_end?: string | null;
@@ -33,6 +35,8 @@ type PrefsRow = {
 };
 
 const PREFS_SELECT =
+  'likes_enabled, comments_enabled, follows_enabled, push_anniversary_enabled, push_milestone_enabled, email_digest_enabled, push_quiet_enabled, push_quiet_start, push_quiet_end, push_quiet_timezone';
+const PREFS_SELECT_DIARY =
   'likes_enabled, comments_enabled, follows_enabled, push_anniversary_enabled, push_milestone_enabled, push_quiet_enabled, push_quiet_start, push_quiet_end, push_quiet_timezone';
 const PREFS_SELECT_QUIET =
   'likes_enabled, comments_enabled, follows_enabled, push_quiet_enabled, push_quiet_start, push_quiet_end, push_quiet_timezone';
@@ -65,7 +69,20 @@ function isMissingDiaryPushColumns(
   );
 }
 
-/** Lee preferencias del receptor. Sin fila / sin tabla → todo activado, quiet off. */
+function isMissingEmailDigestColumn(
+  error: { message?: string; code?: string } | null | undefined,
+): boolean {
+  const message = error?.message ?? '';
+  return (
+    message.includes('email_digest_enabled') ||
+    ((message.includes('schema cache') ||
+      message.includes('Could not find') ||
+      message.includes('column')) &&
+      message.includes('email_digest'))
+  );
+}
+
+/** Lee preferencias del receptor. Sin fila / sin tabla → todo activado, quiet off, digest email off. */
 export async function getNotificationPreferences(
   userId: string,
 ): Promise<NotificationPreferences> {
@@ -82,44 +99,28 @@ export async function getNotificationPreferences(
     if (isMissingPrefsTable(full.error)) {
       return { ...DEFAULT_NOTIFICATION_PREFERENCES, push_quiet: { ...DEFAULT_PUSH_QUIET_HOURS } };
     }
-    if (isMissingDiaryPushColumns(full.error)) {
-      const quietOnly = await supabaseAdmin
+    if (isMissingEmailDigestColumn(full.error)) {
+      const diary = await supabaseAdmin
         .from('notification_preferences')
-        .select(PREFS_SELECT_QUIET)
+        .select(PREFS_SELECT_DIARY)
         .eq('user_id', userId)
         .maybeSingle();
-      if (quietOnly.error) {
-        if (isMissingQuietColumns(quietOnly.error)) {
-          const legacy = await supabaseAdmin
-            .from('notification_preferences')
-            .select(PREFS_SELECT_LEGACY)
-            .eq('user_id', userId)
-            .maybeSingle();
-          if (legacy.error) {
-            return {
-              ...DEFAULT_NOTIFICATION_PREFERENCES,
-              push_quiet: { ...DEFAULT_PUSH_QUIET_HOURS },
-            };
-          }
-          return mapNotificationPreferencesRow(legacy.data as PrefsRow | null);
+      if (diary.error) {
+        if (isMissingDiaryPushColumns(diary.error)) {
+          return getPrefsWithoutDiary(supabaseAdmin, userId);
         }
-        return {
-          ...DEFAULT_NOTIFICATION_PREFERENCES,
-          push_quiet: { ...DEFAULT_PUSH_QUIET_HOURS },
-        };
-      }
-      return mapNotificationPreferencesRow(quietOnly.data as PrefsRow | null);
-    }
-    if (isMissingQuietColumns(full.error)) {
-      const legacy = await supabaseAdmin
-        .from('notification_preferences')
-        .select(PREFS_SELECT_LEGACY)
-        .eq('user_id', userId)
-        .maybeSingle();
-      if (legacy.error) {
+        if (isMissingQuietColumns(diary.error)) {
+          return getPrefsLegacy(supabaseAdmin, userId);
+        }
         return { ...DEFAULT_NOTIFICATION_PREFERENCES, push_quiet: { ...DEFAULT_PUSH_QUIET_HOURS } };
       }
-      return mapNotificationPreferencesRow(legacy.data as PrefsRow | null);
+      return mapNotificationPreferencesRow(diary.data as PrefsRow | null);
+    }
+    if (isMissingDiaryPushColumns(full.error)) {
+      return getPrefsWithoutDiary(supabaseAdmin, userId);
+    }
+    if (isMissingQuietColumns(full.error)) {
+      return getPrefsLegacy(supabaseAdmin, userId);
     }
     return { ...DEFAULT_NOTIFICATION_PREFERENCES, push_quiet: { ...DEFAULT_PUSH_QUIET_HOURS } };
   }
@@ -127,10 +128,43 @@ export async function getNotificationPreferences(
   return mapNotificationPreferencesRow(full.data as PrefsRow | null);
 }
 
+async function getPrefsWithoutDiary(
+  supabaseAdmin: SupabaseClient,
+  userId: string,
+): Promise<NotificationPreferences> {
+  const quietOnly = await supabaseAdmin
+    .from('notification_preferences')
+    .select(PREFS_SELECT_QUIET)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (quietOnly.error) {
+    if (isMissingQuietColumns(quietOnly.error)) {
+      return getPrefsLegacy(supabaseAdmin, userId);
+    }
+    return { ...DEFAULT_NOTIFICATION_PREFERENCES, push_quiet: { ...DEFAULT_PUSH_QUIET_HOURS } };
+  }
+  return mapNotificationPreferencesRow(quietOnly.data as PrefsRow | null);
+}
+
+async function getPrefsLegacy(
+  supabaseAdmin: SupabaseClient,
+  userId: string,
+): Promise<NotificationPreferences> {
+  const legacy = await supabaseAdmin
+    .from('notification_preferences')
+    .select(PREFS_SELECT_LEGACY)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (legacy.error) {
+    return { ...DEFAULT_NOTIFICATION_PREFERENCES, push_quiet: { ...DEFAULT_PUSH_QUIET_HOURS } };
+  }
+  return mapNotificationPreferencesRow(legacy.data as PrefsRow | null);
+}
+
 export type NotificationPreferencesPatch = Partial<
   Pick<
     NotificationPreferences,
-    'like' | 'comment' | 'follow' | 'push_anniversary' | 'push_milestone'
+    'like' | 'comment' | 'follow' | 'push_anniversary' | 'push_milestone' | 'email_digest'
   >
 > & {
   push_quiet?: Partial<PushQuietHours>;
@@ -156,6 +190,7 @@ export async function upsertNotificationPreferences(
     follow: patch.follow ?? current.follow,
     push_anniversary: patch.push_anniversary ?? current.push_anniversary,
     push_milestone: patch.push_milestone ?? current.push_milestone,
+    email_digest: patch.email_digest ?? current.email_digest,
     push_quiet: nextQuiet,
   };
 
@@ -166,6 +201,7 @@ export async function upsertNotificationPreferences(
     follows_enabled: next.follow,
     push_anniversary_enabled: next.push_anniversary,
     push_milestone_enabled: next.push_milestone,
+    email_digest_enabled: next.email_digest,
     push_quiet_enabled: next.push_quiet.enabled,
     push_quiet_start: next.push_quiet.start,
     push_quiet_end: next.push_quiet.end,
@@ -186,6 +222,12 @@ export async function upsertNotificationPreferences(
         { status: 503 },
       );
     }
+    if (isMissingEmailDigestColumn(error) && patch.email_digest !== undefined) {
+      throw Object.assign(
+        new Error('Ejecuta la migración 20250818120000_email_digest.sql en Supabase.'),
+        { status: 503 },
+      );
+    }
     if (
       isMissingDiaryPushColumns(error) &&
       (patch.push_anniversary !== undefined || patch.push_milestone !== undefined)
@@ -203,62 +245,99 @@ export async function upsertNotificationPreferences(
         { status: 503 },
       );
     }
-    if (isMissingDiaryPushColumns(error)) {
-      const quietPayload = {
+    if (isMissingEmailDigestColumn(error)) {
+      const diaryPayload = {
         user_id: userId,
         likes_enabled: next.like,
         comments_enabled: next.comment,
         follows_enabled: next.follow,
+        push_anniversary_enabled: next.push_anniversary,
+        push_milestone_enabled: next.push_milestone,
         push_quiet_enabled: next.push_quiet.enabled,
         push_quiet_start: next.push_quiet.start,
         push_quiet_end: next.push_quiet.end,
         push_quiet_timezone: next.push_quiet.timezone,
         updated_at: new Date().toISOString(),
       };
-      const quiet = await supabaseAdmin
+      const diary = await supabaseAdmin
         .from('notification_preferences')
-        .upsert(quietPayload, { onConflict: 'user_id' })
-        .select(PREFS_SELECT_QUIET)
+        .upsert(diaryPayload, { onConflict: 'user_id' })
+        .select(PREFS_SELECT_DIARY)
         .single();
-      if (quiet.error) {
-        if (isMissingQuietColumns(quiet.error)) {
-          const legacyPayload = {
-            user_id: userId,
-            likes_enabled: next.like,
-            comments_enabled: next.comment,
-            follows_enabled: next.follow,
-            updated_at: new Date().toISOString(),
-          };
-          const legacy = await supabaseAdmin
-            .from('notification_preferences')
-            .upsert(legacyPayload, { onConflict: 'user_id' })
-            .select(PREFS_SELECT_LEGACY)
-            .single();
-          if (legacy.error) throw legacy.error;
-          return mapNotificationPreferencesRow(legacy.data as PrefsRow);
+      if (diary.error) {
+        if (isMissingDiaryPushColumns(diary.error)) {
+          return upsertWithoutDiary(supabaseAdmin, userId, next, patch);
         }
-        throw quiet.error;
+        throw diary.error;
       }
-      return mapNotificationPreferencesRow(quiet.data as PrefsRow);
+      return mapNotificationPreferencesRow(diary.data as PrefsRow);
+    }
+    if (isMissingDiaryPushColumns(error)) {
+      return upsertWithoutDiary(supabaseAdmin, userId, next, patch);
     }
     if (isMissingQuietColumns(error)) {
-      const legacyPayload = {
-        user_id: userId,
-        likes_enabled: next.like,
-        comments_enabled: next.comment,
-        follows_enabled: next.follow,
-        updated_at: new Date().toISOString(),
-      };
-      const legacy = await supabaseAdmin
-        .from('notification_preferences')
-        .upsert(legacyPayload, { onConflict: 'user_id' })
-        .select(PREFS_SELECT_LEGACY)
-        .single();
-      if (legacy.error) throw legacy.error;
-      return mapNotificationPreferencesRow(legacy.data as PrefsRow);
+      return upsertLegacy(supabaseAdmin, userId, next);
     }
     throw error;
   }
 
   return mapNotificationPreferencesRow(data as PrefsRow);
+}
+
+async function upsertWithoutDiary(
+  supabaseAdmin: SupabaseClient,
+  userId: string,
+  next: NotificationPreferences,
+  patch: NotificationPreferencesPatch,
+): Promise<NotificationPreferences> {
+  const quietPayload = {
+    user_id: userId,
+    likes_enabled: next.like,
+    comments_enabled: next.comment,
+    follows_enabled: next.follow,
+    push_quiet_enabled: next.push_quiet.enabled,
+    push_quiet_start: next.push_quiet.start,
+    push_quiet_end: next.push_quiet.end,
+    push_quiet_timezone: next.push_quiet.timezone,
+    updated_at: new Date().toISOString(),
+  };
+  const quiet = await supabaseAdmin
+    .from('notification_preferences')
+    .upsert(quietPayload, { onConflict: 'user_id' })
+    .select(PREFS_SELECT_QUIET)
+    .single();
+  if (quiet.error) {
+    if (isMissingQuietColumns(quiet.error)) {
+      return upsertLegacy(supabaseAdmin, userId, next);
+    }
+    throw quiet.error;
+  }
+  if (patch.push_anniversary !== undefined || patch.push_milestone !== undefined) {
+    throw Object.assign(
+      new Error('Ejecuta la migración 20250817120000_diary_push.sql en Supabase.'),
+      { status: 503 },
+    );
+  }
+  return mapNotificationPreferencesRow(quiet.data as PrefsRow);
+}
+
+async function upsertLegacy(
+  supabaseAdmin: SupabaseClient,
+  userId: string,
+  next: NotificationPreferences,
+): Promise<NotificationPreferences> {
+  const legacyPayload = {
+    user_id: userId,
+    likes_enabled: next.like,
+    comments_enabled: next.comment,
+    follows_enabled: next.follow,
+    updated_at: new Date().toISOString(),
+  };
+  const legacy = await supabaseAdmin
+    .from('notification_preferences')
+    .upsert(legacyPayload, { onConflict: 'user_id' })
+    .select(PREFS_SELECT_LEGACY)
+    .single();
+  if (legacy.error) throw legacy.error;
+  return mapNotificationPreferencesRow(legacy.data as PrefsRow);
 }

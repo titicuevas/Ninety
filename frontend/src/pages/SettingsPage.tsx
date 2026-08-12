@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useId, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useId, useRef, useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Bell, Download, LogOut, Settings, Upload } from 'lucide-react';
@@ -11,6 +11,7 @@ import { PasswordField } from '@/components/PasswordField';
 import { DiaryAnniversaryPrefsPanel } from '@/components/DiaryAnniversaryPrefsPanel';
 import { DiaryDigestPrefsPanel } from '@/components/DiaryDigestPrefsPanel';
 import { DiaryMilestonePrefsPanel } from '@/components/DiaryMilestonePrefsPanel';
+import { EmailDigestPrefsPanel } from '@/components/EmailDigestPrefsPanel';
 import { NotificationTypePrefsPanel } from '@/components/NotificationTypePrefsPanel';
 import { PushQuietHoursPanel } from '@/components/PushQuietHoursPanel';
 import { MutedUsersPanel } from '@/components/MutedUsersPanel';
@@ -43,6 +44,7 @@ import { useAuthStore } from '@/stores/authStore';
 export function SettingsPage() {
   useDocumentTitle('Ajustes');
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
   const session = useAuthStore((s) => s.session);
@@ -82,6 +84,20 @@ export function SettingsPage() {
     isDirty,
     isBusy: passwordLoading,
   });
+
+  useEffect(() => {
+    const status = searchParams.get('email_digest');
+    if (status !== 'off' && status !== 'invalid') return;
+    if (status === 'off') {
+      toast.success('Resumen semanal por email desactivado');
+      void queryClient.invalidateQueries({ queryKey: ['notifications', 'preferences'] });
+    } else {
+      toast.error('Enlace de baja no válido');
+    }
+    const next = new URLSearchParams(searchParams);
+    next.delete('email_digest');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams, queryClient]);
 
   const accountEmail = (user?.email ?? '').trim().toLowerCase();
   const deleteReady =
@@ -307,8 +323,8 @@ export function SettingsPage() {
           <CardHeader>
             <CardTitle className="text-base">Notificaciones</CardTitle>
             <CardDescription>
-              Push del dispositivo, horario silencioso, silenciado por tipo y por usuario. El
-              historial vive en el centro de alertas.
+              Push del dispositivo, horario silencioso, silenciado por tipo y por usuario, y resumen
+              semanal por email (opt-in). El historial vive en el centro de alertas.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -317,6 +333,7 @@ export function SettingsPage() {
             <NotificationTypePrefsPanel />
             <MutedUsersPanel />
             <DiaryDigestPrefsPanel />
+            <EmailDigestPrefsPanel />
             <DiaryAnniversaryPrefsPanel />
             <DiaryMilestonePrefsPanel />
             <Button asChild variant="secondary" className="w-full sm:w-auto">

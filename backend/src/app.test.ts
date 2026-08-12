@@ -348,6 +348,12 @@ describe('API', () => {
     assert.match(res.body.error, /autorizado/i);
   });
 
+  it('POST /api/internal/cron/email-digest requiere CRON_SECRET', async () => {
+    const res = await request(createApp()).post('/api/internal/cron/email-digest');
+    assert.equal(res.status, 401);
+    assert.match(res.body.error, /autorizado/i);
+  });
+
   it('GET / responde página de bienvenida', async () => {
     const res = await request(createApp()).get('/');
     assert.equal(res.status, 200);
