@@ -520,12 +520,12 @@ Ninety/
 - [x] Compartir perfil como texto — resumen one-tap (`Copiar texto` / Compartir) desde perfil público y Ajustes de perfil (`buildProfileShareText`)
 - [x] Soft nudge «Quiero ir» en Home — card cuando hay partidos cercanos en la watchlist (además del push; on-device `ninety.wantToGoNudge:v1:`; ventana ~48 h)
 
-### 🚧 v15 — Loops cerrados & paridad social en listas
+### ✅ v15 — Loops cerrados & paridad social en listas
 - [x] Notificación de comentario en colección — avisar al dueño (y al padre en reply) al comentar una lista pública (`type: comment` + `collection_id`; deep link a la lista; prefs/digest de comentarios)
 - [x] Mentions en comentarios de colecciones — `@usuario` notifica como en Capsules (extender `notifyCommentMentions` a `collectionId`; sin self/blocked)
 - [x] Auto-quitar de Quiero ir al crear Capsule — al guardar el partido, salir de la watchlist sin paso manual (invalidar `want-to-go`)
 - [x] Soft nudge «ya jugó» en Quiero ir — card en Home cuando un partido de la lista ya pasó y aún no hay Capsule (on-device; CTA a crear Capsule; ventana ~14 días; prioridad tras el nudge pre-partido)
-- [ ] Compartir colección como texto — resumen one-tap (`Copiar texto` / Compartir) además del enlace (`buildCollectionShareText`)
+- [x] Compartir colección como texto — resumen one-tap (`Copiar texto` / Compartir) además del enlace (`buildCollectionShareText`)
 
 ## 🎨 Identidad visual
 

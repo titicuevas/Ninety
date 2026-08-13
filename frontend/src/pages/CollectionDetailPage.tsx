@@ -414,6 +414,10 @@ export function CollectionDetailPage() {
               username={username}
               slug={collection.slug}
               name={collection.name}
+              description={collection.description}
+              authorDisplayName={profile?.display_name ?? username}
+              itemsCount={data.capsules.length}
+              likesCount={collection.likes_count}
               compact
             />
           ) : null}

@@ -145,6 +145,10 @@ export function PublicCollectionPage() {
                 username={profile.username}
                 slug={collection.slug}
                 name={collection.name}
+                description={collection.description}
+                authorDisplayName={displayName}
+                itemsCount={capsules.length}
+                likesCount={likesCount}
                 compact
               />
             ) : null}
