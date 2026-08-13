@@ -126,6 +126,8 @@ test.describe('Smoke — feed y discover @smoke', () => {
     await goAppNav(page, /feed/i);
     await expect(page).toHaveURL(/\/feed/);
 
+    await page.getByRole('button', { name: /^filtros/i }).click();
+
     const photosChip = page.getByRole('button', { name: /solo con fotos/i });
     await expect(photosChip).toBeVisible({ timeout: 15_000 });
     await photosChip.click();
@@ -151,6 +153,7 @@ test.describe('Smoke — feed y discover @smoke', () => {
     await expect(page).toHaveURL(/\/capsules/);
     await expect(page.getByRole('heading', { name: /mis capsules/i })).toBeVisible();
     await expect(page.getByLabel(/buscar en tus capsules/i)).toBeVisible();
+    await page.getByRole('button', { name: /^filtros/i }).click();
     await expect(page.getByRole('group', { name: /filtrar por valoración/i })).toBeVisible();
 
     const empty = page.getByText(/aún no tienes capsules/i);

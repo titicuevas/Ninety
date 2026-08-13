@@ -168,6 +168,7 @@ export function CapsulesPage() {
           years={years}
           availableTags={availableTags}
           showVisibility
+          collapsible
           searchAriaLabel="Buscar en tus Capsules"
           qDraft={qDraft}
           year={year}

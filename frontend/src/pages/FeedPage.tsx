@@ -263,8 +263,7 @@ export function FeedPage() {
                 Actividad
               </Link>
             </Button>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
+            <span className="hidden h-5 w-px bg-border sm:block" aria-hidden />
             <SortTabs sort={sort} onChange={setSort} />
             {isFetching && !isLoading && !isFetchingNextPage ? (
               <span className="text-xs text-muted-foreground" aria-live="polite">

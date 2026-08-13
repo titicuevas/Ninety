@@ -28,6 +28,7 @@ test.describe('Smoke — contexto de visionado @smoke', () => {
     });
     const clear = page.getByRole('button', { name: /limpiar filtros/i });
     if (await clear.isVisible()) await clear.click();
+    await page.getByRole('button', { name: /^filtros/i }).click();
     await expect(page.getByRole('group', { name: /filtrar por contexto/i })).toBeVisible();
     await page.getByRole('button', { name: /^tv$/i }).click();
     await expect(page).toHaveURL(/context=tv/);
@@ -41,6 +42,7 @@ test.describe('Smoke — contexto de visionado @smoke', () => {
     });
     const clear = page.getByRole('button', { name: /limpiar filtros/i });
     if (await clear.isVisible()) await clear.click();
+    await page.getByRole('button', { name: /^filtros/i }).click();
     await expect(page.getByRole('group', { name: /filtrar por valoración/i })).toBeVisible();
     await page.getByRole('button', { name: /4\+\s*★/i }).click();
     await expect(page).toHaveURL(/rating=4/);
@@ -57,6 +59,7 @@ test.describe('Smoke — contexto de visionado @smoke', () => {
     const clear = page.getByRole('button', { name: /limpiar filtros/i });
     if (await clear.isVisible()) await clear.click();
 
+    await page.getByRole('button', { name: /^filtros/i }).click();
     await page.getByRole('button', { name: /4\+\s*★/i }).click();
     await expect(page).toHaveURL(/rating=4/);
 
