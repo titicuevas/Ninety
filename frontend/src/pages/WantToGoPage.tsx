@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bookmark, Search, Ticket } from 'lucide-react';
+import { capsuleCardListClass } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
 import { MatchCard } from '@/components/MatchCard';
@@ -47,7 +48,7 @@ export function WantToGoPage() {
 
   return (
     <Layout>
-      <div className="mx-auto max-w-2xl space-y-8">
+      <div className="space-y-5 sm:space-y-8">
         <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Listas</p>
@@ -58,10 +59,10 @@ export function WantToGoPage() {
               Partidos que te interesan ver — una watchlist personal, al estilo Letterboxd.
             </p>
           </div>
-          <Button asChild variant="secondary" className="shrink-0">
+          <Button asChild variant="secondary" className="h-9 w-9 shrink-0 px-0 sm:w-auto sm:px-3">
             <Link to="/search">
-              <Search className="mr-1.5 h-4 w-4" aria-hidden />
-              Buscar partidos
+              <Search className="h-4 w-4 sm:mr-1.5" aria-hidden />
+              <span className="sr-only sm:not-sr-only">Buscar partidos</span>
             </Link>
           </Button>
         </section>
@@ -92,7 +93,7 @@ export function WantToGoPage() {
         ) : null}
 
         {!isLoading && !isError && items.length > 0 ? (
-          <ul className="space-y-3">
+          <ul className={capsuleCardListClass}>
             {items.map((item) => {
               const match = wantToGoToFootballMatch(item);
               const capsuleId = savedByMatchId.get(item.match_id);
@@ -110,10 +111,14 @@ export function WantToGoPage() {
                       type="button"
                       size="sm"
                       variant="secondary"
+                      className="h-9 w-9 px-0 sm:w-auto sm:px-3"
+                      aria-label={capsuleId ? 'Ver Capsule' : 'Crear Capsule'}
                       onClick={() => openCapsuleOrCreate(item.match_id)}
                     >
-                      <Ticket className="mr-1.5 h-4 w-4" aria-hidden />
-                      {capsuleId ? 'Ver Capsule' : 'Crear Capsule'}
+                      <Ticket className="h-4 w-4 sm:mr-1.5" aria-hidden />
+                      <span className="sr-only sm:not-sr-only">
+                        {capsuleId ? 'Ver Capsule' : 'Crear Capsule'}
+                      </span>
                     </Button>
                     <Button
                       type="button"

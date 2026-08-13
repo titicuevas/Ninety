@@ -278,7 +278,7 @@ export function NotificationsPage() {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-8">
         <header
           className="flex flex-wrap items-center justify-between gap-3"
           aria-labelledby="notifications-heading"
@@ -297,7 +297,7 @@ export function NotificationsPage() {
             ) : null}
           </div>
           <div
-            className="flex flex-wrap items-center gap-2"
+            className="flex flex-wrap items-center gap-1.5 sm:gap-2"
             role="group"
             aria-label="Acciones de notificaciones"
           >
@@ -305,6 +305,7 @@ export function NotificationsPage() {
               <Button
                 variant="ghost"
                 size="sm"
+                className="px-2.5 text-xs sm:px-3 sm:text-sm"
                 onClick={() => markAll.mutate()}
                 disabled={markAll.isPending}
               >
@@ -315,6 +316,7 @@ export function NotificationsPage() {
               <Button
                 variant="ghost"
                 size="sm"
+                className="px-2.5 text-xs sm:px-3 sm:text-sm"
                 onClick={() => setClearOpen(true)}
                 loading={clearRead.isPending}
               >

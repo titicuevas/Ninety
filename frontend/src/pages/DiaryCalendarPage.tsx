@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CalendarDays, ChevronLeft, ChevronRight, Ticket } from 'lucide-react';
-import { CapsuleListCard } from '@/components/CapsuleListCard';
+import { CapsuleListCard, capsuleCardListClass } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
 import { NinetyLoader } from '@/components/NinetyLoader';
@@ -80,7 +80,7 @@ export function DiaryCalendarPage() {
 
   return (
     <Layout>
-      <div className="mx-auto max-w-2xl space-y-8">
+      <div className="mx-auto max-w-3xl space-y-5 sm:space-y-8">
         <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Diario</p>
@@ -92,7 +92,7 @@ export function DiaryCalendarPage() {
               públicas.
             </p>
           </div>
-          <div className="flex flex-col gap-2 sm:items-end">
+          <div className="flex shrink-0 items-center gap-2 sm:flex-col sm:items-end">
             {profile?.username ? (
               <ShareDiaryMonthButton
                 username={profile.username}
@@ -103,10 +103,10 @@ export function DiaryCalendarPage() {
                 displayName={profile.display_name}
               />
             ) : null}
-            <Button asChild variant="secondary" className="shrink-0">
+            <Button asChild variant="secondary" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
               <Link to="/capsules">
-                <Ticket className="mr-1.5 h-4 w-4" aria-hidden />
-                Mis Capsules
+                <Ticket className="h-4 w-4 sm:mr-1.5" aria-hidden />
+                <span className="sr-only sm:not-sr-only">Mis Capsules</span>
               </Link>
             </Button>
           </div>
@@ -237,7 +237,7 @@ export function DiaryCalendarPage() {
                 {dayCapsules.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No hay Capsules este día.</p>
                 ) : (
-                  <ul className="space-y-3">
+                  <ul className={capsuleCardListClass}>
                     {dayCapsules.map((capsule) => (
                       <li key={capsule.id}>
                         <CapsuleListCard capsule={capsule} showWatchedDate />
