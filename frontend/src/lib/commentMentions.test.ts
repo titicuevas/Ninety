@@ -21,17 +21,17 @@ describe('extractMentionUsernames', () => {
 describe('splitCommentMentions', () => {
   it('enlaza menciones y conserva texto', () => {
     assert.deepEqual(splitCommentMentions('Hola @Ana!'), [
-      { type: 'text', value: 'Hola ' },
-      { type: 'mention', username: 'ana', raw: 'Ana' },
-      { type: 'text', value: '!' },
+      { type: 'text', value: 'Hola ', start: 0 },
+      { type: 'mention', username: 'ana', raw: 'Ana', start: 5 },
+      { type: 'text', value: '!', start: 9 },
     ]);
   });
 
   it('no enlaza auto-username', () => {
     assert.deepEqual(splitCommentMentions('x @user_abcd1234 y'), [
-      { type: 'text', value: 'x ' },
-      { type: 'text', value: '@user_abcd1234' },
-      { type: 'text', value: ' y' },
+      { type: 'text', value: 'x ', start: 0 },
+      { type: 'text', value: '@user_abcd1234', start: 2 },
+      { type: 'text', value: ' y', start: 16 },
     ]);
   });
 });

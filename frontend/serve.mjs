@@ -291,10 +291,10 @@ async function ogForCompare(username) {
   });
 }
 
+const diaryMonthFormatter = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' });
+
 function formatDiaryMonthTitle(year, month) {
-  const raw = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(
-    new Date(year, month - 1, 1),
-  );
+  const raw = diaryMonthFormatter.format(new Date(year, month - 1, 1));
   return raw.charAt(0).toUpperCase() + raw.slice(1);
 }
 

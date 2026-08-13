@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { Bell, BellOff } from 'lucide-react';
 import { useToggleMuteUser } from '@/hooks/useMuteUser';
 import { muteUserButtonLabel } from '@/lib/muteUser';
@@ -19,11 +19,9 @@ export function MuteUserButton({
   size = 'default',
 }: MuteUserButtonProps) {
   const toggle = useToggleMuteUser(username);
-  const [muted, setMuted] = useState(() => mutedByMe);
-
-  useEffect(() => {
-    setMuted(mutedByMe);
-  }, [mutedByMe, username]);
+  const propKey = `${username}:${mutedByMe ? 1 : 0}`;
+  const [optimistic, setOptimistic] = useState<{ key: string; value: boolean } | null>(null);
+  const muted = optimistic?.key === propKey ? optimistic.value : mutedByMe;
 
   const muting = toggle.isPending && toggle.variables?.muted === false;
   const unmuting = toggle.isPending && toggle.variables?.muted === true;
@@ -35,11 +33,11 @@ export function MuteUserButton({
     event.preventDefault();
     event.stopPropagation();
     const wasMuted = muted;
-    setMuted(!wasMuted);
+    setOptimistic({ key: propKey, value: !wasMuted });
     toggle.mutate(
       { muted: wasMuted },
       {
-        onError: () => setMuted(wasMuted),
+        onError: () => setOptimistic(null),
       },
     );
   };

@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type FormEvent, type MouseEvent } from 'react';
+import { useId, useState, type FormEvent, type MouseEvent } from 'react';
 import { Flag } from 'lucide-react';
 import { FormField } from '@/components/ui/form-field';
 import { Modal } from '@/components/ui/modal';
@@ -25,49 +25,38 @@ type ReportContentButtonProps = {
   size?: 'default' | 'compact' | 'icon';
 };
 
-export function ReportContentButton({
+type ReportContentFormProps = {
+  targetType: ContentReportTargetType;
+  targetId: string;
+  username?: string;
+  open: boolean;
+  onClose: () => void;
+};
+
+function ReportContentForm({
   targetType,
   targetId,
   username,
-  className,
-  size = 'default',
-}: ReportContentButtonProps) {
-  const [open, setOpen] = useState(false);
+  open,
+  onClose,
+}: ReportContentFormProps) {
   const [reason, setReason] = useState<ContentReportReason | ''>('');
   const [note, setNote] = useState('');
-  const [localReported, setLocalReported] = useState(false);
   const reasonFieldId = useId();
   const noteFieldId = useId();
 
-  const status = useReportStatus(targetType, targetId, true);
   const createReport = useCreateContentReport();
-
-  const reported = localReported || !!status.data?.reported;
   const reporting = createReport.isPending;
-  const label = reportContentButtonLabel({ reported, reporting });
-
-  useEffect(() => {
-    setLocalReported(false);
-    setReason('');
-    setNote('');
-  }, [targetType, targetId]);
 
   const close = () => {
     dismissModal({
       busy: reporting,
       onClose: () => {
-        setOpen(false);
+        onClose();
         setReason('');
         setNote('');
       },
     });
-  };
-
-  const openModal = (event: MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (reported || reporting) return;
-    setOpen(true);
   };
 
   const onSubmit = (event: FormEvent) => {
@@ -84,8 +73,7 @@ export function ReportContentButton({
       },
       {
         onSuccess: () => {
-          setLocalReported(true);
-          setOpen(false);
+          onClose();
           setReason('');
           setNote('');
         },
@@ -94,11 +82,98 @@ export function ReportContentButton({
   };
 
   return (
+    <Modal open={open} title="Reportar" onClose={close}>
+      <form onSubmit={onSubmit} className="flex flex-col gap-4 overflow-y-auto px-4 py-4 sm:px-5">
+        <p className="text-sm text-muted-foreground">
+          Cuéntanos qué ocurre. El reporte es confidencial y ayuda a mantener Ninety seguro.
+        </p>
+
+        <FormField label="Motivo" hint="Obligatorio">
+          <select
+            id={reasonFieldId}
+            value={reason}
+            onChange={(e) =>
+              setReason(isContentReportReason(e.target.value) ? e.target.value : '')
+            }
+            required
+            className={cn(
+              'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm',
+              'ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            )}
+            data-testid="report-reason-select"
+          >
+            <option value="" disabled>
+              Elige un motivo
+            </option>
+            {CONTENT_REPORT_REASONS.map((value) => (
+              <option key={value} value={value}>
+                {CONTENT_REPORT_REASON_LABELS[value]}
+              </option>
+            ))}
+          </select>
+        </FormField>
+
+        <FormField label="Detalles (opcional)" hint="Máx. 500 caracteres">
+          <Textarea
+            id={noteFieldId}
+            value={note}
+            onChange={(e) => setNote(e.target.value.slice(0, 500))}
+            rows={3}
+            maxLength={500}
+            placeholder="Contexto adicional para moderación"
+            data-testid="report-note-input"
+          />
+        </FormField>
+
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={close}
+            className="inline-flex h-10 items-center justify-center rounded-lg border border-border bg-secondary px-4 text-sm font-medium hover:bg-secondary/80"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={!reason || reporting}
+            data-testid="report-submit-button"
+            className="inline-flex h-10 items-center justify-center rounded-lg bg-destructive px-4 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-70"
+          >
+            {reporting ? 'Enviando…' : 'Enviar reporte'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+export function ReportContentButton({
+  targetType,
+  targetId,
+  username,
+  className,
+  size = 'default',
+}: ReportContentButtonProps) {
+  const [open, setOpen] = useState(false);
+
+  const status = useReportStatus(targetType, targetId, true);
+
+  const reported = !!status.data?.reported;
+  const label = reportContentButtonLabel({ reported, reporting: false });
+
+  const openModal = (event: MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (reported) return;
+    setOpen(true);
+  };
+
+  return (
     <>
       <button
         type="button"
         onClick={openModal}
-        disabled={reported || reporting || status.isLoading}
+        disabled={reported || status.isLoading}
         aria-label={label}
         title={label}
         data-testid="report-content-button"
@@ -119,68 +194,14 @@ export function ReportContentButton({
         {size === 'icon' ? <span className="sr-only">{label}</span> : label}
       </button>
 
-      <Modal open={open} title="Reportar" onClose={close}>
-        <form onSubmit={onSubmit} className="flex flex-col gap-4 overflow-y-auto px-4 py-4 sm:px-5">
-          <p className="text-sm text-muted-foreground">
-            Cuéntanos qué ocurre. El reporte es confidencial y ayuda a mantener Ninety seguro.
-          </p>
-
-          <FormField label="Motivo" hint="Obligatorio">
-            <select
-              id={reasonFieldId}
-              value={reason}
-              onChange={(e) =>
-                setReason(isContentReportReason(e.target.value) ? e.target.value : '')
-              }
-              required
-              className={cn(
-                'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm',
-                'ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-              )}
-              data-testid="report-reason-select"
-            >
-              <option value="" disabled>
-                Elige un motivo
-              </option>
-              {CONTENT_REPORT_REASONS.map((value) => (
-                <option key={value} value={value}>
-                  {CONTENT_REPORT_REASON_LABELS[value]}
-                </option>
-              ))}
-            </select>
-          </FormField>
-
-          <FormField label="Detalles (opcional)" hint="Máx. 500 caracteres">
-            <Textarea
-              id={noteFieldId}
-              value={note}
-              onChange={(e) => setNote(e.target.value.slice(0, 500))}
-              rows={3}
-              maxLength={500}
-              placeholder="Contexto adicional para moderación"
-              data-testid="report-note-input"
-            />
-          </FormField>
-
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <button
-              type="button"
-              onClick={close}
-              className="inline-flex h-10 items-center justify-center rounded-lg border border-border bg-secondary px-4 text-sm font-medium hover:bg-secondary/80"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={!reason || reporting}
-              data-testid="report-submit-button"
-              className="inline-flex h-10 items-center justify-center rounded-lg bg-destructive px-4 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-70"
-            >
-              {reporting ? 'Enviando…' : 'Enviar reporte'}
-            </button>
-          </div>
-        </form>
-      </Modal>
+      <ReportContentForm
+        key={`${targetType}:${targetId}`}
+        targetType={targetType}
+        targetId={targetId}
+        username={username}
+        open={open}
+        onClose={() => setOpen(false)}
+      />
     </>
   );
 }

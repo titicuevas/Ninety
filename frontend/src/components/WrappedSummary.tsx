@@ -145,6 +145,288 @@ interface WrappedSummaryProps {
   username?: string | null;
 }
 
+function WrappedHeroSection({
+  name,
+  stats,
+  scope,
+  badgeLabel,
+  copied,
+  manualText,
+  onCopySummary,
+  onShare,
+}: {
+  name: string;
+  stats: CapsuleStats;
+  scope: WrappedScope;
+  badgeLabel: string;
+  copied: boolean;
+  manualText: string | null;
+  onCopySummary: () => void;
+  onShare: () => void;
+}) {
+  return (
+    <section
+      className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-emerald-600/30 via-emerald-900/20 to-background p-6 sm:p-8"
+      aria-labelledby="wrapped-heading"
+    >
+      <div
+        className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-primary/20 blur-3xl"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute -bottom-12 -left-8 h-32 w-32 rounded-full bg-emerald-400/10 blur-3xl"
+        aria-hidden="true"
+      />
+
+      <div className="relative">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/20 px-3 py-1 text-xs font-medium text-emerald-100">
+            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+            {badgeLabel}
+          </p>
+          <div className="flex max-w-full flex-col items-end gap-1">
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="bg-black/30 text-emerald-50 hover:bg-black/45"
+                onClick={onCopySummary}
+                aria-label={copied ? 'Resumen copiado' : 'Copiar resumen del Wrapped'}
+                data-testid="copy-wrapped-summary"
+              >
+                {copied ? (
+                  <Check className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                ) : (
+                  <Copy className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                )}
+                {copied ? 'Copiado' : 'Copiar texto'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-white/20 bg-transparent text-emerald-50 hover:bg-black/30"
+                onClick={onShare}
+                aria-label="Compartir Wrapped"
+              >
+                <Share2 className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                Compartir
+              </Button>
+            </div>
+            {manualText ? (
+              <label className="block w-full max-w-xs text-left">
+                <span className="sr-only">Copia tu Wrapped</span>
+                <textarea
+                  readOnly
+                  rows={4}
+                  value={manualText}
+                  onFocus={(e) => e.currentTarget.select()}
+                  className="w-full resize-none rounded-md border border-white/20 bg-black/40 px-2 py-1.5 text-xs text-emerald-50"
+                  aria-label="Texto del Wrapped para copiar"
+                />
+              </label>
+            ) : null}
+          </div>
+        </div>
+
+        <h2 id="wrapped-heading" className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
+          {name}, esto es tu fútbol
+          {scope !== 'all' ? ` en ${scope}` : ''}
+        </h2>
+        <p className="mt-2 max-w-md text-sm text-white/75 sm:text-base">
+          {scope === 'all'
+            ? 'Un vistazo a los partidos que has vivido y lo que dicen de ti como aficionado.'
+            : `Tu resumen anual: partidos, valoraciones y highlights de ${scope}.`}
+        </p>
+
+        {stats.photoCollageUrls.length > 0 ? (
+          <WrappedPhotoCollage
+            urls={stats.photoCollageUrls}
+            className="mt-6 motion-reveal"
+            label={`Fotos de tus partidos${scope !== 'all' ? ` en ${scope}` : ''}`}
+          />
+        ) : null}
+
+        <div className="mt-8 space-y-4">
+          <div>
+            <p className="text-5xl font-bold tabular-nums tracking-tight sm:text-6xl">
+              {stats.totalMatches}
+            </p>
+            <p className="mt-1 text-sm font-medium text-emerald-100/90">
+              {stats.totalMatches === 1 ? 'partido' : 'partidos'}
+              {scope !== 'all' ? ` en ${scope}` : ' en tu diario'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
+            <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
+              <p className="text-2xl font-bold tabular-nums">{formatRating(stats.averageRating)}</p>
+              <p className="text-xs text-white/70">media ⭐</p>
+            </div>
+            <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
+              <p className="text-2xl font-bold tabular-nums">{stats.notesCount}</p>
+              <p className="text-xs text-white/70">{stats.notesCount === 1 ? 'nota' : 'notas'}</p>
+            </div>
+            {scope !== 'all' ? (
+              <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
+                <p className="text-2xl font-bold tabular-nums">{stats.activeMonths}</p>
+                <p className="text-xs text-white/70">
+                  {stats.activeMonths === 1 ? 'mes activo' : 'meses activos'}
+                </p>
+              </div>
+            ) : null}
+            {stats.photosCount > 0 ? (
+              <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
+                <p className="text-2xl font-bold tabular-nums">{stats.photosCount}</p>
+                <p className="text-xs text-white/70">fotos</p>
+              </div>
+            ) : null}
+            {stats.stadiumVisits > 0 ? (
+              <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
+                <p className="text-2xl font-bold tabular-nums">{stats.stadiumVisits}</p>
+                <p className="text-xs text-white/70">
+                  {stats.stadiumVisits === 1 ? 'en estadio' : 'en estadio'}
+                </p>
+              </div>
+            ) : null}
+            {stats.fiveStarCount > 0 ? (
+              <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
+                <p className="text-2xl font-bold tabular-nums">{stats.fiveStarCount}</p>
+                <p className="text-xs text-white/70">con 5★</p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function WrappedHighlightsSection({ stats, scope }: { stats: CapsuleStats; scope: WrappedScope }) {
+  const bestScore = stats.bestRated
+    ? formatCapsuleScore(stats.bestRated.home_score, stats.bestRated.away_score)
+    : null;
+
+  return (
+    <>
+      <section className="grid gap-3 sm:grid-cols-2">
+        {stats.topTeam ? (
+          <HighlightCard
+            label="Equipo top"
+            title={stats.topTeam.name}
+            subtitle={`Aparece en ${stats.topTeam.count} ${stats.topTeam.count === 1 ? 'partido' : 'partidos'}`}
+            icon={Users}
+          />
+        ) : null}
+        {stats.topCompetition ? (
+          <HighlightCard
+            label="Competición favorita"
+            title={stats.topCompetition.name}
+            subtitle={`${stats.topCompetition.count} ${stats.topCompetition.count === 1 ? 'partido' : 'partidos'}`}
+            icon={Trophy}
+          />
+        ) : null}
+        {stats.peakMonth ? (
+          <HighlightCard
+            label="Mes pico"
+            title={MONTH_NAMES_ES[stats.peakMonth.month - 1]}
+            subtitle={`${stats.peakMonth.count} ${stats.peakMonth.count === 1 ? 'partido' : 'partidos'}`}
+            icon={Mountain}
+          />
+        ) : null}
+        {stats.topWatchContext ? (
+          <HighlightCard
+            label="Dónde lo ves más"
+            title={stats.topWatchContext.name}
+            subtitle={`${stats.topWatchContext.count} ${stats.topWatchContext.count === 1 ? 'partido' : 'partidos'}`}
+            icon={MapPin}
+          />
+        ) : null}
+        {stats.stadiumVisits > 0 ? (
+          <HighlightCard
+            label="En el estadio"
+            title={`${stats.stadiumVisits} partido${stats.stadiumVisits === 1 ? '' : 's'}`}
+            subtitle="Vividos desde la grada"
+            icon={Landmark}
+          />
+        ) : null}
+        {stats.firstWatched ? (
+          <HighlightCard
+            label={scope === 'all' ? 'Primero del diario' : 'Primero del año'}
+            title={`${stats.firstWatched.home_team_name} vs ${stats.firstWatched.away_team_name}`}
+            subtitle={formatWatchedDate(stats.firstWatched.watched_at)}
+            icon={Sparkles}
+          />
+        ) : null}
+        {stats.lastWatched ? (
+          <HighlightCard
+            label={scope === 'all' ? 'Último visto' : 'Último del año'}
+            title={`${stats.lastWatched.home_team_name} vs ${stats.lastWatched.away_team_name}`}
+            subtitle={formatWatchedDate(stats.lastWatched.watched_at)}
+            icon={Calendar}
+            className="sm:col-span-2"
+          />
+        ) : null}
+        {stats.photosCount > 0 ? (
+          <HighlightCard
+            label="Recuerdos en foto"
+            title={`${stats.photosCount} foto${stats.photosCount === 1 ? '' : 's'}`}
+            subtitle="Guardadas en tus Capsules"
+            icon={Camera}
+            className="sm:col-span-2"
+          />
+        ) : null}
+      </section>
+
+      {stats.bestRated ? (
+        <Card className="overflow-hidden border-primary/25 bg-gradient-to-br from-card to-emerald-950/20">
+          <CardContent className="p-0">
+            <div className="border-b border-border/80 px-5 py-4">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
+                <Star className="h-3.5 w-3.5 fill-primary" aria-hidden="true" />
+                Mejor valorado
+              </div>
+              <p className="mt-2 text-lg font-semibold">
+                {stats.bestRated.home_team_name} vs {stats.bestRated.away_team_name}
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                {bestScore ? <span className="text-sm font-medium tabular-nums">{bestScore}</span> : null}
+                <StarRating rating={stats.bestRated.rating ?? 0} />
+                {stats.bestRated.competition_name ? (
+                  <span className="text-xs text-muted-foreground">{stats.bestRated.competition_name}</span>
+                ) : null}
+              </div>
+            </div>
+            <div className="px-5 pb-5 pt-4">
+              <CapsulePhotoGallery
+                capsule={stats.bestRated}
+                alt={`Mejor partido: ${stats.bestRated.home_team_name} vs ${stats.bestRated.away_team_name}`}
+              />
+              {stats.bestRated.note ? (
+                <p className="mt-3 text-sm italic text-muted-foreground">"{stats.bestRated.note}"</p>
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {stats.longestStreak > 1 ? (
+        <HighlightCard
+          label="Racha más larga"
+          title={`${stats.longestStreak} días seguidos`}
+          subtitle="Con al menos un partido cada día"
+          icon={Flame}
+        />
+      ) : null}
+
+      <TopTeamsCard teams={stats.topTeams} />
+      <TopCompetitionsCard competitions={stats.topCompetitions} />
+      <MatchesByMonthChart matchesByMonth={stats.matchesByMonth} peakMonth={stats.peakMonth} />
+    </>
+  );
+}
+
 export function WrappedSummary({
   name,
   stats,
@@ -155,9 +437,6 @@ export function WrappedSummary({
 }: WrappedSummaryProps) {
   const [copied, setCopied] = useState(false);
   const [manualText, setManualText] = useState<string | null>(null);
-  const bestScore = stats.bestRated
-    ? formatCapsuleScore(stats.bestRated.home_score, stats.bestRated.away_score)
-    : null;
   const periodLabel = scope === 'all' ? 'Todo tu diario' : `Año ${scope}`;
   const badgeLabel = scope === 'all' ? 'Tu Wrapped · completo' : `Tu Wrapped · ${scope}`;
   const profileUrl =
@@ -243,141 +522,16 @@ export function WrappedSummary({
         </div>
       ) : null}
 
-      <section
-        className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-emerald-600/30 via-emerald-900/20 to-background p-6 sm:p-8"
-        aria-labelledby="wrapped-heading"
-      >
-        <div
-          className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-primary/20 blur-3xl"
-          aria-hidden="true"
-        />
-        <div
-          className="pointer-events-none absolute -bottom-12 -left-8 h-32 w-32 rounded-full bg-emerald-400/10 blur-3xl"
-          aria-hidden="true"
-        />
-
-        <div className="relative">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/20 px-3 py-1 text-xs font-medium text-emerald-100">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-              {badgeLabel}
-            </p>
-            <div className="flex max-w-full flex-col items-end gap-1">
-              <div className="flex flex-wrap justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  className="bg-black/30 text-emerald-50 hover:bg-black/45"
-                  onClick={() => void copySummary()}
-                  aria-label={copied ? 'Resumen copiado' : 'Copiar resumen del Wrapped'}
-                  data-testid="copy-wrapped-summary"
-                >
-                  {copied ? (
-                    <Check className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                  ) : (
-                    <Copy className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                  )}
-                  {copied ? 'Copiado' : 'Copiar texto'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="border-white/20 bg-transparent text-emerald-50 hover:bg-black/30"
-                  onClick={() => void share()}
-                  aria-label="Compartir Wrapped"
-                >
-                  <Share2 className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                  Compartir
-                </Button>
-              </div>
-              {manualText ? (
-                <label className="block w-full max-w-xs text-left">
-                  <span className="sr-only">Copia tu Wrapped</span>
-                  <textarea
-                    readOnly
-                    rows={4}
-                    value={manualText}
-                    onFocus={(e) => e.currentTarget.select()}
-                    className="w-full resize-none rounded-md border border-white/20 bg-black/40 px-2 py-1.5 text-xs text-emerald-50"
-                    aria-label="Texto del Wrapped para copiar"
-                  />
-                </label>
-              ) : null}
-            </div>
-          </div>
-
-          <h2 id="wrapped-heading" className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
-            {name}, esto es tu fútbol
-            {scope !== 'all' ? ` en ${scope}` : ''}
-          </h2>
-          <p className="mt-2 max-w-md text-sm text-white/75 sm:text-base">
-            {scope === 'all'
-              ? 'Un vistazo a los partidos que has vivido y lo que dicen de ti como aficionado.'
-              : `Tu resumen anual: partidos, valoraciones y highlights de ${scope}.`}
-          </p>
-
-          {stats.photoCollageUrls.length > 0 ? (
-            <WrappedPhotoCollage
-              urls={stats.photoCollageUrls}
-              className="mt-6 motion-reveal"
-              label={`Fotos de tus partidos${scope !== 'all' ? ` en ${scope}` : ''}`}
-            />
-          ) : null}
-
-          <div className="mt-8 space-y-4">
-            <div>
-              <p className="text-5xl font-bold tabular-nums tracking-tight sm:text-6xl">
-                {stats.totalMatches}
-              </p>
-              <p className="mt-1 text-sm font-medium text-emerald-100/90">
-                {stats.totalMatches === 1 ? 'partido' : 'partidos'}
-                {scope !== 'all' ? ` en ${scope}` : ' en tu diario'}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
-              <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
-                <p className="text-2xl font-bold tabular-nums">{formatRating(stats.averageRating)}</p>
-                <p className="text-xs text-white/70">media ⭐</p>
-              </div>
-              <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
-                <p className="text-2xl font-bold tabular-nums">{stats.notesCount}</p>
-                <p className="text-xs text-white/70">{stats.notesCount === 1 ? 'nota' : 'notas'}</p>
-              </div>
-              {scope !== 'all' ? (
-                <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
-                  <p className="text-2xl font-bold tabular-nums">{stats.activeMonths}</p>
-                  <p className="text-xs text-white/70">
-                    {stats.activeMonths === 1 ? 'mes activo' : 'meses activos'}
-                  </p>
-                </div>
-              ) : null}
-              {stats.photosCount > 0 ? (
-                <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
-                  <p className="text-2xl font-bold tabular-nums">{stats.photosCount}</p>
-                  <p className="text-xs text-white/70">fotos</p>
-                </div>
-              ) : null}
-              {stats.stadiumVisits > 0 ? (
-                <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
-                  <p className="text-2xl font-bold tabular-nums">{stats.stadiumVisits}</p>
-                  <p className="text-xs text-white/70">
-                    {stats.stadiumVisits === 1 ? 'en estadio' : 'en estadio'}
-                  </p>
-                </div>
-              ) : null}
-              {stats.fiveStarCount > 0 ? (
-                <div className="rounded-xl bg-black/25 px-4 py-3 backdrop-blur-sm">
-                  <p className="text-2xl font-bold tabular-nums">{stats.fiveStarCount}</p>
-                  <p className="text-xs text-white/70">con 5★</p>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      </section>
+      <WrappedHeroSection
+        name={name}
+        stats={stats}
+        scope={scope}
+        badgeLabel={badgeLabel}
+        copied={copied}
+        manualText={manualText}
+        onCopySummary={() => void copySummary()}
+        onShare={() => void share()}
+      />
 
       {stats.totalMatches === 0 ? (
         <EmptyState
@@ -390,119 +544,7 @@ export function WrappedSummary({
         </EmptyState>
       ) : (
         <>
-          <section className="grid gap-3 sm:grid-cols-2">
-            {stats.topTeam ? (
-              <HighlightCard
-                label="Equipo top"
-                title={stats.topTeam.name}
-                subtitle={`Aparece en ${stats.topTeam.count} ${stats.topTeam.count === 1 ? 'partido' : 'partidos'}`}
-                icon={Users}
-              />
-            ) : null}
-            {stats.topCompetition ? (
-              <HighlightCard
-                label="Competición favorita"
-                title={stats.topCompetition.name}
-                subtitle={`${stats.topCompetition.count} ${stats.topCompetition.count === 1 ? 'partido' : 'partidos'}`}
-                icon={Trophy}
-              />
-            ) : null}
-            {stats.peakMonth ? (
-              <HighlightCard
-                label="Mes pico"
-                title={MONTH_NAMES_ES[stats.peakMonth.month - 1]}
-                subtitle={`${stats.peakMonth.count} ${stats.peakMonth.count === 1 ? 'partido' : 'partidos'}`}
-                icon={Mountain}
-              />
-            ) : null}
-            {stats.topWatchContext ? (
-              <HighlightCard
-                label="Dónde lo ves más"
-                title={stats.topWatchContext.name}
-                subtitle={`${stats.topWatchContext.count} ${stats.topWatchContext.count === 1 ? 'partido' : 'partidos'}`}
-                icon={MapPin}
-              />
-            ) : null}
-            {stats.stadiumVisits > 0 ? (
-              <HighlightCard
-                label="En el estadio"
-                title={`${stats.stadiumVisits} partido${stats.stadiumVisits === 1 ? '' : 's'}`}
-                subtitle="Vividos desde la grada"
-                icon={Landmark}
-              />
-            ) : null}
-            {stats.firstWatched ? (
-              <HighlightCard
-                label={scope === 'all' ? 'Primero del diario' : 'Primero del año'}
-                title={`${stats.firstWatched.home_team_name} vs ${stats.firstWatched.away_team_name}`}
-                subtitle={formatWatchedDate(stats.firstWatched.watched_at)}
-                icon={Sparkles}
-              />
-            ) : null}
-            {stats.lastWatched ? (
-              <HighlightCard
-                label={scope === 'all' ? 'Último visto' : 'Último del año'}
-                title={`${stats.lastWatched.home_team_name} vs ${stats.lastWatched.away_team_name}`}
-                subtitle={formatWatchedDate(stats.lastWatched.watched_at)}
-                icon={Calendar}
-                className="sm:col-span-2"
-              />
-            ) : null}
-            {stats.photosCount > 0 ? (
-              <HighlightCard
-                label="Recuerdos en foto"
-                title={`${stats.photosCount} foto${stats.photosCount === 1 ? '' : 's'}`}
-                subtitle="Guardadas en tus Capsules"
-                icon={Camera}
-                className="sm:col-span-2"
-              />
-            ) : null}
-          </section>
-
-          {stats.bestRated ? (
-            <Card className="overflow-hidden border-primary/25 bg-gradient-to-br from-card to-emerald-950/20">
-              <CardContent className="p-0">
-                <div className="border-b border-border/80 px-5 py-4">
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
-                    <Star className="h-3.5 w-3.5 fill-primary" aria-hidden="true" />
-                    Mejor valorado
-                  </div>
-                  <p className="mt-2 text-lg font-semibold">
-                    {stats.bestRated.home_team_name} vs {stats.bestRated.away_team_name}
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-3">
-                    {bestScore ? <span className="text-sm font-medium tabular-nums">{bestScore}</span> : null}
-                    <StarRating rating={stats.bestRated.rating ?? 0} />
-                    {stats.bestRated.competition_name ? (
-                      <span className="text-xs text-muted-foreground">{stats.bestRated.competition_name}</span>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="px-5 pb-5 pt-4">
-                  <CapsulePhotoGallery
-                    capsule={stats.bestRated}
-                    alt={`Mejor partido: ${stats.bestRated.home_team_name} vs ${stats.bestRated.away_team_name}`}
-                  />
-                  {stats.bestRated.note ? (
-                    <p className="mt-3 text-sm italic text-muted-foreground">"{stats.bestRated.note}"</p>
-                  ) : null}
-                </div>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          {stats.longestStreak > 1 ? (
-            <HighlightCard
-              label="Racha más larga"
-              title={`${stats.longestStreak} días seguidos`}
-              subtitle="Con al menos un partido cada día"
-              icon={Flame}
-            />
-          ) : null}
-
-          <TopTeamsCard teams={stats.topTeams} />
-          <TopCompetitionsCard competitions={stats.topCompetitions} />
-          <MatchesByMonthChart matchesByMonth={stats.matchesByMonth} peakMonth={stats.peakMonth} />
+          <WrappedHighlightsSection stats={stats} scope={scope} />
 
           {stats.recentCapsules.length > 0 ? (
             <Card>

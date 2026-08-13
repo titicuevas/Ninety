@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import { LIKES_PAGE_SIZE, buildCollectionLikesQuery } from '@/lib/collectionLikes';
+import { buildCollectionLikesQuery } from '@/lib/collectionLikes';
 import { useAuthStore } from '@/stores/authStore';
 import type { CollectionLikesResponse } from '@/types/like';
 
@@ -23,5 +23,3 @@ export function useCollectionLikes(collectionId: string, enabled: boolean) {
     enabled: enabled && !!collectionId,
   });
 }
-
-export { LIKES_PAGE_SIZE };

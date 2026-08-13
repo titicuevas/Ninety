@@ -7,8 +7,8 @@ const USERNAME_RE = /^[a-z0-9_]{3,30}$/;
 const MENTION_IN_TEXT_RE = /(^|[^a-zA-Z0-9_])@([a-zA-Z0-9_]{3,30})\b/g;
 
 export type CommentBodyPart =
-  | { type: 'text'; value: string }
-  | { type: 'mention'; username: string; raw: string };
+  | { type: 'text'; value: string; start: number }
+  | { type: 'mention'; username: string; raw: string; start: number };
 
 /** Extrae usernames únicos (lowercase) hasta `max`. */
 export function extractMentionUsernames(
@@ -38,7 +38,7 @@ export function extractMentionUsernames(
 
 /** Parte el cuerpo en texto plano y menciones enlazables. */
 export function splitCommentMentions(body: string): CommentBodyPart[] {
-  if (!body) return [{ type: 'text', value: '' }];
+  if (!body) return [{ type: 'text', value: '', start: 0 }];
 
   const parts: CommentBodyPart[] = [];
   const re = new RegExp(MENTION_IN_TEXT_RE.source, 'g');
@@ -52,21 +52,21 @@ export function splitCommentMentions(body: string): CommentBodyPart[] {
     const atIndex = match.index + prefix.length;
 
     if (atIndex > lastIndex) {
-      parts.push({ type: 'text', value: body.slice(lastIndex, atIndex) });
+      parts.push({ type: 'text', value: body.slice(lastIndex, atIndex), start: lastIndex });
     }
 
     if (USERNAME_RE.test(username) && !isAutoUsername(username)) {
-      parts.push({ type: 'mention', username, raw });
+      parts.push({ type: 'mention', username, raw, start: atIndex });
     } else {
-      parts.push({ type: 'text', value: `@${raw}` });
+      parts.push({ type: 'text', value: `@${raw}`, start: atIndex });
     }
 
     lastIndex = match.index + match[0].length;
   }
 
   if (lastIndex < body.length) {
-    parts.push({ type: 'text', value: body.slice(lastIndex) });
+    parts.push({ type: 'text', value: body.slice(lastIndex), start: lastIndex });
   }
 
-  return parts.length > 0 ? parts : [{ type: 'text', value: body }];
+  return parts.length > 0 ? parts : [{ type: 'text', value: body, start: 0 }];
 }

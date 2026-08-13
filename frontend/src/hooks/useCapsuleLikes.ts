@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import { LIKES_PAGE_SIZE, buildCapsuleLikesQuery } from '@/lib/capsuleLikes';
+import { buildCapsuleLikesQuery } from '@/lib/capsuleLikes';
 import { useAuthStore } from '@/stores/authStore';
 import type { CapsuleLikesResponse } from '@/types/like';
 
@@ -23,5 +23,3 @@ export function useCapsuleLikes(capsuleId: string, enabled: boolean) {
     enabled: enabled && !!capsuleId,
   });
 }
-
-export { LIKES_PAGE_SIZE };

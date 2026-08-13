@@ -109,11 +109,6 @@ export function capsulesForDate(capsules: Capsule[], date: string): Capsule[] {
     });
 }
 
-export function isSameCalendarDay(a: string | null | undefined, b: string | null | undefined): boolean {
-  if (!a || !b) return false;
-  return a.slice(0, 10) === b.slice(0, 10);
-}
-
 /** Cuántas Capsules del mes son públicas (shareable). */
 export function countPublicCapsules(capsules: { is_public?: boolean | null }[]): number {
   return capsules.filter((c) => c.is_public !== false).length;

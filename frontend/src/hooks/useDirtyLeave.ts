@@ -21,7 +21,7 @@ export function useDirtyLeave({
   onAbandon,
   onLeave,
 }: UseDirtyLeaveOptions) {
-  const [leaveOpen, setLeaveOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
   const skipBlockRef = useRef(false);
 
   const blocker = useBlocker(
@@ -34,11 +34,7 @@ export function useDirtyLeave({
         currentLocation.hash !== nextLocation.hash),
   );
 
-  useEffect(() => {
-    if (blocker.state === 'blocked') {
-      setLeaveOpen(true);
-    }
-  }, [blocker.state]);
+  const leaveOpen = manualOpen || blocker.state === 'blocked';
 
   useEffect(() => {
     if (!isDirty) return;
@@ -56,7 +52,7 @@ export function useDirtyLeave({
 
   const requestLeave = () => {
     if (isDirty) {
-      setLeaveOpen(true);
+      setManualOpen(true);
       return;
     }
     onAbandon?.();
@@ -65,7 +61,7 @@ export function useDirtyLeave({
   };
 
   const confirmLeave = () => {
-    setLeaveOpen(false);
+    setManualOpen(false);
     onAbandon?.();
     if (blocker.state === 'blocked') {
       blocker.proceed();
@@ -76,7 +72,7 @@ export function useDirtyLeave({
   };
 
   const dismissLeave = () => {
-    setLeaveOpen(false);
+    setManualOpen(false);
     if (blocker.state === 'blocked') {
       blocker.reset();
     }

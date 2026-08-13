@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -61,6 +61,275 @@ function profileToFormValues(
     city: data.city ?? '',
     bio: data.bio ?? '',
   };
+}
+
+function ProfileAvatarSection({
+  avatarUrl,
+  profile,
+  userEmail,
+  avatarBusy,
+  avatarError,
+  hasCustomAvatar,
+  fileInputRef,
+  onAvatarSelected,
+  onRemoveAvatar,
+}: {
+  avatarUrl: string | null;
+  profile: Profile | undefined;
+  userEmail: string | undefined;
+  avatarBusy: boolean;
+  avatarError: string | null;
+  hasCustomAvatar: boolean;
+  fileInputRef: RefObject<HTMLInputElement | null>;
+  onAvatarSelected: (file: File | undefined) => void;
+  onRemoveAvatar: () => void;
+}) {
+  return (
+    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt=""
+          className="h-20 w-20 shrink-0 rounded-full border border-border object-cover"
+        />
+      ) : (
+        <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
+          {(profile?.display_name ?? userEmail ?? '?').slice(0, 1).toUpperCase()}
+        </span>
+      )}
+      <div className="min-w-0 flex-1 space-y-2">
+        <p className="truncate font-medium">{profile?.display_name ?? 'Aficionado'}</p>
+        <p className="truncate text-sm text-muted-foreground">{userEmail}</p>
+        <div className="flex flex-wrap gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={AVATAR_ACCEPT}
+            className="sr-only"
+            aria-label="Elegir foto de perfil"
+            onChange={(e) => void onAvatarSelected(e.target.files?.[0])}
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            loading={avatarBusy}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {hasCustomAvatar ? 'Cambiar foto' : 'Subir foto'}
+          </Button>
+          {hasCustomAvatar ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={avatarBusy}
+              onClick={() => void onRemoveAvatar()}
+            >
+              Quitar foto
+            </Button>
+          ) : null}
+        </div>
+        {avatarError ? <p className="text-xs text-destructive">{avatarError}</p> : null}
+        {profile?.username && !isAutoUsername(profile.username) ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
+              <Link to={profilePath(profile.username)}>
+                <User className="h-4 w-4 sm:mr-1.5" aria-hidden />
+                <span className="sr-only sm:not-sr-only">Perfil público</span>
+              </Link>
+            </Button>
+            <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
+              <Link to={`/u/${encodeURIComponent(profile.username)}/followers`}>
+                <Users className="h-4 w-4 sm:mr-1.5" aria-hidden />
+                <span className="sr-only sm:not-sr-only">Seguidores</span>
+              </Link>
+            </Button>
+            <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
+              <Link to={`/u/${encodeURIComponent(profile.username)}/following`}>
+                <UserPlus className="h-4 w-4 sm:mr-1.5" aria-hidden />
+                <span className="sr-only sm:not-sr-only">Siguiendo</span>
+              </Link>
+            </Button>
+            <ShareProfileButton
+              username={profile.username}
+              displayName={profile.display_name}
+              size="sm"
+              variant="outline"
+              compact
+            />
+            <ShareInviteButton
+              username={profile.username}
+              displayName={profile.display_name}
+              size="sm"
+              variant="outline"
+              compact
+            />
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Elige un username abajo para poder compartir tu perfil público.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+type ProfileEditFormProps = {
+  register: ReturnType<typeof useForm<ProfileForm>>['register'];
+  errors: ReturnType<typeof useForm<ProfileForm>>['formState']['errors'];
+  displayName: string;
+  debouncedUsername: string;
+  usernameFormatOk: boolean;
+  usernameCheck: ReturnType<typeof useUsernameAvailability>;
+  usernameTaken: boolean;
+  usernameFree: boolean;
+  isCurrentUsername: boolean;
+  favoriteTeam: string;
+  bioValue: string;
+  onApplySuggestedUsername: () => void;
+  onFavoriteTeamChange: (value: string) => void;
+  mutationError: Error | null;
+  mutationPending: boolean;
+  onSubmit: (data: ProfileForm) => void;
+  handleSubmit: ReturnType<typeof useForm<ProfileForm>>['handleSubmit'];
+};
+
+function ProfileEditForm({
+  register,
+  errors,
+  displayName,
+  debouncedUsername,
+  usernameFormatOk,
+  usernameCheck,
+  usernameTaken,
+  usernameFree,
+  isCurrentUsername,
+  favoriteTeam,
+  bioValue,
+  onApplySuggestedUsername,
+  onFavoriteTeamChange,
+  mutationError,
+  mutationPending,
+  onSubmit,
+  handleSubmit,
+}: ProfileEditFormProps) {
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <FormField label="Nombre" error={errors.display_name?.message}>
+        <Input placeholder="Tu nombre o apodo" {...register('display_name')} />
+      </FormField>
+
+      <FormField
+        label="Username"
+        error={
+          errors.username?.message ??
+          (usernameTaken ? 'Ese username ya está en uso' : undefined)
+        }
+        hint="Público. Solo minúsculas, números y guiones bajos."
+      >
+        <div className="flex gap-2">
+          <Input
+            placeholder="henry_madridista"
+            className="flex-1"
+            autoComplete="username"
+            aria-describedby="username-availability"
+            {...register('username')}
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            className="shrink-0"
+            onClick={onApplySuggestedUsername}
+            disabled={!suggestUsername(displayName)}
+          >
+            Sugerir
+          </Button>
+        </div>
+      </FormField>
+      <p
+        id="username-availability"
+        className={cn(
+          '-mt-2 flex min-h-5 items-center gap-1.5 text-xs',
+          usernameTaken && 'text-destructive',
+          usernameFree && 'text-primary',
+          !usernameTaken && !usernameFree && 'text-muted-foreground',
+        )}
+        role="status"
+        aria-live="polite"
+      >
+        {!debouncedUsername ? (
+          <span>Elige un username único</span>
+        ) : !usernameFormatOk ? (
+          <span>Mínimo 3 caracteres: a-z, 0-9 y _</span>
+        ) : usernameCheck.isFetching ? (
+          <>
+            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+            Comprobando disponibilidad…
+          </>
+        ) : usernameTaken ? (
+          <>
+            <X className="h-3.5 w-3.5" aria-hidden />
+            No disponible
+          </>
+        ) : usernameFree ? (
+          <>
+            <Check className="h-3.5 w-3.5" aria-hidden />
+            {isCurrentUsername || usernameCheck.data?.own
+              ? 'Es tu username actual'
+              : 'Disponible'}
+          </>
+        ) : usernameCheck.isError ? (
+          <span>No se pudo comprobar ahora</span>
+        ) : null}
+      </p>
+
+      <FormField label="Equipo favorito" hint="Escribe y elige una sugerencia, o deja el nombre libre.">
+        <FavoriteTeamField
+          value={favoriteTeam}
+          onChange={onFavoriteTeamChange}
+          placeholder="Ej: FC Barcelona"
+        />
+      </FormField>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField label="País">
+          <Input placeholder="España" {...register('country')} />
+        </FormField>
+        <FormField label="Ciudad">
+          <Input placeholder="Barcelona" {...register('city')} />
+        </FormField>
+      </div>
+
+      <FormField
+        label="Bio"
+        error={errors.bio?.message}
+        hint={`${bioValue.length}/280 · Opcional, visible en tu perfil público`}
+      >
+        <Textarea
+          rows={3}
+          className="min-h-24 resize-y"
+          placeholder="Aficionado, estadio o cómo vives el fútbol…"
+          maxLength={280}
+          {...register('bio')}
+        />
+      </FormField>
+
+      {mutationError ? (
+        <p className="text-sm text-destructive">{mutationError.message}</p>
+      ) : null}
+
+      <Button
+        type="submit"
+        loading={mutationPending}
+        className="w-full"
+        disabled={usernameTaken || (usernameFormatOk && usernameCheck.isFetching)}
+      >
+        Guardar perfil
+      </Button>
+    </form>
+  );
 }
 
 export function ProfilePage() {
@@ -237,210 +506,39 @@ export function ProfilePage() {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt=""
-                className="h-20 w-20 shrink-0 rounded-full border border-border object-cover"
-              />
-            ) : (
-              <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
-                {(profile?.display_name ?? user?.email ?? '?').slice(0, 1).toUpperCase()}
-              </span>
-            )}
-            <div className="min-w-0 flex-1 space-y-2">
-              <p className="truncate font-medium">{profile?.display_name ?? 'Aficionado'}</p>
-              <p className="truncate text-sm text-muted-foreground">{user?.email}</p>
-              <div className="flex flex-wrap gap-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept={AVATAR_ACCEPT}
-                  className="sr-only"
-                  aria-label="Elegir foto de perfil"
-                  onChange={(e) => void onAvatarSelected(e.target.files?.[0])}
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  loading={avatarBusy}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {hasCustomAvatar ? 'Cambiar foto' : 'Subir foto'}
-                </Button>
-                {hasCustomAvatar ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={avatarBusy}
-                    onClick={() => void onRemoveAvatar()}
-                  >
-                    Quitar foto
-                  </Button>
-                ) : null}
-              </div>
-              {avatarError ? <p className="text-xs text-destructive">{avatarError}</p> : null}
-              {profile?.username && !isAutoUsername(profile.username) ? (
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
-                    <Link to={profilePath(profile.username)}>
-                      <User className="h-4 w-4 sm:mr-1.5" aria-hidden />
-                      <span className="sr-only sm:not-sr-only">Perfil público</span>
-                    </Link>
-                  </Button>
-                  <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
-                    <Link to={`/u/${encodeURIComponent(profile.username)}/followers`}>
-                      <Users className="h-4 w-4 sm:mr-1.5" aria-hidden />
-                      <span className="sr-only sm:not-sr-only">Seguidores</span>
-                    </Link>
-                  </Button>
-                  <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
-                    <Link to={`/u/${encodeURIComponent(profile.username)}/following`}>
-                      <UserPlus className="h-4 w-4 sm:mr-1.5" aria-hidden />
-                      <span className="sr-only sm:not-sr-only">Siguiendo</span>
-                    </Link>
-                  </Button>
-                  <ShareProfileButton
-                    username={profile.username}
-                    displayName={profile.display_name}
-                    size="sm"
-                    variant="outline"
-                    compact
-                  />
-                  <ShareInviteButton
-                    username={profile.username}
-                    displayName={profile.display_name}
-                    size="sm"
-                    variant="outline"
-                    compact
-                  />
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Elige un username abajo para poder compartir tu perfil público.
-                </p>
-              )}
-            </div>
-          </div>
+          <ProfileAvatarSection
+            avatarUrl={avatarUrl}
+            profile={profile}
+            userEmail={user?.email}
+            avatarBusy={avatarBusy}
+            avatarError={avatarError}
+            hasCustomAvatar={hasCustomAvatar}
+            fileInputRef={fileInputRef}
+            onAvatarSelected={onAvatarSelected}
+            onRemoveAvatar={onRemoveAvatar}
+          />
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <FormField label="Nombre" error={errors.display_name?.message}>
-              <Input placeholder="Tu nombre o apodo" {...register('display_name')} />
-            </FormField>
-
-            <FormField
-              label="Username"
-              error={
-                errors.username?.message ??
-                (usernameTaken ? 'Ese username ya está en uso' : undefined)
-              }
-              hint="Público. Solo minúsculas, números y guiones bajos."
-            >
-              <div className="flex gap-2">
-                <Input
-                  placeholder="henry_madridista"
-                  className="flex-1"
-                  autoComplete="username"
-                  aria-describedby="username-availability"
-                  {...register('username')}
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="shrink-0"
-                  onClick={applySuggestedUsername}
-                  disabled={!suggestUsername(displayName)}
-                >
-                  Sugerir
-                </Button>
-              </div>
-            </FormField>
-            <p
-              id="username-availability"
-              className={cn(
-                '-mt-2 flex min-h-5 items-center gap-1.5 text-xs',
-                usernameTaken && 'text-destructive',
-                usernameFree && 'text-primary',
-                !usernameTaken && !usernameFree && 'text-muted-foreground',
-              )}
-              role="status"
-              aria-live="polite"
-            >
-              {!debouncedUsername ? (
-                <span>Elige un username único</span>
-              ) : !usernameFormatOk ? (
-                <span>Mínimo 3 caracteres: a-z, 0-9 y _</span>
-              ) : usernameCheck.isFetching ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                  Comprobando disponibilidad…
-                </>
-              ) : usernameTaken ? (
-                <>
-                  <X className="h-3.5 w-3.5" aria-hidden />
-                  No disponible
-                </>
-                ) : usernameFree ? (
-                  <>
-                    <Check className="h-3.5 w-3.5" aria-hidden />
-                    {isCurrentUsername || usernameCheck.data?.own
-                      ? 'Es tu username actual'
-                      : 'Disponible'}
-                  </>
-              ) : usernameCheck.isError ? (
-                <span>No se pudo comprobar ahora</span>
-              ) : null}
-            </p>
-
-            <FormField label="Equipo favorito" hint="Escribe y elige una sugerencia, o deja el nombre libre.">
-              <FavoriteTeamField
-                value={favoriteTeam}
-                onChange={(value) =>
-                  setValue('favorite_team', value, { shouldDirty: true, shouldValidate: true })
-                }
-                placeholder="Ej: FC Barcelona"
-              />
-            </FormField>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label="País">
-                <Input placeholder="España" {...register('country')} />
-              </FormField>
-              <FormField label="Ciudad">
-                <Input placeholder="Barcelona" {...register('city')} />
-              </FormField>
-            </div>
-
-            <FormField
-              label="Bio"
-              error={errors.bio?.message}
-              hint={`${bioValue.length}/280 · Opcional, visible en tu perfil público`}
-            >
-              <Textarea
-                rows={3}
-                className="min-h-24 resize-y"
-                placeholder="Aficionado, estadio o cómo vives el fútbol…"
-                maxLength={280}
-                {...register('bio')}
-              />
-            </FormField>
-
-            {mutation.error ? (
-              <p className="text-sm text-destructive">{(mutation.error as Error).message}</p>
-            ) : null}
-
-            <Button
-              type="submit"
-              loading={mutation.isPending}
-              className="w-full"
-              disabled={usernameTaken || (usernameFormatOk && usernameCheck.isFetching)}
-            >
-              Guardar perfil
-            </Button>
-          </form>
+          <ProfileEditForm
+            register={register}
+            errors={errors}
+            displayName={displayName}
+            debouncedUsername={debouncedUsername}
+            usernameFormatOk={usernameFormatOk}
+            usernameCheck={usernameCheck}
+            usernameTaken={usernameTaken}
+            usernameFree={usernameFree}
+            isCurrentUsername={isCurrentUsername}
+            favoriteTeam={favoriteTeam}
+            bioValue={bioValue}
+            onApplySuggestedUsername={applySuggestedUsername}
+            onFavoriteTeamChange={(value) =>
+              setValue('favorite_team', value, { shouldDirty: true, shouldValidate: true })
+            }
+            mutationError={mutation.error as Error | null}
+            mutationPending={mutation.isPending}
+            onSubmit={onSubmit}
+            handleSubmit={handleSubmit}
+          />
         </CardContent>
       </Card>
 

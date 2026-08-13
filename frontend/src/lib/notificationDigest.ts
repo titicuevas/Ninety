@@ -178,7 +178,11 @@ export function groupNotificationsForDigest(
 }
 
 export function digestUnreadIds(group: NotificationDigestGroup): string[] {
-  return group.notifications.filter((n) => !n.read).map((n) => n.id);
+  const ids: string[] = [];
+  for (const n of group.notifications) {
+    if (!n.read) ids.push(n.id);
+  }
+  return ids;
 }
 
 /**

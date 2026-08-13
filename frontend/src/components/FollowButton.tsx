@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { UserMinus, UserPlus } from 'lucide-react';
 import { useToggleFollow } from '@/hooks/useFollowUser';
 import { followButtonLabel } from '@/lib/followButton';
@@ -25,11 +25,9 @@ export function FollowButton({
   followBack = false,
 }: FollowButtonProps) {
   const toggle = useToggleFollow(username);
-  const [followed, setFollowed] = useState(() => followedByMe);
-
-  useEffect(() => {
-    setFollowed(followedByMe);
-  }, [followedByMe, username]);
+  const propKey = `${username}:${followedByMe ? 1 : 0}`;
+  const [optimistic, setOptimistic] = useState<{ key: string; value: boolean } | null>(null);
+  const followed = optimistic?.key === propKey ? optimistic.value : followedByMe;
 
   const useFollowBack = followBack || (followsMe && !followed);
   const following = toggle.isPending && toggle.variables?.followed === false;
@@ -47,11 +45,11 @@ export function FollowButton({
     event.preventDefault();
     event.stopPropagation();
     const wasFollowed = followed;
-    setFollowed(!wasFollowed);
+    setOptimistic({ key: propKey, value: !wasFollowed });
     toggle.mutate(
       { followed: wasFollowed },
       {
-        onError: () => setFollowed(wasFollowed),
+        onError: () => setOptimistic(null),
       },
     );
   };

@@ -292,6 +292,35 @@ button {
   animation: ninety-loader-fade 320ms ease-out;
 }
 
+.root-error-boundary {
+  min-height: 100vh;
+  background: #0a0a0b;
+  color: #fafafa;
+  padding: 2rem;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.root-error-title {
+  color: #f87171;
+}
+
+.root-error-pre {
+  margin-top: 1rem;
+  color: #a1a1aa;
+  white-space: pre-wrap;
+}
+
+.root-error-reload {
+  margin-top: 1.5rem;
+  border: 0;
+  border-radius: 8px;
+  background: #10b981;
+  color: #0a0a0b;
+  font-weight: 600;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

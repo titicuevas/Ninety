@@ -165,27 +165,33 @@ export function computeAdvancedStats(
   }
 
   const withContext = [...contextCounts.values()].reduce((a, b) => a + b, 0);
-  const watchContextMix: WatchContextShare[] = WATCH_CONTEXTS.map((key) => {
+  const watchContextMix: WatchContextShare[] = [];
+  for (const key of WATCH_CONTEXTS) {
     const count = contextCounts.get(key) ?? 0;
-    return {
-      key,
-      label: WATCH_CONTEXT_LABELS[key],
-      count,
-      pct: withContext > 0 ? Math.round((count / withContext) * 100) : 0,
-    };
-  }).filter((row) => row.count > 0);
+    if (count > 0) {
+      watchContextMix.push({
+        key,
+        label: WATCH_CONTEXT_LABELS[key],
+        count,
+        pct: withContext > 0 ? Math.round((count / withContext) * 100) : 0,
+      });
+    }
+  }
 
-  const topRivalries: RivalryStat[] = [...rivalryMap.entries()]
-    .map(([pairKey, row]) => ({
-      pairKey,
-      teamA: row.teamA,
-      teamB: row.teamB,
-      count: row.count,
-      averageRating: row.rated > 0 ? row.ratingSum / row.rated : null,
-    }))
-    .filter((r) => r.count >= 2)
-    .sort((a, b) => b.count - a.count || (b.averageRating ?? 0) - (a.averageRating ?? 0))
-    .slice(0, 5);
+  const topRivalries: RivalryStat[] = [];
+  for (const [pairKey, row] of rivalryMap.entries()) {
+    if (row.count >= 2) {
+      topRivalries.push({
+        pairKey,
+        teamA: row.teamA,
+        teamB: row.teamB,
+        count: row.count,
+        averageRating: row.rated > 0 ? row.ratingSum / row.rated : null,
+      });
+    }
+  }
+  topRivalries.sort((a, b) => b.count - a.count || (b.averageRating ?? 0) - (a.averageRating ?? 0));
+  topRivalries.splice(5);
 
   const days = [...new Set(capsules.map((c) => c.watched_at.slice(0, 10)))].sort();
   let avgDaysBetween: number | null = null;

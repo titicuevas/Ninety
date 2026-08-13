@@ -21,6 +21,8 @@ import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import { buildCommentThreads, type CapsuleComment } from '@/types/comment';
 
+const NO_COMMENTS: CapsuleComment[] = [];
+
 function CommentAvatar({ name, avatarUrl }: { name: string; avatarUrl: string | null | undefined }) {
   if (avatarUrl) {
     return (
@@ -43,17 +45,17 @@ function CommentBodyText({ body }: { body: string }) {
   const parts = splitCommentMentions(body);
   return (
     <p className="mt-0.5 whitespace-pre-wrap break-words text-muted-foreground">
-      {parts.map((part, index) => {
+      {parts.map((part) => {
         if (part.type === 'text') {
-          return <span key={index}>{part.value}</span>;
+          return <span key={part.start}>{part.value}</span>;
         }
         const href = publicProfilePath(part.username);
         if (!href) {
-          return <span key={index}>@{part.raw}</span>;
+          return <span key={part.start}>@{part.raw}</span>;
         }
         return (
           <Link
-            key={index}
+            key={part.start}
             to={href}
             className="font-medium text-primary hover:underline"
           >
@@ -100,10 +102,6 @@ function CommentItem({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.body);
   const [editError, setEditError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!editing) setDraft(comment.body);
-  }, [comment.body, editing]);
 
   const saveEdit = async () => {
     const text = draft.trim();
@@ -169,7 +167,6 @@ function CommentItem({
                 disabled={editingBusy}
                 onClick={() => {
                   setEditing(false);
-                  setDraft(comment.body);
                   setEditError(null);
                 }}
               >
@@ -206,7 +203,11 @@ function CommentItem({
               className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
               aria-label="Editar comentario"
               disabled={deleting || editingBusy}
-              onClick={() => setEditing(true)}
+              onClick={() => {
+                setDraft(comment.body);
+                setEditError(null);
+                setEditing(true);
+              }}
             >
               <Pencil className="h-3.5 w-3.5" />
             </Button>
@@ -254,7 +255,6 @@ export function CapsuleComments({
   const [replyDraft, setReplyDraft] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [displayCount, setDisplayCount] = useState(commentsCount);
   const panelRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -267,15 +267,13 @@ export function CapsuleComments({
   const updateComment = useUpdateCapsuleComment(capsuleId);
   const { loginTo } = useAuthReturnLinks();
 
-  const comments = data?.comments ?? [];
+  const comments = data?.comments ?? NO_COMMENTS;
   const threads = useMemo(() => buildCommentThreads(comments), [comments]);
-  const label = displayCount > 0 ? `${displayCount} comentarios` : 'Comentar';
+  const liveCount = data?.comments?.length;
+  const labelCount = liveCount ?? commentsCount;
+  const label = labelCount > 0 ? `${labelCount} comentarios` : 'Comentar';
   const rootId = `comments-${capsuleId}`;
   const panelId = `comments-panel-${capsuleId}`;
-
-  useEffect(() => {
-    setDisplayCount(commentsCount);
-  }, [commentsCount]);
 
   useEffect(() => {
     if (!defaultOpen) return;
@@ -320,7 +318,6 @@ export function CapsuleComments({
     try {
       await addComment.mutateAsync({ body: text });
       setDraft('');
-      setDisplayCount((n) => n + 1);
       toast.success('Comentario publicado');
     } catch {
       // toast via mutation onError
@@ -336,7 +333,6 @@ export function CapsuleComments({
       await addComment.mutateAsync({ body: text, parentId: replyToId });
       setReplyDraft('');
       setReplyToId(null);
-      setDisplayCount((n) => n + 1);
       toast.success('Respuesta publicada');
     } catch {
       // toast via mutation onError
@@ -523,11 +519,7 @@ export function CapsuleComments({
         onConfirm={() => {
           if (!pendingDeleteId) return;
           const id = pendingDeleteId;
-          const removedFromCache =
-            1 + comments.filter((c) => c.parent_id === id).length;
           deleteComment.mutate(id, {
-            onSuccess: () =>
-              setDisplayCount((n) => Math.max(0, n - Math.max(1, removedFromCache))),
             onSettled: () => setPendingDeleteId(null),
           });
         }}

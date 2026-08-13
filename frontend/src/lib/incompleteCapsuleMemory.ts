@@ -40,15 +40,6 @@ export function isIncompleteCapsuleNudgeEnabled(prefs: IncompleteCapsulePrefs | 
   return prefs?.enabled !== false;
 }
 
-export function setIncompleteCapsuleNudgeEnabled(
-  userId: string,
-  enabled: boolean,
-): IncompleteCapsulePrefs | null {
-  if (!userId) return null;
-  const prev = readIncompleteCapsulePrefs(userId) ?? {};
-  return writeIncompleteCapsulePrefs(userId, { ...prev, enabled });
-}
-
 export function getSkippedIncompleteCapsuleIds(prefs: IncompleteCapsulePrefs | null): string[] {
   if (!prefs?.skippedIds?.length) return [];
   return prefs.skippedIds.filter((id) => typeof id === 'string' && id.length > 0);

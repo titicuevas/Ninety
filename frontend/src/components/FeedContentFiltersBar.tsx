@@ -35,7 +35,7 @@ export function FeedContentFiltersBar({
   onCompetitionChange,
   onClear,
 }: FeedContentFiltersBarProps) {
-  const [open, setOpen] = useState(hasFilters);
+  const [open, setOpen] = useState(false);
   const summaries = activeSummaries(photosOnly, competition);
   const chipsVisible = open;
 

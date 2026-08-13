@@ -52,15 +52,6 @@ export function ClaimProfileCard({ profile, welcome = false, onWelcomeDismiss }:
   const [usernameError, setUsernameError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!profile) return;
-    setDisplayName((prev) => prev || profile.display_name?.trim() || metadataName || '');
-    if (profile.username && !isAutoUsername(profile.username)) {
-      setUsername((prev) => prev || profile.username || '');
-    }
-    setFavoriteTeam((prev) => prev || profile.favorite_team || '');
-  }, [profile, metadataName]);
-
-  useEffect(() => {
     const timer = window.setTimeout(() => {
       setDebouncedUsername(username.trim().toLowerCase());
     }, 350);

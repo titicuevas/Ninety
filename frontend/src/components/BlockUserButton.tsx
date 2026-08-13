@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { Ban, ShieldOff } from 'lucide-react';
 import { useToggleBlockUser } from '@/hooks/useBlockUser';
 import { blockUserButtonLabel } from '@/lib/blockUser';
@@ -18,11 +18,9 @@ export function BlockUserButton({
   size = 'default',
 }: BlockUserButtonProps) {
   const toggle = useToggleBlockUser(username);
-  const [blocked, setBlocked] = useState(() => blockedByMe);
-
-  useEffect(() => {
-    setBlocked(blockedByMe);
-  }, [blockedByMe, username]);
+  const propKey = `${username}:${blockedByMe ? 1 : 0}`;
+  const [optimistic, setOptimistic] = useState<{ key: string; value: boolean } | null>(null);
+  const blocked = optimistic?.key === propKey ? optimistic.value : blockedByMe;
 
   const blocking = toggle.isPending && toggle.variables?.blocked === false;
   const unblocking = toggle.isPending && toggle.variables?.blocked === true;
@@ -34,11 +32,11 @@ export function BlockUserButton({
     event.preventDefault();
     event.stopPropagation();
     const wasBlocked = blocked;
-    setBlocked(!wasBlocked);
+    setOptimistic({ key: propKey, value: !wasBlocked });
     toggle.mutate(
       { blocked: wasBlocked },
       {
-        onError: () => setBlocked(wasBlocked),
+        onError: () => setOptimistic(null),
       },
     );
   };

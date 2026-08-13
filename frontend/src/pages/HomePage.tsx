@@ -187,6 +187,7 @@ export function HomePage() {
       <div className="space-y-5 sm:space-y-8">
         {profileIncomplete ? (
           <ClaimProfileCard
+            key={profile?.id ?? 'claim-pending'}
             profile={profile}
             welcome={welcomeOpen}
             onWelcomeDismiss={welcomeOpen ? dismissWelcome : undefined}

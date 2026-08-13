@@ -24,19 +24,18 @@ export function FavoriteTeamField({
   const listId = useId();
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [debounced, setDebounced] = useState(value.trim());
+  const [debounced, setDebounced] = useState(() => value.trim());
   const { data, isFetching } = useTeamSearch(debounced);
   const teams = data?.teams ?? [];
   const showList = open && debounced.length >= 2;
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setDebounced(value.trim()), 300);
+    const timer = window.setTimeout(() => {
+      setDebounced(value.trim());
+      setActiveIndex(-1);
+    }, 300);
     return () => window.clearTimeout(timer);
   }, [value]);
-
-  useEffect(() => {
-    setActiveIndex(-1);
-  }, [debounced, teams.length]);
 
   const pick = (name: string) => {
     onChange(name);

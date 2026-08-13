@@ -108,6 +108,63 @@ function SectionCard({
   );
 }
 
+function CapsuleVisibilitySection({
+  isPublic,
+  onChange,
+}: {
+  isPublic: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <SectionCard title="Visibilidad" description="Quién puede ver esta Capsule.">
+      <div className="grid gap-2.5 sm:grid-cols-2" role="radiogroup" aria-label="Visibilidad de la Capsule">
+        <button
+          type="button"
+          role="radio"
+          aria-checked={isPublic}
+          onClick={() => onChange(true)}
+          className={cn(
+            'rounded-xl border px-4 py-3.5 text-left transition-colors',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            isPublic
+              ? 'border-primary bg-primary/10 shadow-[0_0_28px_-16px_rgba(16,185,129,0.7)]'
+              : 'border-border bg-secondary/40 text-muted-foreground hover:border-primary/25 hover:text-foreground',
+          )}
+        >
+          <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Eye className="h-4 w-4 text-primary" aria-hidden />
+            Pública
+          </span>
+          <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+            Visible en tu perfil y al compartir
+          </span>
+        </button>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={!isPublic}
+          onClick={() => onChange(false)}
+          className={cn(
+            'rounded-xl border px-4 py-3.5 text-left transition-colors',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            !isPublic
+              ? 'border-primary bg-primary/10 shadow-[0_0_28px_-16px_rgba(16,185,129,0.7)]'
+              : 'border-border bg-secondary/40 text-muted-foreground hover:border-primary/25 hover:text-foreground',
+          )}
+        >
+          <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <EyeOff className="h-4 w-4 text-primary" aria-hidden />
+            Solo yo
+          </span>
+          <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+            Queda en tu diario, sin enlace público
+          </span>
+        </button>
+      </div>
+    </SectionCard>
+  );
+}
+
 export function CapsuleMemoryForm({
   defaultWatchedAt,
   defaultNote = '',
@@ -344,52 +401,7 @@ export function CapsuleMemoryForm({
         </div>
       </SectionCard>
 
-      <SectionCard title="Visibilidad" description="Quién puede ver esta Capsule.">
-        <div className="grid gap-2.5 sm:grid-cols-2" role="radiogroup" aria-label="Visibilidad de la Capsule">
-          <button
-            type="button"
-            role="radio"
-            aria-checked={isPublic}
-            onClick={() => setIsPublic(true)}
-            className={cn(
-              'rounded-xl border px-4 py-3.5 text-left transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-              isPublic
-                ? 'border-primary bg-primary/10 shadow-[0_0_28px_-16px_rgba(16,185,129,0.7)]'
-                : 'border-border bg-secondary/40 text-muted-foreground hover:border-primary/25 hover:text-foreground',
-            )}
-          >
-            <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <Eye className="h-4 w-4 text-primary" aria-hidden />
-              Pública
-            </span>
-            <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
-              Visible en tu perfil y al compartir
-            </span>
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={!isPublic}
-            onClick={() => setIsPublic(false)}
-            className={cn(
-              'rounded-xl border px-4 py-3.5 text-left transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-              !isPublic
-                ? 'border-primary bg-primary/10 shadow-[0_0_28px_-16px_rgba(16,185,129,0.7)]'
-                : 'border-border bg-secondary/40 text-muted-foreground hover:border-primary/25 hover:text-foreground',
-            )}
-          >
-            <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <EyeOff className="h-4 w-4 text-primary" aria-hidden />
-              Solo yo
-            </span>
-            <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
-              Queda en tu diario, sin enlace público
-            </span>
-          </button>
-        </div>
-      </SectionCard>
+      <CapsuleVisibilitySection isPublic={isPublic} onChange={setIsPublic} />
 
       {error ? (
         <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3">

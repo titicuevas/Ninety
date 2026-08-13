@@ -152,6 +152,186 @@ function CompareShareButton({
   );
 }
 
+function CompareFaceOffSection({
+  meDisplay,
+  themDisplay,
+  themUsername,
+  meAvatarUrl,
+  themAvatarUrl,
+  compare,
+  meSide,
+  themSide,
+}: {
+  meDisplay: string;
+  themDisplay: string;
+  themUsername: string;
+  meAvatarUrl: string | null;
+  themAvatarUrl: string | null;
+  compare: ReturnType<typeof buildProfileCompare>;
+  meSide: CompareSide;
+  themSide: CompareSide;
+}) {
+  return (
+    <section
+      className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-emerald-600/25 via-emerald-900/15 to-background p-5 sm:p-6"
+      aria-labelledby="compare-heading"
+      data-testid="compare-face-off"
+    >
+      <div
+        className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/20 blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -bottom-10 -left-6 h-28 w-28 rounded-full bg-emerald-400/10 blur-3xl"
+        aria-hidden
+      />
+      <div className="relative space-y-6">
+        <p className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/20 px-3 py-1 text-xs font-medium text-emerald-100">
+          <Swords className="h-3.5 w-3.5" aria-hidden />
+          Cara a cara
+        </p>
+
+        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex w-full items-center justify-center gap-3 sm:w-auto sm:justify-start">
+            <div className="flex flex-col items-center gap-1.5">
+              <CompareAvatar name={meDisplay} avatarUrl={meAvatarUrl} />
+              <p className="max-w-[6.5rem] truncate text-center text-xs font-medium text-emerald-100">
+                Tú
+              </p>
+            </div>
+            <div className="flex flex-col items-center gap-1 px-1">
+              <span className="rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-100/90">
+                vs
+              </span>
+              <p
+                className="font-mono text-lg font-bold tabular-nums text-white"
+                aria-label={`Marcador ${compare.scoreLabel}`}
+              >
+                {compare.scoreLabel}
+              </p>
+            </div>
+            <div className="flex flex-col items-center gap-1.5">
+              <CompareAvatar name={themDisplay} avatarUrl={themAvatarUrl} />
+              <p className="max-w-[6.5rem] truncate text-center text-xs font-medium text-white/80">
+                @{themUsername}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex w-full flex-col items-center gap-3 text-center sm:w-auto sm:items-end sm:text-right">
+            <div>
+              <h1 id="compare-heading" className="text-xl font-bold tracking-tight sm:text-2xl">
+                {meDisplay}{' '}
+                <span className="text-emerald-200/80">vs</span> {themDisplay}
+              </h1>
+              <p className="mt-1 max-w-sm text-sm text-white/70">{compare.headline}</p>
+            </div>
+            <CompareShareButton me={meSide} them={themSide} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-[1fr_auto_1fr] gap-x-2 gap-y-1 text-center text-xs text-white/60">
+          <p className="truncate font-medium text-emerald-100">Tú</p>
+          <ArrowLeftRight className="mx-auto h-3.5 w-3.5" aria-hidden />
+          <p className="truncate font-medium text-white/80">@{themUsername}</p>
+        </div>
+
+        <ul className="space-y-2" aria-label="Métricas cara a cara">
+          {compare.metrics.map((metric) => (
+            <li
+              key={metric.id}
+              className="rounded-xl bg-black/25 px-3 py-3 backdrop-blur-sm"
+            >
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                <p
+                  className={cn(
+                    'truncate text-left text-sm font-semibold',
+                    metricTone(metric, 'me'),
+                  )}
+                >
+                  {metric.meDisplay}
+                </p>
+                <div className="min-w-[5.5rem] text-center">
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-white/55">
+                    {metric.label}
+                  </p>
+                  {metric.deltaLabel ? (
+                    <p className="text-[10px] text-emerald-200/70">{metric.deltaLabel}</p>
+                  ) : null}
+                </div>
+                <p
+                  className={cn(
+                    'truncate text-right text-sm font-semibold',
+                    metricTone(metric, 'them'),
+                  )}
+                >
+                  {metric.themDisplay}
+                </p>
+              </div>
+              <MetricProportionBar metric={metric} />
+            </li>
+          ))}
+        </ul>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-white/10 bg-black/25 px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-100/90">
+              Tu equipo top
+            </p>
+            <p className="mt-1 truncate font-semibold">
+              {meSide.stats.topTeam?.name ?? '—'}
+              {meSide.stats.topTeam ? (
+                <span className="ml-1 text-sm font-normal text-white/60">
+                  · {meSide.stats.topTeam.count}
+                </span>
+              ) : null}
+            </p>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-black/25 px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
+              Su equipo top
+            </p>
+            <p className="mt-1 truncate font-semibold">
+              {themSide.stats.topTeam?.name ?? '—'}
+              {themSide.stats.topTeam ? (
+                <span className="ml-1 text-sm font-normal text-white/60">
+                  · {themSide.stats.topTeam.count}
+                </span>
+              ) : null}
+            </p>
+          </div>
+        </div>
+
+        {compare.sharedTeams.length > 0 ? (
+          <div
+            className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3"
+            data-testid="compare-shared-teams"
+          >
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-100/90">
+              <Users className="h-3.5 w-3.5" aria-hidden />
+              En común
+            </p>
+            <p className="mt-1 text-sm font-medium text-white">
+              {compare.sharedTeams.join(' · ')}
+            </p>
+          </div>
+        ) : (
+          <div
+            className="rounded-xl border border-dashed border-white/15 bg-black/20 px-4 py-3"
+            data-testid="compare-shared-teams-empty"
+          >
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/55">
+              <Users className="h-3.5 w-3.5" aria-hidden />
+              Equipos en común
+            </p>
+            <p className="mt-1 text-sm text-white/65">{compare.sharedTeamsEmpty}</p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export function CompareProfilePage() {
   const { username } = useParams<{ username: string }>();
   const { user } = useAuth();
@@ -368,163 +548,16 @@ export function CompareProfilePage() {
           </div>
         ) : null}
 
-        <section
-          className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-emerald-600/25 via-emerald-900/15 to-background p-5 sm:p-6"
-          aria-labelledby="compare-heading"
-          data-testid="compare-face-off"
-        >
-          <div
-            className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/20 blur-3xl"
-            aria-hidden
-          />
-          <div
-            className="pointer-events-none absolute -bottom-10 -left-6 h-28 w-28 rounded-full bg-emerald-400/10 blur-3xl"
-            aria-hidden
-          />
-          <div className="relative space-y-6">
-            <p className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/20 px-3 py-1 text-xs font-medium text-emerald-100">
-              <Swords className="h-3.5 w-3.5" aria-hidden />
-              Cara a cara
-            </p>
-
-            <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex w-full items-center justify-center gap-3 sm:w-auto sm:justify-start">
-                <div className="flex flex-col items-center gap-1.5">
-                  <CompareAvatar name={meDisplay} avatarUrl={meAvatarUrl} />
-                  <p className="max-w-[6.5rem] truncate text-center text-xs font-medium text-emerald-100">
-                    Tú
-                  </p>
-                </div>
-                <div className="flex flex-col items-center gap-1 px-1">
-                  <span className="rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-100/90">
-                    vs
-                  </span>
-                  <p
-                    className="font-mono text-lg font-bold tabular-nums text-white"
-                    aria-label={`Marcador ${compare.scoreLabel}`}
-                  >
-                    {compare.scoreLabel}
-                  </p>
-                </div>
-                <div className="flex flex-col items-center gap-1.5">
-                  <CompareAvatar name={themDisplay} avatarUrl={themAvatarUrl} />
-                  <p className="max-w-[6.5rem] truncate text-center text-xs font-medium text-white/80">
-                    @{themProfile.username}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex w-full flex-col items-center gap-3 text-center sm:w-auto sm:items-end sm:text-right">
-                <div>
-                  <h1 id="compare-heading" className="text-xl font-bold tracking-tight sm:text-2xl">
-                    {meDisplay}{' '}
-                    <span className="text-emerald-200/80">vs</span> {themDisplay}
-                  </h1>
-                  <p className="mt-1 max-w-sm text-sm text-white/70">{compare.headline}</p>
-                </div>
-                <CompareShareButton me={meSide} them={themSide} />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-[1fr_auto_1fr] gap-x-2 gap-y-1 text-center text-xs text-white/60">
-              <p className="truncate font-medium text-emerald-100">Tú</p>
-              <ArrowLeftRight className="mx-auto h-3.5 w-3.5" aria-hidden />
-              <p className="truncate font-medium text-white/80">@{themProfile.username}</p>
-            </div>
-
-            <ul className="space-y-2" aria-label="Métricas cara a cara">
-              {compare.metrics.map((metric) => (
-                <li
-                  key={metric.id}
-                  className="rounded-xl bg-black/25 px-3 py-3 backdrop-blur-sm"
-                >
-                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                    <p
-                      className={cn(
-                        'truncate text-left text-sm font-semibold',
-                        metricTone(metric, 'me'),
-                      )}
-                    >
-                      {metric.meDisplay}
-                    </p>
-                    <div className="min-w-[5.5rem] text-center">
-                      <p className="text-[11px] font-medium uppercase tracking-wider text-white/55">
-                        {metric.label}
-                      </p>
-                      {metric.deltaLabel ? (
-                        <p className="text-[10px] text-emerald-200/70">{metric.deltaLabel}</p>
-                      ) : null}
-                    </div>
-                    <p
-                      className={cn(
-                        'truncate text-right text-sm font-semibold',
-                        metricTone(metric, 'them'),
-                      )}
-                    >
-                      {metric.themDisplay}
-                    </p>
-                  </div>
-                  <MetricProportionBar metric={metric} />
-                </li>
-              ))}
-            </ul>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-white/10 bg-black/25 px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-100/90">
-                  Tu equipo top
-                </p>
-                <p className="mt-1 truncate font-semibold">
-                  {meSide.stats.topTeam?.name ?? '—'}
-                  {meSide.stats.topTeam ? (
-                    <span className="ml-1 text-sm font-normal text-white/60">
-                      · {meSide.stats.topTeam.count}
-                    </span>
-                  ) : null}
-                </p>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-black/25 px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
-                  Su equipo top
-                </p>
-                <p className="mt-1 truncate font-semibold">
-                  {themSide.stats.topTeam?.name ?? '—'}
-                  {themSide.stats.topTeam ? (
-                    <span className="ml-1 text-sm font-normal text-white/60">
-                      · {themSide.stats.topTeam.count}
-                    </span>
-                  ) : null}
-                </p>
-              </div>
-            </div>
-
-            {compare.sharedTeams.length > 0 ? (
-              <div
-                className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3"
-                data-testid="compare-shared-teams"
-              >
-                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-100/90">
-                  <Users className="h-3.5 w-3.5" aria-hidden />
-                  En común
-                </p>
-                <p className="mt-1 text-sm font-medium text-white">
-                  {compare.sharedTeams.join(' · ')}
-                </p>
-              </div>
-            ) : (
-              <div
-                className="rounded-xl border border-dashed border-white/15 bg-black/20 px-4 py-3"
-                data-testid="compare-shared-teams-empty"
-              >
-                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/55">
-                  <Users className="h-3.5 w-3.5" aria-hidden />
-                  Equipos en común
-                </p>
-                <p className="mt-1 text-sm text-white/65">{compare.sharedTeamsEmpty}</p>
-              </div>
-            )}
-          </div>
-        </section>
+        <CompareFaceOffSection
+          meDisplay={meDisplay}
+          themDisplay={themDisplay}
+          themUsername={themProfile.username!}
+          meAvatarUrl={meAvatarUrl}
+          themAvatarUrl={themAvatarUrl}
+          compare={compare}
+          meSide={meSide}
+          themSide={themSide}
+        />
 
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="secondary">

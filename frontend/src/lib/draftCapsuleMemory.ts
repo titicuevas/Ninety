@@ -1,7 +1,8 @@
 import { isWatchContext, type WatchContext } from '@/lib/watchContext';
 import { normalizeCapsuleTags } from '@/lib/capsuleTags';
 
-const DRAFT_MEMORY_KEY = 'ninety.draftCapsuleMemory';
+const DRAFT_MEMORY_KEY = 'ninety.draftCapsuleMemory:v1';
+const LEGACY_DRAFT_MEMORY_KEY = 'ninety.draftCapsuleMemory';
 
 export type CapsuleMemoryDraft = {
   matchId: number;
@@ -31,6 +32,7 @@ function isMemoryDraft(value: unknown): value is CapsuleMemoryDraft {
 export function saveDraftCapsuleMemory(draft: CapsuleMemoryDraft): void {
   try {
     sessionStorage.setItem(DRAFT_MEMORY_KEY, JSON.stringify(draft));
+    sessionStorage.removeItem(LEGACY_DRAFT_MEMORY_KEY);
   } catch {
     /* storage lleno o bloqueado */
   }
@@ -38,10 +40,16 @@ export function saveDraftCapsuleMemory(draft: CapsuleMemoryDraft): void {
 
 export function readDraftCapsuleMemory(matchId: number): CapsuleMemoryDraft | null {
   try {
-    const raw = sessionStorage.getItem(DRAFT_MEMORY_KEY);
+    const raw =
+      sessionStorage.getItem(DRAFT_MEMORY_KEY) ??
+      sessionStorage.getItem(LEGACY_DRAFT_MEMORY_KEY);
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
     if (!isMemoryDraft(parsed) || parsed.matchId !== matchId) return null;
+    if (!sessionStorage.getItem(DRAFT_MEMORY_KEY)) {
+      sessionStorage.setItem(DRAFT_MEMORY_KEY, raw);
+      sessionStorage.removeItem(LEGACY_DRAFT_MEMORY_KEY);
+    }
     return {
       ...parsed,
       tags: normalizeCapsuleTags(parsed.tags ?? []),
@@ -54,6 +62,7 @@ export function readDraftCapsuleMemory(matchId: number): CapsuleMemoryDraft | nu
 export function clearDraftCapsuleMemory(): void {
   try {
     sessionStorage.removeItem(DRAFT_MEMORY_KEY);
+    sessionStorage.removeItem(LEGACY_DRAFT_MEMORY_KEY);
   } catch {
     /* ignore */
   }

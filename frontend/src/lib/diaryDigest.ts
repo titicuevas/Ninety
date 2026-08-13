@@ -19,8 +19,6 @@ export type DiaryDigest = {
 
 const MS_DAY = 24 * 60 * 60 * 1000;
 
-/** Umbral para resumen semanal (activo reciente). */
-export const DIGEST_WEEKLY_MAX_DAYS = 6;
 /** A partir de aquí: recordatorio suave. */
 export const DIGEST_NUDGE_MIN_DAYS = 7;
 /** A partir de aquí: hueco más largo. */

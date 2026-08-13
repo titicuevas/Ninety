@@ -55,7 +55,8 @@ export function CapsuleTagsField({
   tryAdd,
 }: CapsuleTagsFieldProps) {
   const [draft, setDraft] = useState('');
-  const availableSuggestions = suggestions.filter((s) => !tags.includes(s));
+  const tagSet = new Set(tags);
+  const availableSuggestions = suggestions.filter((s) => !tagSet.has(s));
 
   const commitDraft = () => {
     const result = tryAdd(draft);

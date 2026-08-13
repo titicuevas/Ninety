@@ -20,6 +20,8 @@ import { publicProfilePath } from '@/lib/profilePath';
 import { toast } from '@/lib/toast';
 import type { CollectionComment } from '@/types/collectionComment';
 
+const NO_COMMENTS: CollectionComment[] = [];
+
 function CommentAvatar({ name, avatarUrl }: { name: string; avatarUrl: string | null | undefined }) {
   if (avatarUrl) {
     return (
@@ -42,16 +44,16 @@ function CommentBodyText({ body }: { body: string }) {
   const parts = splitCommentMentions(body);
   return (
     <p className="mt-0.5 whitespace-pre-wrap break-words text-muted-foreground">
-      {parts.map((part, index) => {
+      {parts.map((part) => {
         if (part.type === 'text') {
-          return <span key={index}>{part.value}</span>;
+          return <span key={part.start}>{part.value}</span>;
         }
         const href = publicProfilePath(part.username);
         if (!href) {
-          return <span key={index}>@{part.raw}</span>;
+          return <span key={part.start}>@{part.raw}</span>;
         }
         return (
-          <Link key={index} to={href} className="font-medium text-primary hover:underline">
+          <Link key={part.start} to={href} className="font-medium text-primary hover:underline">
             @{part.raw}
           </Link>
         );
@@ -85,10 +87,6 @@ function CommentItem({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.body);
   const [editError, setEditError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!editing) setDraft(comment.body);
-  }, [comment.body, editing]);
 
   const saveEdit = async () => {
     const text = draft.trim();
@@ -154,7 +152,6 @@ function CommentItem({
                 disabled={editingBusy}
                 onClick={() => {
                   setEditing(false);
-                  setDraft(comment.body);
                   setEditError(null);
                 }}
               >
@@ -177,7 +174,11 @@ function CommentItem({
               className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
               aria-label="Editar comentario"
               disabled={deleting || editingBusy}
-              onClick={() => setEditing(true)}
+              onClick={() => {
+                setDraft(comment.body);
+                setEditError(null);
+                setEditing(true);
+              }}
             >
               <Pencil className="h-3.5 w-3.5" />
             </Button>
@@ -228,7 +229,7 @@ export function CollectionComments({
   const updateComment = useUpdateCollectionComment(collectionId);
   const { loginTo } = useAuthReturnLinks();
 
-  const comments = data?.comments ?? [];
+  const comments = data?.comments ?? NO_COMMENTS;
   const label = comments.length > 0 ? `${comments.length} comentarios` : 'Comentar';
 
   useEffect(() => {
