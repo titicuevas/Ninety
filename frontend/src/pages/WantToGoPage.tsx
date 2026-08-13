@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bookmark, Search, Ticket } from 'lucide-react';
+import { Bookmark, Search, Ticket, X } from 'lucide-react';
 import { capsuleCardListClass } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
@@ -49,15 +49,14 @@ export function WantToGoPage() {
   return (
     <Layout>
       <div className="space-y-5 sm:space-y-8">
-        <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Listas</p>
-            <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight sm:text-3xl">
-              Quiero ir
-            </h1>
-            <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-              Partidos que te interesan ver — una watchlist personal, al estilo Letterboxd.
-            </p>
+        <section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Quiero ir</h1>
+            {data && data.total > 0 ? (
+              <p className="mt-1 text-sm text-muted-foreground">
+                {data.total} partido{data.total === 1 ? '' : 's'}
+              </p>
+            ) : null}
           </div>
           <Button asChild variant="secondary" className="h-9 w-9 shrink-0 px-0 sm:w-auto sm:px-3">
             <Link to="/search">
@@ -81,7 +80,7 @@ export function WantToGoPage() {
           <EmptyState
             icon={Bookmark}
             title="Tu lista está vacía"
-            description="En la búsqueda, marca «Quiero ir» en los partidos que te apetezcan ver. También puedes añadir partidos manuales."
+            description="Marca «Quiero ir» al buscar un partido, o añade uno manual."
           >
             <Button asChild>
               <Link to="/search">Ir a buscar</Link>
@@ -124,10 +123,13 @@ export function WantToGoPage() {
                       type="button"
                       size="sm"
                       variant="ghost"
+                      className="h-9 w-9 px-0 text-muted-foreground sm:w-auto sm:px-3"
+                      aria-label="Quitar de Quiero ir"
                       disabled={remove.isPending && remove.variables === item.match_id}
                       onClick={() => remove.mutate(item.match_id)}
                     >
-                      Quitar
+                      <X className="h-4 w-4 sm:mr-1.5" aria-hidden />
+                      <span className="sr-only sm:not-sr-only">Quitar</span>
                     </Button>
                   </div>
                   <WantToGoInCommon matchId={item.match_id} className="pl-1" />
@@ -135,12 +137,6 @@ export function WantToGoPage() {
               );
             })}
           </ul>
-        ) : null}
-
-        {data && data.total > 0 ? (
-          <p className="text-center text-xs text-muted-foreground">
-            {data.total} partido{data.total === 1 ? '' : 's'} en Quiero ir
-          </p>
         ) : null}
       </div>
     </Layout>

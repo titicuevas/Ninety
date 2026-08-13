@@ -139,16 +139,15 @@ export function CreateCapsulePage() {
 
   return (
     <Layout>
-      <div className="mx-auto w-full max-w-md space-y-6 pb-10 md:max-w-lg lg:max-w-xl">
-        <header className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Ninety</p>
-          <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
+      <div className="mx-auto w-full max-w-md space-y-5 pb-10 md:max-w-lg lg:max-w-xl">
+        <header>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             Nueva Capsule
           </h1>
-          <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
             {isManualMatchId(match.id)
-              ? 'Partido añadido a mano — guarda fotos y recuerdos en tu diario.'
-              : 'Guarda el partido con fotos y recuerdos en tu diario.'}
+              ? 'Partido manual — fotos y recuerdos en tu diario.'
+              : 'Fotos y recuerdos en tu diario.'}
           </p>
         </header>
 

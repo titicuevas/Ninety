@@ -147,16 +147,11 @@ export function PublicDiaryMonthPage() {
 
   return (
     <Shell>
-      <div className="mx-auto max-w-2xl space-y-8">
-        <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-              Diario público
-            </p>
-            <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight sm:text-3xl">
-              {title}
-            </h1>
-            <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
+      <div className="mx-auto max-w-2xl space-y-5 sm:space-y-8">
+        <section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
+            <p className="mt-1 max-w-md text-sm text-muted-foreground">
               Capsules públicas de{' '}
               {authorHref ? (
                 <Link to={authorHref} className="font-medium text-foreground underline-offset-4 hover:underline">
@@ -176,6 +171,7 @@ export function PublicDiaryMonthPage() {
             capsules={data?.capsules ?? []}
             displayName={displayName}
             className="shrink-0"
+            compact
           />
         </section>
 

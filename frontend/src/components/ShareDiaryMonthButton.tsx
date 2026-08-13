@@ -23,6 +23,8 @@ type Props = {
   className?: string;
   size?: 'sm' | 'default';
   variant?: 'ghost' | 'outline' | 'secondary' | 'default';
+  /** Icono en móvil, etiqueta desde tablet. */
+  compact?: boolean;
 };
 
 export function ShareDiaryMonthButton({
@@ -35,9 +37,13 @@ export function ShareDiaryMonthButton({
   className,
   size = 'sm',
   variant = 'secondary',
+  compact = false,
 }: Props) {
   const [copied, setCopied] = useState(false);
   const [manualText, setManualText] = useState<string | null>(null);
+  const iconBtn = compact ? 'h-9 w-9 px-0 sm:w-auto sm:px-3' : undefined;
+  const iconMargin = compact ? 'sm:mr-1.5' : 'mr-1.5';
+  const labelClass = compact ? 'sr-only sm:not-sr-only' : undefined;
 
   if (isAutoUsername(username)) {
     return (
@@ -55,12 +61,13 @@ export function ShareDiaryMonthButton({
         type="button"
         variant={variant}
         size={size}
-        className={cn(className)}
+        className={cn(iconBtn, className)}
         disabled
         title="Solo se pueden compartir meses con Capsules públicas"
+        aria-label="Sin Capsules públicas para compartir"
       >
-        <Share2 className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-        Sin Capsules públicas
+        <Share2 className={cn('h-3.5 w-3.5', iconMargin)} aria-hidden />
+        <span className={labelClass}>Sin Capsules públicas</span>
       </Button>
     );
   }
@@ -127,26 +134,28 @@ export function ShareDiaryMonthButton({
           type="button"
           variant={variant}
           size={size}
+          className={iconBtn}
           onClick={() => void copySummary()}
           aria-label={copied ? 'Resumen del mes copiado' : 'Copiar resumen del mes'}
           data-testid="copy-diary-month"
         >
           {copied ? (
-            <Check className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+            <Check className={cn('h-3.5 w-3.5', iconMargin)} aria-hidden />
           ) : (
-            <Copy className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+            <Copy className={cn('h-3.5 w-3.5', iconMargin)} aria-hidden />
           )}
-          {copied ? 'Copiado' : 'Copiar texto'}
+          <span className={labelClass}>{copied ? 'Copiado' : 'Copiar texto'}</span>
         </Button>
         <Button
           type="button"
           variant="outline"
           size={size}
+          className={iconBtn}
           onClick={() => void share()}
           aria-label="Compartir mes del diario"
         >
-          <Share2 className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-          Compartir
+          <Share2 className={cn('h-3.5 w-3.5', iconMargin)} aria-hidden />
+          <span className={labelClass}>Compartir</span>
         </Button>
       </div>
       {manualText ? (

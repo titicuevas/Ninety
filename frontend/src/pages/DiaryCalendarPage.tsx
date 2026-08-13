@@ -81,16 +81,15 @@ export function DiaryCalendarPage() {
   return (
     <Layout>
       <div className="mx-auto max-w-3xl space-y-5 sm:space-y-8">
-        <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Diario</p>
-            <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight sm:text-3xl">
-              Calendario
-            </h1>
-            <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-              Vista mensual de tus Capsules por fecha de visionado. Comparte solo meses con Capsules
-              públicas.
-            </p>
+        <section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Calendario</h1>
+            {!isLoading && total > 0 ? (
+              <p className="mt-1 text-sm text-muted-foreground">
+                {total} {total === 1 ? 'Capsule' : 'Capsules'} este mes
+                {publicTotal > 0 ? ` · ${publicTotal} pública${publicTotal === 1 ? '' : 's'}` : ''}
+              </p>
+            ) : null}
           </div>
           {profile?.username ? (
             <ShareDiaryMonthButton
@@ -100,6 +99,7 @@ export function DiaryCalendarPage() {
               publicTotal={publicTotal}
               capsules={data?.capsules ?? []}
               displayName={profile.display_name}
+              compact
             />
           ) : null}
         </section>
