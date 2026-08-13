@@ -44,22 +44,22 @@ export function notificationTypeEmptyCopy(type: NotificationTypeFilter): {
     case 'like':
       return {
         title: 'Sin me gusta',
-        description: 'Cuando alguien le dé me gusta a tu cápsula, aparecerá aquí.',
+        description: 'Los likes a tus Capsules aparecerán aquí.',
       };
     case 'comment':
       return {
         title: 'Sin comentarios',
-        description: 'Cuando comenten tu cápsula, lo verás en este filtro.',
+        description: 'Los comentarios a tus Capsules aparecerán aquí.',
       };
     case 'mention':
       return {
         title: 'Sin menciones',
-        description: 'Cuando te mencionen con @usuario en un comentario, aparecerá aquí.',
+        description: 'Las menciones @usuario aparecerán aquí.',
       };
     case 'follow':
       return {
         title: 'Sin seguidores nuevos',
-        description: 'Cuando alguien te siga, aparecerá en este filtro.',
+        description: 'Los follows nuevos aparecerán aquí.',
       };
   }
 }

@@ -350,12 +350,8 @@ export function NotificationsPage() {
           <EmptyState
             icon={Bell}
             title="Sin notificaciones"
-            description="Cuando alguien te siga o le guste tu cápsula, aparecerá aquí."
-          >
-            <Button asChild>
-              <Link to="/search?tab=people">Buscar aficionados</Link>
-            </Button>
-          </EmptyState>
+            description="Likes, comentarios y follows aparecerán aquí."
+          />
         ) : (
           <section className="space-y-3" aria-labelledby="notifications-list-heading">
             <h2 id="notifications-list-heading" className="sr-only">

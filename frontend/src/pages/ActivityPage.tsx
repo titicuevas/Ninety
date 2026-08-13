@@ -153,25 +153,23 @@ export function ActivityPage() {
   return (
     <Layout>
       <div className="space-y-5 sm:space-y-8">
-        <section className="space-y-3">
+        <section className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Actividad</h1>
-            <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-              Capsules y listas nuevas de a quien sigues — aparte del feed de partidos.
-            </p>
+            {followingCount > 0 ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Siguiendo a {followingCount} {followingCount === 1 ? 'persona' : 'personas'}
+              </p>
+            ) : null}
           </div>
           {followingCount === 0 ? (
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
               <Link to="/search?tab=people">
-                <Users className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                Seguir aficionados
+                <Users className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
+                <span className="sr-only sm:not-sr-only">Seguir aficionados</span>
               </Link>
             </Button>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              Siguiendo a {followingCount} {followingCount === 1 ? 'persona' : 'personas'}
-            </p>
-          )}
+          ) : null}
         </section>
 
         {isLoading ? <ActivityListSkeleton /> : null}
@@ -194,8 +192,8 @@ export function ActivityPage() {
             }
             description={
               followingCount === 0
-                ? 'Sigue aficionados para ver aquí sus Capsules y listas públicas nuevas.'
-                : 'Cuando alguien a quien sigues publique una Capsule o cree una lista, aparecerá aquí.'
+                ? 'Sigue aficionados para ver aquí sus Capsules y listas.'
+                : 'Cuando publiquen Capsules o listas, aparecerán aquí.'
             }
           >
             {followingCount === 0 ? (

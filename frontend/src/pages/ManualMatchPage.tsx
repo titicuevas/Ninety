@@ -120,15 +120,11 @@ export function ManualMatchPage() {
 
   return (
     <Layout>
-      <div className="mx-auto w-full max-w-md space-y-6 pb-10 md:max-w-lg">
-        <header className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Ninety</p>
-          <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight sm:text-3xl">
-            Partido manual
-          </h1>
-          <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-            Si el catálogo no tiene el partido (amistoso, local, torneo…), añádelo tú y sigue con tu
-            Capsule.
+      <div className="mx-auto w-full max-w-md space-y-5 pb-10 md:max-w-lg">
+        <header>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Partido manual</h1>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            Amistoso, local o torneo que no está en el catálogo.
           </p>
         </header>
 
@@ -203,10 +199,10 @@ export function ManualMatchPage() {
           ) : null}
 
           <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:flex-wrap">
-            <Button type="submit" className="h-11 w-full sm:w-auto" disabled={!isValid}>
+            <Button type="submit" className="h-10 w-full sm:w-auto" disabled={!isValid}>
               Continuar a Capsule
             </Button>
-            <Button asChild type="button" variant="secondary" className="h-11 w-full sm:w-auto">
+            <Button asChild type="button" variant="secondary" className="h-10 w-full sm:w-auto">
               <Link to="/search">Volver a buscar</Link>
             </Button>
           </div>

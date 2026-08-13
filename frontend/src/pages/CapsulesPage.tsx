@@ -134,18 +134,12 @@ export function CapsulesPage() {
         <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Mis Capsules</h1>
-            <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-              Todos los partidos que has guardado en tu diario.
-              {!isLoading && (hasFilters || total > 0) ? (
-                <>
-                  {' '}
-                  <span className="text-foreground">
-                    {total} {total === 1 ? 'partido' : 'partidos'}
-                    {hasFilters ? ' con estos filtros' : ''}
-                  </span>
-                </>
-              ) : null}
-            </p>
+            {!isLoading && (hasFilters || total > 0) ? (
+              <p className="mt-1 text-sm text-muted-foreground">
+                {total} {total === 1 ? 'partido' : 'partidos'}
+                {hasFilters ? ' con estos filtros' : ''}
+              </p>
+            ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <Button asChild variant="secondary" className="h-9 w-9 px-0 sm:w-auto sm:px-3">

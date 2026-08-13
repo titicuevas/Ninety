@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Library } from 'lucide-react';
+import { BookOpen, Library } from 'lucide-react';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { CollectionComments } from '@/components/CollectionComments';
 import { CollectionLikeButton } from '@/components/CollectionLikeButton';
@@ -84,7 +84,7 @@ export function PublicCollectionPage() {
 
   return (
     <Shell>
-      <div className="mx-auto max-w-2xl space-y-8">
+      <div className="mx-auto max-w-2xl space-y-5 sm:space-y-8">
         {coverUrl ? (
           <div className="overflow-hidden rounded-xl border border-border">
             <img
@@ -94,19 +94,16 @@ export function PublicCollectionPage() {
             />
           </div>
         ) : null}
-        <section className="space-y-3 text-center sm:text-left" aria-labelledby="public-collection-heading">
-          <p className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-primary">
-            <Library className="h-3.5 w-3.5" aria-hidden />
-            Colección
-          </p>
+        <section className="space-y-2.5 text-center sm:text-left" aria-labelledby="public-collection-heading">
           <h1
             id="public-collection-heading"
-            className="text-2xl font-bold tracking-tight sm:text-3xl"
+            className="inline-flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl"
           >
+            <Library className="hidden h-6 w-6 shrink-0 text-primary sm:block" aria-hidden />
             {collection.name}
           </h1>
           {collection.description ? (
-            <p className="text-sm text-muted-foreground sm:text-base">{collection.description}</p>
+            <p className="text-sm text-muted-foreground">{collection.description}</p>
           ) : null}
           <p className="text-sm text-muted-foreground">
             Por{' '}
@@ -148,11 +145,15 @@ export function PublicCollectionPage() {
                 username={profile.username}
                 slug={collection.slug}
                 name={collection.name}
+                compact
               />
             ) : null}
             {authorHref ? (
-              <Button asChild variant="outline" size="sm">
-                <Link to={authorHref}>Ver diario</Link>
+              <Button asChild variant="outline" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
+                <Link to={authorHref}>
+                  <BookOpen className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
+                  <span className="sr-only sm:not-sr-only">Ver diario</span>
+                </Link>
               </Button>
             ) : null}
           </div>
@@ -161,7 +162,7 @@ export function PublicCollectionPage() {
               <Link to={loginTo} className="text-primary hover:underline">
                 Inicia sesión
               </Link>{' '}
-              para dar me gusta o comentar esta lista.
+              para dar me gusta o comentar.
             </p>
           ) : null}
         </section>
