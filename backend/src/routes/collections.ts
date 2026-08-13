@@ -32,6 +32,7 @@ import {
   formatCollectionsImportSummary,
   parseCollectionsImportPayload,
 } from '../lib/collectionsImport.js';
+import { notifyCommentMentions } from '../lib/commentMentions.js';
 import { validateCommentBody } from '../lib/contentModeration.js';
 import { selectDiscoverCollections, parseDiscoverCollectionsSort } from '../lib/discoverCollections.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
@@ -1634,6 +1635,14 @@ collectionsRouter.post('/:id/comments', requireAuth, commentLimiter, async (req:
       body: parsed.data.body,
     });
   }
+
+  void notifyCommentMentions({
+    body: parsed.data.body,
+    actorId: req.userId!,
+    collectionId: collection.id,
+    collectionOwnerId: collection.user_id,
+    extraSkipIds: parentAuthorId ? [parentAuthorId] : undefined,
+  });
 
   const { data: profile } = await supabase
     .from('profiles')

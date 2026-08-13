@@ -40,21 +40,39 @@ export function extractMentionUsernames(
   return result;
 }
 
+/** Ids a no notificar (actor, dueño Capsule/lista, padre de reply…). */
+export function mentionNotifySkipIds(params: {
+  actorId: string;
+  ownerId: string;
+  extraSkipIds?: string[];
+}): Set<string> {
+  return new Set<string>([params.actorId, params.ownerId, ...(params.extraSkipIds ?? [])]);
+}
+
 /**
  * Notifica a usuarios mencionados en un comentario.
- * No notifica: self, dueño de la Capsule (ya recibe type=comment), inválidos / inexistentes.
+ * Capsule: `capsuleId` + `capsuleOwnerId`. Colección: `collectionId` + `collectionOwnerId`.
+ * No notifica: self, dueño (ya recibe type=comment), inválidos / inexistentes.
  * Blocks / mutes / prefs se aplican dentro de notifyUser.
  */
 export async function notifyCommentMentions(params: {
   body: string;
   actorId: string;
-  capsuleId: string;
-  capsuleOwnerId: string;
+  capsuleId?: string;
+  capsuleOwnerId?: string;
+  collectionId?: string;
+  collectionOwnerId?: string;
   /** Ids adicionales a no notificar (p.ej. autor del comentario padre en una reply). */
   extraSkipIds?: string[];
 }): Promise<void> {
   const usernames = extractMentionUsernames(params.body);
   if (usernames.length === 0) return;
+
+  const ownerId = params.capsuleOwnerId ?? params.collectionOwnerId;
+  const capsuleId = params.capsuleId;
+  const collectionId = params.collectionId;
+  if (!ownerId) return;
+  if (!capsuleId && !collectionId) return;
 
   try {
     const [{ supabaseAdmin }, { notifyUser }] = await Promise.all([
@@ -70,7 +88,11 @@ export async function notifyCommentMentions(params: {
 
     if (error || !data?.length) return;
 
-    const skip = new Set<string>([params.actorId, params.capsuleOwnerId, ...(params.extraSkipIds ?? [])]);
+    const skip = mentionNotifySkipIds({
+      actorId: params.actorId,
+      ownerId,
+      extraSkipIds: params.extraSkipIds,
+    });
     const notified = new Set<string>();
 
     // Respetar orden de aparición en el comentario.
@@ -92,7 +114,8 @@ export async function notifyCommentMentions(params: {
         userId: profile.id,
         actorId: params.actorId,
         type: 'mention',
-        capsuleId: params.capsuleId,
+        ...(capsuleId ? { capsuleId } : {}),
+        ...(collectionId ? { collectionId } : {}),
         body: params.body,
       });
     }
