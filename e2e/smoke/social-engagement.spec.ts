@@ -39,22 +39,58 @@ test.describe('Smoke — likes y comentarios @smoke', () => {
       data: { body: note },
     });
     expect(comment.status()).toBe(201);
-    const created = (await comment.json()) as { id?: string; body?: string };
+    const created = (await comment.json()) as { id?: string; body?: string; parent_id?: string | null };
     expect(created.id).toBeTruthy();
     expect(created.body).toBe(note);
+    expect(created.parent_id == null).toBe(true);
+
+    const replyNote = `E2E reply ${Date.now()}`;
+    const reply = await request.post(`${API_BASE}/api/capsules/${capsule.id}/comments`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      data: { body: replyNote, parent_id: created.id },
+    });
+    expect(reply.status()).toBe(201);
+    const replyBody = (await reply.json()) as { id?: string; body?: string; parent_id?: string | null };
+    expect(replyBody.id).toBeTruthy();
+    expect(replyBody.parent_id).toBe(created.id);
+
+    const nested = await request.post(`${API_BASE}/api/capsules/${capsule.id}/comments`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      data: { body: 'demasiado profundo', parent_id: replyBody.id },
+    });
+    expect(nested.status()).toBe(400);
 
     const list = await request.get(`${API_BASE}/api/capsules/${capsule.id}/comments`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(list.ok()).toBeTruthy();
-    const commentsBody = (await list.json()) as { comments?: Array<{ id: string; body: string }> };
+    const commentsBody = (await list.json()) as {
+      comments?: Array<{ id: string; body: string; parent_id?: string | null }>;
+    };
     expect(commentsBody.comments?.some((c) => c.id === created.id)).toBe(true);
+    expect(commentsBody.comments?.some((c) => c.id === replyBody.id && c.parent_id === created.id)).toBe(
+      true,
+    );
 
     const del = await request.delete(
       `${API_BASE}/api/capsules/${capsule.id}/comments/${created.id}`,
       { headers: { Authorization: `Bearer ${token}` } },
     );
     expect(del.status()).toBe(204);
+
+    const listAfter = await request.get(`${API_BASE}/api/capsules/${capsule.id}/comments`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(listAfter.ok()).toBeTruthy();
+    const after = (await listAfter.json()) as { comments?: Array<{ id: string }> };
+    expect(after.comments?.some((c) => c.id === created.id)).toBe(false);
+    expect(after.comments?.some((c) => c.id === replyBody.id)).toBe(false);
   });
 
   test('UI like y comentario en detalle de Capsule', async ({ page, request }) => {

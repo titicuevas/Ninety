@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, Pencil, Trash2 } from 'lucide-react';
+import { MessageCircle, Pencil, Reply, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,7 +19,7 @@ import { isAutoUsername } from '@/lib/profileHelpers';
 import { publicProfilePath } from '@/lib/profilePath';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
-import type { CapsuleComment } from '@/types/comment';
+import { buildCommentThreads, type CapsuleComment } from '@/types/comment';
 
 function CommentAvatar({ name, avatarUrl }: { name: string; avatarUrl: string | null | undefined }) {
   if (avatarUrl) {
@@ -73,6 +73,9 @@ function CommentItem({
   deleting,
   onSaveEdit,
   editingBusy,
+  canReply,
+  onReply,
+  replyOpen,
 }: {
   comment: CapsuleComment;
   currentUserId?: string;
@@ -81,6 +84,9 @@ function CommentItem({
   deleting: boolean;
   onSaveEdit: (id: string, body: string) => Promise<void>;
   editingBusy: boolean;
+  canReply?: boolean;
+  onReply?: () => void;
+  replyOpen?: boolean;
 }) {
   const name = comment.author?.display_name ?? comment.author?.username ?? 'Aficionado';
   const username = comment.author?.username;
@@ -170,6 +176,20 @@ function CommentItem({
         ) : (
           <CommentBodyText body={comment.body} />
         )}
+        {!editing && canReply && currentUserId && onReply ? (
+          <button
+            type="button"
+            onClick={onReply}
+            className={cn(
+              'mt-1 inline-flex items-center gap-1 text-xs transition-colors',
+              replyOpen ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+            )}
+            aria-expanded={replyOpen}
+          >
+            <Reply className="h-3 w-3" aria-hidden="true" />
+            Responder
+          </button>
+        ) : null}
       </div>
       {!editing && (isOwn || canDelete) ? (
         <div className="flex shrink-0 gap-0.5">
@@ -225,11 +245,14 @@ export function CapsuleComments({
 }: CapsuleCommentsProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [draft, setDraft] = useState('');
+  const [replyToId, setReplyToId] = useState<string | null>(null);
+  const [replyDraft, setReplyDraft] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [displayCount, setDisplayCount] = useState(commentsCount);
   const panelRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
   const { data, isLoading, isError, isFetching, refetch, isRefetching } = useCapsuleComments(
     capsuleId,
     open,
@@ -240,6 +263,7 @@ export function CapsuleComments({
   const { loginTo } = useAuthReturnLinks();
 
   const comments = data?.comments ?? [];
+  const threads = useMemo(() => buildCommentThreads(comments), [comments]);
   const label = displayCount > 0 ? `${displayCount} comentarios` : 'Comentar';
   const rootId = `comments-${capsuleId}`;
   const panelId = `comments-panel-${capsuleId}`;
@@ -264,6 +288,14 @@ export function CapsuleComments({
     return () => window.cancelAnimationFrame(id);
   }, [open, currentUserId]);
 
+  useEffect(() => {
+    if (!replyToId) return;
+    const id = window.requestAnimationFrame(() => {
+      replyTextareaRef.current?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [replyToId]);
+
   const handleToggle = () => {
     setOpen((wasOpen) => {
       const next = !wasOpen;
@@ -281,10 +313,26 @@ export function CapsuleComments({
     if (!text) return;
 
     try {
-      await addComment.mutateAsync(text);
+      await addComment.mutateAsync({ body: text });
       setDraft('');
       setDisplayCount((n) => n + 1);
       toast.success('Comentario publicado');
+    } catch {
+      // toast via mutation onError
+    }
+  };
+
+  const handleReplySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = replyDraft.trim();
+    if (!text || !replyToId) return;
+
+    try {
+      await addComment.mutateAsync({ body: text, parentId: replyToId });
+      setReplyDraft('');
+      setReplyToId(null);
+      setDisplayCount((n) => n + 1);
+      toast.success('Respuesta publicada');
     } catch {
       // toast via mutation onError
     }
@@ -325,7 +373,7 @@ export function CapsuleComments({
                 <span className="text-xs text-muted-foreground">
                   {draft.length}/500 · Sé respetuoso
                 </span>
-                <Button type="submit" size="sm" loading={addComment.isPending} disabled={!draft.trim()}>
+                <Button type="submit" size="sm" loading={addComment.isPending && !replyToId} disabled={!draft.trim()}>
                   Publicar
                 </Button>
               </div>
@@ -361,17 +409,23 @@ export function CapsuleComments({
             />
           ) : null}
 
-          {!isLoading && comments.length > 0 ? (
-            <ul className="space-y-3">
-              {comments.map((comment) => (
-                <li key={comment.id}>
+          {!isLoading && threads.length > 0 ? (
+            <ul className="space-y-4">
+              {threads.map(({ root, replies }) => (
+                <li key={root.id} className="space-y-2">
                   <CommentItem
-                    comment={comment}
+                    comment={root}
                     currentUserId={currentUserId}
                     capsuleOwnerId={capsuleOwnerId}
                     onDelete={(id) => setPendingDeleteId(id)}
-                    deleting={deleteComment.isPending && pendingDeleteId === comment.id}
-                    editingBusy={updateComment.isPending && editingId === comment.id}
+                    deleting={deleteComment.isPending && pendingDeleteId === root.id}
+                    editingBusy={updateComment.isPending && editingId === root.id}
+                    canReply={!!currentUserId}
+                    replyOpen={replyToId === root.id}
+                    onReply={() => {
+                      setReplyToId((prev) => (prev === root.id ? null : root.id));
+                      setReplyDraft('');
+                    }}
                     onSaveEdit={async (id, body) => {
                       setEditingId(id);
                       try {
@@ -381,12 +435,75 @@ export function CapsuleComments({
                       }
                     }}
                   />
+                  {replyToId === root.id && currentUserId ? (
+                    <form
+                      onSubmit={(e) => void handleReplySubmit(e)}
+                      className="ml-9 space-y-2 border-l border-border pl-3"
+                    >
+                      <Textarea
+                        ref={replyTextareaRef}
+                        value={replyDraft}
+                        onChange={(e) => setReplyDraft(e.target.value)}
+                        placeholder="Escribe una respuesta…"
+                        maxLength={500}
+                        rows={2}
+                        className="min-h-[64px] resize-none text-sm"
+                        aria-label="Nueva respuesta"
+                      />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          type="submit"
+                          size="sm"
+                          loading={addComment.isPending}
+                          disabled={!replyDraft.trim()}
+                        >
+                          Responder
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          disabled={addComment.isPending}
+                          onClick={() => {
+                            setReplyToId(null);
+                            setReplyDraft('');
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </form>
+                  ) : null}
+                  {replies.length > 0 ? (
+                    <ul className="ml-9 space-y-3 border-l border-border pl-3">
+                      {replies.map((reply) => (
+                        <li key={reply.id}>
+                          <CommentItem
+                            comment={reply}
+                            currentUserId={currentUserId}
+                            capsuleOwnerId={capsuleOwnerId}
+                            onDelete={(id) => setPendingDeleteId(id)}
+                            deleting={deleteComment.isPending && pendingDeleteId === reply.id}
+                            editingBusy={updateComment.isPending && editingId === reply.id}
+                            onSaveEdit={async (id, body) => {
+                              setEditingId(id);
+                              try {
+                                await updateComment.mutateAsync({ commentId: id, body });
+                              } finally {
+                                setEditingId(null);
+                              }
+                            }}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </li>
               ))}
             </ul>
           ) : null}
 
-          {!isLoading && !isError && comments.length === 0 ? (
+          {!isLoading && !isError && threads.length === 0 ? (
             <p className="text-xs text-muted-foreground">Sé el primero en comentar.</p>
           ) : null}
         </div>
@@ -395,13 +512,17 @@ export function CapsuleComments({
       <ConfirmDialog
         open={pendingDeleteId != null}
         title="¿Borrar este comentario?"
-        description="No se puede deshacer."
+        description="No se puede deshacer. Si tiene respuestas, también se eliminarán."
         confirmLabel="Borrar"
         busy={deleteComment.isPending}
         onConfirm={() => {
           if (!pendingDeleteId) return;
-          deleteComment.mutate(pendingDeleteId, {
-            onSuccess: () => setDisplayCount((n) => Math.max(0, n - 1)),
+          const id = pendingDeleteId;
+          const removedFromCache =
+            1 + comments.filter((c) => c.parent_id === id).length;
+          deleteComment.mutate(id, {
+            onSuccess: () =>
+              setDisplayCount((n) => Math.max(0, n - Math.max(1, removedFromCache))),
             onSettled: () => setPendingDeleteId(null),
           });
         }}

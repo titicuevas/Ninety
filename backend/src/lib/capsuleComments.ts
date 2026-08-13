@@ -20,6 +20,23 @@ export function isMissingCommentsTable(error: unknown): boolean {
   );
 }
 
+export function isMissingParentIdColumn(error: unknown): boolean {
+  const message =
+    error && typeof error === 'object' && 'message' in error && typeof error.message === 'string'
+      ? error.message
+      : error instanceof Error
+        ? error.message
+        : String(error);
+
+  return (
+    message.includes('parent_id') &&
+    (message.includes('schema cache') ||
+      message.includes('Could not find') ||
+      message.includes('column') ||
+      message.includes('does not exist'))
+  );
+}
+
 function defaultCommentStats<T extends { id: string }>(items: T[]): Array<T & CommentStats> {
   return items.map((item) => ({
     ...item,
@@ -63,6 +80,7 @@ export interface CommentRow {
   user_id: string;
   body: string;
   created_at: string;
+  parent_id: string | null;
 }
 
 export interface CommentAuthor {
@@ -71,21 +89,60 @@ export interface CommentAuthor {
   avatar_url: string | null;
 }
 
+export type CommentWithAuthor = CommentRow & { author: CommentAuthor | null };
+
+const COMMENT_SELECT_WITH_PARENT = 'id, capsule_id, user_id, body, created_at, parent_id';
+const COMMENT_SELECT_LEGACY = 'id, capsule_id, user_id, body, created_at';
+
+/**
+ * Valida parent_id para hilos de 1 nivel: debe existir en la misma cápsula
+ * y ser un comentario raíz (sin abuelo).
+ */
+export function assertValidReplyParent(
+  parent: { id: string; capsule_id: string; parent_id: string | null } | null | undefined,
+  capsuleId: string,
+): string | null {
+  if (!parent) return 'Comentario padre no encontrado';
+  if (parent.capsule_id !== capsuleId) return 'El comentario padre no pertenece a esta Capsule';
+  if (parent.parent_id != null) return 'Solo se permite un nivel de respuestas';
+  return null;
+}
+
 export async function fetchCommentsWithAuthors(
   supabase: SupabaseClient,
   capsuleId: string,
-): Promise<Array<CommentRow & { author: CommentAuthor | null }>> {
-  const { data: comments, error } = await supabase
+): Promise<CommentWithAuthor[]> {
+  let rows: Array<{
+    id: string;
+    capsule_id: string;
+    user_id: string;
+    body: string;
+    created_at: string;
+    parent_id?: string | null;
+  }> = [];
+
+  const withParent = await supabase
     .from('capsule_comments')
-    .select('id, capsule_id, user_id, body, created_at')
+    .select(COMMENT_SELECT_WITH_PARENT)
     .eq('capsule_id', capsuleId)
     .order('created_at', { ascending: true });
 
-  if (error) {
-    throw error;
+  if (withParent.error) {
+    if (isMissingParentIdColumn(withParent.error)) {
+      const legacy = await supabase
+        .from('capsule_comments')
+        .select(COMMENT_SELECT_LEGACY)
+        .eq('capsule_id', capsuleId)
+        .order('created_at', { ascending: true });
+      if (legacy.error) throw legacy.error;
+      rows = legacy.data ?? [];
+    } else {
+      throw withParent.error;
+    }
+  } else {
+    rows = withParent.data ?? [];
   }
 
-  const rows = comments ?? [];
   const userIds = [...new Set(rows.map((c) => c.user_id))];
   const profileMap = new Map<string, CommentAuthor>();
 
@@ -105,7 +162,12 @@ export async function fetchCommentsWithAuthors(
   }
 
   return rows.map((comment) => ({
-    ...comment,
+    id: comment.id,
+    capsule_id: comment.capsule_id,
+    user_id: comment.user_id,
+    body: comment.body,
+    created_at: comment.created_at,
+    parent_id: comment.parent_id ?? null,
     author: profileMap.get(comment.user_id) ?? null,
   }));
 }

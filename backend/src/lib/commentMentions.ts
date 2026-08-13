@@ -50,6 +50,8 @@ export async function notifyCommentMentions(params: {
   actorId: string;
   capsuleId: string;
   capsuleOwnerId: string;
+  /** Ids adicionales a no notificar (p.ej. autor del comentario padre en una reply). */
+  extraSkipIds?: string[];
 }): Promise<void> {
   const usernames = extractMentionUsernames(params.body);
   if (usernames.length === 0) return;
@@ -68,7 +70,7 @@ export async function notifyCommentMentions(params: {
 
     if (error || !data?.length) return;
 
-    const skip = new Set<string>([params.actorId, params.capsuleOwnerId]);
+    const skip = new Set<string>([params.actorId, params.capsuleOwnerId, ...(params.extraSkipIds ?? [])]);
     const notified = new Set<string>();
 
     // Respetar orden de aparición en el comentario.

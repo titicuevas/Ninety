@@ -22,7 +22,13 @@ import {
 } from '../lib/diaryImport.js';
 import { restorePhotosForCapsules } from '../lib/diaryImportPhotos.js';
 import { validateCommentBody, validateImageBuffer } from '../lib/contentModeration.js';
-import { attachCommentCounts, fetchCommentsWithAuthors, isMissingCommentsTable } from '../lib/capsuleComments.js';
+import {
+  assertValidReplyParent,
+  attachCommentCounts,
+  fetchCommentsWithAuthors,
+  isMissingCommentsTable,
+  isMissingParentIdColumn,
+} from '../lib/capsuleComments.js';
 import { notifyCommentMentions } from '../lib/commentMentions.js';
 import { attachLikeStats, fetchLikesWithProfiles, isMissingLikesTable } from '../lib/capsuleLikes.js';
 import { applyFeedContentFilters, resolveFeedContentFilters } from '../lib/feedFilters.js';
@@ -1212,6 +1218,7 @@ capsulesRouter.get('/:id/likes', optionalAuth, async (req: AuthRequest, res) => 
 
 const commentBodySchema = z.object({
   body: z.string().trim().min(1, 'Escribe un comentario').max(500),
+  parent_id: z.string().uuid().optional().nullable(),
 });
 
 capsulesRouter.get('/:id/comments', optionalAuth, async (req: AuthRequest, res) => {
@@ -1290,15 +1297,73 @@ capsulesRouter.post('/:id/comments', requireAuth, commentLimiter, async (req: Au
     return;
   }
 
-  const { data, error } = await supabase
+  const parentId = parsed.data.parent_id ?? null;
+  let parentAuthorId: string | null = null;
+
+  if (parentId) {
+    const { data: parent, error: parentError } = await supabase
+      .from('capsule_comments')
+      .select('id, capsule_id, user_id, parent_id')
+      .eq('id', parentId)
+      .maybeSingle();
+
+    if (parentError) {
+      if (isMissingCommentsTable(parentError)) {
+        res.status(503).json({
+          error: 'Ejecuta la migración 20250711210000_capsule_comments.sql en Supabase.',
+        });
+        return;
+      }
+      if (isMissingParentIdColumn(parentError)) {
+        res.status(503).json({
+          error: 'Ejecuta la migración 20250823120000_capsule_comment_replies.sql en Supabase.',
+        });
+        return;
+      }
+      res.status(400).json({ error: parentError.message });
+      return;
+    }
+
+    const parentErr = assertValidReplyParent(parent, capsule.id);
+    if (parentErr) {
+      res.status(parentErr.includes('no encontrado') ? 404 : 400).json({ error: parentErr });
+      return;
+    }
+
+    parentAuthorId = parent!.user_id;
+  }
+
+  const insertRow: Record<string, unknown> = {
+    capsule_id: capsule.id,
+    user_id: req.userId!,
+    body: parsed.data.body,
+  };
+  if (parentId) insertRow.parent_id = parentId;
+
+  let { data, error } = await supabase
     .from('capsule_comments')
-    .insert({
-      capsule_id: capsule.id,
-      user_id: req.userId!,
-      body: parsed.data.body,
-    })
-    .select('id, capsule_id, user_id, body, created_at')
+    .insert(insertRow)
+    .select('id, capsule_id, user_id, body, created_at, parent_id')
     .single();
+
+  if (error && parentId && isMissingParentIdColumn(error)) {
+    res.status(503).json({
+      error: 'Ejecuta la migración 20250823120000_capsule_comment_replies.sql en Supabase.',
+    });
+    return;
+  }
+
+  if (error && !parentId && isMissingParentIdColumn(error)) {
+    ({ data, error } = await supabase
+      .from('capsule_comments')
+      .insert({
+        capsule_id: capsule.id,
+        user_id: req.userId!,
+        body: parsed.data.body,
+      })
+      .select('id, capsule_id, user_id, body, created_at')
+      .single());
+  }
 
   if (error) {
     if (isMissingCommentsTable(error)) {
@@ -1311,19 +1376,41 @@ capsulesRouter.post('/:id/comments', requireAuth, commentLimiter, async (req: Au
     return;
   }
 
-  notifyUser({
-    userId: capsule.user_id,
-    actorId: req.userId!,
-    type: 'comment',
-    capsuleId: capsule.id,
-    body: parsed.data.body,
-  });
+  // Respuesta: notifica al autor del comentario padre. Raíz: al dueño de la Capsule.
+  // Si el padre ≠ dueño, el dueño también recibe alerta de actividad en su Capsule.
+  if (parentAuthorId) {
+    notifyUser({
+      userId: parentAuthorId,
+      actorId: req.userId!,
+      type: 'comment',
+      capsuleId: capsule.id,
+      body: parsed.data.body,
+    });
+    if (parentAuthorId !== capsule.user_id) {
+      notifyUser({
+        userId: capsule.user_id,
+        actorId: req.userId!,
+        type: 'comment',
+        capsuleId: capsule.id,
+        body: parsed.data.body,
+      });
+    }
+  } else {
+    notifyUser({
+      userId: capsule.user_id,
+      actorId: req.userId!,
+      type: 'comment',
+      capsuleId: capsule.id,
+      body: parsed.data.body,
+    });
+  }
 
   void notifyCommentMentions({
     body: parsed.data.body,
     actorId: req.userId!,
     capsuleId: capsule.id,
     capsuleOwnerId: capsule.user_id,
+    extraSkipIds: parentAuthorId ? [parentAuthorId] : undefined,
   });
 
   const { data: profile } = await supabase
@@ -1334,6 +1421,7 @@ capsulesRouter.post('/:id/comments', requireAuth, commentLimiter, async (req: Au
 
   res.status(201).json({
     ...data,
+    parent_id: (data as { parent_id?: string | null }).parent_id ?? parentId,
     author: profile
       ? {
           username: profile.username,
@@ -1401,13 +1489,48 @@ capsulesRouter.patch('/:id/comments/:commentId', requireAuth, commentLimiter, as
     .eq('id', commentId)
     .eq('capsule_id', capsuleId)
     .eq('user_id', req.userId!)
-    .select('id, capsule_id, user_id, body, created_at')
+    .select('id, capsule_id, user_id, body, created_at, parent_id')
     .maybeSingle();
 
   if (error) {
     if (isMissingCommentsTable(error)) {
       res.status(503).json({
         error: 'Ejecuta la migración 20250801120000_capsule_comments_update.sql en Supabase.',
+      });
+      return;
+    }
+    if (isMissingParentIdColumn(error)) {
+      const legacy = await supabase
+        .from('capsule_comments')
+        .update({ body: parsed.data.body })
+        .eq('id', commentId)
+        .eq('capsule_id', capsuleId)
+        .eq('user_id', req.userId!)
+        .select('id, capsule_id, user_id, body, created_at')
+        .maybeSingle();
+      if (legacy.error) {
+        res.status(400).json({ error: legacy.error.message });
+        return;
+      }
+      if (!legacy.data) {
+        res.status(404).json({ error: 'Comentario no encontrado' });
+        return;
+      }
+      const { data: profileLegacy } = await supabase
+        .from('profiles')
+        .select('username, full_name, avatar_url')
+        .eq('id', req.userId!)
+        .maybeSingle();
+      res.json({
+        ...legacy.data,
+        parent_id: null,
+        author: profileLegacy
+          ? {
+              username: profileLegacy.username,
+              display_name: profileLegacy.full_name ?? null,
+              avatar_url: profileLegacy.avatar_url,
+            }
+          : null,
       });
       return;
     }
@@ -1428,6 +1551,7 @@ capsulesRouter.patch('/:id/comments/:commentId', requireAuth, commentLimiter, as
 
   res.json({
     ...data,
+    parent_id: data.parent_id ?? null,
     author: profile
       ? {
           username: profile.username,
@@ -1449,22 +1573,42 @@ capsulesRouter.delete('/:id/comments/:commentId', requireAuth, async (req: AuthR
   const commentId = routeParam(req.params.commentId);
   const supabase = createUserClient(token);
 
-  const { data: comment, error: commentError } = await supabase
+  type CommentRef = { id: string; user_id: string; capsule_id: string; parent_id: string | null };
+
+  let comment: CommentRef | null = null;
+
+  const withParent = await supabase
     .from('capsule_comments')
-    .select('id, user_id, capsule_id')
+    .select('id, user_id, capsule_id, parent_id')
     .eq('id', commentId)
     .eq('capsule_id', capsuleId)
     .maybeSingle();
 
-  if (commentError) {
-    if (isMissingCommentsTable(commentError)) {
+  if (withParent.error) {
+    if (isMissingCommentsTable(withParent.error)) {
       res.status(503).json({
         error: 'Ejecuta la migración 20250711210000_capsule_comments.sql en Supabase.',
       });
       return;
     }
-    res.status(400).json({ error: commentError.message });
-    return;
+    if (isMissingParentIdColumn(withParent.error)) {
+      const legacy = await supabase
+        .from('capsule_comments')
+        .select('id, user_id, capsule_id')
+        .eq('id', commentId)
+        .eq('capsule_id', capsuleId)
+        .maybeSingle();
+      if (legacy.error) {
+        res.status(400).json({ error: legacy.error.message });
+        return;
+      }
+      comment = legacy.data ? { ...legacy.data, parent_id: null } : null;
+    } else {
+      res.status(400).json({ error: withParent.error.message });
+      return;
+    }
+  } else {
+    comment = withParent.data;
   }
 
   if (!comment) {
