@@ -154,6 +154,10 @@ function ProfileAvatarSection({
             <ShareProfileButton
               username={profile.username}
               displayName={profile.display_name}
+              favoriteTeam={profile.favorite_team}
+              city={profile.city}
+              country={profile.country}
+              followersCount={profile.followers_count}
               size="sm"
               variant="outline"
               compact

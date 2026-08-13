@@ -517,7 +517,7 @@ Ninety/
 - [x] Filtros en Actividad — ver solo Capsules o solo listas (`?type=capsule|collection` en `GET /api/activity` + chips en `/activity`)
 - [x] Buscar / ordenar en Explorar colecciones — `q` + `sort=relevant|recent|likes` en `GET /api/collections/discover` y UI en `/collections/explore`
 - [x] Respuestas en comentarios de colecciones — hilos 1 nivel (`parent_id`; migración `20250828120000_collection_comment_replies.sql`; paridad con Capsules)
-- [ ] Compartir perfil como texto — resumen one-tap (Capsules, club, listas) desde perfil público
+- [x] Compartir perfil como texto — resumen one-tap (`Copiar texto` / Compartir) desde perfil público y Ajustes de perfil (`buildProfileShareText`)
 - [ ] Soft nudge «Quiero ir» en Home — card cuando hay partidos cercanos en la watchlist (además del push)
 
 ## 🎨 Identidad visual

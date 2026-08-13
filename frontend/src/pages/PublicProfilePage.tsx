@@ -72,6 +72,7 @@ function PublicProfileHeader({
   location,
   diaryTotal,
   unlockedAchievements,
+  collectionsCount,
   isOwnProfile,
   isBlockedByMe,
   user,
@@ -82,6 +83,7 @@ function PublicProfileHeader({
   location: string;
   diaryTotal: number;
   unlockedAchievements: number;
+  collectionsCount: number;
   isOwnProfile: boolean;
   isBlockedByMe: boolean;
   user: ReturnType<typeof useAuth>['user'];
@@ -220,6 +222,13 @@ function PublicProfileHeader({
           <ShareProfileButton
             username={profile.username}
             displayName={displayName}
+            favoriteTeam={profile.favorite_team}
+            city={profile.city}
+            country={profile.country}
+            publicCapsulesCount={diaryTotal}
+            collectionsCount={collectionsCount}
+            achievementsCount={unlockedAchievements}
+            followersCount={profile.followers_count}
             compact
           />
         ) : null}
@@ -590,6 +599,7 @@ export function PublicProfilePage() {
           location={location}
           diaryTotal={diaryTotal}
           unlockedAchievements={unlockedAchievements}
+          collectionsCount={collectionsData?.collections?.length ?? 0}
           isOwnProfile={isOwnProfile}
           isBlockedByMe={isBlockedByMe}
           user={user}
