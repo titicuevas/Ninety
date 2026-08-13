@@ -505,7 +505,7 @@ Ninety/
 - [x] Tags en diario público — filtrar Capsules públicas por tag en perfil ajeno (`?tag=` + chips; `tags` en respuesta de `GET /api/capsules/user/:username`)
 - [x] Colección destacada en perfil — pin de una lista pública (`featured_collection_id` en profiles; `PATCH /api/profile/me`; visible en perfil público; migración `20250826120000_featured_collection.sql`)
 
-### 🚧 v13 — Descubrimiento & ritmo diario
+### ✅ v13 — Descubrimiento & ritmo diario
 - [x] Feed de actividad de follows — timeline ligera aparte del feed de Capsules (`GET /api/activity` + `/activity`; nuevas Capsules/colecciones públicas de gente que sigues; respeta blocks; paginación `limit`/`offset`)
 - [x] Guardar búsqueda / filtros del diario — recordar último tag/filtro en Mis Capsules (`localStorage` `ninety.diaryFilters:v1:` + query sticky vía `useDiaryFilterParams({ persist: true })`)
 - [x] Soft nudge «completa tu Capsule» — si hay rating sin nota/fotos, card discreta en Home (on-device; `ninety.incompleteCapsule:v1:`; sin backend)
