@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
+import { isCommentsList, mapInfinitePages } from '@/lib/queryCache';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 import type { CapsuleComment, CapsuleCommentsResponse } from '@/types/comment';
@@ -21,18 +22,14 @@ function bumpFeedCommentCount(
   capsuleId: string,
   delta: number,
 ): InfiniteData<FeedResponse> | undefined {
-  if (!old) return old;
-  return {
-    ...old,
-    pages: old.pages.map((page) => ({
-      ...page,
-      capsules: page.capsules.map((c) =>
-        c.id === capsuleId
-          ? { ...c, comments_count: Math.max(0, (c.comments_count ?? 0) + delta) }
-          : c,
-      ),
-    })),
-  };
+  return mapInfinitePages<FeedResponse>(old, (page) => ({
+    ...page,
+    capsules: (page.capsules ?? []).map((c) =>
+      c.id === capsuleId
+        ? { ...c, comments_count: Math.max(0, (c.comments_count ?? 0) + delta) }
+        : c,
+    ),
+  })) as InfiniteData<FeedResponse> | undefined;
 }
 
 export function useAddCapsuleComment(capsuleId: string) {
@@ -53,8 +50,9 @@ export function useAddCapsuleComment(capsuleId: string) {
         session?.access_token,
       ),
     onSuccess: () => {
-      queryClient.setQueryData<InfiniteData<FeedResponse>>(['capsules', 'feed'], (old) =>
-        bumpFeedCommentCount(old, capsuleId, 1),
+      queryClient.setQueriesData<InfiniteData<FeedResponse>>(
+        { queryKey: ['capsules', 'feed'] },
+        (old) => bumpFeedCommentCount(old, capsuleId, 1),
       );
       void queryClient.invalidateQueries({ queryKey: ['capsules', capsuleId, 'comments'] });
       void queryClient.invalidateQueries({ queryKey: ['capsules', 'feed'] });
@@ -83,19 +81,20 @@ export function useDeleteCapsuleComment(capsuleId: string) {
       const previousComments = queryClient.getQueriesData<CapsuleCommentsResponse>({
         queryKey: ['capsules', capsuleId, 'comments'],
       });
-      const previousFeed = queryClient.getQueryData<InfiniteData<FeedResponse>>(['capsules', 'feed']);
+      const previousFeed = queryClient.getQueriesData<InfiniteData<FeedResponse>>({
+        queryKey: ['capsules', 'feed'],
+      });
 
       let removed = 1;
       queryClient.setQueriesData<CapsuleCommentsResponse>(
         { queryKey: ['capsules', capsuleId, 'comments'] },
         (old) => {
-          if (!old) return old;
+          if (!isCommentsList<CapsuleComment>(old)) return old;
           const target = old.comments.find((c) => c.id === commentId);
           const next = old.comments.filter(
             (c) => c.id !== commentId && c.parent_id !== commentId,
           );
           removed = Math.max(1, old.comments.length - next.length);
-          // Si no estaba en cache, al menos 1; si era raíz con replies, count real.
           if (target && !target.parent_id) {
             removed = 1 + old.comments.filter((c) => c.parent_id === commentId).length;
           }
@@ -103,8 +102,9 @@ export function useDeleteCapsuleComment(capsuleId: string) {
         },
       );
 
-      queryClient.setQueryData<InfiniteData<FeedResponse>>(['capsules', 'feed'], (old) =>
-        bumpFeedCommentCount(old, capsuleId, -removed),
+      queryClient.setQueriesData<InfiniteData<FeedResponse>>(
+        { queryKey: ['capsules', 'feed'] },
+        (old) => bumpFeedCommentCount(old, capsuleId, -removed),
       );
 
       return { previousComments, previousFeed, removed };
@@ -113,9 +113,9 @@ export function useDeleteCapsuleComment(capsuleId: string) {
       context?.previousComments?.forEach(([key, data]) => {
         queryClient.setQueryData(key, data);
       });
-      if (context?.previousFeed) {
-        queryClient.setQueryData(['capsules', 'feed'], context.previousFeed);
-      }
+      context?.previousFeed?.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
       toast.error('No se pudo borrar el comentario');
     },
     onSuccess: () => {
@@ -148,16 +148,16 @@ export function useUpdateCapsuleComment(capsuleId: string) {
 
       queryClient.setQueriesData<CapsuleCommentsResponse>(
         { queryKey: ['capsules', capsuleId, 'comments'] },
-        (old) =>
-          old
-            ? {
-                comments: old.comments.map((c) =>
-                  c.id === commentId
-                    ? { ...c, body, edited_at: new Date().toISOString() }
-                    : c,
-                ),
-              }
-            : old,
+        (old) => {
+          if (!isCommentsList<CapsuleComment>(old)) return old;
+          return {
+            comments: old.comments.map((c) =>
+              c.id === commentId
+                ? { ...c, body, edited_at: new Date().toISOString() }
+                : c,
+            ),
+          };
+        },
       );
 
       return { previousComments };

@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { ApiError, apiFetch } from '@/lib/api';
 import type { FeedContentFilters, FeedScope, FeedSort } from '@/lib/feedParams';
+import { mapInfinitePages } from '@/lib/queryCache';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 import type { Capsule, CapsulesResponse, CreateCapsuleInput, FeedCapsule, FeedResponse, UpdateCapsuleInput } from '@/types/capsule';
@@ -67,7 +68,7 @@ export function useMyCapsulesInfinite(filters: MyCapsulesFilters = {}) {
       ),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
-      const loaded = allPages.reduce((sum, page) => sum + page.capsules.length, 0);
+      const loaded = allPages.reduce((sum, page) => sum + (page.capsules?.length ?? 0), 0);
       const total = lastPage.total ?? loaded;
       return loaded < total ? loaded : undefined;
     },
@@ -122,7 +123,7 @@ export function useCapsuleFeed(
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
-      const loaded = allPages.reduce((sum, page) => sum + page.capsules.length, 0);
+      const loaded = allPages.reduce((sum, page) => sum + (page.capsules?.length ?? 0), 0);
       return loaded < lastPage.total ? loaded : undefined;
     },
     enabled: !!session,
@@ -169,29 +170,19 @@ export function useToggleCapsuleLike() {
           : c;
 
       queryClient.setQueriesData<InfiniteData<FeedResponse>>({ queryKey: ['capsules', 'feed'] }, (old) =>
-        old
-          ? {
-              ...old,
-              pages: old.pages.map((page) => ({
-                ...page,
-                capsules: page.capsules.map(updateCapsule),
-              })),
-            }
-          : old,
+        mapInfinitePages<FeedResponse>(old, (page) => ({
+          ...page,
+          capsules: (page.capsules ?? []).map(updateCapsule),
+        })) as InfiniteData<FeedResponse> | undefined,
       );
 
       queryClient.setQueriesData<InfiniteData<{ capsules: FeedCapsule[] }>>(
         { queryKey: ['profile', 'public'] },
         (old) =>
-          old
-            ? {
-                ...old,
-                pages: old.pages.map((page) => ({
-                  ...page,
-                  capsules: page.capsules.map(updateCapsule),
-                })),
-              }
-            : old,
+          mapInfinitePages<{ capsules: FeedCapsule[] }>(old, (page) => ({
+            ...page,
+            capsules: (page.capsules ?? []).map(updateCapsule),
+          })) as InfiniteData<{ capsules: FeedCapsule[] }> | undefined,
       );
 
       queryClient.setQueriesData({ queryKey: ['capsules', 'public', capsuleId] }, (old) =>

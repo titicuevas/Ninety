@@ -26,7 +26,7 @@ export function useTeamFansInfinite(slug: string | undefined) {
       ),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
-      const loaded = allPages.reduce((sum, page) => sum + page.profiles.length, 0);
+      const loaded = allPages.reduce((sum, page) => sum + (page.profiles?.length ?? 0), 0);
       return loaded < lastPage.total ? loaded : undefined;
     },
   });

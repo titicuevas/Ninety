@@ -122,7 +122,7 @@ export function CapsuleLikersDialog({
     fetchNextPage,
   } = useCapsuleLikes(capsuleId, open);
 
-  const likes = data?.pages.flatMap((page) => page.likes) ?? [];
+  const likes = data?.pages.flatMap((page) => page.likes ?? []) ?? [];
   const total = data?.pages[0]?.total ?? likesCount;
   const title = formatLikesPanelTitle(total);
 

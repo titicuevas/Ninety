@@ -111,7 +111,7 @@ export function PublicProfilePage() {
           ? 'Perfil no encontrado'
           : 'Perfil',
   );
-  const capsules = isBlockedByMe ? [] : (data?.pages.flatMap((page) => page.capsules) ?? []);
+  const capsules = isBlockedByMe ? [] : (data?.pages.flatMap((page) => page.capsules ?? []) ?? []);
   const total = isBlockedByMe ? 0 : (data?.pages[0]?.total ?? capsules.length);
   const stats = isBlockedByMe ? undefined : data?.pages[0]?.stats;
   const years = isBlockedByMe ? [] : (data?.pages[0]?.years ?? []);

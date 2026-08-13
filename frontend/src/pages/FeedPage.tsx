@@ -229,7 +229,7 @@ export function FeedPage() {
     refetch,
     isRefetching,
   } = useCapsuleFeed(scope, sort, content);
-  const capsules = data?.pages.flatMap((page) => page.capsules) ?? [];
+  const capsules = data?.pages.flatMap((page) => page.capsules ?? []) ?? [];
   const followingCount = data?.pages[0]?.following_count;
   const isEmpty = !isLoading && !isError && capsules.length === 0;
   const filterEmpty = isEmpty && contentFiltersActive;

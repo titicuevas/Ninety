@@ -108,7 +108,7 @@ export function CapsulesPage() {
   } = useMyCapsulesInfinite({ q, year, ratingMin, visibility, watchContext, tag });
   const deleteCapsule = useDeleteCapsule();
   const capsules = useMemo(
-    () => data?.pages.flatMap((page) => page.capsules) ?? [],
+    () => data?.pages.flatMap((page) => page.capsules ?? []) ?? [],
     [data],
   );
   const total = data?.pages[0]?.total ?? capsules.length;

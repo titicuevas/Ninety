@@ -147,7 +147,7 @@ export function ActivityPage() {
     isRefetching,
   } = useFollowActivity();
 
-  const events = data?.pages.flatMap((page) => page.events) ?? [];
+  const events = data?.pages.flatMap((page) => page.events ?? []) ?? [];
   const followingCount = data?.pages[0]?.following_count ?? 0;
   const isEmpty = !isLoading && !isError && events.length === 0;
 

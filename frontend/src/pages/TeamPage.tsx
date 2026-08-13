@@ -108,7 +108,7 @@ export function TeamPage() {
   useDocumentTitle(teamName ? `Fans · ${teamName}` : 'Fans del equipo');
 
   const profiles = useMemo(
-    () => data?.pages.flatMap((page) => page.profiles) ?? [],
+    () => data?.pages.flatMap((page) => page.profiles ?? []) ?? [],
     [data],
   );
 

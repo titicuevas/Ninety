@@ -265,9 +265,9 @@ export function NotificationsPage() {
   const markRead = useMarkNotificationsRead();
   const clearRead = useClearReadNotifications();
   const [clearOpen, setClearOpen] = useState(false);
-  const notifications = data?.pages.flatMap((page) => page.notifications) ?? [];
+  const notifications = data?.pages.flatMap((page) => page.notifications ?? []) ?? [];
   const digestGroups = useMemo(() => {
-    const list = data?.pages.flatMap((page) => page.notifications) ?? [];
+    const list = data?.pages.flatMap((page) => page.notifications ?? []) ?? [];
     return groupNotificationsForDigest(list);
   }, [data]);
   const unread = data?.pages[0]?.unread_count ?? 0;

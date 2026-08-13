@@ -67,7 +67,7 @@ export function useNotifications(typeFilter: NotificationListFilter = null) {
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
-      const loaded = allPages.reduce((sum, page) => sum + page.notifications.length, 0);
+      const loaded = allPages.reduce((sum, page) => sum + (page.notifications?.length ?? 0), 0);
       const total = lastPage.total ?? loaded;
       return loaded < total ? loaded : undefined;
     },
