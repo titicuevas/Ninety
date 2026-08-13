@@ -511,7 +511,7 @@ Ninety/
 - [x] Soft nudge «completa tu Capsule» — si hay rating sin nota/fotos, card discreta en Home (on-device; `ninety.incompleteCapsule:v1:`; sin backend)
 - [x] Notificación de like en colección — opt-in reutilizando prefs de likes (`collection_like` + `collection_id`; migración `20250827120000_notification_collection_likes.sql`; in-app + digest push)
 - [x] Estadio favorito / mapa enriquecido — destacar sede más visitada + deep link al diario (`context=stadium`) y a Capsules (`/c/:id`); pin dorado en mapa
-- [ ] Export Wrapped / mes como texto compartible mejorado — copy one-tap desde calendario o Wrapped
+- [x] Export Wrapped / mes como texto compartible mejorado — copy one-tap (`Copiar texto`) desde Wrapped y calendario; resumen enriquecido (`buildWrappedShareText` / `buildDiaryMonthShareText`)
 
 ## 🎨 Identidad visual
 

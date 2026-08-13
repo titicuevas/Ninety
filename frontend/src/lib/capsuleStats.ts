@@ -302,6 +302,12 @@ export function buildWrappedShareText(
   if (stats.fiveStarCount > 0) {
     lines.push(`5★: ${stats.fiveStarCount}`);
   }
+  if (stats.longestStreak > 1) {
+    lines.push(`Racha: ${stats.longestStreak} días con partido`);
+  }
+  if (stats.activeMonths > 1 && scope === 'all') {
+    lines.push(`Meses activos: ${stats.activeMonths}`);
+  }
   if (stats.bestRated) {
     lines.push(
       `Mejor partido: ${stats.bestRated.home_team_name} vs ${stats.bestRated.away_team_name}`,

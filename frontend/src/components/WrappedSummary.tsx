@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Check, Camera, Flame, Landmark, MapPin, Mountain, Share2, Sparkles, Star, Trophy, Users } from 'lucide-react';
+import { Calendar, Check, Camera, Copy, Flame, Landmark, MapPin, Mountain, Share2, Sparkles, Star, Trophy, Users } from 'lucide-react';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { EmptyState } from '@/components/EmptyState';
 import { MatchesByMonthChart } from '@/components/MatchesByMonthChart';
@@ -17,7 +17,7 @@ import {
 } from '@/lib/capsuleStats';
 import { formatCapsuleScore, formatWatchedDate } from '@/lib/format';
 import { isAutoUsername } from '@/lib/profileHelpers';
-import { shareOrCopyLink } from '@/lib/shareLink';
+import { copyTextToClipboard, shareOrCopyLink } from '@/lib/shareLink';
 import { publicProfileUrl } from '@/lib/siteUrl';
 import { toast } from '@/lib/toast';
 import type { Capsule } from '@/types/capsule';
@@ -191,6 +191,20 @@ export function WrappedSummary({
     }
   };
 
+  const copySummary = async () => {
+    setManualText(null);
+    const text = buildWrappedShareText(name, scope, stats, profileUrl);
+    const result = await copyTextToClipboard(text);
+    if (result === 'copied') {
+      setCopied(true);
+      toast.success('Resumen del Wrapped copiado');
+      window.setTimeout(() => setCopied(false), 2000);
+      return;
+    }
+    setManualText(text);
+    toast.error('No se pudo copiar — selecciona el texto');
+  };
+
   return (
     <div className="space-y-6">
       {years.length > 0 ? (
@@ -249,21 +263,35 @@ export function WrappedSummary({
               {badgeLabel}
             </p>
             <div className="flex max-w-full flex-col items-end gap-1">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                className="bg-black/30 text-emerald-50 hover:bg-black/45"
-                onClick={() => void share()}
-                aria-label={copied ? 'Resumen copiado' : 'Compartir Wrapped'}
-              >
-                {copied ? (
-                  <Check className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                ) : (
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="bg-black/30 text-emerald-50 hover:bg-black/45"
+                  onClick={() => void copySummary()}
+                  aria-label={copied ? 'Resumen copiado' : 'Copiar resumen del Wrapped'}
+                  data-testid="copy-wrapped-summary"
+                >
+                  {copied ? (
+                    <Check className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                  ) : (
+                    <Copy className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                  )}
+                  {copied ? 'Copiado' : 'Copiar texto'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="border-white/20 bg-transparent text-emerald-50 hover:bg-black/30"
+                  onClick={() => void share()}
+                  aria-label="Compartir Wrapped"
+                >
                   <Share2 className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                )}
-                {copied ? 'Copiado' : 'Compartir'}
-              </Button>
+                  Compartir
+                </Button>
+              </div>
               {manualText ? (
                 <label className="block w-full max-w-xs text-left">
                   <span className="sr-only">Copia tu Wrapped</span>

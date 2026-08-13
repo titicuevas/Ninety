@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Share2 } from 'lucide-react';
+import { Check, Copy, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatCalendarMonthTitle } from '@/lib/diaryCalendar';
+import { buildDiaryMonthShareText } from '@/lib/diaryMonthShare';
 import { isAutoUsername } from '@/lib/profileHelpers';
-import { shareOrCopyLink } from '@/lib/shareLink';
+import { copyTextToClipboard, shareOrCopyLink } from '@/lib/shareLink';
 import { publicDiaryMonthUrl } from '@/lib/siteUrl';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
+import type { Capsule } from '@/types/capsule';
 
 type Props = {
   username: string;
@@ -15,6 +17,8 @@ type Props = {
   month: number;
   /** Solo meses con ≥1 Capsule pública son shareables. */
   publicTotal: number;
+  /** Capsules del mes (se filtran las públicas en el texto). */
+  capsules?: Capsule[];
   displayName?: string | null;
   className?: string;
   size?: 'sm' | 'default';
@@ -26,13 +30,14 @@ export function ShareDiaryMonthButton({
   year,
   month,
   publicTotal,
+  capsules = [],
   displayName,
   className,
   size = 'sm',
   variant = 'secondary',
 }: Props) {
   const [copied, setCopied] = useState(false);
-  const [manualUrl, setManualUrl] = useState<string | null>(null);
+  const [manualText, setManualText] = useState<string | null>(null);
 
   if (isAutoUsername(username)) {
     return (
@@ -64,16 +69,43 @@ export function ShareDiaryMonthButton({
   const monthTitle = formatCalendarMonthTitle(year, month);
   const name = displayName?.trim() || `@${username}`;
   const title = `${monthTitle} · Ninety`;
-  const text = `Mes de ${name} en Ninety — ${monthTitle}`;
+  const shareText = buildDiaryMonthShareText({
+    name,
+    year,
+    month,
+    capsules,
+    monthUrl: url,
+  });
+
+  const markCopied = () => {
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
+  };
+
+  const copySummary = async () => {
+    setManualText(null);
+    const result = await copyTextToClipboard(shareText);
+    if (result === 'copied') {
+      markCopied();
+      toast.success('Resumen del mes copiado');
+      return;
+    }
+    setManualText(shareText);
+    toast.error('No se pudo copiar — selecciona el texto');
+  };
 
   const share = async () => {
-    setManualUrl(null);
-    const result = await shareOrCopyLink({ url, title, text });
+    setManualText(null);
+    const result = await shareOrCopyLink({
+      url,
+      title,
+      text: shareText,
+      clipboardText: shareText,
+    });
 
     if (result === 'copied') {
-      setCopied(true);
-      toast.success('Enlace del mes copiado');
-      window.setTimeout(() => setCopied(false), 2000);
+      markCopied();
+      toast.success('Resumen del mes copiado');
       return;
     }
 
@@ -83,36 +115,50 @@ export function ShareDiaryMonthButton({
     }
 
     if (result === 'manual_needed') {
-      setManualUrl(url);
-      toast.error('No se pudo copiar — selecciona el enlace');
+      setManualText(shareText);
+      toast.error('No se pudo copiar — selecciona el texto');
     }
   };
 
   return (
     <div className={cn('inline-flex max-w-full flex-col items-stretch gap-1', className)}>
-      <Button
-        type="button"
-        variant={variant}
-        size={size}
-        onClick={() => void share()}
-        aria-label={copied ? 'Enlace del mes copiado' : 'Compartir mes del diario'}
-      >
-        {copied ? (
-          <Check className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-        ) : (
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          variant={variant}
+          size={size}
+          onClick={() => void copySummary()}
+          aria-label={copied ? 'Resumen del mes copiado' : 'Copiar resumen del mes'}
+          data-testid="copy-diary-month"
+        >
+          {copied ? (
+            <Check className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+          ) : (
+            <Copy className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+          )}
+          {copied ? 'Copiado' : 'Copiar texto'}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size={size}
+          onClick={() => void share()}
+          aria-label="Compartir mes del diario"
+        >
           <Share2 className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-        )}
-        {copied ? 'Copiado' : 'Compartir mes'}
-      </Button>
-      {manualUrl ? (
+          Compartir
+        </Button>
+      </div>
+      {manualText ? (
         <label className="block max-w-xs text-left">
-          <span className="sr-only">Copia el enlace del mes</span>
-          <input
+          <span className="sr-only">Copia el resumen del mes</span>
+          <textarea
             readOnly
-            value={manualUrl}
+            rows={5}
+            value={manualText}
             onFocus={(e) => e.currentTarget.select()}
-            className="w-full rounded-md border border-border bg-secondary px-2 py-1 text-xs text-foreground"
-            aria-label="Enlace del mes del diario"
+            className="w-full resize-none rounded-md border border-border bg-secondary px-2 py-1 text-xs text-foreground"
+            aria-label="Texto del mes del diario"
           />
         </label>
       ) : null}

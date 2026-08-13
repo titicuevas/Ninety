@@ -99,6 +99,7 @@ export function DiaryCalendarPage() {
                 year={year}
                 month={month}
                 publicTotal={publicTotal}
+                capsules={data?.capsules ?? []}
                 displayName={profile.display_name}
               />
             ) : null}

@@ -173,6 +173,7 @@ export function PublicDiaryMonthPage() {
             year={year}
             month={month}
             publicTotal={total}
+            capsules={data?.capsules ?? []}
             displayName={displayName}
             className="shrink-0"
           />

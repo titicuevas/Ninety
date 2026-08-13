@@ -13,6 +13,18 @@ type ShareLinkOptions = {
   clipboardText?: string;
 };
 
+/** Copia texto al portapapeles (one-tap). */
+export async function copyTextToClipboard(text: string): Promise<'copied' | 'manual_needed'> {
+  const value = text.trim();
+  if (!value) return 'manual_needed';
+  try {
+    await navigator.clipboard.writeText(value);
+    return 'copied';
+  } catch {
+    return 'manual_needed';
+  }
+}
+
 /**
  * Intenta Web Share → clipboard → indica que hay que mostrar el contenido a mano.
  */
@@ -38,10 +50,6 @@ export async function shareOrCopyLink({
     if (err instanceof DOMException && err.name === 'AbortError') return 'aborted';
   }
 
-  try {
-    await navigator.clipboard.writeText(toCopy);
-    return 'copied';
-  } catch {
-    return 'manual_needed';
-  }
+  const copied = await copyTextToClipboard(toCopy);
+  return copied === 'copied' ? 'copied' : 'manual_needed';
 }
