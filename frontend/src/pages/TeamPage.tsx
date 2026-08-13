@@ -126,28 +126,27 @@ export function TeamPage() {
 
   return (
     <Layout>
-      <div className="mx-auto max-w-xl space-y-6 py-2">
+      <div className="mx-auto max-w-xl space-y-5 py-2 sm:space-y-6">
         <div className="space-y-3">
-          <Button asChild variant="ghost" size="sm" className="-ml-2 text-muted-foreground">
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="-ml-2 h-9 w-9 px-0 text-muted-foreground sm:w-auto sm:px-3"
+          >
             <Link to="/search?tab=people">
-              <ArrowLeft className="mr-1.5 h-4 w-4" aria-hidden />
-              Aficionados
+              <ArrowLeft className="h-4 w-4 sm:mr-1.5" aria-hidden />
+              <span className="sr-only sm:not-sr-only">Aficionados</span>
             </Link>
           </Button>
 
-          <div className="space-y-2">
-            <p className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-              <Trophy className="h-3.5 w-3.5" aria-hidden />
-              Equipo
-            </p>
-            <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight sm:text-3xl">
+          <div>
+            <h1 className="inline-flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl">
+              <Trophy className="hidden h-6 w-6 shrink-0 text-primary sm:block" aria-hidden />
               {teamName}
             </h1>
-            <p className="text-sm text-muted-foreground">
-              {total === 1
-                ? '1 aficionado con este club favorito.'
-                : `${total} aficionados con este club favorito.`}{' '}
-              Síguelos para llenar tu feed.
+            <p className="mt-1 text-sm text-muted-foreground">
+              {total === 1 ? '1 aficionado' : `${total} aficionados`}
             </p>
           </div>
         </div>
@@ -164,13 +163,10 @@ export function TeamPage() {
           <EmptyState
             icon={Users}
             title="Sin aficionados aún"
-            description={`Nadie tiene «${teamName}» como club favorito (o no hay perfiles visibles). Busca gente o completa tu perfil.`}
+            description={`Nadie tiene «${teamName}» como club favorito.`}
           >
             <Button asChild>
               <Link to="/search?tab=people">Buscar aficionados</Link>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link to="/profile">Editar perfil</Link>
             </Button>
           </EmptyState>
         ) : null}
