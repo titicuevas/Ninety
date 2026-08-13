@@ -272,7 +272,7 @@ Probar en **móvil** (375px), **tablet** (768px) y **desktop** (1280px):
 | `/login` | Formulario centrado, inputs táctiles |
 | `/home` | Wrapped en grid, banner perfil en columna en móvil |
 | `/feed` | Cards a ancho completo, likes/comentarios sin overflow |
-| `/activity` | Timeline de follows (Capsules + listas); empty states y scroll infinito |
+| `/activity` | Timeline de follows (Capsules + listas); filtros `?type=`; empty states y scroll infinito |
 | `/search` | Grid 1 col móvil → 2 cols tablet+ |
 | `/capsules/new` | Formulario `max-w-md` → `lg:max-w-xl` |
 | `/profile` | Avatar y formulario legibles |
@@ -370,7 +370,7 @@ Ninety/
 | GET | `/api/capsules/me/export` | ✅ | Export diario JSON/CSV (GDPR) |
 | POST | `/api/capsules/me/import` | ✅ | Import diario desde export JSON (omite `match_id` existentes; `restore_photos` opcional re-sube `photo_urls` remotas) |
 | GET | `/api/capsules/feed` | ✅ | Feed (seguidos + tuyo); `scope`, `sort`, `photos=1`, `competition` |
-| GET | `/api/activity` | ✅ | Timeline de actividad de follows (Capsules + colecciones públicas nuevas; blocks; `limit`/`offset`) |
+| GET | `/api/activity` | ✅ | Timeline de actividad de follows (Capsules + colecciones públicas nuevas; `type=capsule|collection`; blocks; `limit`/`offset`) |
 | GET | `/api/capsules/user/:username` | opcional | Perfil + capsules + stats (base del cara a cara `/u/:username/vs`) |
 | GET | `/api/capsules/:id` | opcional | Capsule pública (compartir) |
 | POST/PATCH/DELETE | `/api/capsules`… | ✅ | CRUD capsules |
@@ -512,6 +512,13 @@ Ninety/
 - [x] Notificación de like en colección — opt-in reutilizando prefs de likes (`collection_like` + `collection_id`; migración `20250827120000_notification_collection_likes.sql`; in-app + digest push)
 - [x] Estadio favorito / mapa enriquecido — destacar sede más visitada + deep link al diario (`context=stadium`) y a Capsules (`/c/:id`); pin dorado en mapa
 - [x] Export Wrapped / mes como texto compartible mejorado — copy one-tap (`Copiar texto`) desde Wrapped y calendario; resumen enriquecido (`buildWrappedShareText` / `buildDiaryMonthShareText`)
+
+### 🚧 v14 — Ritmo social & descubrimiento fino
+- [x] Filtros en Actividad — ver solo Capsules o solo listas (`?type=capsule|collection` en `GET /api/activity` + chips en `/activity`)
+- [ ] Buscar / ordenar en Explorar colecciones — query y orden por actividad o likes en `/collections/explore`
+- [ ] Respuestas en comentarios de colecciones — hilos 1 nivel (paridad con Capsules)
+- [ ] Compartir perfil como texto — resumen one-tap (Capsules, club, listas) desde perfil público
+- [ ] Soft nudge «Quiero ir» en Home — card cuando hay partidos cercanos en la watchlist (además del push)
 
 ## 🎨 Identidad visual
 

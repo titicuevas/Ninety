@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Activity, Library, Ticket, Users } from 'lucide-react';
+import { ActivityTypeFiltersBar } from '@/components/ActivityTypeFiltersBar';
 import { EmptyState } from '@/components/EmptyState';
 import { capsuleCardListClass } from '@/components/CapsuleListCard';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
@@ -7,8 +8,14 @@ import { Layout } from '@/components/Layout';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { useActivityFilterParams } from '@/hooks/useActivityFilterParams';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useFollowActivity } from '@/hooks/useFollowActivity';
+import {
+  activityDocumentTitle,
+  activityTypeEmptyCopy,
+  hasActivityTypeFilter,
+} from '@/lib/activityTypeFilter';
 import { formatRelativeTime } from '@/lib/format';
 import { publicProfilePath } from '@/lib/profilePath';
 import type { FollowActivityEvent } from '@/types/activity';
@@ -133,7 +140,9 @@ function ActivityRow({ event }: { event: FollowActivityEvent }) {
 }
 
 export function ActivityPage() {
-  useDocumentTitle('Actividad · Ninety');
+  const { type, setType, clearType } = useActivityFilterParams();
+  const typeFilterActive = hasActivityTypeFilter(type);
+  useDocumentTitle(activityDocumentTitle(type));
   const {
     data,
     isLoading,
@@ -144,11 +153,13 @@ export function ActivityPage() {
     isFetchingNextPage,
     refetch,
     isRefetching,
-  } = useFollowActivity();
+  } = useFollowActivity(type);
 
   const events = data?.pages.flatMap((page) => page.events ?? []) ?? [];
   const followingCount = data?.pages[0]?.following_count ?? 0;
   const isEmpty = !isLoading && !isError && events.length === 0;
+  const filterEmpty = isEmpty && typeFilterActive && followingCount > 0;
+  const filterEmptyCopy = type ? activityTypeEmptyCopy(type) : null;
 
   return (
     <Layout>
@@ -172,6 +183,10 @@ export function ActivityPage() {
           ) : null}
         </section>
 
+        {followingCount > 0 ? (
+          <ActivityTypeFiltersBar type={type} onTypeChange={setType} onClear={clearType} />
+        ) : null}
+
         {isLoading ? <ActivityListSkeleton /> : null}
 
         {isError ? (
@@ -182,7 +197,17 @@ export function ActivityPage() {
           />
         ) : null}
 
-        {isEmpty ? (
+        {filterEmpty && filterEmptyCopy ? (
+          <EmptyState
+            icon={Activity}
+            title={filterEmptyCopy.title}
+            description={filterEmptyCopy.description}
+          >
+            <Button type="button" variant="secondary" size="sm" onClick={clearType}>
+              Ver todas
+            </Button>
+          </EmptyState>
+        ) : isEmpty ? (
           <EmptyState
             icon={Activity}
             title={

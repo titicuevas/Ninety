@@ -11,6 +11,7 @@ activityRouter.use(requireAuth);
 const activityQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
   offset: z.coerce.number().int().min(0).default(0),
+  type: z.enum(['capsule', 'collection']).optional(),
 });
 
 function getAccessToken(req: AuthRequest): string | null {
@@ -32,9 +33,13 @@ activityRouter.get('/', async (req: AuthRequest, res, next) => {
       return;
     }
 
-    const { limit, offset } = parsed.data;
+    const { limit, offset, type } = parsed.data;
     const supabase = createUserClient(token);
-    const result = await listFollowActivity(supabase, req.userId!, { limit, offset });
+    const result = await listFollowActivity(supabase, req.userId!, {
+      limit,
+      offset,
+      type: type ?? null,
+    });
 
     res.json({
       events: result.events,
@@ -42,6 +47,7 @@ activityRouter.get('/', async (req: AuthRequest, res, next) => {
       following_count: result.following_count,
       limit,
       offset,
+      type: type ?? null,
     });
   } catch (err) {
     next(err);

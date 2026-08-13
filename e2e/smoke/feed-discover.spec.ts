@@ -220,4 +220,41 @@ test.describe('Smoke — feed y discover @smoke', () => {
       }
     }
   });
+
+  test('Actividad acepta filtros por tipo en URL', async ({ page, request }) => {
+    await openAuthenticatedHome(page);
+    await page.goto('/activity');
+    await expect(page.getByRole('heading', { name: /^actividad$/i })).toBeVisible({
+      timeout: 15_000,
+    });
+
+    const filters = page.getByTestId('activity-type-filters');
+    const emptyNoFollows = page.getByText(/todavía no sigues a nadie/i);
+    if (await emptyNoFollows.isVisible().catch(() => false)) {
+      return;
+    }
+
+    await expect(filters).toBeVisible({ timeout: 10_000 });
+    await page.getByRole('button', { name: /^capsules$/i }).click();
+    await expect(page).toHaveURL(/type=capsule/);
+
+    const token = await readAccessToken(page);
+    const res = await request.get(`${API_BASE}/api/activity?type=capsule&limit=5`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      events?: Array<{ type?: string }>;
+      type?: string | null;
+    };
+    expect(body.type).toBe('capsule');
+    for (const event of body.events ?? []) {
+      expect(event.type).toBe('capsule');
+    }
+
+    await page.getByRole('button', { name: /^listas$/i }).click();
+    await expect(page).toHaveURL(/type=collection/);
+    await page.getByRole('button', { name: /^todas$/i }).click();
+    await expect(page).not.toHaveURL(/type=/);
+  });
 });

@@ -174,7 +174,7 @@ function toEvent(
 export async function listFollowActivity(
   supabase: SupabaseClient,
   viewerId: string,
-  opts: { limit: number; offset: number },
+  opts: { limit: number; offset: number; type?: 'capsule' | 'collection' | null },
 ): Promise<{
   events: FollowActivityEvent[];
   total: number;
@@ -182,6 +182,7 @@ export async function listFollowActivity(
 }> {
   const limit = Math.min(Math.max(opts.limit, 1), 50);
   const offset = Math.max(opts.offset, 0);
+  const typeFilter = opts.type === 'capsule' || opts.type === 'collection' ? opts.type : null;
 
   const [followingIds, blockedList] = await Promise.all([
     getFollowingIds(supabase, viewerId),
@@ -198,25 +199,31 @@ export async function listFollowActivity(
   }
 
   const poolSize = Math.max(offset + limit, 1);
+  const wantCapsules = typeFilter !== 'collection';
+  const wantCollections = typeFilter !== 'capsule';
 
   const [capsulesResult, collectionsResult] = await Promise.all([
-    supabase
-      .from('capsules')
-      .select(
-        'id, user_id, home_team_name, away_team_name, competition_name, rating, photo_urls, watched_at, created_at',
-        { count: 'exact' },
-      )
-      .eq('is_public', true)
-      .in('user_id', authorIds)
-      .order('created_at', { ascending: false })
-      .range(0, poolSize - 1),
-    supabase
-      .from('collections')
-      .select('id, user_id, name, slug, description, created_at', { count: 'exact' })
-      .eq('is_public', true)
-      .in('user_id', authorIds)
-      .order('created_at', { ascending: false })
-      .range(0, poolSize - 1),
+    wantCapsules
+      ? supabase
+          .from('capsules')
+          .select(
+            'id, user_id, home_team_name, away_team_name, competition_name, rating, photo_urls, watched_at, created_at',
+            { count: 'exact' },
+          )
+          .eq('is_public', true)
+          .in('user_id', authorIds)
+          .order('created_at', { ascending: false })
+          .range(0, poolSize - 1)
+      : Promise.resolve({ data: [], error: null, count: 0 }),
+    wantCollections
+      ? supabase
+          .from('collections')
+          .select('id, user_id, name, slug, description, created_at', { count: 'exact' })
+          .eq('is_public', true)
+          .in('user_id', authorIds)
+          .order('created_at', { ascending: false })
+          .range(0, poolSize - 1)
+      : Promise.resolve({ data: [], error: null, count: 0 }),
   ]);
 
   if (capsulesResult.error) {
@@ -285,7 +292,12 @@ export async function listFollowActivity(
 
   const merged = mergeFollowActivityCandidates(candidates);
   const page = paginateFollowActivity(merged, offset, limit);
-  const total = capsuleTotal + collectionTotal;
+  const total =
+    typeFilter === 'capsule'
+      ? capsuleTotal
+      : typeFilter === 'collection'
+        ? collectionTotal
+        : capsuleTotal + collectionTotal;
 
   const userIds = [...new Set(page.map((row) => row.user_id))];
   const profileMap = new Map<
