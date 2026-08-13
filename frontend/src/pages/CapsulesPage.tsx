@@ -36,28 +36,30 @@ function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: s
       }
       footer={
         <>
-          <AddToCollectionButton capsuleId={capsule.id} />
+          <AddToCollectionButton capsuleId={capsule.id} compact />
           <ShareCapsuleButton
             capsuleId={capsule.id}
             title={shareTitle}
             variant="outline"
             isPublic={isPublic}
+            compact
           />
-          <Button asChild variant="secondary" size="sm">
-            <Link to={`/capsules/${capsule.id}/edit`}>
-              <Pencil className="mr-1.5 h-3.5 w-3.5" />
-              Editar
+          <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
+            <Link to={`/capsules/${capsule.id}/edit`} aria-label="Editar">
+              <Pencil className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
+              <span className="sr-only sm:not-sr-only">Editar</span>
             </Link>
           </Button>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="text-destructive hover:bg-destructive/10"
+            className="h-9 w-9 px-0 text-destructive hover:bg-destructive/10 sm:w-auto sm:px-3"
+            aria-label="Eliminar"
             onClick={() => onDelete(capsule.id)}
           >
-            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-            Eliminar
+            <Trash2 className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
+            <span className="sr-only sm:not-sr-only">Eliminar</span>
           </Button>
         </>
       }

@@ -1,12 +1,11 @@
 import { Link } from 'react-router-dom';
-import { Activity, Bell, Compass, Library, Newspaper, User, UserPlus, Users } from 'lucide-react';
+import { Activity, UserPlus, Users } from 'lucide-react';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCapsuleFeed } from '@/hooks/useCapsules';
 import { useDiscoverCollections } from '@/hooks/useDiscoverCollections';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
-import { useUnreadCount } from '@/hooks/useNotifications';
 import { feedPath } from '@/lib/feedParams';
 import { formatRelativeTime } from '@/lib/format';
 import { publicProfilePath } from '@/lib/profilePath';
@@ -64,7 +63,6 @@ type HomeSocialHubProps = {
 
 /** Atajos sociales + preview del feed (o sugerencias si está vacío). */
 export function HomeSocialHub({ username }: HomeSocialHubProps) {
-  const unread = useUnreadCount();
   const { data: feedData, isLoading: feedLoading } = useCapsuleFeed('following', 'recent');
   const preview = feedData?.pages[0]?.capsules.slice(0, PREVIEW_COUNT) ?? [];
   const feedEmpty = !feedLoading && preview.length === 0;
@@ -75,7 +73,6 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
     .slice(0, PREVIEW_COUNT);
   const collectionPreview = (discoverCollectionsData?.collections ?? []).slice(0, PREVIEW_COUNT);
 
-  const unreadLabel = unread > 9 ? '9+' : String(unread);
   const profileHref = publicProfilePath(username);
   const followingHref = profileHref ? `${profileHref}/following` : null;
   const followersHref = profileHref ? `${profileHref}/followers` : null;
@@ -87,37 +84,15 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
           Comunidad
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Gestiona a quién sigues, encuentra aficionados y entra al feed.
+          Aficionados, actividad de quien sigues y tus listas de follows.
         </p>
       </div>
 
       <nav aria-label="Atajos sociales" className="flex flex-wrap gap-2">
-        {followingHref ? (
-          <Button asChild size="sm">
-            <Link to={followingHref}>
-              <UserPlus className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-              Siguiendo
-            </Link>
-          </Button>
-        ) : null}
-        <Button asChild variant={followingHref ? 'secondary' : 'default'} size="sm">
+        <Button asChild size="sm">
           <Link to="/search?tab=people">
             <Users className="mr-1.5 h-3.5 w-3.5" aria-hidden />
             Aficionados
-          </Link>
-        </Button>
-        {followersHref ? (
-          <Button asChild variant="secondary" size="sm">
-            <Link to={followersHref}>
-              <Users className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-              Seguidores
-            </Link>
-          </Button>
-        ) : null}
-        <Button asChild variant="secondary" size="sm">
-          <Link to={feedPath()}>
-            <Newspaper className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-            Feed
           </Link>
         </Button>
         <Button asChild variant="secondary" size="sm">
@@ -126,35 +101,22 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
             Actividad
           </Link>
         </Button>
-        <Button asChild variant="secondary" size="sm">
-          <Link to={feedPath('explore')}>
-            <Compass className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-            Explorar
-          </Link>
-        </Button>
-        <Button asChild variant="secondary" size="sm">
-          <Link to="/collections">
-            <Library className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-            Colecciones
-          </Link>
-        </Button>
-        <Button asChild variant="secondary" size="sm">
-          <Link to="/notifications">
-            <Bell className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-            Notificaciones
-            {unread > 0 ? (
-              <span className="ml-1.5 rounded-md bg-primary/20 px-1.5 py-0.5 text-xs font-semibold text-primary">
-                {unreadLabel}
-              </span>
-            ) : null}
-          </Link>
-        </Button>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/profile">
-            <User className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-            Editar perfil
-          </Link>
-        </Button>
+        {followingHref ? (
+          <Button asChild variant="secondary" size="sm">
+            <Link to={followingHref}>
+              <UserPlus className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+              Siguiendo
+            </Link>
+          </Button>
+        ) : null}
+        {followersHref ? (
+          <Button asChild variant="secondary" size="sm">
+            <Link to={followersHref}>
+              <Users className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+              Seguidores
+            </Link>
+          </Button>
+        ) : null}
       </nav>
 
       {followingHref ? (

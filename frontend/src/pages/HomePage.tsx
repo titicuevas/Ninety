@@ -184,7 +184,7 @@ export function HomePage() {
 
   return (
     <Layout>
-      <div className="space-y-8">
+      <div className="space-y-5 sm:space-y-8">
         {profileIncomplete ? (
           <ClaimProfileCard
             profile={profile}

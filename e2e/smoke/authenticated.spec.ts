@@ -15,9 +15,8 @@ test.describe('Smoke — autenticado @smoke', () => {
       timeout: 20_000,
     });
     const shortcuts = page.getByRole('navigation', { name: /atajos sociales/i });
-    await expect(shortcuts.getByRole('link', { name: /^feed$/i })).toBeVisible();
     await expect(shortcuts.getByRole('link', { name: /aficionados/i })).toBeVisible();
-    await expect(shortcuts.getByRole('link', { name: /notificaciones/i })).toBeVisible();
+    await expect(shortcuts.getByRole('link', { name: /actividad/i })).toBeVisible();
   });
 
   test('Wrapped permite cambiar periodo y compartir', async ({ page }) => {

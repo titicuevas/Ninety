@@ -24,6 +24,8 @@ type AddToCollectionButtonProps = {
   size?: 'sm' | 'default';
   variant?: 'outline' | 'secondary' | 'ghost';
   className?: string;
+  /** Icono en móvil, etiqueta desde tablet. */
+  compact?: boolean;
 };
 
 export function AddToCollectionButton({
@@ -31,6 +33,7 @@ export function AddToCollectionButton({
   size = 'sm',
   variant = 'outline',
   className,
+  compact = false,
 }: AddToCollectionButtonProps) {
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -109,11 +112,12 @@ export function AddToCollectionButton({
         type="button"
         variant={variant}
         size={size}
-        className={className}
+        className={cn(compact && 'h-9 w-9 px-0 sm:w-auto sm:px-3', className)}
         onClick={() => setOpen(true)}
+        aria-label="Añadir a colección"
       >
-        <Library className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-        Añadir a colección
+        <Library className={cn('h-3.5 w-3.5', compact ? 'sm:mr-1.5' : 'mr-1.5')} aria-hidden />
+        <span className={compact ? 'sr-only sm:not-sr-only' : undefined}>Añadir a colección</span>
       </Button>
 
       <Modal open={open} title="Añadir a colección" onClose={close}>
