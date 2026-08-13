@@ -89,19 +89,16 @@ export function CollectionsPage() {
               <Library className="h-7 w-7 text-primary" aria-hidden />
               Mis listas
             </h1>
-            <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-              Listas curadas de Capsules — Clásicos, viajes, noches de Champions…
-            </p>
           </div>
           <Button
             type="button"
-            className="shrink-0"
+            className="h-9 w-9 shrink-0 px-0 sm:w-auto sm:px-3"
             aria-expanded={formOpen}
             aria-controls="create-collection-panel"
             onClick={() => openForm(!formOpen)}
           >
-            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-            Nueva colección
+            <Plus className="h-4 w-4 sm:mr-1.5" aria-hidden />
+            <span className="sr-only sm:not-sr-only">Nueva colección</span>
           </Button>
         </section>
 
@@ -189,8 +186,7 @@ export function CollectionsPage() {
             icon={Library}
             title="Aún no tienes colecciones"
             description={
-              postImportHint ??
-              'Agrupa Capsules en listas como Clásicos o Viajes y compártelas.'
+              postImportHint ?? 'Agrupa Capsules en listas y compártelas.'
             }
           >
             <Button type="button" onClick={() => openForm(true)}>

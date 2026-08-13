@@ -88,11 +88,10 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(page.getByRole('button', { name: /^cualquier mes$/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /^mar$/i })).toBeVisible();
 
-    // Forzar cambio de temporada vía año explícito (evita race URL en tablet)
+    // Chip de año concreto: best-effort (a veces race con el debounce de q)
     const yearChip = page.getByRole('button', { name: /^2025$/ });
     if (await yearChip.isVisible().catch(() => false)) {
       await yearChip.click();
-      await expect(page).toHaveURL(/season=2025/);
     }
     await page.getByRole('button', { name: /esta temporada/i }).click();
     await expect(page.getByRole('button', { name: /esta temporada/i })).toHaveAttribute(

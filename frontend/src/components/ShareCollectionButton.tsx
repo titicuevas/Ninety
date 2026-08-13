@@ -13,6 +13,8 @@ type Props = {
   className?: string;
   size?: 'sm' | 'default';
   variant?: 'ghost' | 'outline' | 'secondary';
+  /** Icono en móvil, etiqueta desde tablet. */
+  compact?: boolean;
 };
 
 export function ShareCollectionButton({
@@ -22,6 +24,7 @@ export function ShareCollectionButton({
   className,
   size = 'sm',
   variant = 'secondary',
+  compact = false,
 }: Props) {
   const [copied, setCopied] = useState(false);
   const [manualUrl, setManualUrl] = useState<string | null>(null);
@@ -60,13 +63,16 @@ export function ShareCollectionButton({
         size={size}
         onClick={() => void share()}
         aria-label={copied ? 'Enlace copiado' : 'Compartir colección'}
+        className={cn(compact && 'h-9 w-9 px-0 sm:w-auto sm:px-3')}
       >
         {copied ? (
-          <Check className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+          <Check className={cn('h-3.5 w-3.5', compact ? 'sm:mr-1.5' : 'mr-1.5')} aria-hidden />
         ) : (
-          <Share2 className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+          <Share2 className={cn('h-3.5 w-3.5', compact ? 'sm:mr-1.5' : 'mr-1.5')} aria-hidden />
         )}
-        {copied ? 'Copiado' : 'Compartir'}
+        <span className={compact ? 'sr-only sm:not-sr-only' : undefined}>
+          {copied ? 'Copiado' : 'Compartir'}
+        </span>
       </Button>
       {manualUrl ? (
         <label className="block max-w-xs text-left">

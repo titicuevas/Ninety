@@ -24,9 +24,6 @@ export function SearchMatchPage() {
       <div className="space-y-5 sm:space-y-8">
         <section>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Buscar</h1>
-          <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-            Partidos para tu diario o aficionados para seguir.
-          </p>
           <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Tipo de búsqueda">
             <button
               type="button"
@@ -34,7 +31,7 @@ export function SearchMatchPage() {
               aria-selected={tab === 'matches'}
               onClick={() => setTab('matches')}
               className={cn(
-                'min-h-11 rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'min-h-9 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 tab === 'matches'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-muted-foreground hover:text-foreground',
@@ -48,7 +45,7 @@ export function SearchMatchPage() {
               aria-selected={tab === 'people'}
               onClick={() => setTab('people')}
               className={cn(
-                'min-h-11 rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'min-h-9 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 tab === 'people'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-muted-foreground hover:text-foreground',

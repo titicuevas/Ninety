@@ -63,6 +63,222 @@ const selectClassName = cn(
   'ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
 );
 
+type MatchSearchFiltersProps = {
+  query: string;
+  onQueryChange: (value: string) => void;
+  activeCompetition: string;
+  onCompetitionChange: (code: string) => void;
+  groupedCompetitions: Array<[string, CuratedCompetition[]]>;
+  resolvedTeam: { name: string } | null;
+  isLoadingTeamCompetitions: boolean;
+  debouncedQuery: string;
+  showSeasonChips: boolean;
+  seasonChips: ReturnType<typeof seasonChipOptions>;
+  activeSeason: number | undefined;
+  onSeasonChange: (value: number | undefined) => void;
+  showMonthChips: boolean;
+  activeMonth: number | undefined;
+  onMonthChange: (value: number | undefined) => void;
+};
+
+function MatchSearchFilters({
+  query,
+  onQueryChange,
+  activeCompetition,
+  onCompetitionChange,
+  groupedCompetitions,
+  resolvedTeam,
+  isLoadingTeamCompetitions,
+  debouncedQuery,
+  showSeasonChips,
+  seasonChips,
+  activeSeason,
+  onSeasonChange,
+  showMonthChips,
+  activeMonth,
+  onMonthChange,
+}: MatchSearchFiltersProps) {
+  return (
+    <section className="grid max-w-2xl gap-4 sm:grid-cols-2">
+      <div className="space-y-1.5 sm:col-span-2">
+        <Label htmlFor="match-search">Equipo o rival</Label>
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <Input
+            id="match-search"
+            type="search"
+            value={query}
+            onChange={(e) => onQueryChange(e.target.value)}
+            placeholder="Ej. Betis, Madrid, Argentina, Liverpool..."
+            className="pl-9"
+            autoFocus
+          />
+        </div>
+      </div>
+
+      <div className="space-y-1.5 sm:col-span-2">
+        <Label htmlFor="competition-filter">Competición</Label>
+        {resolvedTeam ? (
+          <p className="text-xs text-muted-foreground">
+            Competiciones de {resolvedTeam.name}
+            {isLoadingTeamCompetitions ? '…' : ''}
+          </p>
+        ) : null}
+        <select
+          id="competition-filter"
+          value={activeCompetition}
+          onChange={(e) => onCompetitionChange(e.target.value)}
+          className={selectClassName}
+          disabled={isLoadingTeamCompetitions && debouncedQuery.length >= MIN_QUERY_LENGTH}
+          aria-label="Competición"
+        >
+          <option value="">
+            {resolvedTeam ? `Todas las de ${resolvedTeam.name}` : 'Todas (por equipo)'}
+          </option>
+          {groupedCompetitions.map(([label, items]) => (
+            <optgroup key={label} label={label}>
+              {items.map((item) => (
+                <option key={item.code} value={item.code}>
+                  {item.name}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+      </div>
+
+      {showSeasonChips ? (
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label id="season-filter-label">Temporada</Label>
+          <div className={filterChipRowClass} role="group" aria-labelledby="season-filter-label">
+            {seasonChips.map((chip) => (
+              <FilterChip
+                key={chip.value ?? 'any'}
+                active={activeSeason === chip.value}
+                onClick={() => onSeasonChange(chip.value)}
+              >
+                {chip.label}
+              </FilterChip>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {showMonthChips ? (
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label id="month-filter-label">Mes</Label>
+          <div className={filterChipRowClass} role="group" aria-labelledby="month-filter-label">
+            {MONTH_CHIPS.map((chip) => (
+              <FilterChip
+                key={chip.value ?? 'any-month'}
+                active={activeMonth === chip.value}
+                onClick={() => onMonthChange(chip.value)}
+              >
+                {chip.label}
+              </FilterChip>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+type MatchSearchResultsProps = {
+  matches: FootballMatch[];
+  matchGroups: ReturnType<typeof groupMatchesByCompetition>;
+  showGrouped: boolean;
+  savedByMatchId: Map<number, string>;
+  wantToGoIds: Set<number>;
+  onSelectMatch: (match: FootballMatch) => void;
+  activeCompetition: string;
+  requiresTeamQuery: boolean;
+  debouncedQuery: string;
+  selectedCompetition: CuratedCompetition | undefined;
+  activeSeason: number | undefined;
+  activeMonth: number | undefined;
+};
+
+function MatchSearchResults({
+  matches,
+  matchGroups,
+  showGrouped,
+  savedByMatchId,
+  wantToGoIds,
+  onSelectMatch,
+  activeCompetition,
+  requiresTeamQuery,
+  debouncedQuery,
+  selectedCompetition,
+  activeSeason,
+  activeMonth,
+}: MatchSearchResultsProps) {
+  return (
+    <div aria-live="polite" aria-atomic="true">
+      {matches.length > 0 ? (
+        <div className="space-y-5 sm:space-y-8">
+          {showGrouped
+            ? matchGroups.map((group) => (
+                <section key={group.key} className="space-y-3">
+                  <h2 className="text-sm font-semibold tracking-wide text-primary uppercase">
+                    {group.label}
+                  </h2>
+                  <ul className="space-y-3">
+                    {group.matches.map((match) => (
+                      <li key={match.id} className="space-y-2">
+                        <MatchCard
+                          match={match}
+                          savedCapsuleId={savedByMatchId.get(match.id)}
+                          wantToGo={wantToGoIds.has(match.id)}
+                          onSelect={() => onSelectMatch(match)}
+                        />
+                        <div className="pl-1">
+                          <WantToGoButton match={match} saved={wantToGoIds.has(match.id)} />
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))
+            : (
+                <ul className="space-y-3">
+                  {matches.map((match) => (
+                    <li key={match.id} className="space-y-2">
+                      <MatchCard
+                        match={match}
+                        savedCapsuleId={savedByMatchId.get(match.id)}
+                        wantToGo={wantToGoIds.has(match.id)}
+                        onSelect={() => onSelectMatch(match)}
+                      />
+                      <div className="pl-1">
+                        <WantToGoButton match={match} saved={wantToGoIds.has(match.id)} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+        </div>
+      ) : (
+        <EmptyState
+          title="Sin resultados"
+          description={
+            activeCompetition
+              ? requiresTeamQuery
+                ? `No hay partidos de «${debouncedQuery}» en ${selectedCompetition?.name ?? 'este torneo'}${activeSeason != null ? ` (${activeSeason})` : ''}${activeMonth != null ? ` · ${monthHintLabel(activeMonth, activeSeason, selectedCompetition)}` : ''}. Prueba otro nombre, temporada o mes — o añádelo a mano.`
+                : `No hay partidos en ${selectedCompetition?.name ?? 'esta competición'}${activeSeason != null ? ` ${activeSeason}` : ''}${activeMonth != null ? ` · ${monthHintLabel(activeMonth, activeSeason, selectedCompetition)}` : ''} para «${debouncedQuery || 'tu búsqueda'}». Prueba otro mes o temporada — o añádelo a mano.`
+              : `No encontramos partidos para «${debouncedQuery}»${activeSeason != null ? ` en ${activeSeason}` : ''}${activeMonth != null ? ` · ${monthHintLabel(activeMonth, activeSeason, selectedCompetition)}` : ''}. Prueba otra temporada, mes, equipo o competición — o añádelo a mano.`
+          }
+        >
+          <ManualMatchCta />
+        </EmptyState>
+      )}
+    </div>
+  );
+}
+
 export function MatchSearchPanel() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -231,91 +447,23 @@ export function MatchSearchPanel() {
 
   return (
     <div className="space-y-5 sm:space-y-8">
-      <section className="grid max-w-2xl gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="match-search">Equipo o rival</Label>
-          <div className="relative">
-            <Search
-              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden
-            />
-            <Input
-              id="match-search"
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ej. Betis, Madrid, Argentina, Liverpool..."
-              className="pl-9"
-              autoFocus
-            />
-          </div>
-        </div>
-
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="competition-filter">Competición</Label>
-          {resolvedTeam ? (
-            <p className="text-xs text-muted-foreground">
-              Competiciones de {resolvedTeam.name}
-              {isLoadingTeamCompetitions ? '…' : ''}
-            </p>
-          ) : null}
-          <select
-            id="competition-filter"
-            value={activeCompetition}
-            onChange={(e) => handleCompetitionChange(e.target.value)}
-            className={selectClassName}
-            disabled={isLoadingTeamCompetitions && debouncedQuery.length >= MIN_QUERY_LENGTH}
-            aria-label="Competición"
-          >
-            <option value="">
-              {resolvedTeam ? `Todas las de ${resolvedTeam.name}` : 'Todas (por equipo)'}
-            </option>
-            {groupedCompetitions.map(([label, items]) => (
-              <optgroup key={label} label={label}>
-                {items.map((item) => (
-                  <option key={item.code} value={item.code}>
-                    {item.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-        </div>
-
-        {showSeasonChips ? (
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label id="season-filter-label">Temporada</Label>
-            <div className={filterChipRowClass} role="group" aria-labelledby="season-filter-label">
-              {seasonChips.map((chip) => (
-                <FilterChip
-                  key={chip.value ?? 'any'}
-                  active={activeSeason === chip.value}
-                  onClick={() => handleSeasonChange(chip.value)}
-                >
-                  {chip.label}
-                </FilterChip>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        {showMonthChips ? (
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label id="month-filter-label">Mes</Label>
-            <div className={filterChipRowClass} role="group" aria-labelledby="month-filter-label">
-              {MONTH_CHIPS.map((chip) => (
-                <FilterChip
-                  key={chip.value ?? 'any-month'}
-                  active={activeMonth === chip.value}
-                  onClick={() => handleMonthChange(chip.value)}
-                >
-                  {chip.label}
-                </FilterChip>
-              ))}
-            </div>
-          </div>
-        ) : null}
-      </section>
+      <MatchSearchFilters
+        query={query}
+        onQueryChange={setQuery}
+        activeCompetition={activeCompetition}
+        onCompetitionChange={handleCompetitionChange}
+        groupedCompetitions={groupedCompetitions}
+        resolvedTeam={resolvedTeam}
+        isLoadingTeamCompetitions={isLoadingTeamCompetitions}
+        debouncedQuery={debouncedQuery}
+        showSeasonChips={showSeasonChips}
+        seasonChips={seasonChips}
+        activeSeason={activeSeason}
+        onSeasonChange={handleSeasonChange}
+        showMonthChips={showMonthChips}
+        activeMonth={activeMonth}
+        onMonthChange={handleMonthChange}
+      />
 
       {showMinLengthHint ? (
         <p className="text-sm text-muted-foreground">
@@ -359,65 +507,20 @@ export function MatchSearchPanel() {
       ) : null}
 
       {!isSearching && canSearch && !isError ? (
-        <div aria-live="polite" aria-atomic="true">
-          {matches.length > 0 ? (
-            <div className="space-y-5 sm:space-y-8">
-              {showGrouped
-                ? matchGroups.map((group) => (
-                    <section key={group.key} className="space-y-3">
-                      <h2 className="text-sm font-semibold tracking-wide text-primary uppercase">
-                        {group.label}
-                      </h2>
-                      <ul className="space-y-3">
-                        {group.matches.map((match) => (
-                          <li key={match.id} className="space-y-2">
-                            <MatchCard
-                              match={match}
-                              savedCapsuleId={savedByMatchId.get(match.id)}
-                              wantToGo={wantToGoIds.has(match.id)}
-                              onSelect={() => selectMatch(match)}
-                            />
-                            <div className="pl-1">
-                              <WantToGoButton match={match} saved={wantToGoIds.has(match.id)} />
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
-                  ))
-                : (
-                    <ul className="space-y-3">
-                      {matches.map((match) => (
-                        <li key={match.id} className="space-y-2">
-                          <MatchCard
-                            match={match}
-                            savedCapsuleId={savedByMatchId.get(match.id)}
-                            wantToGo={wantToGoIds.has(match.id)}
-                            onSelect={() => selectMatch(match)}
-                          />
-                          <div className="pl-1">
-                            <WantToGoButton match={match} saved={wantToGoIds.has(match.id)} />
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-            </div>
-          ) : (
-            <EmptyState
-              title="Sin resultados"
-              description={
-                activeCompetition
-                  ? requiresTeamQuery
-                    ? `No hay partidos de «${debouncedQuery}» en ${selectedCompetition?.name ?? 'este torneo'}${activeSeason != null ? ` (${activeSeason})` : ''}${activeMonth != null ? ` · ${monthHintLabel(activeMonth, activeSeason, selectedCompetition)}` : ''}. Prueba otro nombre, temporada o mes — o añádelo a mano.`
-                    : `No hay partidos en ${selectedCompetition?.name ?? 'esta competición'}${activeSeason != null ? ` ${activeSeason}` : ''}${activeMonth != null ? ` · ${monthHintLabel(activeMonth, activeSeason, selectedCompetition)}` : ''} para «${debouncedQuery || 'tu búsqueda'}». Prueba otro mes o temporada — o añádelo a mano.`
-                  : `No encontramos partidos para «${debouncedQuery}»${activeSeason != null ? ` en ${activeSeason}` : ''}${activeMonth != null ? ` · ${monthHintLabel(activeMonth, activeSeason, selectedCompetition)}` : ''}. Prueba otra temporada, mes, equipo o competición — o añádelo a mano.`
-              }
-            >
-              <ManualMatchCta />
-            </EmptyState>
-          )}
-        </div>
+        <MatchSearchResults
+          matches={matches}
+          matchGroups={matchGroups}
+          showGrouped={showGrouped}
+          savedByMatchId={savedByMatchId}
+          wantToGoIds={wantToGoIds}
+          onSelectMatch={selectMatch}
+          activeCompetition={activeCompetition}
+          requiresTeamQuery={requiresTeamQuery}
+          debouncedQuery={debouncedQuery}
+          selectedCompetition={selectedCompetition}
+          activeSeason={activeSeason}
+          activeMonth={activeMonth}
+        />
       ) : null}
 
       {showIdle ? (
@@ -426,8 +529,8 @@ export function MatchSearchPanel() {
           title="¿Qué partido viste?"
           description={
             favoriteTeam
-              ? `Empieza por tu equipo (${favoriteTeam}) o escribe otro rival, selección o apodo. Si no está en el catálogo, añádelo a mano.`
-              : 'Escribe un apodo o parte del nombre (Betis, Madrid, España…). Si no aparece, puedes añadirlo a mano.'
+              ? `Empieza por ${favoriteTeam} o escribe otro equipo. Si no está, añádelo a mano.`
+              : 'Escribe un equipo o rival. Si no aparece, puedes añadirlo a mano.'
           }
         >
           {favoriteTeam ? (

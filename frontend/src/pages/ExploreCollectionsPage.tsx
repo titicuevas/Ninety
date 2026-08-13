@@ -133,10 +133,6 @@ export function ExploreCollectionsPage() {
             <Compass className="h-7 w-7 text-primary" aria-hidden />
             Explorar colecciones
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-            Listas públicas con Capsules — útiles aunque no tengas follows ni equipo favorito.
-            Priorizamos actividad reciente y autores que ya sigues o comparten equipo.
-          </p>
         </section>
 
         {isLoading ? <NinetyLoader variant="panel" className="py-10" /> : null}
@@ -153,13 +149,10 @@ export function ExploreCollectionsPage() {
           <EmptyState
             icon={Compass}
             title="Aún no hay listas para explorar"
-            description="Cuando otros aficionados publiquen colecciones con Capsules, aparecerán aquí. Mientras tanto, puedes explorar el feed o buscar aficionados."
+            description="Cuando otros publiquen colecciones, aparecerán aquí."
           >
-            <Button asChild variant="secondary">
-              <Link to="/collections">Crear tu primera colección</Link>
-            </Button>
             <Button asChild>
-              <Link to="/feed?scope=explore">Explorar comunidad</Link>
+              <Link to="/collections">Crear tu primera colección</Link>
             </Button>
             <Button asChild variant="secondary">
               <Link to="/search?tab=people">Buscar aficionados</Link>

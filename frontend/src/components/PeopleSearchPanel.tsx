@@ -194,15 +194,9 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
           <PeopleListSkeleton count={4} className="max-w-xl" label="Cargando sugerencias" />
         ) : suggestions.length > 0 ? (
           <section className="max-w-xl space-y-3" aria-label="Aficionados sugeridos">
-            <div>
-              <h2 className="text-sm font-semibold tracking-wide text-primary uppercase">
-                Aficionados sugeridos
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Sin follows aún: sugerimos aficionados activos y, si compartes equipo o ciudad, los
-                priorizamos. Síguelos para llenar tu feed.
-              </p>
-            </div>
+            <h2 className="text-sm font-semibold tracking-wide text-primary uppercase">
+              Aficionados sugeridos
+            </h2>
             <ul className="space-y-2">
               {suggestions.map((profile) => (
                 <PeopleResultRow key={profile.id} profile={profile} />
@@ -214,12 +208,8 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
             icon={Users}
             className="max-w-xl"
             title="Encuentra aficionados"
-            description="Busca por username o nombre, o explora listas públicas mientras no tengas follows."
-          >
-            <Button asChild variant="secondary">
-              <Link to="/collections/explore">Explorar listas</Link>
-            </Button>
-          </EmptyState>
+            description="Busca por username o nombre."
+          />
         )
       ) : null}
     </div>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowDown, ArrowLeft, ArrowUp, ImageIcon, Plus, Trash2 } from 'lucide-react';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
@@ -29,6 +29,288 @@ import { resolveCollectionCoverUrl } from '@/lib/collectionCover';
 import { moveCapsuleInOrder } from '@/lib/collectionReorder';
 import { slugifyCollectionName } from '@/lib/collectionSlug';
 import { toast } from '@/lib/toast';
+import type { Collection, UpdateCollectionInput } from '@/types/collection';
+import type { Capsule } from '@/types/capsule';
+
+type CollectionEditFormProps = {
+  collection: Collection;
+  itemsCount: number;
+  isSaving: boolean;
+  isFeaturing: boolean;
+  isFeatured: boolean;
+  onSave: (input: UpdateCollectionInput) => void;
+  onDelete: () => void;
+  onFeatureToggle: () => void;
+};
+
+function CollectionEditForm({
+  collection,
+  itemsCount,
+  isSaving,
+  isFeaturing,
+  isFeatured,
+  onSave,
+  onDelete,
+  onFeatureToggle,
+}: CollectionEditFormProps) {
+  const [name, setName] = useState(() => collection.name);
+  const [description, setDescription] = useState(() => collection.description ?? '');
+  const [isPublic, setIsPublic] = useState(() => collection.is_public);
+
+  const onSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    if (!name.trim()) return;
+    onSave({
+      name: name.trim(),
+      description: description.trim() || null,
+      is_public: isPublic,
+      slug: slugifyCollectionName(name.trim()),
+    });
+  };
+
+  return (
+    <Card className="border-border">
+      <CardHeader>
+        <CardTitle className="text-base" id="edit-collection-heading">
+          Editar colección
+        </CardTitle>
+        <CardDescription>
+          {collection.items_count ?? itemsCount} Capsules · slug{' '}
+          <code className="text-xs">{collection.slug}</code>
+          {collection.cover_capsule_id ? ' · portada destacada' : ''}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form
+          onSubmit={onSubmit}
+          className="space-y-4"
+          aria-labelledby="edit-collection-heading"
+        >
+          <FormField label="Nombre">
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={80}
+              required
+            />
+          </FormField>
+          <FormField label="Descripción">
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={500}
+              rows={3}
+            />
+          </FormField>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={isPublic}
+              onChange={(e) => setIsPublic(e.target.checked)}
+              className="h-4 w-4 rounded border-border"
+            />
+            Pública (compartible)
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" loading={isSaving}>
+              Guardar
+            </Button>
+            {collection.is_public ? (
+              <Button
+                type="button"
+                variant="secondary"
+                loading={isFeaturing}
+                onClick={onFeatureToggle}
+              >
+                {isFeatured ? 'Quitar del perfil' : 'Destacar en perfil'}
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="outline"
+              className="text-destructive"
+              aria-label={`Eliminar colección ${collection.name}`}
+              onClick={onDelete}
+            >
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+              Eliminar
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+type CollectionItemsSectionProps = {
+  collection: Collection;
+  capsules: Capsule[];
+  candidates: Capsule[];
+  pickId: string;
+  onPickIdChange: (value: string) => void;
+  onAddItem: (capsuleId: string) => void;
+  addItemPending: boolean;
+  onMoveCapsule: (capsuleId: string, direction: 'up' | 'down') => void;
+  reorderPending: boolean;
+  onSetCover: (capsuleId: string | null) => void;
+  updateCollectionPending: boolean;
+  onRemoveItem: (capsuleId: string) => void;
+  removeItemPending: boolean;
+};
+
+function CollectionItemsSection({
+  collection,
+  capsules,
+  candidates,
+  pickId,
+  onPickIdChange,
+  onAddItem,
+  addItemPending,
+  onMoveCapsule,
+  reorderPending,
+  onSetCover,
+  updateCollectionPending,
+  onRemoveItem,
+  removeItemPending,
+}: CollectionItemsSectionProps) {
+  return (
+    <section className="space-y-4" aria-labelledby="collection-items-heading">
+      <h2 id="collection-items-heading" className="text-lg font-semibold">
+        Capsules en la lista
+      </h2>
+
+      {candidates.length > 0 ? (
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+          <div className="min-w-0 flex-1">
+            <FormField label="Añadir Capsule">
+              <select
+                value={pickId}
+                onChange={(e) => onPickIdChange(e.target.value)}
+                className="flex h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+                aria-label="Elegir Capsule"
+              >
+                <option value="">Elige un partido…</option>
+                {candidates.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.home_team_name} vs {c.away_team_name}
+                    {c.watched_at ? ` · ${c.watched_at}` : ''}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+          </div>
+          <Button
+            type="button"
+            disabled={!pickId || addItemPending}
+            loading={addItemPending}
+            onClick={() => {
+              if (!pickId) return;
+              onAddItem(pickId);
+            }}
+          >
+            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+            Añadir
+          </Button>
+        </div>
+      ) : null}
+
+      {capsules.length === 0 ? (
+        <EmptyState
+          title="Lista vacía"
+          description={
+            candidates.length > 0
+              ? 'Elige un partido arriba para añadirlo.'
+              : 'Busca un partido y guárdalo en tu diario.'
+          }
+        >
+          {candidates.length === 0 ? (
+            <Button asChild>
+              <Link to="/search">Buscar partido</Link>
+            </Button>
+          ) : null}
+        </EmptyState>
+      ) : (
+        <ul className="space-y-3" data-testid="collection-items">
+          {capsules.map((capsule, index) => (
+            <li key={capsule.id}>
+              <CapsuleListCard
+                capsule={capsule}
+                showWatchedDate
+                footer={
+                  <div className="flex flex-wrap items-center gap-2">
+                    {capsules.length > 1 ? (
+                      <div className="flex items-center gap-1" role="group" aria-label="Reordenar">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={index === 0 || reorderPending}
+                          aria-label={`Subir ${capsule.home_team_name} vs ${capsule.away_team_name}`}
+                          onClick={() => onMoveCapsule(capsule.id, 'up')}
+                        >
+                          <ArrowUp className="h-3.5 w-3.5" aria-hidden />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={index === capsules.length - 1 || reorderPending}
+                          aria-label={`Bajar ${capsule.home_team_name} vs ${capsule.away_team_name}`}
+                          onClick={() => onMoveCapsule(capsule.id, 'down')}
+                        >
+                          <ArrowDown className="h-3.5 w-3.5" aria-hidden />
+                        </Button>
+                      </div>
+                    ) : null}
+                    {collection.cover_capsule_id === capsule.id ? (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="h-9 w-9 px-0 sm:w-auto sm:px-3"
+                        disabled={updateCollectionPending || removeItemPending}
+                        aria-label={`Quitar portada de ${capsule.home_team_name} vs ${capsule.away_team_name}`}
+                        onClick={() => onSetCover(null)}
+                      >
+                        <ImageIcon className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
+                        <span className="sr-only sm:not-sr-only">Quitar portada</span>
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-9 w-9 px-0 sm:w-auto sm:px-3"
+                        disabled={updateCollectionPending || removeItemPending}
+                        aria-label={`Usar ${capsule.home_team_name} vs ${capsule.away_team_name} como portada`}
+                        onClick={() => onSetCover(capsule.id)}
+                      >
+                        <ImageIcon className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
+                        <span className="sr-only sm:not-sr-only">Portada</span>
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-9 w-9 px-0 text-destructive sm:w-auto sm:px-3"
+                      disabled={removeItemPending || reorderPending}
+                      aria-label={`Quitar ${capsule.home_team_name} vs ${capsule.away_team_name} de la colección`}
+                      onClick={() => onRemoveItem(capsule.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
+                      <span className="sr-only sm:not-sr-only">Quitar</span>
+                    </Button>
+                  </div>
+                }
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
 
 export function CollectionDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -46,20 +328,8 @@ export function CollectionDetailPage() {
   const collection = data?.collection;
   useDocumentTitle(collection?.name ? `Colección · ${collection.name}` : 'Colección');
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [isPublic, setIsPublic] = useState(true);
-  const [syncedId, setSyncedId] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [pickId, setPickId] = useState('');
-
-  useEffect(() => {
-    if (!collection || syncedId === collection.id) return;
-    setName(collection.name);
-    setDescription(collection.description ?? '');
-    setIsPublic(collection.is_public);
-    setSyncedId(collection.id);
-  }, [collection, syncedId]);
 
   const inCollection = useMemo(
     () => new Set((data?.capsules ?? []).map((c) => c.id)),
@@ -97,17 +367,6 @@ export function CollectionDetailPage() {
     updateCollection.mutate({ cover_capsule_id: capsuleId });
   };
 
-  const onSave = (event: FormEvent) => {
-    event.preventDefault();
-    if (!id || !name.trim()) return;
-    updateCollection.mutate({
-      name: name.trim(),
-      description: description.trim() || null,
-      is_public: isPublic,
-      slug: slugifyCollectionName(name.trim()),
-    });
-  };
-
   if (isLoading) {
     return (
       <Layout>
@@ -136,11 +395,11 @@ export function CollectionDetailPage() {
   return (
     <Layout>
       <div className="mx-auto max-w-2xl space-y-8">
-        <nav className="flex flex-wrap items-center gap-3" aria-label="Acciones de la colección">
-          <Button asChild variant="ghost" size="sm">
+        <nav className="flex flex-wrap items-center gap-2" aria-label="Acciones de la colección">
+          <Button asChild variant="ghost" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
             <Link to="/collections">
-              <ArrowLeft className="mr-1.5 h-4 w-4" aria-hidden />
-              Colecciones
+              <ArrowLeft className="h-4 w-4 sm:mr-1.5" aria-hidden />
+              <span className="sr-only sm:not-sr-only">Colecciones</span>
             </Link>
           </Button>
           {collection.is_public ? (
@@ -155,10 +414,11 @@ export function CollectionDetailPage() {
               username={username}
               slug={collection.slug}
               name={collection.name}
+              compact
             />
           ) : null}
           {username && collection.is_public ? (
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="h-9 px-3">
               <Link
                 to={`/u/${encodeURIComponent(username)}/lists/${encodeURIComponent(collection.slug)}`}
               >
@@ -178,243 +438,47 @@ export function CollectionDetailPage() {
           </div>
         ) : null}
 
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="text-base" id="edit-collection-heading">
-              Editar colección
-            </CardTitle>
-            <CardDescription>
-              {collection.items_count ?? data.capsules.length} Capsules · slug{' '}
-              <code className="text-xs">{collection.slug}</code>
-              {collection.cover_capsule_id ? ' · portada destacada' : ''}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              onSubmit={onSave}
-              className="space-y-4"
-              aria-labelledby="edit-collection-heading"
-            >
-              <FormField label="Nombre">
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  maxLength={80}
-                  required
-                />
-              </FormField>
-              <FormField label="Descripción">
-                <Textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  maxLength={500}
-                  rows={3}
-                />
-              </FormField>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={isPublic}
-                  onChange={(e) => setIsPublic(e.target.checked)}
-                  className="h-4 w-4 rounded border-border"
-                />
-                Pública (compartible)
-              </label>
-              <div className="flex flex-wrap gap-2">
-                <Button type="submit" loading={updateCollection.isPending}>
-                  Guardar
-                </Button>
-                {collection.is_public ? (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    loading={updateProfile.isPending}
-                    onClick={() => {
-                      const isFeatured = profile?.featured_collection_id === collection.id;
-                      updateProfile.mutate(
-                        { featured_collection_id: isFeatured ? null : collection.id },
-                        {
-                          onSuccess: () => {
-                            toast.success(
-                              isFeatured
-                                ? 'Colección quitada del perfil'
-                                : 'Colección destacada en tu perfil',
-                            );
-                          },
-                        },
-                      );
-                    }}
-                  >
-                    {profile?.featured_collection_id === collection.id
-                      ? 'Quitar del perfil'
-                      : 'Destacar en perfil'}
-                  </Button>
-                ) : null}
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="text-destructive"
-                  aria-label={`Eliminar colección ${collection.name}`}
-                  onClick={() => setDeleteOpen(true)}
-                >
-                  <Trash2 className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                  Eliminar
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+        <CollectionEditForm
+          key={collection.id}
+          collection={collection}
+          itemsCount={data.capsules.length}
+          isSaving={updateCollection.isPending}
+          isFeaturing={updateProfile.isPending}
+          isFeatured={profile?.featured_collection_id === collection.id}
+          onSave={(input) => updateCollection.mutate(input)}
+          onDelete={() => setDeleteOpen(true)}
+          onFeatureToggle={() => {
+            const isFeatured = profile?.featured_collection_id === collection.id;
+            updateProfile.mutate(
+              { featured_collection_id: isFeatured ? null : collection.id },
+              {
+                onSuccess: () => {
+                  toast.success(
+                    isFeatured
+                      ? 'Colección quitada del perfil'
+                      : 'Colección destacada en tu perfil',
+                  );
+                },
+              },
+            );
+          }}
+        />
 
-        <section className="space-y-4" aria-labelledby="collection-items-heading">
-          <div>
-            <h2 id="collection-items-heading" className="text-lg font-semibold">
-              Capsules en la lista
-            </h2>
-            {data.capsules.length > 1 ? (
-              <p className="mt-1 text-sm text-muted-foreground">
-                Ordena con subir/bajar y elige una portada: así se verá en la lista pública.
-              </p>
-            ) : data.capsules.length === 1 ? (
-              <p className="mt-1 text-sm text-muted-foreground">
-                Puedes destacar esta Capsule como portada de la colección.
-              </p>
-            ) : null}
-          </div>
-
-          {candidates.length > 0 ? (
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-              <div className="min-w-0 flex-1">
-                <FormField label="Añadir Capsule">
-                  <select
-                    value={pickId}
-                    onChange={(e) => setPickId(e.target.value)}
-                    className="flex h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
-                    aria-label="Elegir Capsule"
-                  >
-                    <option value="">Elige un partido…</option>
-                    {candidates.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.home_team_name} vs {c.away_team_name}
-                        {c.watched_at ? ` · ${c.watched_at}` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </FormField>
-              </div>
-              <Button
-                type="button"
-                disabled={!pickId || addItem.isPending}
-                loading={addItem.isPending}
-                onClick={() => {
-                  if (!pickId) return;
-                  addItem.mutate(pickId, { onSuccess: () => setPickId('') });
-                }}
-              >
-                <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-                Añadir
-              </Button>
-            </div>
-          ) : null}
-
-          {data.capsules.length === 0 ? (
-            <EmptyState
-              title="Lista vacía"
-              description={
-                candidates.length > 0
-                  ? 'Elige un partido arriba o ábrelo en el diario y usa «Añadir a colección».'
-                  : 'Aún no tienes Capsules. Busca un partido y guárdalo en tu diario.'
-              }
-            >
-              {candidates.length === 0 ? (
-                <div className="flex flex-wrap justify-center gap-2">
-                  <Button asChild>
-                    <Link to="/search">Buscar partido</Link>
-                  </Button>
-                  <Button asChild variant="secondary">
-                    <Link to="/capsules">Mis Capsules</Link>
-                  </Button>
-                </div>
-              ) : null}
-            </EmptyState>
-          ) : (
-            <ul className="space-y-3" data-testid="collection-items">
-              {data.capsules.map((capsule, index) => (
-                <li key={capsule.id}>
-                  <CapsuleListCard
-                    capsule={capsule}
-                    showWatchedDate
-                    footer={
-                      <div className="flex flex-wrap items-center gap-2">
-                        {data.capsules.length > 1 ? (
-                          <div className="flex items-center gap-1" role="group" aria-label="Reordenar">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              disabled={index === 0 || reorderItems.isPending}
-                              aria-label={`Subir ${capsule.home_team_name} vs ${capsule.away_team_name}`}
-                              onClick={() => moveCapsule(capsule.id, 'up')}
-                            >
-                              <ArrowUp className="h-3.5 w-3.5" aria-hidden />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              disabled={
-                                index === data.capsules.length - 1 || reorderItems.isPending
-                              }
-                              aria-label={`Bajar ${capsule.home_team_name} vs ${capsule.away_team_name}`}
-                              onClick={() => moveCapsule(capsule.id, 'down')}
-                            >
-                              <ArrowDown className="h-3.5 w-3.5" aria-hidden />
-                            </Button>
-                          </div>
-                        ) : null}
-                        {collection.cover_capsule_id === capsule.id ? (
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            disabled={updateCollection.isPending || removeItem.isPending}
-                            aria-label={`Quitar portada de ${capsule.home_team_name} vs ${capsule.away_team_name}`}
-                            onClick={() => setCover(null)}
-                          >
-                            <ImageIcon className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                            Quitar portada
-                          </Button>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={updateCollection.isPending || removeItem.isPending}
-                            aria-label={`Usar ${capsule.home_team_name} vs ${capsule.away_team_name} como portada`}
-                            onClick={() => setCover(capsule.id)}
-                          >
-                            <ImageIcon className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                            Portada
-                          </Button>
-                        )}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="text-destructive"
-                          disabled={removeItem.isPending || reorderItems.isPending}
-                          aria-label={`Quitar ${capsule.home_team_name} vs ${capsule.away_team_name} de la colección`}
-                          onClick={() => removeItem.mutate(capsule.id)}
-                        >
-                          Quitar
-                        </Button>
-                      </div>
-                    }
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        <CollectionItemsSection
+          collection={collection}
+          capsules={data.capsules}
+          candidates={candidates}
+          pickId={pickId}
+          onPickIdChange={setPickId}
+          onAddItem={(capsuleId) => addItem.mutate(capsuleId, { onSuccess: () => setPickId('') })}
+          addItemPending={addItem.isPending}
+          onMoveCapsule={moveCapsule}
+          reorderPending={reorderItems.isPending}
+          onSetCover={setCover}
+          updateCollectionPending={updateCollection.isPending}
+          onRemoveItem={(capsuleId) => removeItem.mutate(capsuleId)}
+          removeItemPending={removeItem.isPending}
+        />
       </div>
 
       <ConfirmDialog
