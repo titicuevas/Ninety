@@ -12,6 +12,7 @@ type Props = {
   valueOnboardingVisible: boolean;
   anniversaryVisible?: boolean;
   milestoneVisible?: boolean;
+  incompleteCapsuleVisible?: boolean;
   className?: string;
 };
 
@@ -27,6 +28,7 @@ export function DiaryDigestCard({
   valueOnboardingVisible,
   anniversaryVisible = false,
   milestoneVisible = false,
+  incompleteCapsuleVisible = false,
   className,
 }: Props) {
   const { digest, visible, dismiss } = useDiaryDigest({
@@ -35,6 +37,7 @@ export function DiaryDigestCard({
     valueOnboardingVisible,
     anniversaryVisible,
     milestoneVisible,
+    incompleteCapsuleVisible,
   });
 
   if (!visible || !digest) return null;

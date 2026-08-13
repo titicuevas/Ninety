@@ -1,0 +1,68 @@
+import { Link } from 'react-router-dom';
+import { PencilLine } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import type { IncompleteCapsuleNudge } from '@/lib/incompleteCapsule';
+
+type Props = {
+  nudge: IncompleteCapsuleNudge | null;
+  visible: boolean;
+  dismiss: (permanent?: boolean) => void;
+  openEdit: () => void;
+  className?: string;
+};
+
+export function IncompleteCapsuleCard({
+  nudge,
+  visible,
+  dismiss,
+  openEdit,
+  className,
+}: Props) {
+  if (!visible || !nudge) return null;
+
+  return (
+    <Card
+      className={cn(
+        'border-border/80 bg-secondary/30 motion-reveal',
+        className,
+      )}
+      data-testid="incomplete-capsule-card"
+    >
+      <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
+        <div className="flex min-w-0 gap-3">
+          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <PencilLine className="h-4 w-4" aria-hidden />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold sm:text-lg">{nudge.title}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{nudge.body}</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:flex-col sm:items-stretch">
+          <Button asChild className="w-full sm:w-auto">
+            <Link to={nudge.href} onClick={openEdit}>
+              {nudge.hrefLabel}
+            </Link>
+          </Button>
+          <div className="flex flex-wrap gap-1">
+            <Button type="button" variant="ghost" size="sm" onClick={() => dismiss(false)}>
+              Ahora no
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              onClick={() => dismiss(true)}
+            >
+              No volver a mostrar
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

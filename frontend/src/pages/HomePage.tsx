@@ -8,6 +8,7 @@ import { DiaryDigestCard } from '@/components/DiaryDigestCard';
 import { DiaryMilestoneCard } from '@/components/DiaryMilestoneCard';
 import { EmptyState } from '@/components/EmptyState';
 import { HomeSocialHub } from '@/components/HomeSocialHub';
+import { IncompleteCapsuleCard } from '@/components/IncompleteCapsuleCard';
 import { InsightsSection } from '@/components/InsightsSection';
 import { Layout } from '@/components/Layout';
 import { WrappedLoadingSkeleton } from '@/components/ListSkeletons';
@@ -26,6 +27,7 @@ import { useDiaryAnniversary } from '@/hooks/useDiaryAnniversary';
 import { useDiaryMilestone } from '@/hooks/useDiaryMilestone';
 import { useDiaryPostImportGuide } from '@/hooks/useDiaryPostImportGuide';
 import { useFollowList } from '@/hooks/useFollowList';
+import { useIncompleteCapsuleNudge } from '@/hooks/useIncompleteCapsuleNudge';
 import { useValueOnboarding } from '@/hooks/useValueOnboarding';
 import {
   achievementsInputFromStats,
@@ -97,6 +99,13 @@ export function HomePage() {
     coreComplete,
     valueOnboardingVisible: valueOnboarding.visible || postImportGuide.visible,
     anniversaryVisible: diaryAnniversary.visible,
+  });
+  const incompleteCapsule = useIncompleteCapsuleNudge({
+    capsules: capsulesData?.capsules ?? [],
+    coreComplete,
+    valueOnboardingVisible: valueOnboarding.visible || postImportGuide.visible,
+    anniversaryVisible: diaryAnniversary.visible,
+    milestoneVisible: diaryMilestone.visible,
   });
 
   const metadataName =
@@ -245,12 +254,19 @@ export function HomePage() {
               dismiss={diaryMilestone.dismiss}
               celebrate={diaryMilestone.celebrate}
             />
+            <IncompleteCapsuleCard
+              nudge={incompleteCapsule.nudge}
+              visible={incompleteCapsule.visible}
+              dismiss={incompleteCapsule.dismiss}
+              openEdit={incompleteCapsule.openEdit}
+            />
             <DiaryDigestCard
               capsules={capsules}
               coreComplete
               valueOnboardingVisible={valueOnboarding.visible || postImportGuide.visible}
               anniversaryVisible={diaryAnniversary.visible}
               milestoneVisible={diaryMilestone.visible}
+              incompleteCapsuleVisible={incompleteCapsule.visible}
             />
             <PushActivationBanner context="home" />
           </>

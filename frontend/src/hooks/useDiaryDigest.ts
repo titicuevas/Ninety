@@ -17,6 +17,7 @@ type Options = {
   valueOnboardingVisible: boolean;
   anniversaryVisible?: boolean;
   milestoneVisible?: boolean;
+  incompleteCapsuleVisible?: boolean;
 };
 
 export function useDiaryDigest({
@@ -25,6 +26,7 @@ export function useDiaryDigest({
   valueOnboardingVisible,
   anniversaryVisible = false,
   milestoneVisible = false,
+  incompleteCapsuleVisible = false,
 }: Options) {
   const { user } = useAuth();
   const userId = user?.id ?? '';
@@ -45,6 +47,7 @@ export function useDiaryDigest({
     valueOnboardingVisible,
     anniversaryVisible,
     milestoneVisible,
+    incompleteCapsuleVisible,
     hasDigest: digest != null,
     kind: digest?.kind ?? null,
   });

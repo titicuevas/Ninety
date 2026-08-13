@@ -77,6 +77,8 @@ export function shouldShowDiaryDigest(
     anniversaryVisible?: boolean;
     /** Hito del diario tiene prioridad sobre el digest. */
     milestoneVisible?: boolean;
+    /** Soft nudge «completa tu Capsule» tiene prioridad sobre el digest. */
+    incompleteCapsuleVisible?: boolean;
     hasDigest: boolean;
     kind: 'weekly' | 'nudge' | 'gap' | null;
     nowMs?: number;
@@ -86,6 +88,7 @@ export function shouldShowDiaryDigest(
   if (opts.valueOnboardingVisible) return false;
   if (opts.anniversaryVisible) return false;
   if (opts.milestoneVisible) return false;
+  if (opts.incompleteCapsuleVisible) return false;
   if (!opts.hasDigest || !opts.kind) return false;
   if (!isDiaryDigestEnabled(prefs)) return false;
   if (prefs?.dismissPermanent) return false;
