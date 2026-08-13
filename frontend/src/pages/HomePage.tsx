@@ -17,6 +17,7 @@ import { PushActivationBanner } from '@/components/PushActivationBanner';
 import { StadiumMapSection } from '@/components/StadiumMapSection';
 import { PostImportGuideCard } from '@/components/PostImportGuideCard';
 import { ValueOnboardingCard } from '@/components/ValueOnboardingCard';
+import { WantToGoNudgeCard } from '@/components/WantToGoNudgeCard';
 import { WrappedSummary } from '@/components/WrappedSummary';
 import { WrappedTeaser, WrappedTeaserCompact } from '@/components/WrappedTeaser';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ import { useDiaryPostImportGuide } from '@/hooks/useDiaryPostImportGuide';
 import { useFollowList } from '@/hooks/useFollowList';
 import { useIncompleteCapsuleNudge } from '@/hooks/useIncompleteCapsuleNudge';
 import { useValueOnboarding } from '@/hooks/useValueOnboarding';
+import { useWantToGoNudge } from '@/hooks/useWantToGoNudge';
 import {
   achievementsInputFromStats,
   computeAchievements,
@@ -106,6 +108,13 @@ export function HomePage() {
     valueOnboardingVisible: valueOnboarding.visible || postImportGuide.visible,
     anniversaryVisible: diaryAnniversary.visible,
     milestoneVisible: diaryMilestone.visible,
+  });
+  const wantToGoNudge = useWantToGoNudge({
+    coreComplete,
+    valueOnboardingVisible: valueOnboarding.visible || postImportGuide.visible,
+    anniversaryVisible: diaryAnniversary.visible,
+    milestoneVisible: diaryMilestone.visible,
+    incompleteCapsuleVisible: incompleteCapsule.visible,
   });
 
   const metadataName =
@@ -261,6 +270,12 @@ export function HomePage() {
               dismiss={incompleteCapsule.dismiss}
               openEdit={incompleteCapsule.openEdit}
             />
+            <WantToGoNudgeCard
+              nudge={wantToGoNudge.nudge}
+              visible={wantToGoNudge.visible}
+              dismiss={wantToGoNudge.dismiss}
+              openList={wantToGoNudge.openList}
+            />
             <DiaryDigestCard
               capsules={capsules}
               coreComplete
@@ -268,6 +283,7 @@ export function HomePage() {
               anniversaryVisible={diaryAnniversary.visible}
               milestoneVisible={diaryMilestone.visible}
               incompleteCapsuleVisible={incompleteCapsule.visible}
+              wantToGoNudgeVisible={wantToGoNudge.visible}
             />
             <PushActivationBanner context="home" />
           </>

@@ -64,6 +64,14 @@ describe('diaryDigestMemory', () => {
       shouldShowDiaryDigest(null, { ...base, milestoneVisible: true }),
       false,
     );
+    assert.equal(
+      shouldShowDiaryDigest(null, { ...base, incompleteCapsuleVisible: true }),
+      false,
+    );
+    assert.equal(
+      shouldShowDiaryDigest(null, { ...base, wantToGoNudgeVisible: true }),
+      false,
+    );
     assert.equal(shouldShowDiaryDigest(null, { ...base, coreComplete: false }), false);
   });
 

@@ -18,6 +18,7 @@ type Options = {
   anniversaryVisible?: boolean;
   milestoneVisible?: boolean;
   incompleteCapsuleVisible?: boolean;
+  wantToGoNudgeVisible?: boolean;
 };
 
 export function useDiaryDigest({
@@ -27,6 +28,7 @@ export function useDiaryDigest({
   anniversaryVisible = false,
   milestoneVisible = false,
   incompleteCapsuleVisible = false,
+  wantToGoNudgeVisible = false,
 }: Options) {
   const { user } = useAuth();
   const userId = user?.id ?? '';
@@ -48,6 +50,7 @@ export function useDiaryDigest({
     anniversaryVisible,
     milestoneVisible,
     incompleteCapsuleVisible,
+    wantToGoNudgeVisible,
     hasDigest: digest != null,
     kind: digest?.kind ?? null,
   });
