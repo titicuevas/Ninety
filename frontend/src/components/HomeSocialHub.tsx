@@ -119,15 +119,7 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
         ) : null}
       </nav>
 
-      {followingHref ? (
-        <p className="text-sm text-muted-foreground">
-          En{' '}
-          <Link to={followingHref} className="font-medium text-primary hover:underline">
-            Siguiendo
-          </Link>{' '}
-          puedes dejar de seguir a quien ya no quieras ver en el feed.
-        </p>
-      ) : (
+      {followingHref ? null : (
         <p className="text-sm text-muted-foreground">
           Elige un username en{' '}
           <Link to="/profile" className="font-medium text-primary hover:underline">

@@ -259,15 +259,6 @@ export function CollectionsPage() {
             </ul>
           </section>
         ) : null}
-
-        <p className="text-center text-sm text-muted-foreground">
-          <Link
-            to="/capsules"
-            className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            Volver a Mis Capsules
-          </Link>
-        </p>
       </div>
     </Layout>
   );

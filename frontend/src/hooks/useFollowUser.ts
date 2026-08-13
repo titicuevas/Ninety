@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import { isInfiniteQueryData, isProfilesList } from '@/lib/queryCache';
+import { isProfilesList, mapInfinitePages } from '@/lib/queryCache';
 import { markPushPromptEligible } from '@/lib/pushPromptMemory';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
@@ -54,15 +54,11 @@ function bumpFeedFollowingCount(
   old: InfiniteData<FeedResponse> | undefined,
   delta: number,
 ): InfiniteData<FeedResponse> | undefined {
-  if (!isInfiniteQueryData<FeedResponse>(old)) return old;
-  return {
-    ...old,
-    pages: old.pages.map((page, index) =>
-      index === 0
-        ? { ...page, following_count: Math.max(0, (page.following_count ?? 0) + delta) }
-        : page,
-    ),
-  };
+  return mapInfinitePages<FeedResponse>(old, (page, index) =>
+    index === 0
+      ? { ...page, following_count: Math.max(0, (page.following_count ?? 0) + delta) }
+      : page,
+  ) as InfiniteData<FeedResponse> | undefined;
 }
 
 function patchNotificationActors(
@@ -70,19 +66,15 @@ function patchNotificationActors(
   username: string,
   followed: boolean,
 ): InfiniteData<NotificationsResponse> | undefined {
-  if (!isInfiniteQueryData<NotificationsResponse>(old)) return old;
   const nextFollowed = !followed;
-  return {
-    ...old,
-    pages: old.pages.map((page) => ({
-      ...page,
-      notifications: (page.notifications ?? []).map((n) =>
-        n.actor?.username === username
-          ? { ...n, actor: { ...n.actor, followed_by_me: nextFollowed } }
-          : n,
-      ),
-    })),
-  };
+  return mapInfinitePages<NotificationsResponse>(old, (page) => ({
+    ...page,
+    notifications: (page.notifications ?? []).map((n) =>
+      n.actor?.username === username
+        ? { ...n, actor: { ...n.actor, followed_by_me: nextFollowed } }
+        : n,
+    ),
+  })) as InfiniteData<NotificationsResponse> | undefined;
 }
 
 export function useToggleFollow(username: string) {
@@ -125,15 +117,10 @@ export function useToggleFollow(username: string) {
       queryClient.setQueriesData<PublicProfileInfinite>(
         { queryKey: ['profile', 'public', username] },
         (old) =>
-          isInfiniteQueryData<PublicProfilePage>(old)
-            ? {
-                ...old,
-                pages: old.pages.map((page) => ({
-                  ...page,
-                  profile: page.profile ? updateProfileFollow(page.profile, followed) : page.profile,
-                })),
-              }
-            : old,
+          mapInfinitePages<PublicProfilePage>(old, (page) => ({
+            ...page,
+            profile: page.profile ? updateProfileFollow(page.profile, followed) : page.profile,
+          })) as PublicProfileInfinite | undefined,
       );
 
       queryClient.setQueriesData<InfiniteData<FeedResponse>>(

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import { isInfiniteQueryData } from '@/lib/queryCache';
+import { mapInfinitePages } from '@/lib/queryCache';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 import type { Profile } from '@/types/profile';
@@ -68,18 +68,13 @@ export function useToggleBlockUser(username: string) {
       queryClient.setQueriesData<PublicProfileInfinite>(
         { queryKey: ['profile', 'public', username] },
         (old) =>
-          isInfiniteQueryData<PublicProfilePage>(old)
-            ? {
-                ...old,
-                pages: old.pages.map((page) => ({
-                  ...page,
-                  profile: updateProfileBlock(page.profile, blocked),
-                  capsules: blocked ? page.capsules : [],
-                  total: blocked ? page.total : 0,
-                  blocked: !blocked,
-                })),
-              }
-            : old,
+          mapInfinitePages<PublicProfilePage>(old, (page) => ({
+            ...page,
+            profile: updateProfileBlock(page.profile, blocked),
+            capsules: blocked ? page.capsules : [],
+            total: blocked ? page.total : 0,
+            blocked: !blocked,
+          })) as PublicProfileInfinite | undefined,
       );
 
       if (previousBlocked && blocked) {

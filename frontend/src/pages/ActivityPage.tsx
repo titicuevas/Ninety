@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Activity, Library, Newspaper, Ticket, Users } from 'lucide-react';
+import { Activity, Library, Ticket, Users } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { capsuleCardListClass } from '@/components/CapsuleListCard';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
@@ -161,25 +161,18 @@ export function ActivityPage() {
               Capsules y listas nuevas de a quien sigues — aparte del feed de partidos.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant="secondary" size="sm">
-              <Link to={feedPath()}>
-                <Newspaper className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                Ir al feed
-              </Link>
-            </Button>
+          {followingCount === 0 ? (
             <Button asChild variant="outline" size="sm">
               <Link to="/search?tab=people">
                 <Users className="mr-1.5 h-3.5 w-3.5" aria-hidden />
                 Seguir aficionados
               </Link>
             </Button>
-          </div>
-          {followingCount > 0 ? (
+          ) : (
             <p className="text-xs text-muted-foreground">
               Siguiendo a {followingCount} {followingCount === 1 ? 'persona' : 'personas'}
             </p>
-          ) : null}
+          )}
         </section>
 
         {isLoading ? <ActivityListSkeleton /> : null}

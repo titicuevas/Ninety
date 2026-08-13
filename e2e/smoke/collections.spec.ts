@@ -79,7 +79,7 @@ test.describe('Smoke — colecciones @smoke', () => {
     await expect(page.getByRole('button', { name: /compartir/i })).toBeVisible();
   });
 
-  test('Perfil enlaza a Colecciones', async ({ page }) => {
+  test('Perfil y Listas en nav abren Mis listas', async ({ page }) => {
     await openAuthenticatedHome(page);
     await page
       .getByRole('navigation', { name: /navegación principal/i })
@@ -89,7 +89,11 @@ test.describe('Smoke — colecciones @smoke', () => {
     await expect(page).toHaveURL(/\/profile/);
     await expect(page.getByRole('heading', { name: /tu perfil/i })).toBeVisible({ timeout: 20_000 });
 
-    await page.getByRole('link', { name: /^colecciones$/i }).click();
+    await page
+      .getByRole('navigation', { name: /navegación principal/i })
+      .getByRole('link', { name: /listas/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/collections/);
     await expect(page.getByRole('heading', { name: /^mis listas$/i })).toBeVisible();
   });

@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Check, Bookmark, CalendarDays, Library, Loader2, Settings, Trophy, X } from 'lucide-react';
+import { Check, Bookmark, CalendarDays, Loader2, Settings, Trophy, X } from 'lucide-react';
 import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
 import { FavoriteTeamField } from '@/components/FavoriteTeamField';
 import { Layout } from '@/components/Layout';
@@ -290,13 +290,6 @@ export function ProfilePage() {
                     Ver perfil público
                   </Link>
                   <Link
-                    to="/collections"
-                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                  >
-                    <Library className="h-3.5 w-3.5" aria-hidden />
-                    Colecciones
-                  </Link>
-                  <Link
                     to="/want-to-go"
                     className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
                   >
@@ -349,27 +342,22 @@ export function ProfilePage() {
                   <p className="text-sm text-muted-foreground">
                     Elige un username abajo para poder compartir tu perfil público.
                   </p>
-                  <Link
-                    to="/collections"
-                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                  >
-                    <Library className="h-3.5 w-3.5" aria-hidden />
-                    Colecciones
-                  </Link>
-                  <Link
-                    to="/want-to-go"
-                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                  >
-                    <Bookmark className="h-3.5 w-3.5" aria-hidden />
-                    Quiero ir
-                  </Link>
-                  <Link
-                    to="/diary/calendar"
-                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                  >
-                    <CalendarDays className="h-3.5 w-3.5" aria-hidden />
-                    Calendario
-                  </Link>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <Link
+                      to="/want-to-go"
+                      className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                    >
+                      <Bookmark className="h-3.5 w-3.5" aria-hidden />
+                      Quiero ir
+                    </Link>
+                    <Link
+                      to="/diary/calendar"
+                      className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                    >
+                      <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+                      Calendario
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>
