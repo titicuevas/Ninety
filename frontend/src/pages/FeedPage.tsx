@@ -242,25 +242,22 @@ export function FeedPage() {
     ? postImportFeedHint(readDiaryPostImportState(user.id))
     : null;
 
-  const subtitle =
-    scope === 'explore'
-      ? 'Partidos públicos de la comunidad Ninety.'
-      : 'El vestuario digital: partidos de a quien sigues y los tuyos.';
-
   return (
     <Layout>
       <div className="space-y-5 sm:space-y-8">
         <section className="space-y-3">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Feed</h1>
-            <p className="mt-1 text-sm text-muted-foreground sm:text-base">{subtitle}</p>
-          </div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Feed</h1>
           <div className="flex flex-nowrap items-center gap-2 overflow-x-auto overscroll-x-contain pb-0.5 sm:flex-wrap sm:overflow-visible">
             <ScopeTabs scope={scope} onChange={setScope} />
-            <Button asChild variant="outline" size="sm" className="shrink-0 rounded-full">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="h-9 w-9 shrink-0 rounded-full px-0 sm:w-auto sm:px-3"
+            >
               <Link to="/activity">
-                <Activity className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                Actividad
+                <Activity className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
+                <span className="sr-only sm:not-sr-only">Actividad</span>
               </Link>
             </Button>
             <span className="hidden h-5 w-px bg-border sm:block" aria-hidden />
@@ -295,7 +292,7 @@ export function FeedPage() {
           <EmptyState
             icon={Compass}
             title="Ningún partido con estos filtros"
-            description="Prueba otra competición, quita «solo con fotos» o cambia de Siguiendo a Explorar."
+            description="Prueba otra competición o quita «solo con fotos»."
           >
             <Button type="button" variant="secondary" onClick={clearContentFilters}>
               Quitar filtros
@@ -304,11 +301,7 @@ export function FeedPage() {
               <Button asChild>
                 <Link to={feedPath('explore', sort, content)}>Explorar comunidad</Link>
               </Button>
-            ) : (
-              <Button asChild variant="secondary">
-                <Link to={feedPath('following', sort, content)}>Volver a Siguiendo</Link>
-              </Button>
-            )}
+            ) : null}
           </EmptyState>
         ) : null}
 
@@ -320,15 +313,12 @@ export function FeedPage() {
               description={
                 postImportHint ??
                 (followingCount === 0
-                  ? 'Aún no sigues a nadie. Explora aficionados activos y listas públicas para empezar.'
-                  : 'La gente que sigues aún no ha publicado partidos, o aún no has guardado ninguno.')
+                  ? 'Sigue aficionados o explora la comunidad para llenarlo.'
+                  : 'Quien sigues aún no ha publicado, o tú tampoco.')
               }
             >
-              <Button asChild variant="secondary">
-                <Link to={feedPath('explore', sort)}>Explorar comunidad</Link>
-              </Button>
               <Button asChild>
-                <Link to="/collections/explore">Explorar listas</Link>
+                <Link to={feedPath('explore', sort)}>Explorar comunidad</Link>
               </Button>
               <Button asChild variant="secondary">
                 <Link to="/search?tab=people">Buscar aficionados</Link>
@@ -337,24 +327,14 @@ export function FeedPage() {
                 <Button asChild variant="secondary">
                   <Link to="/collections?new=1">Crear colección</Link>
                 </Button>
-              ) : (
-                <Button asChild variant="secondary">
-                  <Link to="/search">Buscar partido</Link>
-                </Button>
-              )}
+              ) : null}
             </EmptyState>
 
             {collectionSuggestions.length > 0 ? (
               <section className="space-y-3">
-                <div>
-                  <h2 className="text-sm font-semibold tracking-wide text-primary uppercase">
-                    Listas para descubrir
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Colecciones públicas con Capsules — útiles aunque no tengas follows ni equipo
-                    favorito.
-                  </p>
-                </div>
+                <h2 className="text-sm font-semibold tracking-wide text-primary uppercase">
+                  Listas para descubrir
+                </h2>
                 <ul className="space-y-2">
                   {collectionSuggestions.map((collection) => (
                     <FeedDiscoverCollectionRow key={collection.id} collection={collection} />
@@ -368,15 +348,9 @@ export function FeedPage() {
 
             {suggestions.length > 0 ? (
               <section className="space-y-3">
-                <div>
-                  <h2 className="text-sm font-semibold tracking-wide text-primary uppercase">
-                    Aficionados sugeridos
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Priorizamos perfiles con Capsules públicas; si compartes equipo o ciudad, van
-                    primero.
-                  </p>
-                </div>
+                <h2 className="text-sm font-semibold tracking-wide text-primary uppercase">
+                  Aficionados sugeridos
+                </h2>
                 <ul className="space-y-2">
                   {suggestions.map((profile) => (
                     <PeopleResultRow key={profile.id} profile={profile} />
@@ -391,13 +365,10 @@ export function FeedPage() {
           <EmptyState
             icon={Compass}
             title="Aún no hay cápsulas públicas"
-            description="Cuando la comunidad publique partidos públicos, aparecerán aquí."
+            description="Cuando la comunidad publique partidos, aparecerán aquí."
           >
             <Button asChild>
               <Link to="/search">Crear tu primera Capsule</Link>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link to={feedPath('following', sort)}>Volver a Siguiendo</Link>
             </Button>
           </EmptyState>
         ) : null}

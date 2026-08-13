@@ -25,7 +25,6 @@ import { usePublicCapsule } from '@/hooks/usePublicCapsule';
 import { formatCapsuleScore, formatWatchedDate } from '@/lib/format';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { profilePath } from '@/lib/profilePath';
-import { publicCapsuleUrl } from '@/lib/siteUrl';
 
 type CapsuleLocationState = {
   shareNudge?: boolean;
@@ -142,6 +141,7 @@ export function PublicCapsulePage() {
                 username={username}
                 followedByMe={capsule.profiles?.followed_by_me}
                 followsMe={capsule.profiles?.follows_me}
+                size="compact"
               />
             ) : null}
             {canFollow && user && capsule.profiles?.follows_me ? <FollowsYouBadge /> : null}
@@ -154,7 +154,7 @@ export function PublicCapsulePage() {
               <ReportContentButton
                 targetType="capsule"
                 targetId={capsule.id}
-                size="compact"
+                size="icon"
               />
             ) : null}
             <ShareCapsuleButton
@@ -162,6 +162,7 @@ export function PublicCapsulePage() {
               title={shareTitle}
               variant="outline"
               isPublic={capsule.is_public !== false}
+              compact
             />
           </div>
         </section>
@@ -177,19 +178,15 @@ export function PublicCapsulePage() {
 
         {showShareNudge && isOwn && capsule.is_public !== false ? (
           <Card className="border-primary/40 bg-primary/5 motion-reveal">
-            <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-              <div className="min-w-0">
-                <p className="font-medium">Comparte este partido</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Acabas de guardarlo. Envía el enlace para que otros lo vean.
-                </p>
-              </div>
+            <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="font-medium">Comparte este partido</p>
               <div className="flex flex-wrap items-center gap-2">
                 <ShareCapsuleButton
                   capsuleId={capsule.id}
                   title={shareTitle}
                   variant="secondary"
                   isPublic
+                  compact
                 />
                 <Button type="button" variant="ghost" size="sm" onClick={() => setShowShareNudge(false)}>
                   Cerrar
@@ -204,19 +201,11 @@ export function PublicCapsulePage() {
             className="border-primary/40 bg-primary/5 motion-reveal"
             data-testid="private-capsule-saved-banner"
           >
-            <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-              <div className="min-w-0">
-                <p className="font-medium">Guardada en privado</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Solo tú la ves. Puedes hacerla pública cuando quieras para compartirla.
-                </p>
-              </div>
+            <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="font-medium">Guardada en privado</p>
               <div className="flex flex-wrap items-center gap-2">
                 <Button asChild variant="secondary" size="sm">
                   <Link to={`/capsules/${capsule.id}/edit`}>Hazla pública</Link>
-                </Button>
-                <Button asChild variant="ghost" size="sm">
-                  <Link to="/capsules">Ver diario</Link>
                 </Button>
                 <Button type="button" variant="ghost" size="sm" onClick={() => setShowPrivateSaved(false)}>
                   Cerrar
@@ -279,7 +268,7 @@ export function PublicCapsulePage() {
 
             {isOwn ? (
               <div className="mt-4 flex flex-wrap gap-2">
-                <AddToCollectionButton capsuleId={capsule.id} variant="secondary" />
+                <AddToCollectionButton capsuleId={capsule.id} variant="secondary" compact />
                 <Button asChild variant="secondary" size="sm">
                   <Link to={`/capsules/${capsule.id}/edit`}>Editar Capsule</Link>
                 </Button>
@@ -292,17 +281,10 @@ export function PublicCapsulePage() {
           <p className="text-center text-xs text-muted-foreground">
             Solo tú puedes ver esta Capsule ·{' '}
             <Link to={`/capsules/${capsule.id}/edit`} className="text-primary hover:underline">
-              Hazla pública para compartir
+              Hazla pública
             </Link>
           </p>
-        ) : (
-          <p className="text-center text-xs text-muted-foreground">
-            Enlace público ·{' '}
-            <a href={publicCapsuleUrl(capsule.id)} className="text-primary hover:underline">
-              {publicCapsuleUrl(capsule.id).replace(/^https?:\/\//, '')}
-            </a>
-          </p>
-        )}
+        ) : null}
       </div>
     </Shell>
   );

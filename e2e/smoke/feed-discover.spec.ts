@@ -22,10 +22,6 @@ test.describe('Smoke — feed y discover @smoke', () => {
 
     await exploreTab.click();
     await expect(exploreTab).toHaveAttribute('aria-selected', 'true');
-    // Subtítulo + lista/empty: .first() evita strict mode si ambos coinciden
-    await expect(page.getByText(/partidos públicos de la comunidad/i)).toBeVisible({
-      timeout: 15_000,
-    });
     await expect(
       page.getByText(/aún no hay cápsulas públicas/i).or(page.locator('main ul li').first()).first(),
     ).toBeVisible({ timeout: 15_000 });
@@ -41,7 +37,7 @@ test.describe('Smoke — feed y discover @smoke', () => {
     await expect(empty.or(listItem).or(recentTab).first()).toBeVisible({ timeout: 15_000 });
 
     if (await empty.isVisible()) {
-      await expect(page.getByRole('button', { name: /explorar comunidad/i })).toBeVisible();
+      await expect(page.getByRole('link', { name: /explorar comunidad/i })).toBeVisible();
     } else {
       const loadMore = page.getByRole('button', { name: /cargar más/i });
       if (await loadMore.isVisible()) {
@@ -63,8 +59,8 @@ test.describe('Smoke — feed y discover @smoke', () => {
     await expect(empty.or(hasContent)).toBeVisible({ timeout: 15_000 });
 
     if (await empty.isVisible()) {
+      await expect(page.getByRole('link', { name: /explorar comunidad/i })).toBeVisible();
       await expect(page.getByRole('link', { name: /buscar aficionados/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: /explorar listas/i })).toBeVisible();
 
       const suggestions = page.getByRole('heading', { name: /aficionados sugeridos/i });
       const lists = page.getByRole('heading', { name: /listas para descubrir/i });
