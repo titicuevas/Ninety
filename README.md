@@ -218,7 +218,7 @@ Sin necesidad de tener la API en marcha:
 npm run seed:fans
 ```
 
-Crea **24 usuarios** (`fan01@ninety.app` … `fan24@ninety.app`) con perfil, 1–4 partidos públicos y red de follows (incluye enlaces con `@aficionado_demo` si ya existe). Comparten la contraseña de `DEMO_FANS_PASSWORD` o, si no está definida, `TEST_USER_PASSWORD` en `backend/.env`.
+Crea **24 usuarios** (`fan01@ninety.app` … `fan24@ninety.app`) con perfil, **avatar del escudo de su equipo**, 1–4 partidos públicos y red de follows (incluye enlaces con `@aficionado_demo` si ya existe). Comparten la contraseña de `DEMO_FANS_PASSWORD` o, si no está definida, `TEST_USER_PASSWORD` en `backend/.env`.
 
 ### 3. Tests automatizados (pirámide QE)
 
@@ -507,7 +507,7 @@ Ninety/
 
 ### 🚧 v13 — Descubrimiento & ritmo diario
 - [x] Feed de actividad de follows — timeline ligera aparte del feed de Capsules (`GET /api/activity` + `/activity`; nuevas Capsules/colecciones públicas de gente que sigues; respeta blocks; paginación `limit`/`offset`)
-- [ ] Guardar búsqueda / filtros del diario — recordar último tag/filtro en Mis Capsules (localStorage o query sticky)
+- [x] Guardar búsqueda / filtros del diario — recordar último tag/filtro en Mis Capsules (`localStorage` `ninety.diaryFilters:v1:` + query sticky vía `useDiaryFilterParams({ persist: true })`)
 - [ ] Estadio favorito / mapa enriquecido — destacar estadios más visitados con deep link al diario/mapa
 - [ ] Notificación de like en colección — opt-in reutilizando prefs (`notification_preferences` + tipo o flag; in-app + push)
 - [ ] Export Wrapped / mes como texto compartible mejorado — copy one-tap desde calendario o Wrapped

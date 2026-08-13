@@ -33,9 +33,21 @@ type FanSeed = {
   city: string;
   country: string;
   bio: string;
+  /** Foto de perfil: escudo del equipo favorito. */
+  avatar_url: string;
   /** Índices 0–4 en MATCH_POOL para sus capsules (1–3 partidos). */
   matchIndexes: number[];
 };
+
+/** Escudo PNG de football-data.org (mismo CDN que las Capsules). */
+function fdCrest(id: number, ext: 'png' | 'svg' = 'png'): string {
+  return `https://crests.football-data.org/${id}.${ext}`;
+}
+
+/** Fallback PNG (CONMEBOL / selecciones sin PNG en football-data). */
+function apiSportsCrest(id: number): string {
+  return `https://media.api-sports.io/football/teams/${id}.png`;
+}
 
 /** Partidos reutilizables — match_id único por usuario vía offset. */
 const MATCH_POOL = [
@@ -115,6 +127,7 @@ const FANS: FanSeed[] = [
     city: 'Sevilla',
     country: 'España',
     bio: 'Verdiblanca de corazón. Derbis > todo.',
+    avatar_url: fdCrest(90),
     matchIndexes: [0, 1],
   },
   {
@@ -125,6 +138,7 @@ const FANS: FanSeed[] = [
     city: 'Sevilla',
     country: 'España',
     bio: 'Nervionense. Sánchez-Pizjuán es mi templo.',
+    avatar_url: fdCrest(559),
     matchIndexes: [0, 2],
   },
   {
@@ -135,6 +149,7 @@ const FANS: FanSeed[] = [
     city: 'Madrid',
     country: 'España',
     bio: 'Hala Madrid. Colecciono finales.',
+    avatar_url: fdCrest(86),
     matchIndexes: [1, 3],
   },
   {
@@ -145,6 +160,7 @@ const FANS: FanSeed[] = [
     city: 'Barcelona',
     country: 'España',
     bio: 'Més que un club. La Masia en el ADN.',
+    avatar_url: fdCrest(81),
     matchIndexes: [1],
   },
   {
@@ -155,6 +171,7 @@ const FANS: FanSeed[] = [
     city: 'Madrid',
     country: 'España',
     bio: 'Coraje y corazón rojiblanco.',
+    avatar_url: fdCrest(78),
     matchIndexes: [1, 2, 3],
   },
   {
@@ -165,6 +182,7 @@ const FANS: FanSeed[] = [
     city: 'Valencia',
     country: 'España',
     bio: 'Mestalla siempre. Amunt València.',
+    avatar_url: fdCrest(95),
     matchIndexes: [0, 2],
   },
   {
@@ -175,6 +193,7 @@ const FANS: FanSeed[] = [
     city: 'Bilbao',
     country: 'España',
     bio: 'Solo leones de San Mamés.',
+    avatar_url: fdCrest(77),
     matchIndexes: [2],
   },
   {
@@ -185,6 +204,7 @@ const FANS: FanSeed[] = [
     city: 'Liverpool',
     country: 'Reino Unido',
     bio: 'YNWA. Anfield en la sangre.',
+    avatar_url: fdCrest(64),
     matchIndexes: [2, 3],
   },
   {
@@ -195,6 +215,7 @@ const FANS: FanSeed[] = [
     city: 'Manchester',
     country: 'Reino Unido',
     bio: 'Etihad regular. Pep ball believer.',
+    avatar_url: fdCrest(65),
     matchIndexes: [2],
   },
   {
@@ -205,6 +226,7 @@ const FANS: FanSeed[] = [
     city: 'London',
     country: 'Reino Unido',
     bio: 'North London forever.',
+    avatar_url: fdCrest(57),
     matchIndexes: [2, 4],
   },
   {
@@ -215,6 +237,7 @@ const FANS: FanSeed[] = [
     city: 'München',
     country: 'Alemania',
     bio: 'Mia san mia desde la Allianz.',
+    avatar_url: fdCrest(5),
     matchIndexes: [3],
   },
   {
@@ -225,6 +248,7 @@ const FANS: FanSeed[] = [
     city: 'Dortmund',
     country: 'Alemania',
     bio: 'Die Gelbe Wand. Signal Iduna Park.',
+    avatar_url: fdCrest(4),
     matchIndexes: [3, 4],
   },
   {
@@ -235,6 +259,7 @@ const FANS: FanSeed[] = [
     city: 'Paris',
     country: 'Francia',
     bio: 'Parc des Princes los miércoles.',
+    avatar_url: fdCrest(524),
     matchIndexes: [3],
   },
   {
@@ -245,6 +270,7 @@ const FANS: FanSeed[] = [
     city: 'Milano',
     country: 'Italia',
     bio: 'Forza Milan. San Siro nights.',
+    avatar_url: fdCrest(98),
     matchIndexes: [1, 4],
   },
   {
@@ -255,6 +281,7 @@ const FANS: FanSeed[] = [
     city: 'Milano',
     country: 'Italia',
     bio: 'Nerazzurra. Derby della Madonnina fan.',
+    avatar_url: fdCrest(108),
     matchIndexes: [4],
   },
   {
@@ -265,6 +292,7 @@ const FANS: FanSeed[] = [
     city: 'Torino',
     country: 'Italia',
     bio: 'Fino alla fine. Vecchia Signora.',
+    avatar_url: fdCrest(109),
     matchIndexes: [1, 2],
   },
   {
@@ -275,6 +303,7 @@ const FANS: FanSeed[] = [
     city: 'Buenos Aires',
     country: 'Argentina',
     bio: 'La Bombonera es otra liga.',
+    avatar_url: apiSportsCrest(451),
     matchIndexes: [4, 0],
   },
   {
@@ -285,6 +314,7 @@ const FANS: FanSeed[] = [
     city: 'Buenos Aires',
     country: 'Argentina',
     bio: 'Millonaria. Superclásico vivido en vivo.',
+    avatar_url: apiSportsCrest(435),
     matchIndexes: [4],
   },
   {
@@ -295,6 +325,7 @@ const FANS: FanSeed[] = [
     city: 'Rio de Janeiro',
     country: 'Brasil',
     bio: 'Uma vez Flamengo, sempre Flamengo.',
+    avatar_url: fdCrest(1783),
     matchIndexes: [4, 3],
   },
   {
@@ -305,6 +336,7 @@ const FANS: FanSeed[] = [
     city: 'São Paulo',
     country: 'Brasil',
     bio: 'Verdão. Allianz Parque é casa.',
+    avatar_url: fdCrest(1769),
     matchIndexes: [3],
   },
   {
@@ -315,6 +347,7 @@ const FANS: FanSeed[] = [
     city: 'Sevilla',
     country: 'España',
     bio: 'Otra bética más en Triana.',
+    avatar_url: fdCrest(90),
     matchIndexes: [0, 1, 2],
   },
   {
@@ -325,6 +358,7 @@ const FANS: FanSeed[] = [
     city: 'Sevilla',
     country: 'España',
     bio: 'Selección primero. Euro 2024 core memory.',
+    avatar_url: fdCrest(760, 'svg'),
     matchIndexes: [4, 1],
   },
   {
@@ -335,6 +369,7 @@ const FANS: FanSeed[] = [
     city: 'Sevilla',
     country: 'España',
     bio: 'Expat en Sevilla. Aprendí a amar el derbi.',
+    avatar_url: fdCrest(90),
     matchIndexes: [0],
   },
   {
@@ -345,6 +380,7 @@ const FANS: FanSeed[] = [
     city: 'Madrid',
     country: 'España',
     bio: 'Diario de partidos desde 2018.',
+    avatar_url: fdCrest(86),
     matchIndexes: [1, 2, 3, 4],
   },
 ];
@@ -400,6 +436,7 @@ async function ensureFanProfile(userId: string, fan: FanSeed) {
       id: userId,
       username: fan.username,
       display_name: fan.display_name,
+      avatar_url: fan.avatar_url,
       favorite_team: fan.favorite_team,
       country: fan.country,
       city: fan.city,
@@ -503,7 +540,7 @@ async function main() {
     await ensureFanProfile(userId, fan);
     await seedFanCapsules(userId, i, fan);
     fanIds.push(userId);
-    console.log(`✅ @${fan.username} — ${fan.matchIndexes.length} partido(s)`);
+    console.log(`✅ @${fan.username} — ${fan.matchIndexes.length} partido(s) · escudo`);
   }
 
   const demoUserId = await lookupDemoUserId();
