@@ -527,6 +527,13 @@ Ninety/
 - [x] Soft nudge «ya jugó» en Quiero ir — card en Home cuando un partido de la lista ya pasó y aún no hay Capsule (on-device; CTA a crear Capsule; ventana ~14 días; prioridad tras el nudge pre-partido)
 - [x] Compartir colección como texto — resumen one-tap (`Copiar texto` / Compartir) además del enlace (`buildCollectionShareText`)
 
+### 🚧 v16 — Paridad Capsule & partidos en común
+- [ ] Compartir Capsule como texto — resumen one-tap (`Copiar texto` / Compartir) con equipos, rating y nota además del enlace (`buildCapsuleShareText`; paridad con perfil / colección / mes)
+- [ ] Reportar colección — denunciar listas abusivas; extender `content_report_target_type` con `collection` + UI en página pública (hoy solo `user` / `capsule`)
+- [ ] También lo vieron — quién de tus follows tiene Capsule del mismo partido (`GET` por `match_id`; respeta `is_public` y blocks; análogo a Quiero ir en común)
+- [ ] Mis me gusta — archivo de Capsules que te gustaron (`GET /api/capsules/me/liked` + ruta tipo `/likes`)
+- [ ] Quiero ir: próximos vs ya jugados — chips en `/want-to-go` + CTA «limpiar ya jugados sin Capsule»
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium
