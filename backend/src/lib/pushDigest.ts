@@ -72,6 +72,24 @@ async function loadMatchLabels(capsuleIds: string[]): Promise<Map<string, string
   return map;
 }
 
+async function loadCollectionLabels(collectionIds: string[]): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  if (!supabaseAdmin || collectionIds.length === 0) return map;
+
+  const { data } = await supabaseAdmin
+    .from('collections')
+    .select('id, name')
+    .in('id', collectionIds);
+
+  if (data) {
+    for (const row of data as Array<{ id: string; name: string | null }>) {
+      const name = row.name?.trim();
+      if (name) map.set(row.id, name);
+    }
+  }
+  return map;
+}
+
 async function markPushSent(ids: string[]): Promise<void> {
   if (!supabaseAdmin || ids.length === 0) return;
   await supabaseAdmin
@@ -130,11 +148,22 @@ async function flushUserPushDigest(
   const capsuleIds = [
     ...new Set(rows.map((r) => r.capsule_id).filter((id): id is string => Boolean(id))),
   ];
+  const collectionIds = [
+    ...new Set(
+      rows.map((r) => r.collection_id).filter((id): id is string => Boolean(id)),
+    ),
+  ];
 
-  const [{ names: actorNames, usernames: actorUsernames }, matchLabels] = await Promise.all([
-    loadActorProfiles(actorIds),
-    loadMatchLabels(capsuleIds),
-  ]);
+  const [{ names: actorNames, usernames: actorUsernames }, matchLabels, collectionLabels] =
+    await Promise.all([
+      loadActorProfiles(actorIds),
+      loadMatchLabels(capsuleIds),
+      loadCollectionLabels(collectionIds),
+    ]);
+
+  for (const [id, name] of collectionLabels) {
+    matchLabels.set(id, name);
+  }
 
   const payload = buildPushDigestPayload({
     notifications: rows,

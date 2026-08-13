@@ -45,6 +45,10 @@ export function notificationDigestKey(
     const collection = n.collection_id?.trim();
     return collection ? `collection_like:${collection}` : 'collection_like:none';
   }
+  const collection = n.collection_id?.trim();
+  if (collection && (n.type === 'comment' || n.type === 'mention') && !n.capsule_id?.trim()) {
+    return `${n.type}:collection:${collection}`;
+  }
   const capsule = n.capsule_id?.trim();
   return capsule ? `${n.type}:${capsule}` : `${n.type}:none`;
 }
@@ -59,7 +63,11 @@ function formatDigestActorNames(names: string[], maxNamed = 2): string {
   return `${shown.slice(0, -1).join(', ')}, ${shown[shown.length - 1]} y ${rest} más`;
 }
 
-function digestActionText(type: DigestNotificationType, actorCount: number): string {
+function digestActionText(
+  type: DigestNotificationType,
+  actorCount: number,
+  onCollection = false,
+): string {
   const plural = actorCount > 1;
   switch (type) {
     case 'like':
@@ -67,6 +75,9 @@ function digestActionText(type: DigestNotificationType, actorCount: number): str
     case 'collection_like':
       return plural ? 'les gustó tu lista' : 'le gustó tu lista';
     case 'comment':
+      if (onCollection) {
+        return plural ? 'comentaron en tu lista' : 'comentó en tu lista';
+      }
       return plural ? 'comentaron en tu cápsula' : 'comentó en tu cápsula';
     case 'mention':
       return plural ? 'te mencionaron en un comentario' : 'te mencionó en un comentario';
@@ -179,6 +190,10 @@ export function resolvePushDigestUrl(params: {
     return `/collections/${collection_id}`;
   }
 
+  if ((type === 'comment' || type === 'mention') && collection_id && !capsule_id) {
+    return `/collections/${collection_id}`;
+  }
+
   if (capsule_id) {
     return type === 'comment' || type === 'mention'
       ? `/c/${capsule_id}#comments`
@@ -222,9 +237,14 @@ export function buildPushDigestPayload(params: {
   if (sorted.length === 1) {
     const n = sorted[0]!;
     const name = resolveActorName(n.actor_id, actorNames);
-    const matchLabel = n.capsule_id ? matchLabels.get(n.capsule_id) ?? null : null;
+    const matchLabel = n.capsule_id
+      ? matchLabels.get(n.capsule_id) ?? null
+      : n.collection_id
+        ? matchLabels.get(n.collection_id) ?? null
+        : null;
     const snippet =
       n.type === 'comment' || n.type === 'mention' ? n.body?.trim() || null : null;
+    const onCollection = Boolean(n.collection_id && !n.capsule_id);
     return {
       title: PUSH_TITLE[n.type],
       body: buildNotificationPushBody({
@@ -232,6 +252,7 @@ export function buildPushDigestPayload(params: {
         actorName: name,
         matchLabel,
         commentSnippet: snippet,
+        onCollection,
       }),
       url: resolvePushDigestUrl({
         type: n.type,
@@ -249,8 +270,13 @@ export function buildPushDigestPayload(params: {
     const group = groups[0]!;
     const names = group.actorNames.map((id) => resolveActorName(id, actorNames));
     const actorsText = formatDigestActorNames(names);
-    const action = digestActionText(group.type, names.length);
-    const matchLabel = group.capsule_id ? matchLabels.get(group.capsule_id) ?? null : null;
+    const onCollection = Boolean(group.collection_id && !group.capsule_id);
+    const action = digestActionText(group.type, names.length, onCollection);
+    const matchLabel = group.capsule_id
+      ? matchLabels.get(group.capsule_id) ?? null
+      : group.collection_id
+        ? matchLabels.get(group.collection_id) ?? null
+        : null;
 
     let body: string;
     if (group.type === 'follow') {

@@ -126,7 +126,8 @@ function DigestNotificationItem({
   onOpen?: (ids: string[]) => void;
 }) {
   const actorNames = formatDigestActorNames(group.actors);
-  const actionText = digestActionText(group.type, group.actors.length);
+  const onCollection = Boolean(group.collection_id && !group.capsule_id);
+  const actionText = digestActionText(group.type, group.actors.length, { onCollection });
   const singleActorUsername =
     group.actors.length === 1 ? group.actors[0]?.username ?? null : null;
   const followBackActor = digestFollowBackActor(group);
@@ -136,7 +137,9 @@ function DigestNotificationItem({
       : undefined;
   const link =
     followHref ??
-    (group.type === 'collection_like' && group.collection_id
+    (group.collection_id &&
+    (group.type === 'collection_like' ||
+      ((group.type === 'comment' || group.type === 'mention') && !group.capsule_id))
       ? `/collections/${group.collection_id}`
       : group.capsule_id
         ? group.type === 'comment' || group.type === 'mention'

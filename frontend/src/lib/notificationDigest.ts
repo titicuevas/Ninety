@@ -64,6 +64,10 @@ export function notificationDigestKey(
     const collection = n.collection_id?.trim();
     return collection ? `collection_like:${collection}` : 'collection_like:none';
   }
+  const collection = n.collection_id?.trim();
+  if (collection && (n.type === 'comment' || n.type === 'mention') && !n.capsule_id?.trim()) {
+    return `${n.type}:collection:${collection}`;
+  }
   const capsule = n.capsule_id?.trim();
   return capsule ? `${n.type}:${capsule}` : `${n.type}:none`;
 }
@@ -93,14 +97,22 @@ export function formatDigestActorNames(
   return `${shown.slice(0, -1).join(', ')}, ${shown[shown.length - 1]} y ${rest} más`;
 }
 
-export function digestActionText(type: DigestNotificationType, actorCount: number): string {
+export function digestActionText(
+  type: DigestNotificationType,
+  actorCount: number,
+  options?: { onCollection?: boolean },
+): string {
   const plural = actorCount > 1;
+  const onCollection = options?.onCollection === true;
   switch (type) {
     case 'like':
       return plural ? 'les gustó tu cápsula' : 'le gustó tu cápsula';
     case 'collection_like':
       return plural ? 'les gustó tu lista' : 'le gustó tu lista';
     case 'comment':
+      if (onCollection) {
+        return plural ? 'comentaron en tu lista' : 'comentó en tu lista';
+      }
       return plural ? 'comentaron en tu cápsula' : 'comentó en tu cápsula';
     case 'mention':
       return plural ? 'te mencionaron en un comentario' : 'te mencionó en un comentario';

@@ -13,6 +13,7 @@ const base = (overrides: Partial<PendingNotificationRow>): PendingNotificationRo
   type: overrides.type ?? 'like',
   actor_id: overrides.actor_id ?? 'a1',
   capsule_id: overrides.capsule_id !== undefined ? overrides.capsule_id : 'c1',
+  collection_id: overrides.collection_id !== undefined ? overrides.collection_id : null,
   body: overrides.body !== undefined ? overrides.body : null,
   created_at: overrides.created_at ?? '2025-08-12T10:00:00.000Z',
 });
@@ -22,6 +23,17 @@ describe('notificationDigestKey', () => {
     assert.equal(notificationDigestKey({ type: 'follow', capsule_id: null }), 'follow');
     assert.equal(notificationDigestKey({ type: 'like', capsule_id: 'c1' }), 'like:c1');
     assert.equal(notificationDigestKey({ type: 'comment', capsule_id: 'c2' }), 'comment:c2');
+  });
+
+  it('agrupa comentarios de colección por collection_id', () => {
+    assert.equal(
+      notificationDigestKey({
+        type: 'comment',
+        capsule_id: null,
+        collection_id: 'list-1',
+      }),
+      'comment:collection:list-1',
+    );
   });
 });
 
@@ -156,6 +168,19 @@ describe('resolvePushDigestUrl', () => {
         actorUsernames,
       }),
       '/notifications',
+    );
+  });
+
+  it('comentario en colección abre la lista', () => {
+    assert.equal(
+      resolvePushDigestUrl({
+        type: 'comment',
+        capsule_id: null,
+        collection_id: 'list-9',
+        actorIds: ['a1'],
+        actorUsernames,
+      }),
+      '/collections/list-9',
     );
   });
 });

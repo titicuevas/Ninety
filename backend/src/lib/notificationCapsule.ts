@@ -80,10 +80,13 @@ export function buildNotificationPushBody(params: {
   actorName: string;
   matchLabel?: string | null;
   commentSnippet?: string | null;
+  /** Comentario/mención en lista (sin Capsule). */
+  onCollection?: boolean;
 }): string {
   const { type, actorName } = params;
   const match = params.matchLabel?.trim() || null;
   const snippet = params.commentSnippet?.trim() || null;
+  const onCollection = params.onCollection === true;
 
   if (type === 'follow') {
     return `${actorName} te empezó a seguir`;
@@ -112,5 +115,7 @@ export function buildNotificationPushBody(params: {
   if (match && snippet) return `${actorName} en ${match}: «${snippet}»`;
   if (match) return `${actorName} comentó en ${match}`;
   if (snippet) return `${actorName}: «${snippet}»`;
-  return `${actorName} comentó en tu cápsula`;
+  return onCollection
+    ? `${actorName} comentó en tu lista`
+    : `${actorName} comentó en tu cápsula`;
 }

@@ -132,5 +132,13 @@ describe('buildNotificationPushBody', () => {
       }),
       'Ana te mencionó: «Hola @tú»',
     );
+    assert.equal(
+      buildNotificationPushBody({
+        type: 'comment',
+        actorName: 'Ana',
+        onCollection: true,
+      }),
+      'Ana comentó en tu lista',
+    );
   });
 });

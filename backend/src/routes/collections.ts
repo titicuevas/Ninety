@@ -1536,6 +1536,7 @@ collectionsRouter.post('/:id/comments', requireAuth, commentLimiter, async (req:
   }
 
   const parentId = parsed.data.parent_id ?? null;
+  let parentAuthorId: string | null = null;
 
   if (parentId) {
     const { data: parent, error: parentError } = await supabase
@@ -1562,6 +1563,8 @@ collectionsRouter.post('/:id/comments', requireAuth, commentLimiter, async (req:
       res.status(parentErr.includes('no encontrado') ? 404 : 400).json({ error: parentErr });
       return;
     }
+
+    parentAuthorId = parent!.user_id;
   }
 
   const insertRow: Record<string, unknown> = {
@@ -1601,6 +1604,35 @@ collectionsRouter.post('/:id/comments', requireAuth, commentLimiter, async (req:
     }
     res.status(400).json({ error: error.message });
     return;
+  }
+
+  // Respuesta: notifica al autor del padre. Raíz: al dueño de la lista.
+  // Si el padre ≠ dueño, el dueño también recibe alerta de actividad en su lista.
+  if (parentAuthorId) {
+    notifyUser({
+      userId: parentAuthorId,
+      actorId: req.userId!,
+      type: 'comment',
+      collectionId: collection.id,
+      body: parsed.data.body,
+    });
+    if (parentAuthorId !== collection.user_id) {
+      notifyUser({
+        userId: collection.user_id,
+        actorId: req.userId!,
+        type: 'comment',
+        collectionId: collection.id,
+        body: parsed.data.body,
+      });
+    }
+  } else {
+    notifyUser({
+      userId: collection.user_id,
+      actorId: req.userId!,
+      type: 'comment',
+      collectionId: collection.id,
+      body: parsed.data.body,
+    });
   }
 
   const { data: profile } = await supabase

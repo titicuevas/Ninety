@@ -35,6 +35,17 @@ describe('notificationDigestKey', () => {
     assert.equal(notificationDigestKey({ type: 'follow', capsule_id: null }), 'follow');
     assert.equal(notificationDigestKey({ type: 'like', capsule_id: null }), 'like:none');
   });
+
+  it('agrupa comentarios de colección por collection_id', () => {
+    assert.equal(
+      notificationDigestKey({
+        type: 'comment',
+        capsule_id: null,
+        collection_id: 'list-1',
+      }),
+      'comment:collection:list-1',
+    );
+  });
 });
 
 describe('formatDigestActorNames / digestActionText', () => {
@@ -64,6 +75,10 @@ describe('formatDigestActorNames / digestActionText', () => {
     assert.equal(digestActionText('like', 1), 'le gustó tu cápsula');
     assert.equal(digestActionText('like', 3), 'les gustó tu cápsula');
     assert.equal(digestActionText('comment', 2), 'comentaron en tu cápsula');
+    assert.equal(
+      digestActionText('comment', 1, { onCollection: true }),
+      'comentó en tu lista',
+    );
     assert.equal(digestActionText('mention', 1), 'te mencionó en un comentario');
     assert.equal(digestActionText('follow', 2), 'te empezaron a seguir');
   });
