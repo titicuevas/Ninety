@@ -1,6 +1,13 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { resolveCollectionCoverUrl } from '../lib/collectionCover.js';
+import {
+  canEngageCollectionComments,
+  collectionCommentsMigrationHint,
+  fetchCollectionCommentsWithAuthors,
+  isMissingCollectionCommentsTable,
+} from '../lib/collectionComments.js';
 import {
   attachCollectionLikeStats,
   canEngageCollectionLikes,
@@ -22,6 +29,7 @@ import {
   formatCollectionsImportSummary,
   parseCollectionsImportPayload,
 } from '../lib/collectionsImport.js';
+import { validateCommentBody } from '../lib/contentModeration.js';
 import { rankDiscoverCollections } from '../lib/discoverCollections.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
 import {
@@ -89,6 +97,18 @@ const addItemSchema = z.object({
 
 const reorderItemsSchema = z.object({
   capsule_ids: z.array(z.string().uuid()).min(1).max(MAX_ITEMS_PER_COLLECTION),
+});
+
+const commentBodySchema = z.object({
+  body: z.string().trim().min(1).max(500),
+});
+
+const commentLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiados comentarios. Inténtalo en un minuto.' },
 });
 
 function routeParam(value: string | string[]): string {
@@ -1389,6 +1409,320 @@ collectionsRouter.get('/:id/likes', optionalAuth, async (req: AuthRequest, res) 
   }
 });
 
+async function loadCollectionForComments(
+  reader: ReturnType<typeof createUserClient>,
+  collectionId: string,
+): Promise<{ id: string; user_id: string; is_public: boolean } | null | 'missing' | 'error'> {
+  const { data, error } = await reader
+    .from('collections')
+    .select('id, user_id, is_public')
+    .eq('id', collectionId)
+    .maybeSingle();
+
+  if (error) {
+    if (isMissingCollectionsTable(error)) return 'missing';
+    return 'error';
+  }
+  return data;
+}
+
+/** GET /api/collections/:id/comments */
+collectionsRouter.get('/:id/comments', optionalAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  const reader = getReaderClient(token);
+  if (!reader) {
+    res.status(503).json({ error: 'Comentarios no disponibles temporalmente' });
+    return;
+  }
+
+  const id = routeParam(req.params.id);
+  const collection = await loadCollectionForComments(reader, id);
+  if (collection === 'missing') {
+    res.status(503).json({ error: collectionsMigrationHint() });
+    return;
+  }
+  if (collection === 'error') {
+    res.status(400).json({ error: 'No se pudo cargar la colección' });
+    return;
+  }
+  if (!collection || !canEngageCollectionComments(collection, req.userId)) {
+    res.status(404).json({ error: 'Colección no encontrada' });
+    return;
+  }
+
+  if (req.userId && req.userId !== collection.user_id) {
+    const block = await getBlockRelation(req.userId, collection.user_id);
+    if (isBlockActive(block)) {
+      res.status(404).json({ error: 'Colección no encontrada' });
+      return;
+    }
+  }
+
+  try {
+    const comments = await fetchCollectionCommentsWithAuthors(reader, collection.id);
+    res.json({ comments });
+  } catch (err) {
+    if (isMissingCollectionCommentsTable(err)) {
+      res.status(503).json({ error: collectionCommentsMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: err instanceof Error ? err.message : 'Error al cargar comentarios' });
+  }
+});
+
+/** POST /api/collections/:id/comments */
+collectionsRouter.post('/:id/comments', requireAuth, commentLimiter, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const parsed = commentBodySchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const moderationError = validateCommentBody(parsed.data.body);
+  if (moderationError) {
+    res.status(400).json({ error: moderationError });
+    return;
+  }
+
+  const id = routeParam(req.params.id);
+  const supabase = createUserClient(token);
+  const collection = await loadCollectionForComments(supabase, id);
+  if (collection === 'missing') {
+    res.status(503).json({ error: collectionsMigrationHint() });
+    return;
+  }
+  if (collection === 'error') {
+    res.status(400).json({ error: 'No se pudo cargar la colección' });
+    return;
+  }
+  if (!collection || !canEngageCollectionComments(collection, req.userId)) {
+    res.status(404).json({ error: 'Colección no encontrada' });
+    return;
+  }
+
+  if (req.userId !== collection.user_id) {
+    const block = await getBlockRelation(req.userId!, collection.user_id);
+    if (isBlockActive(block)) {
+      res.status(404).json({ error: 'Colección no encontrada' });
+      return;
+    }
+  }
+
+  const { data, error } = await supabase
+    .from('collection_comments')
+    .insert({
+      collection_id: collection.id,
+      user_id: req.userId!,
+      body: parsed.data.body,
+    })
+    .select('id, collection_id, user_id, body, created_at, edited_at')
+    .single();
+
+  if (error) {
+    if (isMissingCollectionCommentsTable(error)) {
+      res.status(503).json({ error: collectionCommentsMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('username, full_name, avatar_url')
+    .eq('id', req.userId!)
+    .maybeSingle();
+
+  res.status(201).json({
+    ...data,
+    edited_at: data.edited_at ?? null,
+    author: profile
+      ? {
+          username: profile.username,
+          display_name: profile.full_name ?? null,
+          avatar_url: profile.avatar_url,
+        }
+      : null,
+  });
+});
+
+/** PATCH /api/collections/:id/comments/:commentId */
+collectionsRouter.patch(
+  '/:id/comments/:commentId',
+  requireAuth,
+  commentLimiter,
+  async (req: AuthRequest, res) => {
+    const token = getAccessToken(req);
+    if (!token) {
+      res.status(401).json({ error: 'Token requerido' });
+      return;
+    }
+
+    const parsed = commentBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() });
+      return;
+    }
+
+    const moderationError = validateCommentBody(parsed.data.body);
+    if (moderationError) {
+      res.status(400).json({ error: moderationError });
+      return;
+    }
+
+    const collectionId = routeParam(req.params.id);
+    const commentId = routeParam(req.params.commentId);
+    const supabase = createUserClient(token);
+
+    const { data: existing, error: existingError } = await supabase
+      .from('collection_comments')
+      .select('id, user_id, collection_id')
+      .eq('id', commentId)
+      .eq('collection_id', collectionId)
+      .maybeSingle();
+
+    if (existingError) {
+      if (isMissingCollectionCommentsTable(existingError)) {
+        res.status(503).json({ error: collectionCommentsMigrationHint() });
+        return;
+      }
+      res.status(400).json({ error: existingError.message });
+      return;
+    }
+
+    if (!existing) {
+      res.status(404).json({ error: 'Comentario no encontrado' });
+      return;
+    }
+
+    if (existing.user_id !== req.userId) {
+      res.status(403).json({ error: 'Solo puedes editar tus comentarios' });
+      return;
+    }
+
+    const editedAt = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('collection_comments')
+      .update({ body: parsed.data.body, edited_at: editedAt })
+      .eq('id', commentId)
+      .eq('collection_id', collectionId)
+      .eq('user_id', req.userId!)
+      .select('id, collection_id, user_id, body, created_at, edited_at')
+      .maybeSingle();
+
+    if (error) {
+      if (isMissingCollectionCommentsTable(error)) {
+        res.status(503).json({ error: collectionCommentsMigrationHint() });
+        return;
+      }
+      res.status(400).json({ error: error.message });
+      return;
+    }
+
+    if (!data) {
+      res.status(404).json({ error: 'Comentario no encontrado' });
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('username, full_name, avatar_url')
+      .eq('id', req.userId!)
+      .maybeSingle();
+
+    res.json({
+      ...data,
+      edited_at: data.edited_at ?? editedAt,
+      author: profile
+        ? {
+            username: profile.username,
+            display_name: profile.full_name ?? null,
+            avatar_url: profile.avatar_url,
+          }
+        : null,
+    });
+  },
+);
+
+/** DELETE /api/collections/:id/comments/:commentId */
+collectionsRouter.delete('/:id/comments/:commentId', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const collectionId = routeParam(req.params.id);
+  const commentId = routeParam(req.params.commentId);
+  const supabase = createUserClient(token);
+
+  const { data: comment, error: commentError } = await supabase
+    .from('collection_comments')
+    .select('id, user_id, collection_id')
+    .eq('id', commentId)
+    .eq('collection_id', collectionId)
+    .maybeSingle();
+
+  if (commentError) {
+    if (isMissingCollectionCommentsTable(commentError)) {
+      res.status(503).json({ error: collectionCommentsMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: commentError.message });
+    return;
+  }
+
+  if (!comment) {
+    res.status(404).json({ error: 'Comentario no encontrado' });
+    return;
+  }
+
+  const collection = await loadCollectionForComments(supabase, collectionId);
+  if (collection === 'missing') {
+    res.status(503).json({ error: collectionsMigrationHint() });
+    return;
+  }
+  if (collection === 'error' || !collection) {
+    res.status(404).json({ error: 'Colección no encontrada' });
+    return;
+  }
+
+  const isAuthor = comment.user_id === req.userId;
+  const isOwner = collection.user_id === req.userId;
+  if (!isAuthor && !isOwner) {
+    res.status(403).json({ error: 'No puedes borrar este comentario' });
+    return;
+  }
+
+  const { error, count } = await supabase
+    .from('collection_comments')
+    .delete({ count: 'exact' })
+    .eq('id', commentId)
+    .eq('collection_id', collectionId);
+
+  if (error) {
+    if (isMissingCollectionCommentsTable(error)) {
+      res.status(503).json({ error: collectionCommentsMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  if (!count) {
+    res.status(404).json({ error: 'Comentario no encontrado' });
+    return;
+  }
+
+  res.status(204).end();
+});
+
 /** PATCH /api/collections/:id */
 collectionsRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
   const token = getAccessToken(req);
@@ -1496,6 +1830,15 @@ collectionsRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
     }
     res.status(400).json({ error: error.message });
     return;
+  }
+
+  // Si pasa a privada, quitar pin del perfil (si estaba destacada).
+  if (parsed.data.is_public === false && supabaseAdmin) {
+    await supabaseAdmin
+      .from('profiles')
+      .update({ featured_collection_id: null })
+      .eq('id', req.userId!)
+      .eq('featured_collection_id', id);
   }
 
   const row = data as CollectionRow;

@@ -246,6 +246,9 @@ export function CollectionsPage() {
                               Privada
                             </span>
                           ) : null}
+                          {profile?.featured_collection_id === collection.id ? (
+                            <span className="ml-2 text-primary">· Destacada</span>
+                          ) : null}
                         </p>
                       </div>
                     </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Library } from 'lucide-react';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
+import { CollectionComments } from '@/components/CollectionComments';
 import { CollectionLikeButton } from '@/components/CollectionLikeButton';
 import { CollectionLikersDialog } from '@/components/CollectionLikersDialog';
 import { EmptyState } from '@/components/EmptyState';
@@ -160,7 +161,7 @@ export function PublicCollectionPage() {
               <Link to={loginTo} className="text-primary hover:underline">
                 Inicia sesión
               </Link>{' '}
-              para dar me gusta a esta lista.
+              para dar me gusta o comentar esta lista.
             </p>
           ) : null}
         </section>
@@ -184,6 +185,12 @@ export function PublicCollectionPage() {
             </ul>
           </section>
         )}
+
+        <CollectionComments
+          collectionId={collection.id}
+          currentUserId={user?.id}
+          collectionOwnerId={profile?.id ?? collection.user_id}
+        />
       </div>
 
       {!user ? (

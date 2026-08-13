@@ -13,6 +13,7 @@ export type PublicProfileFilters = {
   year?: number;
   ratingMin?: number;
   watchContext?: WatchContext;
+  tag?: string;
 };
 
 interface UserCapsulesResponse {
@@ -21,9 +22,20 @@ interface UserCapsulesResponse {
   total: number;
   stats?: PublicProfileStats;
   years?: number[];
+  tags?: string[];
+  featured_collection?: FeaturedCollectionSummary | null;
   /** true cuando el viewer bloqueó a este perfil (sin Capsules). */
   blocked?: boolean;
 }
+
+export type FeaturedCollectionSummary = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  cover_url: string | null;
+  items_count: number;
+};
 
 function buildPublicProfileQuery(username: string, filters: PublicProfileFilters, offset: number): string {
   const params = new URLSearchParams();
@@ -34,6 +46,7 @@ function buildPublicProfileQuery(username: string, filters: PublicProfileFilters
   if (filters.year != null) params.set('year', String(filters.year));
   if (filters.ratingMin != null) params.set('rating_min', String(filters.ratingMin));
   if (filters.watchContext) params.set('watch_context', filters.watchContext);
+  if (filters.tag) params.set('tag', filters.tag);
   return `/api/capsules/user/${encodeURIComponent(username)}?${params.toString()}`;
 }
 
@@ -43,6 +56,7 @@ export function usePublicProfile(username: string | undefined, filters: PublicPr
   const year = filters.year;
   const ratingMin = filters.ratingMin;
   const watchContext = filters.watchContext;
+  const tag = filters.tag;
 
   return useInfiniteQuery({
     queryKey: [
@@ -50,11 +64,11 @@ export function usePublicProfile(username: string | undefined, filters: PublicPr
       'public',
       username,
       session?.access_token ?? 'guest',
-      { q, year, ratingMin, watchContext },
+      { q, year, ratingMin, watchContext, tag },
     ],
     queryFn: ({ pageParam }) =>
       apiFetch<UserCapsulesResponse>(
-        buildPublicProfileQuery(username!, { q, year, ratingMin, watchContext }, pageParam),
+        buildPublicProfileQuery(username!, { q, year, ratingMin, watchContext, tag }, pageParam),
         {},
         session?.access_token,
       ),

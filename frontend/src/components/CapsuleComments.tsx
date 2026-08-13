@@ -136,6 +136,11 @@ function CommentItem({
           <time className="text-xs text-muted-foreground" dateTime={comment.created_at}>
             {formatRelativeTime(comment.created_at)}
           </time>
+          {comment.edited_at ? (
+            <span className="text-xs text-muted-foreground" title={comment.edited_at}>
+              · editado
+            </span>
+          ) : null}
         </div>
         {editing ? (
           <div className="mt-1.5 space-y-2">

@@ -156,6 +156,92 @@ export async function listWantToGoMatchIds(userId: string): Promise<number[]> {
   return (data ?? []).map((row) => row.match_id as number);
 }
 
+export type WantToGoInCommonProfile = {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+};
+
+/** Follows del usuario que también tienen el partido en Quiero ir. */
+export async function listWantToGoInCommon(
+  userId: string,
+  matchId: number,
+): Promise<WantToGoInCommonProfile[]> {
+  if (!isValidCapsuleMatchId(matchId)) {
+    throw Object.assign(new Error('match_id inválido'), { status: 400 });
+  }
+
+  const { supabaseAdmin } = await import('./supabase.js');
+  if (!supabaseAdmin) {
+    throw Object.assign(new Error('Quiero ir no disponible'), { status: 503 });
+  }
+
+  const { data: followingRows, error: followingError } = await supabaseAdmin
+    .from('user_follows')
+    .select('following_id')
+    .eq('follower_id', userId)
+    .limit(500);
+
+  if (followingError) {
+    if (
+      (followingError.message ?? '').includes('user_follows') ||
+      followingError.code === '42P01'
+    ) {
+      return [];
+    }
+    throw followingError;
+  }
+
+  const followingIds = (followingRows ?? []).map((row) => row.following_id as string);
+  if (followingIds.length === 0) return [];
+
+  const { data: shared, error: sharedError } = await supabaseAdmin
+    .from('want_to_go_matches')
+    .select('user_id')
+    .eq('match_id', matchId)
+    .in('user_id', followingIds)
+    .limit(50);
+
+  if (sharedError) {
+    if (isMissingWantToGoTable(sharedError)) {
+      throw Object.assign(new Error('Quiero ir no disponible (aplica la migración)'), {
+        status: 503,
+      });
+    }
+    throw sharedError;
+  }
+
+  const sharedIds = [...new Set((shared ?? []).map((row) => row.user_id as string))];
+  if (sharedIds.length === 0) return [];
+
+  const { data: profiles, error: profilesError } = await supabaseAdmin
+    .from('profiles')
+    .select('id, username, full_name, avatar_url')
+    .in('id', sharedIds);
+
+  if (profilesError) throw profilesError;
+
+  const byId = new Map(
+    (profiles ?? []).map((p) => [
+      p.id as string,
+      {
+        id: p.id as string,
+        username: (p.username as string | null) ?? null,
+        display_name: (p.full_name as string | null) ?? null,
+        avatar_url: (p.avatar_url as string | null) ?? null,
+      },
+    ]),
+  );
+
+  return sharedIds
+    .map((id) => byId.get(id))
+    .filter((p): p is WantToGoInCommonProfile => !!p)
+    .sort((a, b) =>
+      (a.display_name ?? a.username ?? '').localeCompare(b.display_name ?? b.username ?? '', 'es'),
+    );
+}
+
 export async function addWantToGoMatch(
   userId: string,
   input: WantToGoMatchInput,

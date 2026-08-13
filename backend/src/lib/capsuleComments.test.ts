@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { assertValidReplyParent } from './capsuleComments.js';
+import { assertValidReplyParent, isMissingEditedAtColumn } from './capsuleComments.js';
 
 describe('assertValidReplyParent', () => {
   const capsuleId = '11111111-1111-4111-8111-111111111111';
@@ -38,6 +38,17 @@ describe('assertValidReplyParent', () => {
     assert.equal(
       assertValidReplyParent({ id: parentId, capsule_id: capsuleId, parent_id: null }, capsuleId),
       null,
+    );
+  });
+});
+
+describe('isMissingEditedAtColumn', () => {
+  it('detecta columna edited_at ausente', () => {
+    assert.equal(
+      isMissingEditedAtColumn({
+        message: 'Could not find the column edited_at in the schema cache',
+      }),
+      true,
     );
   });
 });

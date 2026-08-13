@@ -151,7 +151,11 @@ export function useUpdateCapsuleComment(capsuleId: string) {
         (old) =>
           old
             ? {
-                comments: old.comments.map((c) => (c.id === commentId ? { ...c, body } : c)),
+                comments: old.comments.map((c) =>
+                  c.id === commentId
+                    ? { ...c, body, edited_at: new Date().toISOString() }
+                    : c,
+                ),
               }
             : old,
       );

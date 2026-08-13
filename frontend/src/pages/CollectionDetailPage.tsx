@@ -24,16 +24,18 @@ import {
   useUpdateCollection,
 } from '@/hooks/useCollections';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { useProfile } from '@/hooks/useProfile';
+import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { resolveCollectionCoverUrl } from '@/lib/collectionCover';
 import { moveCapsuleInOrder } from '@/lib/collectionReorder';
 import { slugifyCollectionName } from '@/lib/collectionSlug';
+import { toast } from '@/lib/toast';
 
 export function CollectionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data, isLoading, isError, error, refetch, isRefetching } = useCollectionDetail(id);
   const { data: profile } = useProfile();
+  const updateProfile = useUpdateProfile();
   const { data: myCapsules } = useCapsules();
   const updateCollection = useUpdateCollection(id ?? '');
   const deleteCollection = useDeleteCollection();
@@ -222,6 +224,32 @@ export function CollectionDetailPage() {
                 <Button type="submit" loading={updateCollection.isPending}>
                   Guardar
                 </Button>
+                {collection.is_public ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    loading={updateProfile.isPending}
+                    onClick={() => {
+                      const isFeatured = profile?.featured_collection_id === collection.id;
+                      updateProfile.mutate(
+                        { featured_collection_id: isFeatured ? null : collection.id },
+                        {
+                          onSuccess: () => {
+                            toast.success(
+                              isFeatured
+                                ? 'Colección quitada del perfil'
+                                : 'Colección destacada en tu perfil',
+                            );
+                          },
+                        },
+                      );
+                    }}
+                  >
+                    {profile?.featured_collection_id === collection.id
+                      ? 'Quitar del perfil'
+                      : 'Destacar en perfil'}
+                  </Button>
+                ) : null}
                 <Button
                   type="button"
                   variant="outline"

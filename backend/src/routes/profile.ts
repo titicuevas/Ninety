@@ -7,6 +7,12 @@ import {
   isManagedAvatarUrl,
   uploadAvatarBuffer,
 } from '../lib/ensureStorage.js';
+import {
+  assertFeaturedCollectionAllowed,
+  featuredCollectionMigrationHint,
+  isMissingFeaturedCollectionColumn,
+  loadFeaturedCollectionSummary,
+} from '../lib/featuredCollection.js';
 import { normalizeProfile, profileUpdatePayload } from '../lib/profileNormalize.js';
 import { syncUserProfile } from '../lib/syncUserProfile.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
@@ -75,6 +81,8 @@ const updateProfileSchema = z.object({
   country: z.string().max(100).optional().nullable(),
   city: z.string().max(100).optional().nullable(),
   bio: z.string().max(280).optional().nullable(),
+  /** uuid de colección pública propia, o null para quitar el pin. */
+  featured_collection_id: z.string().uuid().nullable().optional(),
 });
 
 const followListQuerySchema = z.object({
@@ -174,7 +182,18 @@ profileRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  res.json(normalizeProfile(data));
+  const featured = await loadFeaturedCollectionSummary(
+    supabase,
+    (data as { featured_collection_id?: string | null }).featured_collection_id,
+    { viewerId: req.userId!, ownerId: req.userId! },
+  );
+
+  res.json({
+    ...normalizeProfile(data),
+    featured_collection_id:
+      (data as { featured_collection_id?: string | null }).featured_collection_id ?? null,
+    featured_collection: featured,
+  });
 });
 
 profileRouter.patch('/me', requireAuth, async (req: AuthRequest, res) => {
@@ -192,13 +211,47 @@ profileRouter.patch('/me', requireAuth, async (req: AuthRequest, res) => {
   }
 
   const supabase = createUserClient(token);
+
+  if (Object.prototype.hasOwnProperty.call(parsed.data, 'featured_collection_id')) {
+    const featuredId = parsed.data.featured_collection_id;
+    if (featuredId) {
+      const errMsg = await assertFeaturedCollectionAllowed(supabase, req.userId!, featuredId);
+      if (errMsg) {
+        const status = errMsg.includes('migración') ? 503 : 400;
+        res.status(status).json({ error: errMsg });
+        return;
+      }
+    }
+  }
+
   const payload = profileUpdatePayload(parsed.data);
+  if (Object.prototype.hasOwnProperty.call(parsed.data, 'featured_collection_id')) {
+    payload.featured_collection_id = parsed.data.featured_collection_id ?? null;
+  }
+
   let { data, error } = await supabase
     .from('profiles')
     .update(payload)
     .eq('id', req.userId!)
     .select()
     .single();
+
+  if (error && isMissingFeaturedCollectionColumn(error)) {
+    const { featured_collection_id: _fc, ...withoutFeatured } = payload as Record<
+      string,
+      unknown
+    > & { featured_collection_id?: unknown };
+    if (Object.prototype.hasOwnProperty.call(parsed.data, 'featured_collection_id')) {
+      res.status(503).json({ error: featuredCollectionMigrationHint() });
+      return;
+    }
+    ({ data, error } = await supabase
+      .from('profiles')
+      .update(withoutFeatured)
+      .eq('id', req.userId!)
+      .select()
+      .single());
+  }
 
   if (error && isMissingProfileColumn(error, 'bio') && Object.prototype.hasOwnProperty.call(payload, 'bio')) {
     const { bio: _bio, ...withoutBio } = payload as Record<string, unknown> & { bio?: unknown };
@@ -227,7 +280,18 @@ profileRouter.patch('/me', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  res.json(normalizeProfile(data));
+  const featured = await loadFeaturedCollectionSummary(
+    supabase,
+    (data as { featured_collection_id?: string | null }).featured_collection_id,
+    { viewerId: req.userId!, ownerId: req.userId! },
+  );
+
+  res.json({
+    ...normalizeProfile(data),
+    featured_collection_id:
+      (data as { featured_collection_id?: string | null }).featured_collection_id ?? null,
+    featured_collection: featured,
+  });
 });
 
 const usernameAvailableQuerySchema = z.object({

@@ -12,6 +12,28 @@ import type {
 const LIST_KEY = ['want-to-go', 'me'] as const;
 const IDS_KEY = ['want-to-go', 'me', 'ids'] as const;
 
+export type WantToGoInCommonProfile = {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+};
+
+export function useWantToGoInCommon(matchId: number | undefined) {
+  const session = useAuthStore((s) => s.session);
+
+  return useQuery({
+    queryKey: ['want-to-go', 'in-common', matchId],
+    queryFn: () =>
+      apiFetch<{ profiles: WantToGoInCommonProfile[]; total: number }>(
+        `/api/want-to-go/me/${matchId}/following`,
+        {},
+        session?.access_token,
+      ),
+    enabled: !!session && matchId != null && Number.isFinite(matchId),
+  });
+}
+
 export function useWantToGoList() {
   const session = useAuthStore((s) => s.session);
 

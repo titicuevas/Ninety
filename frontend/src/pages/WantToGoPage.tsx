@@ -7,6 +7,7 @@ import { MatchCard } from '@/components/MatchCard';
 import { NinetyLoader } from '@/components/NinetyLoader';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { WantToGoButton } from '@/components/WantToGoButton';
+import { WantToGoInCommon } from '@/components/WantToGoInCommon';
 import { Button } from '@/components/ui/button';
 import { useCapsules } from '@/hooks/useCapsules';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -124,6 +125,7 @@ export function WantToGoPage() {
                       Quitar
                     </Button>
                   </div>
+                  <WantToGoInCommon matchId={item.match_id} className="pl-1" />
                 </li>
               );
             })}

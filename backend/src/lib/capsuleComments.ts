@@ -37,6 +37,23 @@ export function isMissingParentIdColumn(error: unknown): boolean {
   );
 }
 
+export function isMissingEditedAtColumn(error: unknown): boolean {
+  const message =
+    error && typeof error === 'object' && 'message' in error && typeof error.message === 'string'
+      ? error.message
+      : error instanceof Error
+        ? error.message
+        : String(error);
+
+  return (
+    message.includes('edited_at') &&
+    (message.includes('schema cache') ||
+      message.includes('Could not find') ||
+      message.includes('column') ||
+      message.includes('does not exist'))
+  );
+}
+
 function defaultCommentStats<T extends { id: string }>(items: T[]): Array<T & CommentStats> {
   return items.map((item) => ({
     ...item,
@@ -81,6 +98,7 @@ export interface CommentRow {
   body: string;
   created_at: string;
   parent_id: string | null;
+  edited_at: string | null;
 }
 
 export interface CommentAuthor {
@@ -91,6 +109,8 @@ export interface CommentAuthor {
 
 export type CommentWithAuthor = CommentRow & { author: CommentAuthor | null };
 
+const COMMENT_SELECT_FULL =
+  'id, capsule_id, user_id, body, created_at, parent_id, edited_at';
 const COMMENT_SELECT_WITH_PARENT = 'id, capsule_id, user_id, body, created_at, parent_id';
 const COMMENT_SELECT_LEGACY = 'id, capsule_id, user_id, body, created_at';
 
@@ -119,16 +139,39 @@ export async function fetchCommentsWithAuthors(
     body: string;
     created_at: string;
     parent_id?: string | null;
+    edited_at?: string | null;
   }> = [];
 
-  const withParent = await supabase
+  const withFull = await supabase
     .from('capsule_comments')
-    .select(COMMENT_SELECT_WITH_PARENT)
+    .select(COMMENT_SELECT_FULL)
     .eq('capsule_id', capsuleId)
     .order('created_at', { ascending: true });
 
-  if (withParent.error) {
-    if (isMissingParentIdColumn(withParent.error)) {
+  if (withFull.error) {
+    if (isMissingEditedAtColumn(withFull.error)) {
+      const withParent = await supabase
+        .from('capsule_comments')
+        .select(COMMENT_SELECT_WITH_PARENT)
+        .eq('capsule_id', capsuleId)
+        .order('created_at', { ascending: true });
+
+      if (withParent.error) {
+        if (isMissingParentIdColumn(withParent.error)) {
+          const legacy = await supabase
+            .from('capsule_comments')
+            .select(COMMENT_SELECT_LEGACY)
+            .eq('capsule_id', capsuleId)
+            .order('created_at', { ascending: true });
+          if (legacy.error) throw legacy.error;
+          rows = legacy.data ?? [];
+        } else {
+          throw withParent.error;
+        }
+      } else {
+        rows = withParent.data ?? [];
+      }
+    } else if (isMissingParentIdColumn(withFull.error)) {
       const legacy = await supabase
         .from('capsule_comments')
         .select(COMMENT_SELECT_LEGACY)
@@ -137,10 +180,10 @@ export async function fetchCommentsWithAuthors(
       if (legacy.error) throw legacy.error;
       rows = legacy.data ?? [];
     } else {
-      throw withParent.error;
+      throw withFull.error;
     }
   } else {
-    rows = withParent.data ?? [];
+    rows = withFull.data ?? [];
   }
 
   const userIds = [...new Set(rows.map((c) => c.user_id))];
@@ -168,6 +211,7 @@ export async function fetchCommentsWithAuthors(
     body: comment.body,
     created_at: comment.created_at,
     parent_id: comment.parent_id ?? null,
+    edited_at: comment.edited_at ?? null,
     author: profileMap.get(comment.user_id) ?? null,
   }));
 }

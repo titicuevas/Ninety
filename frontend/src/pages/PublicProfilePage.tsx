@@ -78,6 +78,7 @@ export function PublicProfilePage() {
     year,
     ratingMin,
     watchContext,
+    tag,
     hasFilters,
     patchParams,
     clearFilters,
@@ -94,7 +95,7 @@ export function PublicProfilePage() {
     isRefetching,
     fetchNextPage,
     refetch,
-  } = usePublicProfile(username, { q, year, ratingMin, watchContext });
+  } = usePublicProfile(username, { q, year, ratingMin, watchContext, tag });
 
   const { data: collectionsData } = usePublicCollections(username);
 
@@ -114,6 +115,8 @@ export function PublicProfilePage() {
   const total = isBlockedByMe ? 0 : (data?.pages[0]?.total ?? capsules.length);
   const stats = isBlockedByMe ? undefined : data?.pages[0]?.stats;
   const years = isBlockedByMe ? [] : (data?.pages[0]?.years ?? []);
+  const availableTags = isBlockedByMe ? [] : (data?.pages[0]?.tags ?? []);
+  const featuredCollection = isBlockedByMe ? null : (data?.pages[0]?.featured_collection ?? null);
   const isOwnProfile = !!user && profile?.id === user.id;
   const Shell = user ? Layout : PublicLayout;
 
@@ -340,6 +343,54 @@ export function PublicProfilePage() {
           />
         ) : null}
 
+        {!isBlockedByMe && featuredCollection && profile?.username ? (
+          <section className="space-y-3" aria-labelledby="featured-collection-heading">
+            <div>
+              <h2
+                id="featured-collection-heading"
+                className="flex items-center gap-2 text-lg font-semibold"
+              >
+                <Library className="h-5 w-5 text-primary" aria-hidden />
+                Colección destacada
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Lista pública pinneada en el perfil.
+              </p>
+            </div>
+            <Link
+              to={`/u/${encodeURIComponent(profile.username)}/lists/${encodeURIComponent(featuredCollection.slug)}`}
+              className="flex items-center gap-3 rounded-xl border border-primary/40 bg-card/50 px-3 py-3 transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {featuredCollection.cover_url ? (
+                <img
+                  src={featuredCollection.cover_url}
+                  alt=""
+                  className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                />
+              ) : (
+                <div
+                  className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+                  aria-hidden
+                >
+                  <Library className="h-5 w-5" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="font-medium">{featuredCollection.name}</p>
+                {featuredCollection.description ? (
+                  <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                    {featuredCollection.description}
+                  </p>
+                ) : null}
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {featuredCollection.items_count}{' '}
+                  {featuredCollection.items_count === 1 ? 'partido' : 'partidos'}
+                </p>
+              </div>
+            </Link>
+          </section>
+        ) : null}
+
         {!isBlockedByMe && (collectionsData?.collections.length ?? 0) > 0 ? (
           <section className="space-y-3" aria-labelledby="public-collections-heading">
             <div>
@@ -418,12 +469,14 @@ export function PublicProfilePage() {
         {!isBlockedByMe && !diaryEmpty ? (
           <CapsuleDiaryFilters
             years={years}
+            availableTags={availableTags}
             searchAriaLabel="Buscar en el diario público"
             ariaLabel="Filtros del diario público"
             qDraft={qDraft}
             year={year}
             ratingMin={ratingMin}
             watchContext={watchContext}
+            tag={tag}
             hasFilters={hasFilters}
             isUpdating={isFetching && !isFetchingNextPage}
             onQDraftChange={setQDraft}

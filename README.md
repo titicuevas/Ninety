@@ -485,13 +485,13 @@ Ninety/
 - [x] Compartir calendario / mes del diario — link shareable + preview OG (`/u/:username/calendar/:year/:month` + `GET /api/capsules/user/:username/calendar`; solo Capsules públicas; botón compartir/copiar en `/diary/calendar`)
 - [x] Mentions en comentarios — @usuario notifica y enlaza al perfil (tipo `mention`; máx. 5/comentario; sin self/blocked/dueño Capsule; prefs de comentarios; migración `20250822120000_notification_mentions.sql`)
 
-### 🚧 v12 — Conversación & listas vivas
+### ✅ v12 — Conversación & listas vivas
 - [x] Respuestas a comentarios — hilos ligeros bajo un comentario (1 nivel); notifica al padre (`parent_id` en `capsule_comments`; `POST` con `parent_id`; UI hilo; tipo `comment` al autor del padre; migración `20250823120000_capsule_comment_replies.sql`; blocks/mutes/prefs vía `notifyUser`)
-- [ ] Editar / borrar comentario propio — con confirmación; historial mínimo (`edited_at`)
-- [ ] Comentarios en colecciones públicas — charla en la lista (además de likes)
-- [ ] Quiero ir en común — ver quién de tus follows también tiene ese partido
-- [ ] Tags en diario público — filtrar Capsules públicas por tag en perfil ajeno
-- [ ] Colección destacada en perfil — pin de una lista pública en el perfil
+- [x] Editar / borrar comentario propio — confirmación al borrar; `edited_at` al editar; `PATCH/DELETE /api/capsules/:id/comments/:commentId`; UI en propio (incl. replies); ownership; migración `20250824120000_capsule_comments_edited_at.sql`
+- [x] Comentarios en colecciones públicas — charla en la lista (además de likes); `GET/POST/PATCH/DELETE /api/collections/:id/comments`; UI en página pública; blocks; sin comentarios en privadas ajenas; migración `20250825120000_collection_comments.sql`
+- [x] Quiero ir en común — ver quién de tus follows también tiene ese partido (`GET /api/want-to-go/me/:matchId/following`; UI ligera en `/want-to-go`)
+- [x] Tags en diario público — filtrar Capsules públicas por tag en perfil ajeno (`?tag=` + chips; `tags` en respuesta de `GET /api/capsules/user/:username`)
+- [x] Colección destacada en perfil — pin de una lista pública (`featured_collection_id` en profiles; `PATCH /api/profile/me`; visible en perfil público; migración `20250826120000_featured_collection.sql`)
 
 ## 🎨 Identidad visual
 

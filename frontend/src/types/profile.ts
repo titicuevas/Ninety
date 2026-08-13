@@ -9,6 +9,15 @@ export interface Profile {
   bio: string | null;
   created_at: string;
   updated_at?: string;
+  featured_collection_id?: string | null;
+  featured_collection?: {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    cover_url: string | null;
+    items_count: number;
+  } | null;
   followers_count?: number;
   following_count?: number;
   followed_by_me?: boolean;
@@ -32,4 +41,5 @@ export interface UpdateProfileInput {
   country?: string | null;
   city?: string | null;
   bio?: string | null;
+  featured_collection_id?: string | null;
 }

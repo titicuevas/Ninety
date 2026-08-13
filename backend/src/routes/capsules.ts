@@ -27,6 +27,7 @@ import {
   attachCommentCounts,
   fetchCommentsWithAuthors,
   isMissingCommentsTable,
+  isMissingEditedAtColumn,
   isMissingParentIdColumn,
 } from '../lib/capsuleComments.js';
 import { notifyCommentMentions } from '../lib/commentMentions.js';
@@ -42,6 +43,7 @@ import {
   listBlockedEitherWayIds,
 } from '../lib/userBlocks.js';
 import { notifyUser } from '../lib/notifyUser.js';
+import { loadFeaturedCollectionSummary } from '../lib/featuredCollection.js';
 import { normalizeProfile } from '../lib/profileNormalize.js';
 import {
   fetchProfileByUsername,
@@ -135,6 +137,8 @@ const publicProfileQuerySchema = z.object({
   year: z.coerce.number().int().min(1990).max(2100).optional(),
   rating_min: z.coerce.number().int().min(1).max(5).optional(),
   watch_context: z.enum(['stadium', 'tv', 'pub', 'other']).optional(),
+  /** Una etiqueta exacta (normalizada) para filtrar el diario público. */
+  tag: z.string().trim().max(CAPSULE_TAG_MAX_LEN).optional(),
 });
 
 function sanitizeSearchQ(raw: string | undefined): string {
@@ -914,6 +918,7 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
 
   const { limit, offset, year, rating_min, watch_context } = parsed.data;
   const safeQ = sanitizeSearchQ(parsed.data.q);
+  const tagFilter = parseCapsuleTagFilter(parsed.data.tag);
 
   let query = reader
     .from('capsules')
@@ -938,6 +943,10 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
     query = query.eq('watch_context', watch_context);
   }
 
+  if (tagFilter) {
+    query = query.contains('tags', [tagFilter]);
+  }
+
   if (safeQ.length >= 2) {
     const pattern = `%${safeQ}%`;
     query = query.or(
@@ -960,15 +969,22 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
       res.status(503).json({ error: watchContextMigrationHint() });
       return;
     }
+    if (tagFilter && isMissingTagsColumn(error)) {
+      res.status(503).json({ error: tagsMigrationHint() });
+      return;
+    }
     res.status(400).json({ error: error.message });
     return;
   }
 
   let stats = null;
   let years: number[] | null = null;
+  let tags: string[] | null = null;
   if (offset === 0) {
     // Solo `photo_urls`: `photo_url` se eliminó en 20250705160000_capsule_photo_urls.
     // Pedir la columna legacy hace fallar el select y el Wrapped público desaparece en silencio.
+    const statsSelectWithTags =
+      'watched_at, rating, home_team_name, away_team_name, competition_name, watch_context, photo_urls, tags';
     const statsSelectWithContext =
       'watched_at, rating, home_team_name, away_team_name, competition_name, watch_context, photo_urls';
     const statsSelectCore =
@@ -976,17 +992,30 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
 
     let statsQuery = reader
       .from('capsules')
-      .select(statsSelectWithContext)
+      .select(statsSelectWithTags)
       .eq('user_id', profile.id);
 
     if (viewerId !== profile.id) {
       statsQuery = statsQuery.eq('is_public', true);
     }
 
-    let statsRows: PublicProfileStatsRow[] | null = null;
+    let statsRows: Array<PublicProfileStatsRow & { tags?: string[] | null }> | null = null;
     const firstStats = await statsQuery;
     let statsError = firstStats.error;
-    statsRows = (firstStats.data as PublicProfileStatsRow[] | null) ?? null;
+    statsRows = (firstStats.data as Array<PublicProfileStatsRow & { tags?: string[] | null }> | null) ?? null;
+
+    if (statsError && isMissingTagsColumn(statsError)) {
+      let fallbackTags = reader
+        .from('capsules')
+        .select(statsSelectWithContext)
+        .eq('user_id', profile.id);
+      if (viewerId !== profile.id) {
+        fallbackTags = fallbackTags.eq('is_public', true);
+      }
+      const secondStats = await fallbackTags;
+      statsError = secondStats.error;
+      statsRows = (secondStats.data as Array<PublicProfileStatsRow & { tags?: string[] | null }> | null) ?? null;
+    }
 
     if (statsError && isMissingWatchContextColumn(statsError)) {
       let fallback = reader.from('capsules').select(statsSelectCore).eq('user_id', profile.id);
@@ -995,13 +1024,21 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
       }
       const secondStats = await fallback;
       statsError = secondStats.error;
-      statsRows = (secondStats.data as PublicProfileStatsRow[] | null) ?? null;
+      statsRows = (secondStats.data as Array<PublicProfileStatsRow & { tags?: string[] | null }> | null) ?? null;
     }
 
     if (!statsError) {
       const rows = statsRows ?? [];
       stats = computePublicProfileStats(rows);
       years = listYearsFromWatchedAt(rows);
+      const tagSet = new Set<string>();
+      for (const row of rows) {
+        for (const raw of row.tags ?? []) {
+          const tag = parseCapsuleTagFilter(raw);
+          if (tag) tagSet.add(tag);
+        }
+      }
+      tags = [...tagSet].sort((a, b) => a.localeCompare(b, 'es'));
     }
   }
 
@@ -1012,12 +1049,30 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
   const profileWithMute = await attachMutedByMe(reader, viewerId, profileWithFollows);
   const profileWithBlock = await attachBlockedByMe(reader, viewerId, profileWithMute);
 
+  let featuredCollection = null;
+  if (offset === 0) {
+    const featuredSelect = await reader
+      .from('profiles')
+      .select('featured_collection_id')
+      .eq('id', profile.id)
+      .maybeSingle();
+    if (!featuredSelect.error) {
+      featuredCollection = await loadFeaturedCollectionSummary(
+        reader,
+        featuredSelect.data?.featured_collection_id ?? null,
+        { viewerId: viewerId || undefined, ownerId: profile.id },
+      );
+    }
+  }
+
   res.json({
     profile: profileWithBlock,
     capsules: capsulesWithLikes,
     total: count ?? capsulesWithLikes.length,
     ...(stats ? { stats } : {}),
     ...(years ? { years } : {}),
+    ...(tags ? { tags } : {}),
+    ...(offset === 0 ? { featured_collection: featuredCollection } : {}),
   });
 });
 
@@ -1483,24 +1538,39 @@ capsulesRouter.patch('/:id/comments/:commentId', requireAuth, commentLimiter, as
     return;
   }
 
-  const { data, error } = await supabase
+  const editedAt = new Date().toISOString();
+  let { data, error } = await supabase
     .from('capsule_comments')
-    .update({ body: parsed.data.body })
+    .update({ body: parsed.data.body, edited_at: editedAt })
     .eq('id', commentId)
     .eq('capsule_id', capsuleId)
     .eq('user_id', req.userId!)
-    .select('id, capsule_id, user_id, body, created_at, parent_id')
+    .select('id, capsule_id, user_id, body, created_at, parent_id, edited_at')
     .maybeSingle();
 
-  if (error) {
-    if (isMissingCommentsTable(error)) {
-      res.status(503).json({
-        error: 'Ejecuta la migración 20250801120000_capsule_comments_update.sql en Supabase.',
-      });
-      return;
-    }
-    if (isMissingParentIdColumn(error)) {
-      const legacy = await supabase
+  if (error && isMissingEditedAtColumn(error)) {
+    ({ data, error } = await supabase
+      .from('capsule_comments')
+      .update({ body: parsed.data.body })
+      .eq('id', commentId)
+      .eq('capsule_id', capsuleId)
+      .eq('user_id', req.userId!)
+      .select('id, capsule_id, user_id, body, created_at, parent_id')
+      .maybeSingle());
+  }
+
+  if (error && isMissingParentIdColumn(error)) {
+    let legacy = await supabase
+      .from('capsule_comments')
+      .update({ body: parsed.data.body, edited_at: editedAt })
+      .eq('id', commentId)
+      .eq('capsule_id', capsuleId)
+      .eq('user_id', req.userId!)
+      .select('id, capsule_id, user_id, body, created_at, edited_at')
+      .maybeSingle();
+
+    if (legacy.error && isMissingEditedAtColumn(legacy.error)) {
+      legacy = await supabase
         .from('capsule_comments')
         .update({ body: parsed.data.body })
         .eq('id', commentId)
@@ -1508,29 +1578,28 @@ capsulesRouter.patch('/:id/comments/:commentId', requireAuth, commentLimiter, as
         .eq('user_id', req.userId!)
         .select('id, capsule_id, user_id, body, created_at')
         .maybeSingle();
-      if (legacy.error) {
-        res.status(400).json({ error: legacy.error.message });
-        return;
-      }
-      if (!legacy.data) {
-        res.status(404).json({ error: 'Comentario no encontrado' });
-        return;
-      }
-      const { data: profileLegacy } = await supabase
-        .from('profiles')
-        .select('username, full_name, avatar_url')
-        .eq('id', req.userId!)
-        .maybeSingle();
-      res.json({
-        ...legacy.data,
-        parent_id: null,
-        author: profileLegacy
-          ? {
-              username: profileLegacy.username,
-              display_name: profileLegacy.full_name ?? null,
-              avatar_url: profileLegacy.avatar_url,
-            }
-          : null,
+    }
+
+    if (legacy.error) {
+      res.status(400).json({ error: legacy.error.message });
+      return;
+    }
+    if (!legacy.data) {
+      res.status(404).json({ error: 'Comentario no encontrado' });
+      return;
+    }
+    data = {
+      ...legacy.data,
+      parent_id: null,
+      edited_at: (legacy.data as { edited_at?: string | null }).edited_at ?? null,
+    } as typeof data;
+    error = null;
+  }
+
+  if (error) {
+    if (isMissingCommentsTable(error)) {
+      res.status(503).json({
+        error: 'Ejecuta la migración 20250801120000_capsule_comments_update.sql en Supabase.',
       });
       return;
     }
@@ -1551,7 +1620,8 @@ capsulesRouter.patch('/:id/comments/:commentId', requireAuth, commentLimiter, as
 
   res.json({
     ...data,
-    parent_id: data.parent_id ?? null,
+    parent_id: (data as { parent_id?: string | null }).parent_id ?? null,
+    edited_at: (data as { edited_at?: string | null }).edited_at ?? null,
     author: profile
       ? {
           username: profile.username,

@@ -5,6 +5,7 @@ import { requireAuth, type AuthRequest } from '../middleware/auth.js';
 import { isValidCapsuleMatchId } from '../lib/manualMatch.js';
 import {
   addWantToGoMatch,
+  listWantToGoInCommon,
   listWantToGoMatchIds,
   listWantToGoMatches,
   removeWantToGoMatch,
@@ -68,6 +69,28 @@ wantToGoRouter.get('/me/ids', async (req: AuthRequest, res, next) => {
     const status = wantToGoErrorStatus(err);
     if (status === 503) {
       res.status(503).json({
+        error: err instanceof Error ? err.message : 'Quiero ir no disponible',
+      });
+      return;
+    }
+    next(err);
+  }
+});
+
+/** Follows que también tienen este partido en Quiero ir. */
+wantToGoRouter.get('/me/:matchId/following', async (req: AuthRequest, res, next) => {
+  try {
+    const matchId = Number(req.params.matchId);
+    if (!isValidCapsuleMatchId(matchId)) {
+      res.status(400).json({ error: 'match_id inválido' });
+      return;
+    }
+    const profiles = await listWantToGoInCommon(req.userId!, matchId);
+    res.json({ profiles, total: profiles.length });
+  } catch (err) {
+    const status = wantToGoErrorStatus(err);
+    if (status === 400 || status === 503) {
+      res.status(status).json({
         error: err instanceof Error ? err.message : 'Quiero ir no disponible',
       });
       return;

@@ -78,6 +78,22 @@ test.describe('Smoke — likes y comentarios @smoke', () => {
       true,
     );
 
+    const editedNote = `E2E editado ${Date.now()}`;
+    const patch = await request.patch(
+      `${API_BASE}/api/capsules/${capsule.id}/comments/${created.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        data: { body: editedNote },
+      },
+    );
+    expect(patch.status()).toBe(200);
+    const patched = (await patch.json()) as { body?: string; edited_at?: string | null };
+    expect(patched.body).toBe(editedNote);
+    expect(patched.edited_at).toBeTruthy();
+
     const del = await request.delete(
       `${API_BASE}/api/capsules/${capsule.id}/comments/${created.id}`,
       { headers: { Authorization: `Bearer ${token}` } },

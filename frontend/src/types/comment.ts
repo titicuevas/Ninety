@@ -6,6 +6,8 @@ export interface CapsuleComment {
   created_at: string;
   /** null = comentario raíz; uuid = respuesta (máx. 1 nivel). */
   parent_id: string | null;
+  /** ISO si el autor editó el cuerpo. */
+  edited_at?: string | null;
   author: {
     username: string | null;
     display_name: string | null;
