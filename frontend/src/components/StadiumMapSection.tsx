@@ -149,25 +149,18 @@ export function StadiumMapSection({ map, className }: StadiumMapSectionProps) {
         className={cn('space-y-3 motion-reveal', className)}
         aria-labelledby="stadium-map-heading"
       >
-        <div>
-          <h2
-            id="stadium-map-heading"
-            className="flex items-center gap-2 text-lg font-semibold tracking-tight"
-          >
-            <MapPinned className="h-5 w-5 text-primary" aria-hidden="true" />
-            Mapa de estadios
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Marca un partido como visto en estadio y aparecerán pins de las sedes que
-            reconozcamos.
-          </p>
-        </div>
+        <h2
+          id="stadium-map-heading"
+          className="flex items-center gap-2 text-lg font-semibold tracking-tight"
+        >
+          <MapPinned className="h-5 w-5 text-primary" aria-hidden="true" />
+          Mapa de estadios
+        </h2>
         <p className="text-sm text-muted-foreground">
-          Aún no tienes visitas en el diario.{' '}
+          Marca un partido como visto en estadio y aparecerán las sedes.{' '}
           <Link to="/search" className="text-primary hover:underline">
-            Guarda tu próximo partido en la grada
+            Guardar partido
           </Link>
-          .
         </p>
       </section>
     );

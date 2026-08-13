@@ -49,17 +49,12 @@ export function AchievementsSection({
 
   return (
     <section className={cn('space-y-4', className)} aria-labelledby={headingId}>
-      <div>
-        <h2 id={headingId} className="text-lg font-semibold tracking-tight">
-          {title}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {subtitle ??
-            (unlocked === 0
-              ? `0 de ${total} desbloqueados — sigue llenando tu diario`
-              : `${unlocked} de ${total} desbloqueados`)}
-        </p>
-      </div>
+      <h2 id={headingId} className="text-lg font-semibold tracking-tight">
+        {title}
+        <span className="ml-2 text-sm font-normal text-muted-foreground">
+          {subtitle ?? `${unlocked} de ${total}`}
+        </span>
+      </h2>
 
       <ul className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
         {achievements.map((achievement) => {

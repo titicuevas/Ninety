@@ -51,9 +51,6 @@ export function OnboardingSteps({
     <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
       <CardContent className="p-5 sm:p-6">
         <h2 className="text-base font-semibold sm:text-lg">Primeros pasos</h2>
-        <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-          Completa estos pasos para sacarle el máximo a Ninety.
-        </p>
         <ol className="mt-4 space-y-3">
           {steps.map((step, i) => {
             const done = completed[i];

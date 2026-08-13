@@ -49,15 +49,10 @@ export function AdvancedStatsSection({ stats, className }: AdvancedStatsSectionP
 
   return (
     <section className={cn('space-y-5 motion-reveal', className)} aria-labelledby={headingId}>
-      <div>
-        <h2 id={headingId} className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-          <BarChart3 className="h-5 w-5 text-primary" aria-hidden="true" />
-          Estadísticas avanzadas
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Cómo valoras, dónde ves y qué rivalidades se repiten en tu diario.
-        </p>
-      </div>
+      <h2 id={headingId} className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+        <BarChart3 className="h-5 w-5 text-primary" aria-hidden="true" />
+        Estadísticas avanzadas
+      </h2>
 
       <div className="grid gap-6 sm:grid-cols-2">
         {hasRatings ? (

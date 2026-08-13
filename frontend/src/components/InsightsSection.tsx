@@ -27,15 +27,10 @@ export function InsightsSection({ insights, className }: InsightsSectionProps) {
 
   return (
     <section className={cn('space-y-4 motion-reveal', className)} aria-labelledby={headingId}>
-      <div>
-        <h2 id={headingId} className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-          <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" />
-          Insights
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Resumen y recomendaciones a partir de tu diario — sin enviar datos a una IA externa.
-        </p>
-      </div>
+      <h2 id={headingId} className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+        <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" />
+        Insights
+      </h2>
 
       {summary ? (
         <div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-emerald-600/20 via-emerald-950/30 to-background p-5 sm:p-6">

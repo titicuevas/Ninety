@@ -19,7 +19,7 @@ export function WrappedTeaser({ name, stats, scope, href, onDismiss }: WrappedTe
 
   return (
     <section
-      className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-emerald-600/30 via-emerald-900/20 to-background p-5 sm:p-6"
+      className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-emerald-600/30 via-emerald-900/20 to-background p-4 sm:p-5"
       aria-labelledby="wrapped-teaser-heading"
       data-testid="wrapped-teaser"
     >
@@ -28,22 +28,16 @@ export function WrappedTeaser({ name, stats, scope, href, onDismiss }: WrappedTe
         aria-hidden
       />
 
-      <div className="relative space-y-4">
+      <div className="relative space-y-3 sm:space-y-4">
         <p className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/20 px-3 py-1 text-xs font-medium text-emerald-100">
           <Sparkles className="h-3.5 w-3.5" aria-hidden />
           Tu Wrapped · {periodLabel}
         </p>
 
-        <div>
-          <h2 id="wrapped-teaser-heading" className="text-xl font-bold tracking-tight sm:text-2xl">
-            {name}, esto es tu fútbol
-            {scope !== 'all' ? ` en ${scope}` : ''}
-          </h2>
-          <p className="mt-1.5 max-w-md text-sm text-white/75">
-            Un vistazo rápido — abre el Wrapped completo cuando quieras; el resto de Home sigue
-            abajo.
-          </p>
-        </div>
+        <h2 id="wrapped-teaser-heading" className="text-xl font-bold tracking-tight sm:text-2xl">
+          {name}, esto es tu fútbol
+          {scope !== 'all' ? ` en ${scope}` : ''}
+        </h2>
 
         <div className="flex flex-wrap items-end gap-4 sm:gap-6">
           <div>
@@ -72,7 +66,7 @@ export function WrappedTeaser({ name, stats, scope, href, onDismiss }: WrappedTe
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button asChild className="min-h-11">
+          <Button asChild>
             <Link to={href}>Ver Wrapped</Link>
           </Button>
           {onDismiss ? (

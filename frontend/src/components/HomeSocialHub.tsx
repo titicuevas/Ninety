@@ -6,7 +6,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCapsuleFeed } from '@/hooks/useCapsules';
 import { useDiscoverCollections } from '@/hooks/useDiscoverCollections';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
-import { feedPath } from '@/lib/feedParams';
 import { formatRelativeTime } from '@/lib/format';
 import { publicProfilePath } from '@/lib/profilePath';
 import type { FeedCapsule } from '@/types/capsule';
@@ -79,41 +78,36 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
 
   return (
     <section className="space-y-4" aria-labelledby="home-social-heading">
-      <div>
-        <h2 id="home-social-heading" className="text-lg font-semibold tracking-tight sm:text-xl">
-          Comunidad
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Aficionados, actividad de quien sigues y tus listas de follows.
-        </p>
-      </div>
+      <h2 id="home-social-heading" className="text-lg font-semibold tracking-tight sm:text-xl">
+        Comunidad
+      </h2>
 
       <nav aria-label="Atajos sociales" className="flex flex-wrap gap-2">
-        <Button asChild size="sm">
+        <Button asChild size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
           <Link to="/search?tab=people">
-            <Users className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-            Aficionados
+            <Users className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
+            <span className="sr-only sm:not-sr-only">Aficionados</span>
           </Link>
         </Button>
-        <Button asChild variant="secondary" size="sm">
+        <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
           <Link to="/activity">
-            <Activity className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-            Actividad
+            <Activity className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
+            <span className="sr-only sm:not-sr-only">Actividad</span>
           </Link>
         </Button>
         {followingHref ? (
-          <Button asChild variant="secondary" size="sm">
+          <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
             <Link to={followingHref}>
-              <UserPlus className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-              Siguiendo
+              <UserPlus className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
+              <span className="sr-only sm:not-sr-only">Siguiendo</span>
             </Link>
           </Button>
         ) : null}
         {followersHref ? (
-          <Button asChild variant="secondary" size="sm">
+          <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
             <Link to={followersHref}>
-              <Users className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-              Seguidores
+              <Users className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
+              <span className="sr-only sm:not-sr-only">Seguidores</span>
             </Link>
           </Button>
         ) : null}
@@ -132,16 +126,11 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
       {feedLoading ? <FeedPreviewSkeleton /> : null}
 
       {!feedLoading && preview.length > 0 ? (
-        <div className="space-y-3">
-          <ul className="space-y-2">
-            {preview.map((capsule) => (
-              <FeedPreviewRow key={capsule.id} capsule={capsule} />
-            ))}
-          </ul>
-          <Button asChild variant="ghost" size="sm" className="px-0 text-primary">
-            <Link to={feedPath()}>Ver feed completo</Link>
-          </Button>
-        </div>
+        <ul className="space-y-2">
+          {preview.map((capsule) => (
+            <FeedPreviewRow key={capsule.id} capsule={capsule} />
+          ))}
+        </ul>
       ) : null}
 
       {feedEmpty && collectionPreview.length > 0 ? (
@@ -149,9 +138,6 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
           <h3 className="text-sm font-semibold tracking-wide text-primary uppercase">
             Listas para descubrir
           </h3>
-          <p className="text-sm text-muted-foreground">
-            Colecciones públicas con Capsules para empezar sin follows.
-          </p>
           <ul className="space-y-2">
             {collectionPreview.map((collection) => {
               const username = collection.author.username;
@@ -193,9 +179,6 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
           <h3 className="text-sm font-semibold tracking-wide text-primary uppercase">
             Aficionados sugeridos
           </h3>
-          <p className="text-sm text-muted-foreground">
-            Perfiles con actividad pública; si compartes equipo o ciudad, van primero.
-          </p>
           <ul className="space-y-2">
             {suggestions.map((profile) => (
               <PeopleResultRow key={profile.id} profile={profile} />
@@ -209,15 +192,7 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
 
       {feedEmpty && suggestions.length === 0 && collectionPreview.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Descubre aficionados y listas públicas para llenar tu feed.{' '}
-          <Link to={feedPath('explore')} className="text-primary hover:underline">
-            Explorar comunidad
-          </Link>
-          {' · '}
-          <Link to="/collections/explore" className="text-primary hover:underline">
-            Explorar listas
-          </Link>
-          {' · '}
+          Sigue aficionados para llenar el feed.{' '}
           <Link to="/search?tab=people" className="text-primary hover:underline">
             Buscar gente
           </Link>
