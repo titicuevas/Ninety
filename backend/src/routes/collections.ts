@@ -32,6 +32,7 @@ import {
 import { validateCommentBody } from '../lib/contentModeration.js';
 import { rankDiscoverCollections } from '../lib/discoverCollections.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
+import { notifyUser } from '../lib/notifyUser.js';
 import {
   followRelationFlags,
   isMissingFollowsTable,
@@ -1281,6 +1282,15 @@ collectionsRouter.post('/:id/like', requireAuth, async (req: AuthRequest, res) =
     }
     res.status(400).json({ error: error.message });
     return;
+  }
+
+  if (collection.user_id !== req.userId) {
+    notifyUser({
+      userId: collection.user_id,
+      actorId: req.userId!,
+      type: 'collection_like',
+      collectionId: collection.id,
+    });
   }
 
   res.status(201).json({ liked: true });

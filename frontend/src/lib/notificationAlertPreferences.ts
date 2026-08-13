@@ -44,7 +44,7 @@ export const NOTIFICATION_ALERT_TYPE_LABELS: Record<NotificationAlertType, strin
 };
 
 export const NOTIFICATION_ALERT_TYPE_HINTS: Record<NotificationAlertType, string> = {
-  like: 'Cuando den me gusta a tus Capsules',
+  like: 'Cuando den me gusta a tus Capsules o colecciones',
   comment: 'Cuando comenten tus Capsules o te mencionen (@usuario)',
   follow: 'Cuando alguien te siga',
 };

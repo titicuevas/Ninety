@@ -23,9 +23,10 @@ export type NotificationCapsule = NotificationCapsuleContext;
 
 export interface AppNotification {
   id: string;
-  type: 'like' | 'follow' | 'comment' | 'mention';
+  type: 'like' | 'follow' | 'comment' | 'mention' | 'collection_like';
   actor_id: string;
   capsule_id: string | null;
+  collection_id?: string | null;
   /** Snippet del comentario (si type=comment | mention). */
   body?: string | null;
   read: boolean;
@@ -33,6 +34,8 @@ export interface AppNotification {
   actor: NotificationActor | null;
   /** Partido de la Capsule (like/comment). Null si se borró o es follow. */
   capsule?: NotificationCapsule | null;
+  /** Lista que recibió like (type=collection_like). */
+  collection?: { id: string; name: string } | null;
 }
 
 interface NotificationsResponse {

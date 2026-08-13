@@ -1,6 +1,6 @@
 /** Agrupa notificaciones del mismo tipo/cápsula en el centro de alertas (digest V7). */
 
-export type DigestNotificationType = 'like' | 'follow' | 'comment' | 'mention';
+export type DigestNotificationType = 'like' | 'follow' | 'comment' | 'mention' | 'collection_like';
 
 export interface DigestActor {
   id: string;
@@ -16,6 +16,7 @@ export interface DigestNotificationInput {
   type: DigestNotificationType;
   actor_id: string;
   capsule_id: string | null;
+  collection_id?: string | null;
   body?: string | null;
   read: boolean;
   created_at: string;
@@ -32,12 +33,17 @@ export interface DigestNotificationInput {
     competition_name: string | null;
     thumb_url: string | null;
   } | null;
+  collection?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 export interface NotificationDigestGroup {
   key: string;
   type: DigestNotificationType;
   capsule_id: string | null;
+  collection_id: string | null;
   /** Más reciente primero. */
   notifications: DigestNotificationInput[];
   /** Actores únicos, orden de aparición (más reciente primero). */
@@ -45,12 +51,19 @@ export interface NotificationDigestGroup {
   unread: boolean;
   created_at: string;
   capsule: DigestNotificationInput['capsule'];
+  collection: DigestNotificationInput['collection'];
   /** Snippet del comentario más reciente (comment | mention). */
   latestBody: string | null;
 }
 
-export function notificationDigestKey(n: Pick<DigestNotificationInput, 'type' | 'capsule_id'>): string {
+export function notificationDigestKey(
+  n: Pick<DigestNotificationInput, 'type' | 'capsule_id' | 'collection_id'>,
+): string {
   if (n.type === 'follow') return 'follow';
+  if (n.type === 'collection_like') {
+    const collection = n.collection_id?.trim();
+    return collection ? `collection_like:${collection}` : 'collection_like:none';
+  }
   const capsule = n.capsule_id?.trim();
   return capsule ? `${n.type}:${capsule}` : `${n.type}:none`;
 }
@@ -85,6 +98,8 @@ export function digestActionText(type: DigestNotificationType, actorCount: numbe
   switch (type) {
     case 'like':
       return plural ? 'les gustó tu cápsula' : 'le gustó tu cápsula';
+    case 'collection_like':
+      return plural ? 'les gustó tu lista' : 'le gustó tu lista';
     case 'comment':
       return plural ? 'comentaron en tu cápsula' : 'comentó en tu cápsula';
     case 'mention':
@@ -144,11 +159,13 @@ export function groupNotificationsForDigest(
       key,
       type: head.type,
       capsule_id: head.capsule_id,
+      collection_id: head.collection_id ?? null,
       notifications: sorted,
       actors,
       unread: sorted.some((n) => !n.read),
       created_at: head.created_at,
       capsule: head.capsule ?? null,
+      collection: head.collection ?? null,
       latestBody,
     });
   }

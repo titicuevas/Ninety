@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { parseNotificationTypeFilter } from './notificationTypeFilter.js';
+import {
+  notificationDbTypesForFilter,
+  parseNotificationTypeFilter,
+} from './notificationTypeFilter.js';
 
 describe('parseNotificationTypeFilter', () => {
   it('acepta like / comment / follow / mention (case-insensitive)', () => {
@@ -17,5 +20,12 @@ describe('parseNotificationTypeFilter', () => {
     assert.equal(parseNotificationTypeFilter('likes'), null);
     assert.equal(parseNotificationTypeFilter('all'), null);
     assert.equal(parseNotificationTypeFilter(1), null);
+  });
+});
+
+describe('notificationDbTypesForFilter', () => {
+  it('like incluye collection_like', () => {
+    assert.deepEqual(notificationDbTypesForFilter('like'), ['like', 'collection_like']);
+    assert.deepEqual(notificationDbTypesForFilter('comment'), ['comment']);
   });
 });

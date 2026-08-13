@@ -102,7 +102,7 @@ async function flushUserPushDigest(
 
   const { data: pending, error } = await supabaseAdmin
     .from('notifications')
-    .select('id, user_id, type, actor_id, capsule_id, body, created_at')
+    .select('id, user_id, type, actor_id, capsule_id, collection_id, body, created_at')
     .eq('user_id', userId)
     .is('push_sent_at', null)
     .lt('created_at', cutoffIso)

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
-import { AtSign, Bell, Heart, UserPlus, MessageCircle } from 'lucide-react';
+import { AtSign, Bell, Heart, Library, UserPlus, MessageCircle } from 'lucide-react';
+
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
@@ -53,6 +54,7 @@ function timeAgo(dateStr: string): string {
 
 const iconMap = {
   like: Heart,
+  collection_like: Library,
   follow: UserPlus,
   comment: MessageCircle,
   mention: AtSign,
@@ -134,21 +136,32 @@ function DigestNotificationItem({
       : undefined;
   const link =
     followHref ??
-    (group.capsule_id
-      ? group.type === 'comment' || group.type === 'mention'
-        ? `/c/${group.capsule_id}#comments`
-        : `/c/${group.capsule_id}`
-      : undefined);
+    (group.type === 'collection_like' && group.collection_id
+      ? `/collections/${group.collection_id}`
+      : group.capsule_id
+        ? group.type === 'comment' || group.type === 'mention'
+          ? `/c/${group.capsule_id}#comments`
+          : `/c/${group.capsule_id}`
+        : undefined);
   const snippet =
     group.type === 'comment' || group.type === 'mention' ? group.latestBody : null;
-  const matchLine = group.capsule ? formatNotificationMatchContext(group.capsule) : null;
-  const ariaLabel = formatNotificationAriaLabel({
-    actorName: actorNames,
-    actionText,
-    capsule: group.capsule,
-    snippet,
-    unread: group.unread,
-  });
+  const matchLine = group.capsule
+    ? formatNotificationMatchContext(group.capsule)
+    : group.collection?.name
+      ? group.collection.name
+      : null;
+  const ariaLabel = [
+    formatNotificationAriaLabel({
+      actorName: actorNames,
+      actionText,
+      capsule: group.capsule,
+      snippet,
+      unread: group.unread,
+    }),
+    group.collection?.name,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   const content = (
     <div

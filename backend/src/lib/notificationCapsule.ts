@@ -69,7 +69,7 @@ export function formatMatchContext(capsule: {
   return competition ? `${match} · ${competition}` : match;
 }
 
-type PushType = 'like' | 'follow' | 'comment' | 'mention';
+type PushType = 'like' | 'follow' | 'comment' | 'mention' | 'collection_like';
 
 /**
  * Cuerpo del push. Si hay partido, lo incluye para que el inbox del SO
@@ -93,6 +93,12 @@ export function buildNotificationPushBody(params: {
     return match
       ? `A ${actorName} le gustó ${match}`
       : `A ${actorName} le gustó tu cápsula`;
+  }
+
+  if (type === 'collection_like') {
+    return match
+      ? `A ${actorName} le gustó tu lista «${match}»`
+      : `A ${actorName} le gustó tu lista`;
   }
 
   if (type === 'mention') {

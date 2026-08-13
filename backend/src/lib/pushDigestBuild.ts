@@ -1,6 +1,6 @@
 import { buildNotificationPushBody } from './notificationCapsule.js';
 
-export type DigestNotificationType = 'like' | 'follow' | 'comment' | 'mention';
+export type DigestNotificationType = 'like' | 'follow' | 'comment' | 'mention' | 'collection_like';
 
 export type PendingNotificationRow = {
   id: string;
@@ -8,6 +8,7 @@ export type PendingNotificationRow = {
   type: DigestNotificationType;
   actor_id: string;
   capsule_id: string | null;
+  collection_id?: string | null;
   body?: string | null;
   created_at: string;
 };
@@ -17,6 +18,7 @@ const PUSH_TITLE: Record<DigestNotificationType, string> = {
   follow: 'Nuevo seguidor',
   comment: 'Nuevo comentario',
   mention: 'Te mencionaron',
+  collection_like: 'Like en tu lista',
 };
 
 const TYPE_LABEL: Record<DigestNotificationType, string> = {
@@ -24,6 +26,7 @@ const TYPE_LABEL: Record<DigestNotificationType, string> = {
   follow: 'follow',
   comment: 'comentario',
   mention: 'mención',
+  collection_like: 'like en lista',
 };
 
 const TYPE_LABEL_PLURAL: Record<DigestNotificationType, string> = {
@@ -31,12 +34,17 @@ const TYPE_LABEL_PLURAL: Record<DigestNotificationType, string> = {
   follow: 'follows',
   comment: 'comentarios',
   mention: 'menciones',
+  collection_like: 'likes en listas',
 };
 
 export function notificationDigestKey(
-  n: Pick<PendingNotificationRow, 'type' | 'capsule_id'>,
+  n: Pick<PendingNotificationRow, 'type' | 'capsule_id' | 'collection_id'>,
 ): string {
   if (n.type === 'follow') return 'follow';
+  if (n.type === 'collection_like') {
+    const collection = n.collection_id?.trim();
+    return collection ? `collection_like:${collection}` : 'collection_like:none';
+  }
   const capsule = n.capsule_id?.trim();
   return capsule ? `${n.type}:${capsule}` : `${n.type}:none`;
 }
@@ -56,6 +64,8 @@ function digestActionText(type: DigestNotificationType, actorCount: number): str
   switch (type) {
     case 'like':
       return plural ? 'les gustó tu cápsula' : 'le gustó tu cápsula';
+    case 'collection_like':
+      return plural ? 'les gustó tu lista' : 'le gustó tu lista';
     case 'comment':
       return plural ? 'comentaron en tu cápsula' : 'comentó en tu cápsula';
     case 'mention':
@@ -71,6 +81,7 @@ function countByType(notifications: PendingNotificationRow[]): Record<DigestNoti
     comment: 0,
     follow: 0,
     mention: 0,
+    collection_like: 0,
   };
   for (const n of notifications) {
     counts[n.type] += 1;
@@ -80,7 +91,7 @@ function countByType(notifications: PendingNotificationRow[]): Record<DigestNoti
 
 function formatTypeBreakdown(counts: Record<DigestNotificationType, number>): string {
   const parts: string[] = [];
-  for (const type of ['like', 'comment', 'mention', 'follow'] as const) {
+  for (const type of ['like', 'collection_like', 'comment', 'mention', 'follow'] as const) {
     const n = counts[type];
     if (n <= 0) continue;
     parts.push(`${n} ${n === 1 ? TYPE_LABEL[type] : TYPE_LABEL_PLURAL[type]}`);
@@ -92,6 +103,7 @@ type DigestGroup = {
   key: string;
   type: DigestNotificationType;
   capsule_id: string | null;
+  collection_id: string | null;
   notifications: PendingNotificationRow[];
   actorNames: string[];
   latestBody: string | null;
@@ -125,6 +137,7 @@ function groupNotificationsForDigest(notifications: PendingNotificationRow[]): D
       key,
       type: head.type,
       capsule_id: head.capsule_id,
+      collection_id: head.collection_id ?? null,
       notifications: sorted,
       actorNames,
       latestBody:
@@ -151,14 +164,19 @@ function resolveActorName(actorId: string, actorNames: Map<string, string>): str
 export function resolvePushDigestUrl(params: {
   type: DigestNotificationType;
   capsule_id: string | null;
+  collection_id?: string | null;
   actorIds: string[];
   actorUsernames: Map<string, string>;
 }): string {
-  const { type, capsule_id, actorIds, actorUsernames } = params;
+  const { type, capsule_id, collection_id, actorIds, actorUsernames } = params;
 
   if (type === 'follow' && actorIds.length === 1) {
     const username = actorUsernames.get(actorIds[0]!);
     return username ? `/u/${username}` : '/notifications';
+  }
+
+  if (type === 'collection_like' && collection_id) {
+    return `/collections/${collection_id}`;
   }
 
   if (capsule_id) {
@@ -177,6 +195,7 @@ function resolveGroupPushUrl(
   return resolvePushDigestUrl({
     type: group.type,
     capsule_id: group.capsule_id,
+    collection_id: group.collection_id,
     actorIds: group.actorNames,
     actorUsernames,
   });
@@ -217,6 +236,7 @@ export function buildPushDigestPayload(params: {
       url: resolvePushDigestUrl({
         type: n.type,
         capsule_id: n.capsule_id,
+        collection_id: n.collection_id ?? null,
         actorIds: [n.actor_id],
         actorUsernames,
       }),

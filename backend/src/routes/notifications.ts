@@ -17,7 +17,8 @@ import {
   resolveMuteTargetByUsername,
   unmuteUserById,
 } from '../lib/notificationMutes.js';
-import { parseNotificationTypeFilter } from '../lib/notificationTypeFilter.js';
+import { parseNotificationTypeFilter, notificationDbTypesForFilter } from '../lib/notificationTypeFilter.js';
+
 import { isValidIanaTimeZone } from '../lib/notificationQuietHours.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { getVapidPublicKey, isPushConfigured, sendPushToUser } from '../lib/webPush.js';
@@ -289,6 +290,7 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
       type: string;
       actor_id: string;
       capsule_id: string | null;
+      collection_id?: string | null;
       body?: string | null;
       read: boolean;
       created_at: string;
@@ -297,13 +299,16 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
     let rows: NotificationRow[] = [];
     let listError: { message?: string; code?: string } | null = null;
     let total = 0;
+    const selectWithCollection =
+      'id, type, actor_id, capsule_id, collection_id, body, read, created_at';
+    const selectLegacy = 'id, type, actor_id, capsule_id, body, read, created_at';
 
     {
       let query = supabaseAdmin!
         .from('notifications')
-        .select('id, type, actor_id, capsule_id, body, read, created_at', { count: 'exact' })
+        .select(selectWithCollection, { count: 'exact' })
         .eq('user_id', userId);
-      if (typeFilter) query = query.eq('type', typeFilter);
+      if (typeFilter) query = query.in('type', notificationDbTypesForFilter(typeFilter));
       const result = await query
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
@@ -314,19 +319,30 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
     }
 
     if (listError) {
+      const msg = listError.message ?? '';
       const missingBody =
-        (listError.message ?? '').includes('body') &&
-        ((listError.message ?? '').includes('schema cache') ||
-          (listError.message ?? '').includes('Could not find') ||
-          (listError.message ?? '').includes('column') ||
-          (listError.message ?? '').includes('does not exist'));
+        msg.includes('body') &&
+        (msg.includes('schema cache') ||
+          msg.includes('Could not find') ||
+          msg.includes('column') ||
+          msg.includes('does not exist'));
+      const missingCollection = msg.includes('collection_id') || msg.includes('collection_like');
 
-      if (missingBody) {
+      if (missingBody || missingCollection) {
+        const select = missingCollection
+          ? missingBody
+            ? 'id, type, actor_id, capsule_id, read, created_at'
+            : selectLegacy
+          : 'id, type, actor_id, capsule_id, collection_id, read, created_at';
         let fallbackQuery = supabaseAdmin!
           .from('notifications')
-          .select('id, type, actor_id, capsule_id, read, created_at', { count: 'exact' })
+          .select(select, { count: 'exact' })
           .eq('user_id', userId);
-        if (typeFilter) fallbackQuery = fallbackQuery.eq('type', typeFilter);
+        if (typeFilter) {
+          fallbackQuery = missingCollection
+            ? fallbackQuery.eq('type', typeFilter)
+            : fallbackQuery.in('type', notificationDbTypesForFilter(typeFilter));
+        }
         const fallback = await fallbackQuery
           .order('created_at', { ascending: false })
           .range(offset, offset + limit - 1);
@@ -354,6 +370,13 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
     const capsuleIds = [
       ...new Set(rows.map((n) => n.capsule_id).filter((id): id is string => Boolean(id))),
     ];
+    const collectionIds = [
+      ...new Set(
+        rows
+          .map((n) => n.collection_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
     const profiles: Record<
       string,
       {
@@ -364,9 +387,10 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
       }
     > = {};
     const capsules: Record<string, NotificationCapsule> = {};
+    const collections: Record<string, { id: string; name: string }> = {};
     const followedSet = new Set<string>();
 
-    const [profilesResult, capsulesResult, followsResult] = await Promise.all([
+    const [profilesResult, capsulesResult, collectionsResult, followsResult] = await Promise.all([
       actorIds.length > 0
         ? supabaseAdmin!
             .from('profiles')
@@ -378,6 +402,9 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
             .from('capsules')
             .select('id, home_team_name, away_team_name, competition_name, photo_urls')
             .in('id', capsuleIds)
+        : Promise.resolve({ data: null }),
+      collectionIds.length > 0
+        ? supabaseAdmin!.from('collections').select('id, name').in('id', collectionIds)
         : Promise.resolve({ data: null }),
       actorIds.length > 0
         ? supabaseAdmin!
@@ -412,11 +439,19 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
       }
     }
 
+    if (collectionsResult.data) {
+      for (const row of collectionsResult.data as Array<{ id: string; name: string }>) {
+        collections[row.id] = { id: row.id, name: row.name };
+      }
+    }
+
     const notifications = rows.map((n) => ({
       ...n,
+      collection_id: n.collection_id ?? null,
       body: typeof n.body === 'string' ? n.body : null,
       actor: profiles[n.actor_id] ?? null,
       capsule: n.capsule_id ? (capsules[n.capsule_id] ?? null) : null,
+      collection: n.collection_id ? (collections[n.collection_id] ?? null) : null,
     }));
 
     res.json({

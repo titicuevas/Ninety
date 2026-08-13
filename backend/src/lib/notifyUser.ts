@@ -31,6 +31,7 @@ export async function notifyUser(params: {
   actorId: string;
   type: NotificationType;
   capsuleId?: string;
+  collectionId?: string;
   /** Snapshot del comentario (type=comment | mention). */
   body?: string;
 }) {
@@ -56,6 +57,7 @@ export async function notifyUser(params: {
       actor_id: params.actorId,
       type: params.type,
       capsule_id: params.capsuleId ?? null,
+      collection_id: params.collectionId ?? null,
     };
     if (snippet) row.body = snippet;
 
@@ -64,6 +66,16 @@ export async function notifyUser(params: {
     if (error && snippet && isMissingBodyColumn(error)) {
       delete row.body;
       ({ error } = await supabaseAdmin.from('notifications').insert(row));
+    }
+
+    // Si la migración de collection_id aún no está, reintenta sin la columna.
+    if (
+      error &&
+      params.collectionId &&
+      ((error.message ?? '').includes('collection_id') ||
+        (error.message ?? '').includes('collection_like'))
+    ) {
+      return;
     }
 
     if (error) return;

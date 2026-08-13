@@ -11,3 +11,11 @@ export function parseNotificationTypeFilter(raw: unknown): NotificationTypeFilte
   if (ALLOWED.has(v as NotificationTypeFilter)) return v as NotificationTypeFilter;
   return null;
 }
+
+/** Tipos DB a incluir cuando el usuario filtra por chip (like incluye collection_like). */
+export function notificationDbTypesForFilter(
+  filter: NotificationTypeFilter,
+): string[] {
+  if (filter === 'like') return ['like', 'collection_like'];
+  return [filter];
+}

@@ -102,4 +102,22 @@ describe('isNotificationTypeEnabled', () => {
     };
     assert.equal(isNotificationTypeEnabled(prefs, 'mention'), false);
   });
+
+  it('likes de colección respetan preferencia de likes', () => {
+    const prefs = {
+      like: false,
+      comment: true,
+      follow: true,
+      push_anniversary: false,
+      push_milestone: false,
+      push_want_to_go: false,
+      email_digest: false,
+      push_quiet: DEFAULT_NOTIFICATION_PREFERENCES.push_quiet,
+    };
+    assert.equal(isNotificationTypeEnabled(prefs, 'collection_like'), false);
+    assert.equal(
+      isNotificationTypeEnabled({ ...prefs, like: true }, 'collection_like'),
+      true,
+    );
+  });
 });
