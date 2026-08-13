@@ -3,7 +3,9 @@ import { describe, it } from 'node:test';
 import {
   findWantToGoNudge,
   isMatchInWantToGoNudgeWindow,
+  isMatchInWantToGoPlayedWindow,
   selectWantToGoNudgeMatches,
+  selectWantToGoPlayedNudgeMatches,
   WANT_TO_GO_NUDGE_WINDOW_MS,
 } from './wantToGoNudge.ts';
 
@@ -24,6 +26,14 @@ describe('wantToGoNudge', () => {
       isMatchInWantToGoNudgeWindow(hoursFromNow(50), NOW, WANT_TO_GO_NUDGE_WINDOW_MS),
       false,
     );
+  });
+
+  it('isMatchInWantToGoPlayedWindow solo pasados recientes', () => {
+    assert.equal(isMatchInWantToGoPlayedWindow(hoursFromNow(-6), NOW), true);
+    assert.equal(isMatchInWantToGoPlayedWindow(hoursFromNow(-24 * 10), NOW), true);
+    assert.equal(isMatchInWantToGoPlayedWindow(hoursFromNow(-24 * 15), NOW), false);
+    assert.equal(isMatchInWantToGoPlayedWindow(hoursFromNow(2), NOW), false);
+    assert.equal(isMatchInWantToGoPlayedWindow(null, NOW), false);
   });
 
   it('selectWantToGoNudgeMatches ordena y respeta skipped', () => {
@@ -54,7 +64,35 @@ describe('wantToGoNudge', () => {
     );
   });
 
-  it('findWantToGoNudge construye copy con extras', () => {
+  it('selectWantToGoPlayedNudgeMatches excluye Capsules y prioriza reciente', () => {
+    const matches = [
+      {
+        match_id: 10,
+        home_team_name: 'A',
+        away_team_name: 'B',
+        match_played_at: hoursFromNow(-48),
+      },
+      {
+        match_id: 11,
+        home_team_name: 'C',
+        away_team_name: 'D',
+        match_played_at: hoursFromNow(-6),
+      },
+      {
+        match_id: 12,
+        home_team_name: 'E',
+        away_team_name: 'F',
+        match_played_at: hoursFromNow(-3),
+      },
+    ];
+    const due = selectWantToGoPlayedNudgeMatches(matches, [12], [], NOW);
+    assert.deepEqual(
+      due.map((m) => m.match_id),
+      [11, 10],
+    );
+  });
+
+  it('findWantToGoNudge prioriza upcoming sobre played', () => {
     const nudge = findWantToGoNudge(
       [
         {
@@ -68,17 +106,47 @@ describe('wantToGoNudge', () => {
           match_id: 11,
           home_team_name: 'Sevilla',
           away_team_name: 'Betis',
-          match_played_at: hoursFromNow(20),
+          match_played_at: hoursFromNow(-8),
         },
       ],
       [],
       NOW,
+      [],
     );
     assert.ok(nudge);
+    assert.equal(nudge!.kind, 'upcoming');
     assert.equal(nudge!.matchId, 10);
-    assert.equal(nudge!.extraCount, 1);
-    assert.equal(nudge!.href, '/want-to-go');
     assert.match(nudge!.body, /Madrid–Barça/);
-    assert.match(nudge!.body, /1 más/);
+  });
+
+  it('findWantToGoNudge cae a played sin Capsule', () => {
+    const nudge = findWantToGoNudge(
+      [
+        {
+          match_id: 20,
+          home_team_name: 'Betis',
+          away_team_name: 'Sevilla',
+          match_played_at: hoursFromNow(-12),
+          competition_name: 'LaLiga',
+        },
+        {
+          match_id: 21,
+          home_team_name: 'Valencia',
+          away_team_name: 'Villarreal',
+          match_played_at: hoursFromNow(-30),
+        },
+      ],
+      [],
+      NOW,
+      [21],
+    );
+    assert.ok(nudge);
+    assert.equal(nudge!.kind, 'played');
+    assert.equal(nudge!.matchId, 20);
+    assert.equal(nudge!.href, '/capsules/new');
+    assert.equal(nudge!.hrefLabel, 'Guardar Capsule');
+    assert.ok(nudge!.createMatch);
+    assert.equal(nudge!.createMatch!.id, 20);
+    assert.match(nudge!.title, /Ya jugó/);
   });
 });

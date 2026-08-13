@@ -66,8 +66,8 @@ export function WantToGoPushPrefsPanel({ className }: Props) {
             Recordatorio Quiero ir
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Card en Inicio cuando un partido de tu lista se acerca (próximas ~48 h). En este
-            dispositivo.
+            Card en Inicio cuando un partido de tu lista se acerca (~48 h) o ya jugó y aún no
+            tienes Capsule. En este dispositivo.
           </p>
         </div>
         <Button

@@ -110,6 +110,7 @@ export function HomePage() {
     milestoneVisible: diaryMilestone.visible,
   });
   const wantToGoNudge = useWantToGoNudge({
+    capsules: capsulesData?.capsules ?? [],
     coreComplete,
     valueOnboardingVisible: valueOnboarding.visible || postImportGuide.visible,
     anniversaryVisible: diaryAnniversary.visible,
@@ -274,7 +275,7 @@ export function HomePage() {
               nudge={wantToGoNudge.nudge}
               visible={wantToGoNudge.visible}
               dismiss={wantToGoNudge.dismiss}
-              openList={wantToGoNudge.openList}
+              openPrimary={wantToGoNudge.openPrimary}
             />
             <DiaryDigestCard
               capsules={capsules}

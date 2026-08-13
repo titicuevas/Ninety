@@ -10,8 +10,10 @@ import {
   shouldShowWantToGoNudge,
   skipWantToGoNudgeMatch,
 } from '@/lib/wantToGoNudgeMemory';
+import type { Capsule } from '@/types/capsule';
 
 type Options = {
+  capsules: Capsule[];
   coreComplete: boolean;
   valueOnboardingVisible: boolean;
   anniversaryVisible?: boolean;
@@ -20,6 +22,7 @@ type Options = {
 };
 
 export function useWantToGoNudge({
+  capsules,
   coreComplete,
   valueOnboardingVisible,
   anniversaryVisible = false,
@@ -36,9 +39,20 @@ export function useWantToGoNudge({
     return userId ? readWantToGoNudgePrefs(userId) : null;
   }, [userId, tick]);
 
+  const capsuleMatchIds = useMemo(
+    () => capsules.map((c) => c.match_id).filter((id) => Number.isFinite(id)),
+    [capsules],
+  );
+
   const nudge: WantToGoNudge | null = useMemo(
-    () => findWantToGoNudge(data?.items ?? [], getSkippedWantToGoMatchIds(prefs)),
-    [data?.items, prefs],
+    () =>
+      findWantToGoNudge(
+        data?.items ?? [],
+        getSkippedWantToGoMatchIds(prefs),
+        new Date(),
+        capsuleMatchIds,
+      ),
+    [data?.items, prefs, capsuleMatchIds],
   );
 
   const visible = shouldShowWantToGoNudge(prefs, {
@@ -62,7 +76,7 @@ export function useWantToGoNudge({
     [userId, nudge?.matchId],
   );
 
-  const openList = useCallback(() => {
+  const openPrimary = useCallback(() => {
     if (!userId || !nudge) return;
     skipWantToGoNudgeMatch(userId, nudge.matchId);
     dismissWantToGoNudge(userId, { matchId: nudge.matchId });
@@ -74,6 +88,8 @@ export function useWantToGoNudge({
     visible,
     enabled: isWantToGoNudgeEnabled(prefs),
     dismiss,
-    openList,
+    openPrimary,
+    /** @deprecated usar openPrimary */
+    openList: openPrimary,
   };
 }

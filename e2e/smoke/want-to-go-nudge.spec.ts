@@ -195,6 +195,7 @@ test.describe('Smoke — soft nudge Quiero ir @smoke', () => {
       'href',
       '/want-to-go',
     );
+    await expect(card).toHaveAttribute('data-nudge-kind', 'upcoming');
     await expect(page.getByTestId('diary-digest-card')).toHaveCount(0);
 
     await card.getByRole('button', { name: /no volver a mostrar/i }).click();
@@ -207,5 +208,59 @@ test.describe('Smoke — soft nudge Quiero ir @smoke', () => {
     await expect(page.getByTestId('want-to-go-push-prefs')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/recordatorio quiero ir/i)).toBeVisible();
     await expect(page.getByText(/card en inicio/i)).toBeVisible();
+  });
+
+  test('card «ya jugó» aparece y abre crear Capsule', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    const userId = await readSessionUserId(page);
+    expect(userId).toBeTruthy();
+
+    await forceCoreComplete(page, userId!);
+
+    await page.route('**/api/want-to-go/me**', async (route) => {
+      if (route.request().method() !== 'GET') {
+        await route.continue();
+        return;
+      }
+      const url = route.request().url();
+      if (url.includes('/ids')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ match_ids: [9102] }),
+        });
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          items: [
+            wantToGoItem({
+              userId: userId!,
+              matchId: 9102,
+              home: 'Valencia',
+              away: 'Villarreal',
+              hoursAhead: -10,
+            }),
+          ],
+          total: 1,
+          limit: 100,
+          offset: 0,
+        }),
+      });
+    });
+
+    await page.reload();
+    await expect(page.getByRole('heading', { name: /primeros pasos/i })).toHaveCount(0);
+
+    const card = page.getByTestId('want-to-go-nudge-card');
+    await expect(card).toBeVisible({ timeout: 15_000 });
+    await expect(card).toHaveAttribute('data-nudge-kind', 'played');
+    await expect(card.getByRole('heading', { name: /ya jugó/i })).toBeVisible();
+    await expect(card.getByText(/Valencia–Villarreal/i)).toBeVisible();
+
+    await card.getByRole('button', { name: /guardar capsule/i }).click();
+    await expect(page).toHaveURL(/\/capsules\/new/, { timeout: 15_000 });
   });
 });
