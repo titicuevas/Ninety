@@ -14,6 +14,8 @@ type Props = {
   className?: string;
   size?: 'sm' | 'default';
   variant?: 'ghost' | 'outline' | 'secondary' | 'default';
+  /** Icono en móvil, etiqueta desde tablet. */
+  compact?: boolean;
 };
 
 export function ShareInviteButton({
@@ -22,6 +24,7 @@ export function ShareInviteButton({
   className,
   size = 'sm',
   variant = 'secondary',
+  compact = false,
 }: Props) {
   const [copied, setCopied] = useState(false);
   const [manualUrl, setManualUrl] = useState<string | null>(null);
@@ -71,13 +74,16 @@ export function ShareInviteButton({
         size={size}
         onClick={() => void share()}
         aria-label={copied ? 'Enlace de invitación copiado' : 'Invitar a Ninety'}
+        className={cn(compact && 'h-9 w-9 px-0 sm:w-auto sm:px-3')}
       >
         {copied ? (
-          <Check className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+          <Check className={cn('h-3.5 w-3.5', compact ? 'sm:mr-1.5' : 'mr-1.5')} aria-hidden />
         ) : (
-          <UserPlus className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+          <UserPlus className={cn('h-3.5 w-3.5', compact ? 'sm:mr-1.5' : 'mr-1.5')} aria-hidden />
         )}
-        {copied ? 'Copiado' : 'Invitar'}
+        <span className={compact ? 'sr-only sm:not-sr-only' : undefined}>
+          {copied ? 'Copiado' : 'Invitar'}
+        </span>
       </Button>
       {manualUrl ? (
         <label className="block max-w-xs text-left">

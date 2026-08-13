@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Check, Bookmark, CalendarDays, Loader2, Settings, Trophy, X } from 'lucide-react';
+import { Check, Loader2, Settings, User, UserPlus, Users, X } from 'lucide-react';
 import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
 import { FavoriteTeamField } from '@/components/FavoriteTeamField';
 import { Layout } from '@/components/Layout';
@@ -31,7 +31,6 @@ import { toast } from '@/lib/toast';
 import { AVATAR_ACCEPT, removeProfileAvatar, uploadProfileAvatar } from '@/lib/profileAvatar';
 import { isAutoUsername, suggestUsername } from '@/lib/profileHelpers';
 import { profilePath } from '@/lib/profilePath';
-import { teamPath } from '@/lib/teamPath';
 import type { Profile, UpdateProfileInput } from '@/types/profile';
 import { cn } from '@/lib/utils';
 
@@ -230,10 +229,10 @@ export function ProfilePage() {
             <CardTitle>Tu perfil</CardTitle>
             <CardDescription>Configura tu identidad como aficionado</CardDescription>
           </div>
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
             <Link to="/settings">
-              <Settings className="mr-1.5 h-4 w-4" aria-hidden />
-              Ajustes
+              <Settings className="h-4 w-4 sm:mr-1.5" aria-hidden />
+              <span className="sr-only sm:not-sr-only">Ajustes</span>
             </Link>
           </Button>
         </CardHeader>
@@ -285,80 +284,44 @@ export function ProfilePage() {
               </div>
               {avatarError ? <p className="text-xs text-destructive">{avatarError}</p> : null}
               {profile?.username && !isAutoUsername(profile.username) ? (
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                  <Link to={profilePath(profile.username)} className="text-sm text-primary hover:underline">
-                    Ver perfil público
-                  </Link>
-                  <Link
-                    to="/want-to-go"
-                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                  >
-                    <Bookmark className="h-3.5 w-3.5" aria-hidden />
-                    Quiero ir
-                  </Link>
-                  <Link
-                    to="/diary/calendar"
-                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                  >
-                    <CalendarDays className="h-3.5 w-3.5" aria-hidden />
-                    Calendario
-                  </Link>
-                  {profile.favorite_team?.trim() ? (
-                    <Link
-                      to={teamPath(profile.favorite_team)}
-                      className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                    >
-                      <Trophy className="h-3.5 w-3.5" aria-hidden />
-                      Fans de {profile.favorite_team.trim()}
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
+                    <Link to={profilePath(profile.username)}>
+                      <User className="h-4 w-4 sm:mr-1.5" aria-hidden />
+                      <span className="sr-only sm:not-sr-only">Perfil público</span>
                     </Link>
-                  ) : null}
-                  <Link
-                    to={`/u/${encodeURIComponent(profile.username)}/followers`}
-                    className="text-sm text-muted-foreground hover:text-foreground"
-                  >
-                    Seguidores
-                  </Link>
-                  <Link
-                    to={`/u/${encodeURIComponent(profile.username)}/following`}
-                    className="text-sm text-muted-foreground hover:text-foreground"
-                  >
-                    Siguiendo
-                  </Link>
+                  </Button>
+                  <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
+                    <Link to={`/u/${encodeURIComponent(profile.username)}/followers`}>
+                      <Users className="h-4 w-4 sm:mr-1.5" aria-hidden />
+                      <span className="sr-only sm:not-sr-only">Seguidores</span>
+                    </Link>
+                  </Button>
+                  <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
+                    <Link to={`/u/${encodeURIComponent(profile.username)}/following`}>
+                      <UserPlus className="h-4 w-4 sm:mr-1.5" aria-hidden />
+                      <span className="sr-only sm:not-sr-only">Siguiendo</span>
+                    </Link>
+                  </Button>
                   <ShareProfileButton
                     username={profile.username}
                     displayName={profile.display_name}
                     size="sm"
                     variant="outline"
+                    compact
                   />
                   <ShareInviteButton
                     username={profile.username}
                     displayName={profile.display_name}
                     size="sm"
                     variant="outline"
+                    compact
                   />
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    Elige un username abajo para poder compartir tu perfil público.
-                  </p>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <Link
-                      to="/want-to-go"
-                      className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                    >
-                      <Bookmark className="h-3.5 w-3.5" aria-hidden />
-                      Quiero ir
-                    </Link>
-                    <Link
-                      to="/diary/calendar"
-                      className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                    >
-                      <CalendarDays className="h-3.5 w-3.5" aria-hidden />
-                      Calendario
-                    </Link>
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  Elige un username abajo para poder compartir tu perfil público.
+                </p>
               )}
             </div>
           </div>

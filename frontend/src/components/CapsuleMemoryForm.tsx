@@ -94,9 +94,9 @@ function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+    <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
       {title ? (
-        <header className="mb-5 space-y-1 border-b border-border/70 pb-4">
+        <header className="mb-3 space-y-0.5 border-b border-border/70 pb-3">
           <h2 className="text-base font-semibold tracking-tight text-foreground">{title}</h2>
           {description ? (
             <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
@@ -244,7 +244,7 @@ export function CapsuleMemoryForm({
       </SectionCard>
 
       <SectionCard title="Recuerdo" description="Fecha, contexto y cómo lo viviste.">
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-5">
           <FormField label="¿Cuándo lo viste?" error={errors.watched_at?.message}>
             <DateInput {...register('watched_at')} />
           </FormField>
