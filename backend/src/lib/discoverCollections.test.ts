@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { rankDiscoverCollections } from './discoverCollections.js';
+import {
+  matchesDiscoverCollectionQuery,
+  parseDiscoverCollectionsSort,
+  rankDiscoverCollections,
+  selectDiscoverCollections,
+} from './discoverCollections.js';
 
 const author = {
   id: 'u1',
@@ -123,5 +128,87 @@ describe('rankDiscoverCollections', () => {
     assert.equal(ranked[0]?.name, 'Larga');
     assert.equal(ranked[0]?.match_reason, 'active');
     assert.equal(ranked[1]?.match_reason, 'active');
+  });
+});
+
+describe('selectDiscoverCollections', () => {
+  it('parsea sort y filtra por q', () => {
+    assert.equal(parseDiscoverCollectionsSort('likes'), 'likes');
+    assert.equal(parseDiscoverCollectionsSort('nope'), 'relevant');
+    assert.equal(
+      matchesDiscoverCollectionQuery(
+        {
+          name: 'Clásicos Betis',
+          description: null,
+          author: { username: 'fan', display_name: 'Fan' },
+        },
+        'betis',
+      ),
+      true,
+    );
+  });
+
+  it('ordena por recientes y por likes', () => {
+    const pool = [
+      {
+        ...base,
+        id: 'c1',
+        name: 'Vieja',
+        user_id: 'u2',
+        updated_at: '2024-01-01T00:00:00Z',
+        author: { ...author, id: 'u2', username: 'viejo' },
+      },
+      {
+        ...base,
+        id: 'c2',
+        name: 'Nueva',
+        user_id: 'u3',
+        updated_at: '2025-06-01T00:00:00Z',
+        author: { ...author, id: 'u3', username: 'nuevo' },
+      },
+    ];
+
+    const recent = selectDiscoverCollections(pool, { id: 'viewer' }, new Set(), {
+      limit: 2,
+      sort: 'recent',
+    });
+    assert.equal(recent[0]?.name, 'Nueva');
+
+    const likes = selectDiscoverCollections(pool, { id: 'viewer' }, new Set(), {
+      limit: 2,
+      sort: 'likes',
+      likesCountById: new Map([
+        ['c1', 9],
+        ['c2', 1],
+      ]),
+    });
+    assert.equal(likes[0]?.name, 'Vieja');
+  });
+
+  it('filtra por query de nombre o autor', () => {
+    const pool = [
+      {
+        ...base,
+        id: 'c1',
+        name: 'Viajes',
+        user_id: 'u2',
+        author: { ...author, id: 'u2', username: 'viajero', display_name: 'Viajero' },
+      },
+      {
+        ...base,
+        id: 'c2',
+        name: 'Clásicos',
+        user_id: 'u3',
+        author: { ...author, id: 'u3', username: 'otro', display_name: 'Otro' },
+      },
+    ];
+
+    const filtered = selectDiscoverCollections(pool, { id: 'viewer' }, new Set(), {
+      limit: 6,
+      q: 'clasicos',
+      sort: 'recent',
+    });
+    assert.equal(filtered.length, 1);
+    assert.equal(filtered[0]?.name, 'Clásicos');
   });
 });

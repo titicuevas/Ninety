@@ -1,19 +1,26 @@
+import { useId } from 'react';
 import { Link } from 'react-router-dom';
-import { Compass, Library } from 'lucide-react';
+import { Compass, Library, Search } from 'lucide-react';
 import { capsuleCardListClass } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
+import { FilterChip, filterChipRowClass } from '@/components/FilterChip';
 import { FollowButton } from '@/components/FollowButton';
 import { FollowsYouBadge } from '@/components/FollowsYouBadge';
 import { Layout } from '@/components/Layout';
 import { NinetyLoader } from '@/components/NinetyLoader';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useDiscoverCollections } from '@/hooks/useDiscoverCollections';
+import { useDiscoverCollectionsFilterParams } from '@/hooks/useDiscoverCollectionsFilterParams';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { discoverCollectionMatchLabel } from '@/lib/discoverCollections';
+import {
+  DISCOVER_COLLECTIONS_SORT_CHIPS,
+  hasDiscoverCollectionsSearch,
+} from '@/lib/discoverCollectionsParams';
 import { profilePath } from '@/lib/profilePath';
 import type { DiscoverCollection } from '@/types/collection';
-
 
 function DiscoverCollectionCard({ collection }: { collection: DiscoverCollection }) {
   const author = collection.author;
@@ -119,13 +126,20 @@ function DiscoverCollectionCard({ collection }: { collection: DiscoverCollection
 
 export function ExploreCollectionsPage() {
   useDocumentTitle('Explorar colecciones');
-  const { data, isLoading, isError, error, refetch, isRefetching } = useDiscoverCollections();
+  const searchId = useId();
+  const { q, qDraft, setQDraft, sort, setSort, clearFilters } =
+    useDiscoverCollectionsFilterParams();
+  const { data, isLoading, isError, error, refetch, isRefetching } = useDiscoverCollections({
+    q,
+    sort,
+  });
   const collections = data?.collections ?? [];
+  const hasSearch = hasDiscoverCollectionsSearch(q, sort);
 
   return (
     <Layout>
       <div className="space-y-5 sm:space-y-8">
-        <section aria-labelledby="explore-collections-heading">
+        <section aria-labelledby="explore-collections-heading" className="space-y-4">
           <h1
             id="explore-collections-heading"
             className="flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl"
@@ -133,6 +147,50 @@ export function ExploreCollectionsPage() {
             <Compass className="h-7 w-7 text-primary" aria-hidden />
             Explorar colecciones
           </h1>
+
+          <div className="space-y-3">
+            <label htmlFor={searchId} className="sr-only">
+              Buscar colecciones
+            </label>
+            <div className="relative max-w-xl">
+              <Search
+                className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
+              <Input
+                id={searchId}
+                type="search"
+                value={qDraft}
+                onChange={(e) => setQDraft(e.target.value)}
+                placeholder="Nombre, descripción o autor…"
+                className="pl-9"
+                autoComplete="off"
+              />
+            </div>
+
+            <div
+              className={filterChipRowClass}
+              role="group"
+              aria-label="Ordenar colecciones"
+              data-testid="explore-collections-sort"
+            >
+              {DISCOVER_COLLECTIONS_SORT_CHIPS.map((chip) => (
+                <FilterChip
+                  key={chip.value}
+                  active={sort === chip.value}
+                  onClick={() => setSort(chip.value)}
+                >
+                  {chip.label}
+                </FilterChip>
+              ))}
+            </div>
+
+            {hasSearch ? (
+              <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={clearFilters}>
+                Limpiar filtros
+              </Button>
+            ) : null}
+          </div>
         </section>
 
         {isLoading ? <NinetyLoader variant="panel" className="py-10" /> : null}
@@ -148,15 +206,27 @@ export function ExploreCollectionsPage() {
         {!isLoading && !isError && collections.length === 0 ? (
           <EmptyState
             icon={Compass}
-            title="Aún no hay listas para explorar"
-            description="Cuando otros publiquen colecciones, aparecerán aquí."
+            title={hasSearch ? 'Sin resultados' : 'Aún no hay listas para explorar'}
+            description={
+              hasSearch
+                ? 'Prueba otro término o cambia el orden.'
+                : 'Cuando otros publiquen colecciones, aparecerán aquí.'
+            }
           >
-            <Button asChild>
-              <Link to="/collections">Crear tu primera colección</Link>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link to="/search?tab=people">Buscar aficionados</Link>
-            </Button>
+            {hasSearch ? (
+              <Button type="button" variant="secondary" onClick={clearFilters}>
+                Limpiar filtros
+              </Button>
+            ) : (
+              <>
+                <Button asChild>
+                  <Link to="/collections">Crear tu primera colección</Link>
+                </Button>
+                <Button asChild variant="secondary">
+                  <Link to="/search?tab=people">Buscar aficionados</Link>
+                </Button>
+              </>
+            )}
           </EmptyState>
         ) : null}
 

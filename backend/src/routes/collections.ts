@@ -30,7 +30,7 @@ import {
   parseCollectionsImportPayload,
 } from '../lib/collectionsImport.js';
 import { validateCommentBody } from '../lib/contentModeration.js';
-import { rankDiscoverCollections } from '../lib/discoverCollections.js';
+import { selectDiscoverCollections, parseDiscoverCollectionsSort } from '../lib/discoverCollections.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
 import { notifyUser } from '../lib/notifyUser.js';
 import {
@@ -825,6 +825,9 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
   }
 
   const limit = Math.min(Math.max(Number(req.query.limit) || 12, 1), 24);
+  const q =
+    typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 80) : '';
+  const sort = parseDiscoverCollectionsSort(req.query.sort);
   const supabase = createUserClient(token);
 
   const [{ data: me }, { data: followingRows }] = await Promise.all([
@@ -885,7 +888,7 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
 
   const rows = [...byId.values()];
   if (rows.length === 0) {
-    res.json({ collections: [] });
+    res.json({ collections: [], q: q || null, sort });
     return;
   }
 
@@ -938,11 +941,29 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
     })
     .filter((row): row is NonNullable<typeof row> => !!row);
 
-  const ranked = rankDiscoverCollections(
+  let likesCountById = new Map<string, number>();
+  let likeById = new Map<string, { likes_count: number; liked_by_me: boolean }>();
+  try {
+    const withLikes = await attachCollectionLikeStats(
+      supabase,
+      req.userId!,
+      candidates.map((row) => ({ id: row.id })),
+    );
+    likeById = new Map(withLikes.map((row) => [row.id, row]));
+    likesCountById = new Map(withLikes.map((row) => [row.id, row.likes_count]));
+  } catch (err) {
+    if (!isMissingCollectionLikesTable(err)) {
+      const message = err instanceof Error ? err.message : String(err);
+      res.status(400).json({ error: message });
+      return;
+    }
+  }
+
+  const ranked = selectDiscoverCollections(
     candidates,
     { id: req.userId!, favorite_team: me?.favorite_team },
     followingIds,
-    limit,
+    { limit, q, sort, likesCountById },
   );
 
   const authorIdsRanked = [...new Set(ranked.map((row) => row.author.id))];
@@ -959,22 +980,6 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
         res.status(400).json({ error: message });
         return;
       }
-    }
-  }
-
-  let likeById = new Map<string, { likes_count: number; liked_by_me: boolean }>();
-  try {
-    const withLikes = await attachCollectionLikeStats(
-      supabase,
-      req.userId!,
-      ranked.map((row) => ({ id: row.id })),
-    );
-    likeById = new Map(withLikes.map((row) => [row.id, row]));
-  } catch (err) {
-    if (!isMissingCollectionLikesTable(err)) {
-      const message = err instanceof Error ? err.message : String(err);
-      res.status(400).json({ error: message });
-      return;
     }
   }
 
@@ -995,6 +1000,8 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
         match_reason,
       };
     }),
+    q: q || null,
+    sort,
   });
 });
 

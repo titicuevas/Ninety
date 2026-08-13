@@ -382,7 +382,7 @@ Ninety/
 | GET | `/api/collections/me/containing/:capsuleId` | ✅ | Colecciones que ya incluyen una Capsule |
 | POST/PATCH/DELETE | `/api/collections`… | ✅ | CRUD colecciones + ítems (`cover_capsule_id` en PATCH) |
 | PUT | `/api/collections/:id/items/reorder` | ✅ | Reordenar Capsules (`position`) |
-| GET | `/api/collections/discover` | ✅ | Descubrir listas públicas ajenas (`match_reason`: `following` / `favorite_team` / `active`) |
+| GET | `/api/collections/discover` | ✅ | Descubrir listas públicas ajenas (`q`, `sort=relevant|recent|likes`; `match_reason`: `following` / `favorite_team` / `active`) |
 | GET | `/api/profile/discover` | ✅ | Sugerir aficionados (`match_reason`: equipo / ciudad / país / `active`; filtra bloqueos) |
 | GET | `/api/profile/by-team` | ✅ | Fans del mismo club favorito (`?slug=` + paginación; filtra `user_blocks`) |
 | GET | `/api/collections/user/:username` | opcional | Colecciones públicas |
@@ -515,7 +515,7 @@ Ninety/
 
 ### 🚧 v14 — Ritmo social & descubrimiento fino
 - [x] Filtros en Actividad — ver solo Capsules o solo listas (`?type=capsule|collection` en `GET /api/activity` + chips en `/activity`)
-- [ ] Buscar / ordenar en Explorar colecciones — query y orden por actividad o likes en `/collections/explore`
+- [x] Buscar / ordenar en Explorar colecciones — `q` + `sort=relevant|recent|likes` en `GET /api/collections/discover` y UI en `/collections/explore`
 - [ ] Respuestas en comentarios de colecciones — hilos 1 nivel (paridad con Capsules)
 - [ ] Compartir perfil como texto — resumen one-tap (Capsules, club, listas) desde perfil público
 - [ ] Soft nudge «Quiero ir» en Home — card cuando hay partidos cercanos en la watchlist (además del push)

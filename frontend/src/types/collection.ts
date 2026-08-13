@@ -45,6 +45,8 @@ export interface DiscoverCollection extends Collection {
 
 export interface DiscoverCollectionsResponse {
   collections: DiscoverCollection[];
+  q?: string | null;
+  sort?: 'relevant' | 'recent' | 'likes';
 }
 
 export interface CollectionDetailResponse {

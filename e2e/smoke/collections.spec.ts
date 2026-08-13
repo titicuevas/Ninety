@@ -21,6 +21,14 @@ test.describe('Smoke — colecciones @smoke', () => {
       timeout: 20_000,
     });
 
+    await expect(page.getByTestId('explore-collections-sort')).toBeVisible();
+    await page.getByRole('button', { name: /^recientes$/i }).click();
+    await expect(page).toHaveURL(/sort=recent/);
+    await page.getByRole('button', { name: /^me gusta$/i }).click();
+    await expect(page).toHaveURL(/sort=likes/);
+    await page.getByRole('button', { name: /^relevantes$/i }).click();
+    await expect(page).not.toHaveURL(/sort=/);
+
     await collectionsNav.getByRole('link', { name: /mis listas/i }).click();
     await expect(page).toHaveURL(/\/collections$/);
   });
