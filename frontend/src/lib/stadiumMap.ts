@@ -13,6 +13,8 @@ export type StadiumVisit = {
 export type StadiumMapResult = {
   /** Visitas emparejadas a un estadio del catálogo. */
   visits: StadiumVisit[];
+  /** Sede más visitada (empate → mejor media ★ → más reciente). */
+  favorite: StadiumVisit | null;
   /** Capsules en estadio sin match de catálogo. */
   unmatchedStadiumCount: number;
   /** Total de capsules con watch_context=stadium. */
@@ -84,6 +86,22 @@ export function resolveStadiumForCapsule(
   return lookupTeam(capsule.home_team_name) ?? lookupTeam(capsule.away_team_name);
 }
 
+/** Compara sedes para elegir favorita: visitas → media ★ → última visita. */
+export function compareStadiumVisits(a: StadiumVisit, b: StadiumVisit): number {
+  if (b.visits !== a.visits) return b.visits - a.visits;
+  const ar = a.averageRating ?? -1;
+  const br = b.averageRating ?? -1;
+  if (br !== ar) return br - ar;
+  const at = a.lastWatchedAt ?? '';
+  const bt = b.lastWatchedAt ?? '';
+  return bt.localeCompare(at);
+}
+
+export function pickFavoriteStadium(visits: StadiumVisit[]): StadiumVisit | null {
+  if (visits.length === 0) return null;
+  return [...visits].sort(compareStadiumVisits)[0] ?? null;
+}
+
 /**
  * Agrega visitas a estadio a partir de capsules con watch_context === 'stadium'.
  */
@@ -117,7 +135,7 @@ export function computeStadiumMap(capsules: Capsule[]): StadiumMapResult {
       rated: 0,
     };
     prev.visits++;
-    if (prev.capsuleIds.length < 3) prev.capsuleIds.push(capsule.id);
+    if (prev.capsuleIds.length < 5) prev.capsuleIds.push(capsule.id);
     if (!prev.lastWatchedAt || capsule.watched_at > prev.lastWatchedAt) {
       prev.lastWatchedAt = capsule.watched_at;
     }
@@ -136,14 +154,30 @@ export function computeStadiumMap(capsules: Capsule[]): StadiumMapResult {
       lastWatchedAt: row.lastWatchedAt,
       averageRating: row.rated > 0 ? row.ratingSum / row.rated : null,
     }))
-    .sort((a, b) => b.visits - a.visits || a.stadium.name.localeCompare(b.stadium.name, 'es'));
+    .sort(
+      (a, b) =>
+        compareStadiumVisits(a, b) || a.stadium.name.localeCompare(b.stadium.name, 'es'),
+    );
 
   const countries = [...new Set(visits.map((v) => v.stadium.country))].sort();
+  const favorite = pickFavoriteStadium(visits);
 
   return {
     visits,
+    favorite,
     unmatchedStadiumCount: unmatched,
     stadiumCapsuleCount: stadiumCapsules.length,
     countries,
   };
+}
+
+/** Deep link al diario filtrado por contexto estadio. */
+export function stadiumDiaryHref(): string {
+  return '/capsules?context=stadium';
+}
+
+/** Deep link a una Capsule concreta (detalle público/propio). */
+export function stadiumCapsuleHref(capsuleId: string | undefined | null): string | null {
+  if (!capsuleId) return null;
+  return `/c/${capsuleId}`;
 }

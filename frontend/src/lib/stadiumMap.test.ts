@@ -2,8 +2,11 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   computeStadiumMap,
+  pickFavoriteStadium,
   projectStadium,
   resolveStadiumForCapsule,
+  stadiumCapsuleHref,
+  stadiumDiaryHref,
 } from './stadiumMap.ts';
 import type { Capsule } from '../types/capsule.ts';
 
@@ -108,7 +111,39 @@ describe('computeStadiumMap', () => {
     assert.equal(result.visits[0]?.stadium.id, 'benito-villamarin');
     assert.equal(result.visits[0]?.visits, 2);
     assert.equal(result.visits[0]?.averageRating, 4.5);
+    assert.equal(result.favorite?.stadium.id, 'benito-villamarin');
     assert.deepEqual(result.countries, ['ES']);
+  });
+
+  it('elige favorito por visitas y desempata con media ★', () => {
+    const result = computeStadiumMap([
+      capsule({
+        id: 'a1',
+        watched_at: '2025-03-01',
+        home_team_name: 'Real Betis',
+        away_team_name: 'Valencia',
+        watch_context: 'stadium',
+        rating: 3,
+      }),
+      capsule({
+        id: 'b1',
+        watched_at: '2025-04-01',
+        home_team_name: 'Sevilla FC',
+        away_team_name: 'Betis',
+        watch_context: 'stadium',
+        rating: 5,
+      }),
+      capsule({
+        id: 'b2',
+        watched_at: '2025-05-01',
+        home_team_name: 'Sevilla',
+        away_team_name: 'Madrid',
+        watch_context: 'stadium',
+        rating: 5,
+      }),
+    ]);
+    assert.equal(result.favorite?.stadium.id, 'ramon-sanchez-pizjuan');
+    assert.equal(pickFavoriteStadium(result.visits)?.stadium.id, 'ramon-sanchez-pizjuan');
   });
 
   it('devuelve vacío sin visitas a estadio', () => {
@@ -123,5 +158,14 @@ describe('computeStadiumMap', () => {
     ]);
     assert.equal(result.stadiumCapsuleCount, 0);
     assert.equal(result.visits.length, 0);
+    assert.equal(result.favorite, null);
+  });
+});
+
+describe('stadium deep links', () => {
+  it('arma href al diario y a Capsule', () => {
+    assert.equal(stadiumDiaryHref(), '/capsules?context=stadium');
+    assert.equal(stadiumCapsuleHref('abc'), '/c/abc');
+    assert.equal(stadiumCapsuleHref(null), null);
   });
 });

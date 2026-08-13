@@ -59,10 +59,10 @@ function buildSummary(input: InsightsInput): Insight {
     bits.push(`Lo ves sobre todo desde ${stats.topWatchContext.name.toLowerCase()}`);
   }
 
-  if (stadiumMap.visits.length > 0) {
-    const top = stadiumMap.visits[0];
+  if (stadiumMap.favorite) {
+    const top = stadiumMap.favorite;
     bits.push(
-      `En la grada destaca ${top.stadium.name} (${top.visits} visita${top.visits === 1 ? '' : 's'})`,
+      `Tu estadio es ${top.stadium.name} (${top.visits} visita${top.visits === 1 ? '' : 's'})`,
     );
   } else if (stats.stadiumVisits === 0 && stats.totalMatches >= 3) {
     bits.push('Todavía no has marcado ningún partido en estadio');
@@ -160,8 +160,8 @@ function buildTip(input: InsightsInput): Insight | null {
       kind: 'tip',
       title: 'Consejo del diario',
       body: 'Si lo viviste en la grada, márcalo como Estadio: alimenta el mapa y los logros.',
-      href: '/capsules',
-      hrefLabel: 'Editar Capsules',
+      href: '/home?view=wrapped#stadium-map',
+      hrefLabel: 'Ver mapa',
     };
   }
 
@@ -176,12 +176,25 @@ function buildTip(input: InsightsInput): Insight | null {
     };
   }
 
+  if (input.stadiumMap.favorite) {
+    return {
+      id: 'tip-favorite-stadium',
+      kind: 'tip',
+      title: 'Tu estadio',
+      body: `${input.stadiumMap.favorite.stadium.name} lidera tu mapa con ${input.stadiumMap.favorite.visits} visita${input.stadiumMap.favorite.visits === 1 ? '' : 's'}. Repasa las Capsules en la grada.`,
+      href: '/capsules?context=stadium',
+      hrefLabel: 'Diario · estadio',
+    };
+  }
+
   if (input.stadiumMap.unmatchedStadiumCount > 0) {
     return {
       id: 'tip-map',
       kind: 'tip',
       title: 'Mapa en crecimiento',
       body: `Hay ${input.stadiumMap.unmatchedStadiumCount} visita${input.stadiumMap.unmatchedStadiumCount === 1 ? '' : 's'} sin sede en el catálogo. Seguimos ampliando el mapa.`,
+      href: '/home?view=wrapped#stadium-map',
+      hrefLabel: 'Ver mapa',
     };
   }
 
