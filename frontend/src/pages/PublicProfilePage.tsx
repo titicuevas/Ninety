@@ -3,7 +3,7 @@ import { Library, MapPin, Swords, Trophy } from 'lucide-react';
 import { AchievementsSection } from '@/components/AchievementsSection';
 import { CapsuleDiaryFilters } from '@/components/CapsuleDiaryFilters';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
-import { CapsuleListCard } from '@/components/CapsuleListCard';
+import { CapsuleListCard, capsuleCardListClass } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
 import { FollowsYouBadge } from '@/components/FollowsYouBadge';
@@ -511,9 +511,13 @@ export function PublicProfilePage() {
 
             {capsules.length > 0 ? (
               <>
-                {capsules.map((capsule) => (
-                  <PublicCapsuleCard key={capsule.id} capsule={capsule} currentUserId={user?.id} />
-                ))}
+                <ul className={capsuleCardListClass}>
+                  {capsules.map((capsule) => (
+                    <li key={capsule.id}>
+                      <PublicCapsuleCard capsule={capsule} currentUserId={user?.id} />
+                    </li>
+                  ))}
+                </ul>
                 <InfiniteScrollSentinel
                   hasNextPage={Boolean(hasNextPage)}
                   isFetchingNextPage={isFetchingNextPage}

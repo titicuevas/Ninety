@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, SlidersHorizontal } from 'lucide-react';
-import { FilterChip } from '@/components/FilterChip';
+import { FilterChip, filterChipRowClass } from '@/components/FilterChip';
 import { Button } from '@/components/ui/button';
 import { FEED_COMPETITION_CHIPS } from '@/lib/feedParams';
 import { cn } from '@/lib/utils';
@@ -83,7 +83,7 @@ export function FeedContentFiltersBar({
 
       {chipsVisible ? (
         <div id="feed-content-filter-chips" className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrar por fotos">
+          <div className={filterChipRowClass} role="group" aria-label="Filtrar por fotos">
             <FilterChip active={!photosOnly} onClick={() => onPhotosOnlyChange(false)}>
               Todas
             </FilterChip>
@@ -92,7 +92,7 @@ export function FeedContentFiltersBar({
             </FilterChip>
           </div>
 
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por competición">
+          <div className={filterChipRowClass} role="group" aria-label="Filtrar por competición">
             <FilterChip active={!competition} onClick={() => onCompetitionChange('')}>
               Todas las competiciones
             </FilterChip>

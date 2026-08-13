@@ -48,7 +48,7 @@ export function CapsuleListSkeleton({
   return (
     <div className={cn('space-y-3', className)} role="status" aria-label="Preparando el diario…">
       <NinetyLoader variant="inline" />
-      <ul className="space-y-3" aria-hidden>
+      <ul className="grid grid-cols-1 gap-3 md:grid-cols-2" aria-hidden>
         {Array.from({ length: count }, (_, i) => (
           <li key={i}>
             <CapsuleCardSkeleton withAuthor={withAuthor} />

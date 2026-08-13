@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { CalendarDays, Library, Pencil, Trash2 } from 'lucide-react';
 import { AddToCollectionButton } from '@/components/AddToCollectionButton';
 import { CapsuleDiaryFilters } from '@/components/CapsuleDiaryFilters';
-import { CapsuleListCard } from '@/components/CapsuleListCard';
+import { CapsuleListCard, capsuleCardListClass } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { CapsuleListSkeleton } from '@/components/ListSkeletons';
@@ -128,7 +128,7 @@ export function CapsulesPage() {
 
   return (
     <Layout>
-      <div className="space-y-8">
+      <div className="space-y-5 sm:space-y-8">
         <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Mis Capsules</h1>
@@ -145,17 +145,17 @@ export function CapsulesPage() {
               ) : null}
             </p>
           </div>
-          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-            <Button asChild variant="secondary">
+          <div className="flex shrink-0 items-center gap-2">
+            <Button asChild variant="secondary" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
               <Link to="/diary/calendar">
-                <CalendarDays className="mr-1.5 h-4 w-4" aria-hidden />
-                Calendario
+                <CalendarDays className="h-4 w-4" aria-hidden />
+                <span className="sr-only sm:not-sr-only sm:ml-1.5">Calendario</span>
               </Link>
             </Button>
-            <Button asChild variant="secondary">
+            <Button asChild variant="secondary" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
               <Link to="/collections">
-                <Library className="mr-1.5 h-4 w-4" aria-hidden />
-                Colecciones
+                <Library className="h-4 w-4" aria-hidden />
+                <span className="sr-only sm:not-sr-only sm:ml-1.5">Colecciones</span>
               </Link>
             </Button>
             <Button asChild>
@@ -217,7 +217,7 @@ export function CapsulesPage() {
 
         {!isLoading && !isError && capsules.length > 0 ? (
           <div className="space-y-4">
-            <ul className="space-y-3">
+            <ul className={capsuleCardListClass}>
               {capsules.map((capsule) => (
                 <li key={capsule.id}>
                   <CapsuleCard capsule={capsule} onDelete={handleDelete} />

@@ -10,6 +10,9 @@ import { formatCapsuleScore, formatWatchedDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { Capsule } from '@/types/capsule';
 
+/** Lista de Capsules: 1 col en móvil, 2 en tablet/desktop. */
+export const capsuleCardListClass = 'grid grid-cols-1 gap-3 md:grid-cols-2';
+
 type CapsuleListCardProps = {
   capsule: Capsule;
   header?: ReactNode;

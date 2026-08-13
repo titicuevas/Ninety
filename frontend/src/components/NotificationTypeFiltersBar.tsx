@@ -1,4 +1,4 @@
-import { FilterChip } from '@/components/FilterChip';
+import { FilterChip, filterChipRowClass } from '@/components/FilterChip';
 import { Button } from '@/components/ui/button';
 import {
   NOTIFICATION_TYPE_FILTER_CHIPS,
@@ -19,7 +19,7 @@ export function NotificationTypeFiltersBar({
 }: NotificationTypeFiltersBarProps) {
   return (
     <section className="space-y-3" aria-label="Filtros de alertas" data-testid="notification-type-filters">
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por tipo">
+      <div className={filterChipRowClass} role="group" aria-label="Filtrar por tipo">
         {NOTIFICATION_TYPE_FILTER_CHIPS.map((chip) => {
           const active = type === chip.value;
           return (

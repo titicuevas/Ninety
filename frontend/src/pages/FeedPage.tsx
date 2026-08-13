@@ -1,7 +1,7 @@
 import { Activity, Compass, Library, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
-import { CapsuleListCard } from '@/components/CapsuleListCard';
+import { CapsuleListCard, capsuleCardListClass } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { FeedContentFiltersBar } from '@/components/FeedContentFiltersBar';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
@@ -145,7 +145,7 @@ function ScopeTabs({
   onChange: (next: FeedScope) => void;
 }) {
   return (
-    <div className="flex gap-2" role="tablist" aria-label="Alcance del feed">
+    <div className="flex shrink-0 gap-2" role="tablist" aria-label="Alcance del feed">
       {(
         [
           ['following', 'Siguiendo'],
@@ -174,7 +174,7 @@ function ScopeTabs({
 
 function SortTabs({ sort, onChange }: { sort: FeedSort; onChange: (next: FeedSort) => void }) {
   return (
-    <div className="flex gap-2" role="tablist" aria-label="Orden del feed">
+    <div className="flex shrink-0 gap-2" role="tablist" aria-label="Orden del feed">
       {(
         [
           ['recent', 'Recientes'],
@@ -249,15 +249,15 @@ export function FeedPage() {
 
   return (
     <Layout>
-      <div className="space-y-8">
+      <div className="space-y-5 sm:space-y-8">
         <section className="space-y-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Feed</h1>
             <p className="mt-1 text-sm text-muted-foreground sm:text-base">{subtitle}</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-nowrap items-center gap-2 overflow-x-auto overscroll-x-contain pb-0.5 sm:flex-wrap sm:overflow-visible">
             <ScopeTabs scope={scope} onChange={setScope} />
-            <Button asChild variant="outline" size="sm" className="rounded-full">
+            <Button asChild variant="outline" size="sm" className="shrink-0 rounded-full">
               <Link to="/activity">
                 <Activity className="mr-1.5 h-3.5 w-3.5" aria-hidden />
                 Actividad
@@ -404,7 +404,7 @@ export function FeedPage() {
 
         {!isLoading && !isError && capsules.length > 0 ? (
           <div className="space-y-4">
-            <ul className="space-y-3">
+            <ul className={capsuleCardListClass}>
               {capsules.map((capsule) => (
                 <li key={capsule.id}>
                   <FeedCapsuleCard capsule={capsule} currentUserId={user?.id} />

@@ -13,8 +13,6 @@ type NavItem = {
   label: string;
   icon: LucideIcon;
   end?: boolean;
-  /** Solo tab bar móvil (desktop usa campana en header). */
-  mobileOnly?: boolean;
   /** Activo en cualquier ruta bajo `to` (p. ej. /collections/*). */
   section?: boolean;
 };
@@ -25,7 +23,6 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/search', label: 'Buscar', icon: Search },
   { to: '/capsules', label: 'Capsules', icon: Ticket },
   { to: '/collections', label: 'Listas', icon: Library, section: true },
-  { to: '/notifications', label: 'Alertas', icon: Bell, mobileOnly: true },
   { to: '/profile', label: 'Perfil', icon: User },
 ];
 
@@ -78,32 +75,15 @@ function NotificationBell({ className }: { className?: string }) {
   );
 }
 
-function MobileNavIcon({
-  icon: Icon,
-  isActive,
-  badge,
-}: {
-  icon: LucideIcon;
-  isActive: boolean;
-  badge?: number;
-}) {
+function MobileNavIcon({ icon: Icon, isActive }: { icon: LucideIcon; isActive: boolean }) {
   return (
-    <span className="relative inline-flex">
-      <Icon className={cn('h-5 w-5 sm:h-6 sm:w-6', isActive && 'scale-105')} aria-hidden />
-      {badge != null && badge > 0 ? (
-        <span className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
-          {badge > 9 ? '9+' : badge}
-        </span>
-      ) : null}
-    </span>
+    <Icon className={cn('h-5 w-5 sm:h-6 sm:w-6', isActive && 'scale-105')} aria-hidden />
   );
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { signOut } = useAuth();
-  const unread = useUnreadCount();
   const { pathname } = useLocation();
-  const desktopItems = NAV_ITEMS.filter((item) => !item.mobileOnly);
 
   return (
     <div className="app-shell min-h-dvh">
@@ -122,7 +102,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Link>
 
           <nav className="hidden items-center gap-1 lg:flex" aria-label="Navegación principal">
-            {desktopItems.map((item) => (
+            {NAV_ITEMS.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
@@ -146,7 +126,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </button>
           </nav>
 
-          <div className="flex items-center gap-1 lg:hidden">
+          <div className="flex items-center gap-0.5 lg:hidden">
+            <NotificationBell className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
             <button
               type="button"
               onClick={() => signOut()}
@@ -184,22 +165,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 className={({ isActive }) =>
                   mobileTabClass(navItemActive(pathname, item, isActive))
                 }
-                aria-label={
-                  item.to === '/notifications' && unread > 0
-                    ? `Alertas (${unread} sin leer)`
-                    : undefined
-                }
               >
                 {({ isActive }) => {
                   const active = navItemActive(pathname, item, isActive);
                   return (
                     <>
-                      <MobileNavIcon
-                        icon={item.icon}
-                        isActive={active}
-                        badge={item.to === '/notifications' ? unread : undefined}
-                      />
-                      <span>{item.label}</span>
+                      <MobileNavIcon icon={item.icon} isActive={active} />
+                      <span className="sr-only sm:not-sr-only sm:max-w-[4.75rem] sm:truncate">
+                        {item.label}
+                      </span>
                       {active ? <span className="sr-only">(página actual)</span> : null}
                     </>
                   );

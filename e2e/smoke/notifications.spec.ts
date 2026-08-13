@@ -5,8 +5,7 @@ test.describe('Smoke — notificaciones @smoke', () => {
   test('página de notificaciones accesible desde la campanita o tab Alertas', async ({ page }) => {
     await openAuthenticatedHome(page);
 
-    const nav = page.getByRole('navigation', { name: /navegación principal/i });
-    const entry = nav.getByRole('link', { name: /notificaciones|alertas/i }).first();
+    const entry = page.getByRole('banner').getByRole('link', { name: /notificaciones/i });
     await expect(entry).toBeVisible({ timeout: 10_000 });
     await entry.click();
 

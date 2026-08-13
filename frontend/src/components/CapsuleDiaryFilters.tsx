@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, SlidersHorizontal, X } from 'lucide-react';
-import { FilterChip } from '@/components/FilterChip';
+import { FilterChip, filterChipRowClass } from '@/components/FilterChip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { DiaryVisibility } from '@/lib/diaryFilters';
@@ -166,7 +166,7 @@ export function CapsuleDiaryFilters({
       {chipsVisible ? (
         <div id="diary-filter-chips" className="space-y-3">
           {years.length > 0 ? (
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por año">
+            <div className={filterChipRowClass} role="group" aria-label="Filtrar por año">
               <FilterChip active={year == null} onClick={() => patchParams({ year: null })}>
                 Todos los años
               </FilterChip>
@@ -182,7 +182,7 @@ export function CapsuleDiaryFilters({
             </div>
           ) : null}
 
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por valoración">
+          <div className={filterChipRowClass} role="group" aria-label="Filtrar por valoración">
             <FilterChip active={ratingMin == null} onClick={() => patchParams({ rating: null })}>
               Cualquier ★
             </FilterChip>
@@ -198,7 +198,7 @@ export function CapsuleDiaryFilters({
           </div>
 
           {showVisibility ? (
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por visibilidad">
+            <div className={filterChipRowClass} role="group" aria-label="Filtrar por visibilidad">
               {(
                 [
                   ['all', 'Todas'],
@@ -217,7 +217,7 @@ export function CapsuleDiaryFilters({
             </div>
           ) : null}
 
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por contexto">
+          <div className={filterChipRowClass} role="group" aria-label="Filtrar por contexto">
             <FilterChip active={watchContext == null} onClick={() => patchParams({ context: null })}>
               Cualquier lugar
             </FilterChip>
@@ -235,7 +235,7 @@ export function CapsuleDiaryFilters({
           </div>
 
           {availableTags.length > 0 ? (
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por etiqueta">
+            <div className={filterChipRowClass} role="group" aria-label="Filtrar por etiqueta">
               <FilterChip active={tag == null} onClick={() => patchParams({ tag: null })}>
                 Cualquier etiqueta
               </FilterChip>
