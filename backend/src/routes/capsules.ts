@@ -55,6 +55,7 @@ import {
   resolveCalendarMonth,
 } from '../lib/diaryCalendar.js';
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
+import { clearWantToGoAfterCapsule } from '../lib/wantToGo.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
 export const capsulesRouter = Router();
@@ -1890,6 +1891,8 @@ capsulesRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
     res.status(400).json({ error: error.message });
     return;
   }
+
+  void clearWantToGoAfterCapsule(req.userId!, parsed.data.match_id);
 
   res.status(201).json(data);
 });

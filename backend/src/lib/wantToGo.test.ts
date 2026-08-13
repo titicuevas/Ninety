@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  clearWantToGoAfterCapsule,
   isMissingWantToGoTable,
   normalizeMatchPlayedAt,
   normalizeOptionalScore,
@@ -89,5 +90,10 @@ describe('wantToGo helpers', () => {
       true,
     );
     assert.equal(isMissingWantToGoTable({ code: '23505', message: 'duplicate key' }), false);
+  });
+
+  it('clearWantToGoAfterCapsule no lanza con match o user inválido', async () => {
+    assert.equal(await clearWantToGoAfterCapsule('user-1', Number.NaN), false);
+    assert.equal(await clearWantToGoAfterCapsule('', 123), false);
   });
 });

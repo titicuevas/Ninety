@@ -86,6 +86,7 @@ export function useCreateCapsule() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['capsules', 'me'] });
       void queryClient.invalidateQueries({ queryKey: ['capsules', 'feed'] });
+      void queryClient.invalidateQueries({ queryKey: ['want-to-go'] });
       toast.success('Capsule guardada');
     },
     onError: (err) => {

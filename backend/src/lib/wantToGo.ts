@@ -332,3 +332,19 @@ export async function removeWantToGoMatch(userId: string, matchId: number): Prom
 
   return !!data;
 }
+
+/**
+ * Tras crear una Capsule: quita el partido de Quiero ir si estaba.
+ * Best-effort — nunca debe fallar el create.
+ */
+export async function clearWantToGoAfterCapsule(
+  userId: string,
+  matchId: number,
+): Promise<boolean> {
+  if (!userId || !isValidCapsuleMatchId(matchId)) return false;
+  try {
+    return await removeWantToGoMatch(userId, matchId);
+  } catch {
+    return false;
+  }
+}
