@@ -9,7 +9,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useFollowActivity } from '@/hooks/useFollowActivity';
-import { feedPath } from '@/lib/feedParams';
 import { formatRelativeTime } from '@/lib/format';
 import { publicProfilePath } from '@/lib/profilePath';
 import type { FollowActivityEvent } from '@/types/activity';
@@ -203,11 +202,7 @@ export function ActivityPage() {
               <Button asChild size="sm">
                 <Link to="/search?tab=people">Buscar aficionados</Link>
               </Button>
-            ) : (
-              <Button asChild variant="secondary" size="sm">
-                <Link to={feedPath()}>Ver feed de Capsules</Link>
-              </Button>
-            )}
+            ) : null}
           </EmptyState>
         ) : null}
 

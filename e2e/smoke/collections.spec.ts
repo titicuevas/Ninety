@@ -25,35 +25,19 @@ test.describe('Smoke — colecciones @smoke', () => {
     await expect(page).toHaveURL(/\/collections$/);
   });
 
-  test('Mis Capsules enlaza a Colecciones y se puede crear una lista', async ({ page }) => {
+  test('Se puede crear una lista desde Mis listas', async ({ page }) => {
     await openAuthenticatedHome(page);
 
     await page
       .getByRole('navigation', { name: /navegación principal/i })
-      .getByRole('link', { name: /capsules/i })
+      .getByRole('link', { name: /listas/i })
       .first()
       .click();
-    await expect(page).toHaveURL(/\/capsules/);
-    await expect(page.getByRole('heading', { name: /mis capsules/i })).toBeVisible({
-      timeout: 20_000,
-    });
-
-    await page.getByRole('link', { name: /^colecciones$/i }).click();
-    await expect(page).toHaveURL(/\/collections/);
+    await expect(page).toHaveURL(/\/collections$/);
     await expect(page.getByRole('heading', { name: /^mis listas$/i })).toBeVisible({
       timeout: 20_000,
     });
     await expect(page.locator('#main-content')).toBeVisible();
-
-    const collectionsNav = page.getByRole('navigation', { name: /^colecciones$/i });
-    await collectionsNav.getByRole('link', { name: /^explorar$/i }).click();
-    await expect(page).toHaveURL(/\/collections\/explore/);
-    await expect(page.getByRole('heading', { name: /explorar colecciones/i })).toBeVisible({
-      timeout: 20_000,
-    });
-
-    await collectionsNav.getByRole('link', { name: /mis listas/i }).click();
-    await expect(page).toHaveURL(/\/collections$/);
 
     const uniqueName = `E2E ${Date.now()}`;
     const newBtn = page.getByRole('button', { name: /nueva colección|crear la primera/i }).first();

@@ -437,11 +437,6 @@ export function PublicProfilePage() {
                 </li>
               ))}
             </ul>
-            {isOwnProfile ? (
-              <Button asChild variant="secondary" size="sm">
-                <Link to="/collections">Gestionar colecciones</Link>
-              </Button>
-            ) : null}
           </section>
         ) : !isBlockedByMe && isOwnProfile ? (
           <section className="space-y-3" aria-labelledby="public-collections-empty-heading">

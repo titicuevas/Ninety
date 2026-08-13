@@ -353,9 +353,6 @@ export function NotificationsPage() {
             description="Cuando alguien te siga o le guste tu cápsula, aparecerá aquí."
           >
             <Button asChild>
-              <Link to="/feed">Ir al feed</Link>
-            </Button>
-            <Button asChild variant="secondary">
               <Link to="/search?tab=people">Buscar aficionados</Link>
             </Button>
           </EmptyState>

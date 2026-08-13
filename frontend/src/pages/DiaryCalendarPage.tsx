@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CalendarDays, ChevronLeft, ChevronRight, Ticket } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CapsuleListCard, capsuleCardListClass } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
@@ -92,24 +92,16 @@ export function DiaryCalendarPage() {
               públicas.
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-2 sm:flex-col sm:items-end">
-            {profile?.username ? (
-              <ShareDiaryMonthButton
-                username={profile.username}
-                year={year}
-                month={month}
-                publicTotal={publicTotal}
-                capsules={data?.capsules ?? []}
-                displayName={profile.display_name}
-              />
-            ) : null}
-            <Button asChild variant="secondary" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
-              <Link to="/capsules">
-                <Ticket className="h-4 w-4 sm:mr-1.5" aria-hidden />
-                <span className="sr-only sm:not-sr-only">Mis Capsules</span>
-              </Link>
-            </Button>
-          </div>
+          {profile?.username ? (
+            <ShareDiaryMonthButton
+              username={profile.username}
+              year={year}
+              month={month}
+              publicTotal={publicTotal}
+              capsules={data?.capsules ?? []}
+              displayName={profile.display_name}
+            />
+          ) : null}
         </section>
 
         <div className="flex items-center justify-between gap-3">
@@ -209,9 +201,6 @@ export function DiaryCalendarPage() {
               >
                 <Button asChild>
                   <Link to="/search">Buscar partido</Link>
-                </Button>
-                <Button asChild variant="secondary">
-                  <Link to="/capsules">Ver Mis Capsules</Link>
                 </Button>
               </EmptyState>
             ) : (
