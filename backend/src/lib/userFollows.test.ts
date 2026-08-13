@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { followRelationFlags } from './userFollows.js';
+import { FollowMutationError, followRelationFlags } from './userFollows.js';
 
 describe('followRelationFlags', () => {
   it('ambos false sin viewer o si es el mismo perfil', () => {
@@ -31,5 +31,13 @@ describe('followRelationFlags', () => {
       followRelationFlags('dave', 'alice', new Set(['dave']), new Set(['dave'])),
       { followed_by_me: true, follows_me: true },
     );
+  });
+});
+
+describe('FollowMutationError', () => {
+  it('conserva status HTTP', () => {
+    const err = new FollowMutationError('No puedes seguirte a ti mismo', 400);
+    assert.equal(err.status, 400);
+    assert.equal(err.message, 'No puedes seguirte a ti mismo');
   });
 });

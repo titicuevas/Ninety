@@ -172,6 +172,91 @@ export async function attachFollowStats<T extends { id: string }>(
   };
 }
 
+export class FollowMutationError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'FollowMutationError';
+    this.status = status;
+  }
+}
+
+/**
+ * Inserta follow con service role (auth ya validada en la ruta).
+ * Evita falsos fallos de RLS con createUserClient + JWT.
+ */
+export async function followUserById(
+  followerId: string,
+  followingId: string,
+): Promise<{ followed: true; already: boolean }> {
+  if (followerId === followingId) {
+    throw new FollowMutationError('No puedes seguirte a ti mismo', 400);
+  }
+
+  const { supabaseAdmin } = await import('./supabase.js');
+  if (!supabaseAdmin) {
+    throw new FollowMutationError(
+      'Función de seguir no disponible. Falta SUPABASE_SERVICE_ROLE_KEY.',
+      503,
+    );
+  }
+
+  const { error } = await supabaseAdmin.from('user_follows').insert({
+    follower_id: followerId,
+    following_id: followingId,
+  });
+
+  if (error) {
+    if (isMissingFollowsTable(error)) {
+      throw new FollowMutationError(
+        'Función de seguir no disponible. Ejecuta la migración user_follows.',
+        503,
+      );
+    }
+    if (error.code === '23505') {
+      return { followed: true, already: true };
+    }
+    throw new FollowMutationError(error.message, 400);
+  }
+
+  return { followed: true, already: false };
+}
+
+/**
+ * Borra follow con service role. Idempotente: si no había fila, success.
+ */
+export async function unfollowUserById(
+  followerId: string,
+  followingId: string,
+): Promise<{ followed: false }> {
+  const { supabaseAdmin } = await import('./supabase.js');
+  if (!supabaseAdmin) {
+    throw new FollowMutationError(
+      'Función de seguir no disponible. Falta SUPABASE_SERVICE_ROLE_KEY.',
+      503,
+    );
+  }
+
+  const { error } = await supabaseAdmin
+    .from('user_follows')
+    .delete()
+    .eq('follower_id', followerId)
+    .eq('following_id', followingId);
+
+  if (error) {
+    if (isMissingFollowsTable(error)) {
+      throw new FollowMutationError(
+        'Función de seguir no disponible. Ejecuta la migración user_follows.',
+        503,
+      );
+    }
+    throw new FollowMutationError(error.message, 400);
+  }
+
+  return { followed: false };
+}
+
 /** Lista de seguidores o seguidos, ordenada por fecha de follow (más reciente primero). */
 export async function listFollowProfiles(
   supabase: SupabaseClient,

@@ -30,10 +30,13 @@ import {
   teamSlugIlikePattern,
 } from '../lib/teamFans.js';
 import {
+  FollowMutationError,
   followRelationFlags,
+  followUserById,
   isMissingFollowsTable,
   listFollowProfiles,
   loadFollowRelationSets,
+  unfollowUserById,
   type FollowListKind,
 } from '../lib/userFollows.js';
 import {
@@ -848,91 +851,59 @@ profileRouter.get('/:username/following', optionalAuth, (req: AuthRequest, res) 
   void handleFollowList(req, res, 'following');
 });
 
-profileRouter.post('/:username/follow', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
-  if (!token) {
-    res.status(401).json({ error: 'Token requerido' });
-    return;
-  }
-
-  const username = routeUsername(req);
-  const target = await resolveProfileByUsername(username);
-  if (!target) {
-    res.status(404).json({ error: 'Usuario no encontrado' });
-    return;
-  }
-
-  if (target.id === req.userId) {
-    res.status(400).json({ error: 'No puedes seguirte a ti mismo' });
-    return;
-  }
-
-  const block = await getBlockRelation(req.userId!, target.id);
-  if (isBlockActive(block)) {
-    res.status(403).json({ error: 'No puedes seguir a este usuario' });
-    return;
-  }
-
-  const supabase = createUserClient(token);
-  const { error } = await supabase.from('user_follows').insert({
-    follower_id: req.userId!,
-    following_id: target.id,
-  });
-
-  if (error) {
-    if (isMissingFollowsTable(error)) {
-      res.status(503).json({ error: 'Función de seguir no disponible. Ejecuta la migración user_follows.' });
+profileRouter.post('/:username/follow', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const username = routeUsername(req);
+    const target = await resolveProfileByUsername(username);
+    if (!target) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
       return;
     }
-    if (error.code === '23505') {
-      res.status(409).json({ error: 'Ya sigues a este usuario' });
+
+    if (target.id === req.userId) {
+      res.status(400).json({ error: 'No puedes seguirte a ti mismo' });
       return;
     }
-    res.status(400).json({ error: error.message });
-    return;
-  }
 
-  notifyUser({ userId: target.id, actorId: req.userId!, type: 'follow' });
-  res.status(201).json({ followed: true });
+    const block = await getBlockRelation(req.userId!, target.id);
+    if (isBlockActive(block)) {
+      res.status(403).json({ error: 'No puedes seguir a este usuario' });
+      return;
+    }
+
+    const result = await followUserById(req.userId!, target.id);
+    if (!result.already) {
+      notifyUser({ userId: target.id, actorId: req.userId!, type: 'follow' });
+    }
+    res.status(result.already ? 200 : 201).json({ followed: true });
+  } catch (err) {
+    if (err instanceof FollowMutationError) {
+      res.status(err.status).json({ error: err.message });
+      return;
+    }
+    next(err);
+  }
 });
 
-profileRouter.delete('/:username/follow', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
-  if (!token) {
-    res.status(401).json({ error: 'Token requerido' });
-    return;
-  }
-
-  const username = routeUsername(req);
-  const target = await resolveProfileByUsername(username);
-  if (!target) {
-    res.status(404).json({ error: 'Usuario no encontrado' });
-    return;
-  }
-
-  const supabase = createUserClient(token);
-  const { data, error } = await supabase
-    .from('user_follows')
-    .delete()
-    .eq('follower_id', req.userId!)
-    .eq('following_id', target.id)
-    .select('follower_id');
-
-  if (error) {
-    if (isMissingFollowsTable(error)) {
-      res.status(503).json({ error: 'Función de seguir no disponible. Ejecuta la migración user_follows.' });
+profileRouter.delete('/:username/follow', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const username = routeUsername(req);
+    const target = await resolveProfileByUsername(username);
+    if (!target) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
       return;
     }
-    res.status(400).json({ error: error.message });
-    return;
-  }
 
-  if (!data?.length) {
-    res.status(404).json({ error: 'No seguías a este usuario' });
-    return;
+    // Idempotente: deja de seguir aunque la fila ya no exista (estado UI/cache desfasado).
+    const result = await unfollowUserById(req.userId!, target.id);
+    res.json(result);
+  } catch (err) {
+    if (err instanceof FollowMutationError) {
+      res.status(err.status).json({ error: err.message });
+      return;
+    }
+    next(err);
   }
-
-  res.json({ followed: false });
 });
 
 profileRouter.get('/:username', async (req, res) => {

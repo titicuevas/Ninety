@@ -158,7 +158,7 @@ export function useToggleFollow(username: string) {
         previousNotifications,
       };
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       context?.previousProfiles?.forEach(([key, data]) => {
         queryClient.setQueryData(key, data);
       });
@@ -174,7 +174,11 @@ export function useToggleFollow(username: string) {
       context?.previousNotifications?.forEach(([key, data]) => {
         queryClient.setQueryData(key, data);
       });
-      toast.error('No se pudo actualizar el seguimiento');
+      const message =
+        err instanceof Error && err.message.trim()
+          ? err.message
+          : 'No se pudo actualizar el seguimiento';
+      toast.error(message);
     },
     onSuccess: (_data, { followed }) => {
       // Feedback en el botón (Seguir ↔ Dejar de seguir); sin toast de éxito.
