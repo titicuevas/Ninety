@@ -3,9 +3,12 @@ import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { resolveCollectionCoverUrl } from '../lib/collectionCover.js';
 import {
+  assertValidCollectionReplyParent,
   canEngageCollectionComments,
+  collectionCommentRepliesMigrationHint,
   collectionCommentsMigrationHint,
   fetchCollectionCommentsWithAuthors,
+  isMissingCollectionCommentParentId,
   isMissingCollectionCommentsTable,
 } from '../lib/collectionComments.js';
 import {
@@ -102,6 +105,7 @@ const reorderItemsSchema = z.object({
 
 const commentBodySchema = z.object({
   body: z.string().trim().min(1).max(500),
+  parent_id: z.string().uuid().optional().nullable(),
 });
 
 const commentLimiter = rateLimit({
@@ -1531,15 +1535,64 @@ collectionsRouter.post('/:id/comments', requireAuth, commentLimiter, async (req:
     }
   }
 
-  const { data, error } = await supabase
+  const parentId = parsed.data.parent_id ?? null;
+
+  if (parentId) {
+    const { data: parent, error: parentError } = await supabase
+      .from('collection_comments')
+      .select('id, collection_id, user_id, parent_id')
+      .eq('id', parentId)
+      .maybeSingle();
+
+    if (parentError) {
+      if (isMissingCollectionCommentsTable(parentError)) {
+        res.status(503).json({ error: collectionCommentsMigrationHint() });
+        return;
+      }
+      if (isMissingCollectionCommentParentId(parentError)) {
+        res.status(503).json({ error: collectionCommentRepliesMigrationHint() });
+        return;
+      }
+      res.status(400).json({ error: parentError.message });
+      return;
+    }
+
+    const parentErr = assertValidCollectionReplyParent(parent, collection.id);
+    if (parentErr) {
+      res.status(parentErr.includes('no encontrado') ? 404 : 400).json({ error: parentErr });
+      return;
+    }
+  }
+
+  const insertRow: Record<string, unknown> = {
+    collection_id: collection.id,
+    user_id: req.userId!,
+    body: parsed.data.body,
+  };
+  if (parentId) insertRow.parent_id = parentId;
+
+  let { data, error } = await supabase
     .from('collection_comments')
-    .insert({
-      collection_id: collection.id,
-      user_id: req.userId!,
-      body: parsed.data.body,
-    })
-    .select('id, collection_id, user_id, body, created_at, edited_at')
+    .insert(insertRow)
+    .select('id, collection_id, user_id, body, created_at, edited_at, parent_id')
     .single();
+
+  if (error && parentId && isMissingCollectionCommentParentId(error)) {
+    res.status(503).json({ error: collectionCommentRepliesMigrationHint() });
+    return;
+  }
+
+  if (error && !parentId && isMissingCollectionCommentParentId(error)) {
+    ({ data, error } = await supabase
+      .from('collection_comments')
+      .insert({
+        collection_id: collection.id,
+        user_id: req.userId!,
+        body: parsed.data.body,
+      })
+      .select('id, collection_id, user_id, body, created_at, edited_at')
+      .single());
+  }
 
   if (error) {
     if (isMissingCollectionCommentsTable(error)) {
@@ -1558,7 +1611,8 @@ collectionsRouter.post('/:id/comments', requireAuth, commentLimiter, async (req:
 
   res.status(201).json({
     ...data,
-    edited_at: data.edited_at ?? null,
+    edited_at: (data as { edited_at?: string | null }).edited_at ?? null,
+    parent_id: (data as { parent_id?: string | null }).parent_id ?? parentId,
     author: profile
       ? {
           username: profile.username,

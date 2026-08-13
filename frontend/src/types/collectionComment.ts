@@ -5,6 +5,8 @@ export interface CollectionComment {
   body: string;
   created_at: string;
   edited_at: string | null;
+  /** null = comentario raíz; uuid = respuesta (máx. 1 nivel). */
+  parent_id: string | null;
   author: {
     username: string | null;
     display_name: string | null;

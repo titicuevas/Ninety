@@ -24,10 +24,16 @@ export function useAddCollectionComment(collectionId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: string) =>
+    mutationFn: ({ body, parentId }: { body: string; parentId?: string | null }) =>
       apiFetch<CollectionComment>(
         `/api/collections/${collectionId}/comments`,
-        { method: 'POST', body: JSON.stringify({ body }) },
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            body,
+            ...(parentId ? { parent_id: parentId } : {}),
+          }),
+        },
         session?.access_token,
       ),
     onSuccess: () => {

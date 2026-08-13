@@ -19,15 +19,19 @@ export interface CapsuleCommentsResponse {
   comments: CapsuleComment[];
 }
 
-export interface CommentThread {
-  root: CapsuleComment;
-  replies: CapsuleComment[];
+export interface CommentThread<
+  T extends { id: string; parent_id: string | null; created_at: string } = CapsuleComment,
+> {
+  root: T;
+  replies: T[];
 }
 
 /** Agrupa lista plana en hilos de 1 nivel (respuestas a raíces). */
-export function buildCommentThreads(comments: CapsuleComment[]): CommentThread[] {
-  const roots: CapsuleComment[] = [];
-  const repliesByParent = new Map<string, CapsuleComment[]>();
+export function buildCommentThreads<
+  T extends { id: string; parent_id: string | null; created_at: string },
+>(comments: T[]): CommentThread<T>[] {
+  const roots: T[] = [];
+  const repliesByParent = new Map<string, T[]>();
 
   for (const comment of comments) {
     const parentId = comment.parent_id ?? null;
@@ -55,6 +59,8 @@ export function buildCommentThreads(comments: CapsuleComment[]): CommentThread[]
 
   return roots.map((root) => ({
     root,
-    replies: (repliesByParent.get(root.id) ?? []).slice().sort((a, b) => a.created_at.localeCompare(b.created_at)),
+    replies: (repliesByParent.get(root.id) ?? [])
+      .slice()
+      .sort((a, b) => a.created_at.localeCompare(b.created_at)),
   }));
 }
