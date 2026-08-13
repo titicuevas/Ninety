@@ -507,6 +507,7 @@ Ninety/
 
 ### 🚧 v13 — Descubrimiento & ritmo diario
 - [x] Feed de actividad de follows — timeline ligera aparte del feed de Capsules (`GET /api/activity` + `/activity`; nuevas Capsules/colecciones públicas de gente que sigues; respeta blocks; paginación `limit`/`offset`)
+- [x] Guardar búsqueda / filtros del diario — recordar último tag/filtro en Mis Capsules (`localStorage` `ninety.diaryFilters:v1:` + query sticky vía `useDiaryFilterParams({ persist: true })`)
 - [x] Soft nudge «completa tu Capsule» — si hay rating sin nota/fotos, card discreta en Home (on-device; `ninety.incompleteCapsule:v1:`; sin backend)
 - [x] Notificación de like en colección — opt-in reutilizando prefs de likes (`collection_like` + `collection_id`; migración `20250827120000_notification_collection_likes.sql`; in-app + digest push)
 - [ ] Estadio favorito / mapa enriquecido — destacar estadios más visitados con deep link al diario/mapa
