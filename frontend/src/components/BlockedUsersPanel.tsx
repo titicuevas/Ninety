@@ -29,8 +29,7 @@ export function BlockedUsersPanel({ className }: Props) {
           Usuarios bloqueados
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          No verás su perfil ni Capsules en el feed. Ellos tampoco verán el tuyo. Más fuerte que
-          silenciar alertas.
+          No verás su perfil ni Capsules. Ellos tampoco verán el tuyo.
         </p>
       </div>
 

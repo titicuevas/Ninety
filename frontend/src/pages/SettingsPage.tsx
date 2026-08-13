@@ -3,7 +3,7 @@ import { useId, useRef, useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Bell, Download, LogOut, Settings, Upload } from 'lucide-react';
+import { Download, LogOut, Settings, Upload } from 'lucide-react';
 import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
 import { FormAlert, FormSuccess } from '@/components/FormAlert';
 import { Layout } from '@/components/Layout';
@@ -19,7 +19,6 @@ import { MutedUsersPanel } from '@/components/MutedUsersPanel';
 import { BlockedUsersPanel } from '@/components/BlockedUsersPanel';
 import { PushAlertsPanel } from '@/components/PushAlertsPanel';
 import { InstallAppPanel } from '@/components/InstallAppPanel';
-import { ShareInviteButton } from '@/components/ShareInviteButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField } from '@/components/ui/form-field';
@@ -28,10 +27,7 @@ import { Modal } from '@/components/ui/modal';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useDirtyLeave } from '@/hooks/useDirtyLeave';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { useProfile } from '@/hooks/useProfile';
 import { apiFetch } from '@/lib/api';
-import { inviteUrl } from '@/lib/inviteReferral';
-import { isAutoUsername } from '@/lib/profileHelpers';
 import { passwordConfirmSchema, type PasswordConfirmForm } from '@/lib/authSchemas';
 import { downloadCollectionsExport } from '@/lib/collectionsExport';
 import { readCollectionsImportFile, uploadCollectionsImport } from '@/lib/collectionsImport';
@@ -49,7 +45,6 @@ export function SettingsPage() {
   const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
   const session = useAuthStore((s) => s.session);
-  const { data: profile } = useProfile();
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [signOutBusy, setSignOutBusy] = useState(false);
@@ -234,7 +229,7 @@ export function SettingsPage() {
 
   return (
     <Layout>
-      <div className="mx-auto max-w-lg space-y-6">
+      <div className="mx-auto max-w-lg space-y-5">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
             <Settings className="h-6 w-6 text-primary" aria-hidden />
@@ -246,23 +241,12 @@ export function SettingsPage() {
         <Card className="border-border">
           <CardHeader>
             <CardTitle className="text-base">Cuenta</CardTitle>
-            <CardDescription>Email de acceso (no editable aquí)</CardDescription>
+            <CardDescription>Email de acceso y contraseña</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             <FormField label="Email">
               <Input type="email" value={user?.email ?? ''} readOnly disabled />
             </FormField>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="text-base">Cambiar contraseña</CardTitle>
-            <CardDescription>
-              Si entraste con Google, configura una contraseña solo si usas email.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
             <form onSubmit={handleSubmit((d) => void onChangePassword(d))} className="space-y-4">
               <FormField label="Nueva contraseña" error={errors.password?.message}>
                 <PasswordField
@@ -290,43 +274,8 @@ export function SettingsPage() {
 
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="text-base">Invitar a Ninety</CardTitle>
-            <CardDescription>
-              Comparte tu enlace. Quien se registre desde él quedará atribuido a tu invitación.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {profile?.username && !isAutoUsername(profile.username) ? (
-              <>
-                <p className="break-all rounded-md border border-border bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
-                  {inviteUrl(profile.username)}
-                </p>
-                <ShareInviteButton
-                  username={profile.username}
-                  displayName={profile.display_name}
-                  size="default"
-                  variant="default"
-                />
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Elige un username en{' '}
-                <Link to="/profile" className="text-primary hover:underline">
-                  Perfil
-                </Link>{' '}
-                para generar tu enlace de invitación.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border-border">
-          <CardHeader>
             <CardTitle className="text-base">Notificaciones</CardTitle>
-            <CardDescription>
-              Push del dispositivo, horario silencioso, silenciado por tipo y por usuario, y resumen
-              semanal por email (opt-in). El historial vive en el centro de alertas.
-            </CardDescription>
+            <CardDescription>Push, silenciado y resúmenes. El historial está en la campana.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <PushAlertsPanel variant="card" />
@@ -338,163 +287,157 @@ export function SettingsPage() {
             <WantToGoPushPrefsPanel />
             <DiaryAnniversaryPrefsPanel />
             <DiaryMilestonePrefsPanel />
-            <Button asChild variant="secondary" className="w-full sm:w-auto">
-              <Link to="/notifications">
-                <Bell className="mr-2 h-4 w-4" aria-hidden />
-                Ver centro de alertas
-              </Link>
-            </Button>
           </CardContent>
         </Card>
 
         <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="text-base">Bloqueos</CardTitle>
-            <CardDescription>
-              Deja de ver el perfil y las Capsules de alguien. Más fuerte que silenciar alertas.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-5">
             <BlockedUsersPanel />
           </CardContent>
         </Card>
 
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="text-base">Exportar e importar diario</CardTitle>
+            <CardTitle className="text-base">Datos</CardTitle>
             <CardDescription>
-              Descarga tus Capsules en JSON o CSV, o restaura desde un export JSON. Solo tus datos;
-              sin contraseñas ni tokens. Las colecciones van en la sección de abajo. Las Capsules con
-              el mismo partido ya guardado se omiten. Opcionalmente puedes restaurar fotos desde las
-              URLs del export (solo http/https accesibles; máx. 9 por Capsule y 200 por import).
+              Backup GDPR de tu diario y listas. Sin contraseñas ni tokens.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <label className="flex items-start gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={importRestorePhotos}
-                onChange={(e) => setImportRestorePhotos(e.target.checked)}
-                disabled={portabilityBusy}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border-border"
-              />
-              <span>
-                Restaurar fotos desde URLs del export{' '}
-                <span className="text-muted-foreground">
-                  (re-sube imágenes remotas; URLs caducadas o privadas se omiten sin bloquear el
-                  import)
+          <CardContent className="space-y-6">
+            <section className="space-y-4" aria-labelledby="export-diary-heading">
+              <div>
+                <h2 id="export-diary-heading" className="text-sm font-medium">
+                  Exportar e importar diario
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  JSON o CSV. Las Capsules del mismo partido se omiten. Fotos opcionales desde URLs
+                  http/https (máx. 9 por Capsule, 200 por import).
+                </p>
+              </div>
+              <label className="flex items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={importRestorePhotos}
+                  onChange={(e) => setImportRestorePhotos(e.target.checked)}
+                  disabled={portabilityBusy}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-border"
+                />
+                <span>
+                  Restaurar fotos desde URLs del export{' '}
+                  <span className="text-muted-foreground">(las caducadas se omiten)</span>
                 </span>
-              </span>
-            </label>
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Button
-                type="button"
-                variant="secondary"
-                loading={exportBusy === 'json'}
-                disabled={portabilityBusy}
-                onClick={() => void onExport('json')}
-              >
-                <Download className="mr-2 h-4 w-4" aria-hidden />
-                Descargar JSON
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                loading={exportBusy === 'csv'}
-                disabled={portabilityBusy}
-                onClick={() => void onExport('csv')}
-              >
-                <Download className="mr-2 h-4 w-4" aria-hidden />
-                Descargar CSV
-              </Button>
-              <input
-                ref={importInputRef}
-                id={importInputId}
-                type="file"
-                accept="application/json,.json"
-                className="sr-only"
-                disabled={portabilityBusy}
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  void onImportFile(file);
-                }}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                loading={importBusy}
-                disabled={portabilityBusy}
-                onClick={() => importInputRef.current?.click()}
-              >
-                <Upload className="mr-2 h-4 w-4" aria-hidden />
-                Importar JSON
-              </Button>
-            </div>
-            {importError ? <FormAlert>{importError}</FormAlert> : null}
-            {importSuccess ? (
-              <div className="space-y-2">
-                <FormSuccess>{importSuccess}</FormSuccess>
-                <Button asChild variant="secondary" size="sm">
-                  <Link to="/home">Ver guía en Inicio</Link>
+              </label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  loading={exportBusy === 'json'}
+                  disabled={portabilityBusy}
+                  onClick={() => void onExport('json')}
+                >
+                  <Download className="mr-2 h-4 w-4" aria-hidden />
+                  Descargar JSON
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  loading={exportBusy === 'csv'}
+                  disabled={portabilityBusy}
+                  onClick={() => void onExport('csv')}
+                >
+                  <Download className="mr-2 h-4 w-4" aria-hidden />
+                  Descargar CSV
+                </Button>
+                <input
+                  ref={importInputRef}
+                  id={importInputId}
+                  type="file"
+                  accept="application/json,.json"
+                  className="sr-only"
+                  aria-label="Elegir archivo JSON del diario"
+                  disabled={portabilityBusy}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    void onImportFile(file);
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  loading={importBusy}
+                  disabled={portabilityBusy}
+                  onClick={() => importInputRef.current?.click()}
+                >
+                  <Upload className="mr-2 h-4 w-4" aria-hidden />
+                  Importar JSON
                 </Button>
               </div>
-            ) : null}
-          </CardContent>
-        </Card>
+              {importError ? <FormAlert>{importError}</FormAlert> : null}
+              {importSuccess ? (
+                <div className="space-y-2">
+                  <FormSuccess>{importSuccess}</FormSuccess>
+                  <Button asChild variant="secondary" size="sm">
+                    <Link to="/home">Ver guía en Inicio</Link>
+                  </Button>
+                </div>
+              ) : null}
+            </section>
 
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="text-base">Exportar e importar colecciones</CardTitle>
-            <CardDescription>
-              Backup GDPR de tus listas curadas (nombre, slug, orden y portada por partido). Los
-              ítems se enlazan por <span className="text-foreground">match_id</span>: importa antes
-              el diario si hace falta. Las colecciones con el mismo slug ya existentes se omiten.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Button
-                type="button"
-                variant="secondary"
-                loading={collectionsExportBusy}
-                disabled={portabilityBusy}
-                onClick={() => void onCollectionsExport()}
-              >
-                <Download className="mr-2 h-4 w-4" aria-hidden />
-                Descargar colecciones
-              </Button>
-              <input
-                ref={collectionsImportInputRef}
-                id={collectionsImportInputId}
-                type="file"
-                accept="application/json,.json"
-                className="sr-only"
-                disabled={portabilityBusy}
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  void onCollectionsImportFile(file);
-                }}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                loading={collectionsImportBusy}
-                disabled={portabilityBusy}
-                onClick={() => collectionsImportInputRef.current?.click()}
-              >
-                <Upload className="mr-2 h-4 w-4" aria-hidden />
-                Importar colecciones
-              </Button>
-            </div>
-            {collectionsImportError ? <FormAlert>{collectionsImportError}</FormAlert> : null}
-            {collectionsImportSuccess ? (
-              <div className="space-y-2">
-                <FormSuccess>{collectionsImportSuccess}</FormSuccess>
-                <Button asChild variant="secondary" size="sm">
-                  <Link to="/collections">Ver colecciones</Link>
+            <section className="space-y-4" aria-labelledby="export-collections-heading">
+              <div>
+                <h2 id="export-collections-heading" className="text-sm font-medium">
+                  Exportar e importar colecciones
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Listas por match_id. Importa antes el diario si hace falta. Slugs existentes se
+                  omiten.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  loading={collectionsExportBusy}
+                  disabled={portabilityBusy}
+                  onClick={() => void onCollectionsExport()}
+                >
+                  <Download className="mr-2 h-4 w-4" aria-hidden />
+                  Descargar colecciones
+                </Button>
+                <input
+                  ref={collectionsImportInputRef}
+                  id={collectionsImportInputId}
+                  type="file"
+                  accept="application/json,.json"
+                  className="sr-only"
+                  aria-label="Elegir archivo JSON de colecciones"
+                  disabled={portabilityBusy}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    void onCollectionsImportFile(file);
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  loading={collectionsImportBusy}
+                  disabled={portabilityBusy}
+                  onClick={() => collectionsImportInputRef.current?.click()}
+                >
+                  <Upload className="mr-2 h-4 w-4" aria-hidden />
+                  Importar colecciones
                 </Button>
               </div>
-            ) : null}
+              {collectionsImportError ? <FormAlert>{collectionsImportError}</FormAlert> : null}
+              {collectionsImportSuccess ? (
+                <div className="space-y-2">
+                  <FormSuccess>{collectionsImportSuccess}</FormSuccess>
+                  <Button asChild variant="secondary" size="sm">
+                    <Link to="/collections">Ver colecciones</Link>
+                  </Button>
+                </div>
+              ) : null}
+            </section>
           </CardContent>
         </Card>
 

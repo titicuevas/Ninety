@@ -22,7 +22,7 @@ type ReportContentButtonProps = {
   /** Solo para targetType=user: envía username al API (más legible en logs). */
   username?: string;
   className?: string;
-  size?: 'default' | 'compact';
+  size?: 'default' | 'compact' | 'icon';
 };
 
 export function ReportContentButton({
@@ -108,6 +108,7 @@ export function ReportContentButton({
           'disabled:pointer-events-none disabled:opacity-70',
           size === 'default' && 'min-h-11 w-full gap-2 px-4 py-2 sm:w-auto',
           size === 'compact' && 'whitespace-nowrap px-3 py-1.5',
+          size === 'icon' && 'h-9 w-9 p-0',
           reported
             ? 'border border-border bg-secondary text-muted-foreground'
             : 'border border-border bg-background text-muted-foreground hover:bg-secondary hover:text-foreground',
@@ -115,7 +116,7 @@ export function ReportContentButton({
         )}
       >
         <Flag className="h-4 w-4 shrink-0" aria-hidden="true" />
-        {label}
+        {size === 'icon' ? <span className="sr-only">{label}</span> : label}
       </button>
 
       <Modal open={open} title="Reportar" onClose={close}>

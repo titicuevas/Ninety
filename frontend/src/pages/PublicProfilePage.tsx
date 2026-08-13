@@ -31,7 +31,6 @@ import {
 } from '@/lib/achievements';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { isPublicProfileNotFound } from '@/lib/publicProfileError';
-import { publicProfileUrl } from '@/lib/siteUrl';
 import { teamPathFromFavorite } from '@/lib/teamPath';
 import type { Capsule } from '@/types/capsule';
 
@@ -177,13 +176,13 @@ export function PublicProfilePage() {
 
   return (
     <Shell>
-      <div className="space-y-8">
+      <div className="space-y-5 sm:space-y-8">
         <section className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
           {profile.avatar_url ? (
             <img
               src={profile.avatar_url}
               alt=""
-                  className="h-20 w-20 shrink-0 rounded-full border border-border bg-secondary object-contain p-1.5"
+              className="h-20 w-20 shrink-0 rounded-full border border-border bg-secondary object-contain p-1.5"
             />
           ) : (
             <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
@@ -251,24 +250,20 @@ export function PublicProfilePage() {
             ) : null}
           </div>
 
-          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-start">
+          <div className="flex w-full flex-wrap items-center justify-center gap-2 sm:w-auto sm:justify-start">
             {isOwnProfile ? (
-              <Button asChild variant="secondary" className="w-full sm:w-auto">
+              <Button asChild variant="secondary" size="sm">
                 <Link to="/profile">Editar perfil</Link>
               </Button>
             ) : profile.username && user ? (
               isBlockedByMe ? (
                 <>
-                  <BlockUserButton
-                    username={profile.username}
-                    blockedByMe
-                    className="w-full sm:w-auto"
-                  />
+                  <BlockUserButton username={profile.username} blockedByMe size="compact" />
                   <ReportContentButton
                     targetType="user"
                     targetId={profile.id}
                     username={profile.username}
-                    className="w-full sm:w-auto"
+                    size="icon"
                   />
                 </>
               ) : (
@@ -277,36 +272,36 @@ export function PublicProfilePage() {
                     username={profile.username}
                     followedByMe={profile.followed_by_me}
                     followsMe={profile.follows_me}
-                    className="w-full sm:w-auto"
+                    size="compact"
                   />
                   <MuteUserButton
                     username={profile.username}
                     mutedByMe={profile.muted_by_me}
-                    className="w-full sm:w-auto"
+                    size="icon"
                   />
                   <BlockUserButton
                     username={profile.username}
                     blockedByMe={profile.blocked_by_me}
-                    className="w-full sm:w-auto"
+                    size="icon"
                   />
                   <ReportContentButton
                     targetType="user"
                     targetId={profile.id}
                     username={profile.username}
-                    className="w-full sm:w-auto"
+                    size="icon"
                   />
                 </>
               )
             ) : profile.username ? (
-              <Button asChild className="w-full sm:w-auto">
+              <Button asChild size="sm">
                 <Link to={loginTo}>Inicia sesión para seguir</Link>
               </Button>
             ) : null}
             {!isOwnProfile && !isBlockedByMe && profile.username && !isAutoUsername(profile.username) ? (
-              <Button asChild variant="outline" className="w-full sm:w-auto">
+              <Button asChild variant="outline" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
                 <Link to={`/u/${encodeURIComponent(profile.username)}/vs`}>
-                  <Swords className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                  Cara a cara
+                  <Swords className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
+                  <span className="sr-only sm:not-sr-only">Cara a cara</span>
                 </Link>
               </Button>
             ) : null}
@@ -314,7 +309,7 @@ export function PublicProfilePage() {
               <ShareProfileButton
                 username={profile.username}
                 displayName={displayName}
-                className="w-full sm:w-auto"
+                compact
               />
             ) : null}
           </div>
@@ -345,18 +340,13 @@ export function PublicProfilePage() {
 
         {!isBlockedByMe && featuredCollection && profile?.username ? (
           <section className="space-y-3" aria-labelledby="featured-collection-heading">
-            <div>
-              <h2
-                id="featured-collection-heading"
-                className="flex items-center gap-2 text-lg font-semibold"
-              >
-                <Library className="h-5 w-5 text-primary" aria-hidden />
-                Colección destacada
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Lista pública pinneada en el perfil.
-              </p>
-            </div>
+            <h2
+              id="featured-collection-heading"
+              className="flex items-center gap-2 text-lg font-semibold"
+            >
+              <Library className="h-5 w-5 text-primary" aria-hidden />
+              Colección destacada
+            </h2>
             <Link
               to={`/u/${encodeURIComponent(profile.username)}/lists/${encodeURIComponent(featuredCollection.slug)}`}
               className="flex items-center gap-3 rounded-xl border border-primary/40 bg-card/50 px-3 py-3 transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -393,18 +383,13 @@ export function PublicProfilePage() {
 
         {!isBlockedByMe && (collectionsData?.collections.length ?? 0) > 0 ? (
           <section className="space-y-3" aria-labelledby="public-collections-heading">
-            <div>
-              <h2
-                id="public-collections-heading"
-                className="flex items-center gap-2 text-lg font-semibold"
-              >
-                <Library className="h-5 w-5 text-primary" aria-hidden />
-                Colecciones
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Listas curadas del diario — clásicos, viajes, noches grandes.
-              </p>
-            </div>
+            <h2
+              id="public-collections-heading"
+              className="flex items-center gap-2 text-lg font-semibold"
+            >
+              <Library className="h-5 w-5 text-primary" aria-hidden />
+              Colecciones
+            </h2>
             <ul className="grid gap-2 sm:grid-cols-2">
               {collectionsData!.collections.map((col) => (
                 <li key={col.id}>
@@ -440,18 +425,13 @@ export function PublicProfilePage() {
           </section>
         ) : !isBlockedByMe && isOwnProfile ? (
           <section className="space-y-3" aria-labelledby="public-collections-empty-heading">
-            <div>
-              <h2
-                id="public-collections-empty-heading"
-                className="flex items-center gap-2 text-lg font-semibold"
-              >
-                <Library className="h-5 w-5 text-primary" aria-hidden />
-                Colecciones
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Agrupa Capsules en listas compartibles (estilo Letterboxd) y enlázalas desde tu perfil.
-              </p>
-            </div>
+            <h2
+              id="public-collections-empty-heading"
+              className="flex items-center gap-2 text-lg font-semibold"
+            >
+              <Library className="h-5 w-5 text-primary" aria-hidden />
+              Colecciones
+            </h2>
             <Button asChild variant="secondary" size="sm">
               <Link to="/collections">
                 <Library className="mr-1.5 h-3.5 w-3.5" aria-hidden />
@@ -538,15 +518,6 @@ export function PublicProfilePage() {
               </Button>
             ) : null}
           </EmptyState>
-        ) : null}
-
-        {!isBlockedByMe && profile.username ? (
-          <p className="text-center text-xs text-muted-foreground">
-            Perfil público ·{' '}
-            <a href={publicProfileUrl(profile.username)} className="text-primary hover:underline">
-              {publicProfileUrl(profile.username).replace(/^https?:\/\//, '')}
-            </a>
-          </p>
         ) : null}
       </div>
     </Shell>

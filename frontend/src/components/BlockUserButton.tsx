@@ -8,7 +8,7 @@ interface BlockUserButtonProps {
   username: string;
   blockedByMe?: boolean;
   className?: string;
-  size?: 'default' | 'compact';
+  size?: 'default' | 'compact' | 'icon';
 }
 
 export function BlockUserButton({
@@ -59,6 +59,7 @@ export function BlockUserButton({
         'disabled:pointer-events-none disabled:opacity-70',
         size === 'default' && 'min-h-11 w-full gap-2 px-4 py-2 sm:w-auto',
         size === 'compact' && 'whitespace-nowrap px-3 py-1.5',
+        size === 'icon' && 'h-9 w-9 p-0',
         showUnblockChrome
           ? 'border border-border bg-secondary text-foreground hover:border-primary/40 hover:bg-primary/10 hover:text-primary'
           : 'border border-destructive/40 bg-background text-destructive hover:bg-destructive/10',
@@ -70,7 +71,7 @@ export function BlockUserButton({
       ) : (
         <Ban className="h-4 w-4 shrink-0" aria-hidden="true" />
       )}
-      {label}
+      {size === 'icon' ? <span className="sr-only">{label}</span> : label}
     </button>
   );
 }

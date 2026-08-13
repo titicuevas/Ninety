@@ -130,8 +130,7 @@ test.describe('Smoke — notificaciones @smoke', () => {
 
     const panel = page.getByTestId('push-alerts-panel');
     await expect(panel).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('link', { name: /ver centro de alertas/i })).toBeVisible();
-    await page.getByRole('link', { name: /ver centro de alertas/i }).click();
+    await page.getByRole('banner').getByRole('link', { name: /notificaciones/i }).click();
     await expect(page).toHaveURL(/\/notifications/);
     await expect(page.getByTestId('push-alerts-panel')).toBeVisible();
   });
