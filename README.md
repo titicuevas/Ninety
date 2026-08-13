@@ -210,6 +210,16 @@ npm run seed:demo
 
 Crea 5 capsules con fotos de prueba para el usuario demo.
 
+### 2b. Aficionados de prueba (descubrir / seguir)
+
+Sin necesidad de tener la API en marcha:
+
+```bash
+npm run seed:fans
+```
+
+Crea **24 usuarios** (`fan01@ninety.app` … `fan24@ninety.app`) con perfil, 1–4 partidos públicos y red de follows (incluye enlaces con `@aficionado_demo` si ya existe). Comparten la contraseña de `DEMO_FANS_PASSWORD` o, si no está definida, `TEST_USER_PASSWORD` en `backend/.env`.
+
 ### 3. Tests automatizados (pirámide QE)
 
 ```bash

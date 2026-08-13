@@ -14,6 +14,7 @@
     "vapid:set-railway": "node scripts/set-railway-vapid.mjs",
     "seed:test-user": "node scripts/seed-test-user.mjs",
     "seed:demo": "npm run generate:test-photos --prefix backend && npm run seed:demo --prefix backend",
+    "seed:fans": "npm run seed:fans --prefix backend",
     "doctor": "react-doctor frontend --verbose",
     "smoke:v1": "npm run smoke:v1 --prefix backend",
     "demo:flow": "npm run demo:flow --prefix backend",
