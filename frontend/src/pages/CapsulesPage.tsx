@@ -79,7 +79,7 @@ export function CapsulesPage() {
     hasFilters,
     patchParams,
     clearFilters,
-  } = useDiaryFilterParams({ withVisibility: true });
+  } = useDiaryFilterParams({ withVisibility: true, persist: true });
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const { data: allCapsulesData } = useCapsules();

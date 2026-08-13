@@ -65,6 +65,7 @@ test.describe('Smoke — público @smoke', () => {
       const bestRated = page.getByText(/mejor valorado/i);
       await expect(monthChart.or(bestRated).or(page.getByText(/media ★/i)).first()).toBeVisible();
       await expect(page.getByLabel(/buscar en el diario público/i)).toBeVisible();
+      await page.getByRole('button', { name: /^filtros/i }).click();
       await expect(page.getByRole('group', { name: /filtrar por valoración/i })).toBeVisible();
     } else {
       await expect(emptyDiary.or(page.locator('main'))).toBeVisible();

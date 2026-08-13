@@ -183,7 +183,7 @@ export function PublicProfilePage() {
             <img
               src={profile.avatar_url}
               alt=""
-              className="h-20 w-20 shrink-0 rounded-full border border-border object-cover"
+                  className="h-20 w-20 shrink-0 rounded-full border border-border bg-secondary object-contain p-1.5"
             />
           ) : (
             <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
@@ -467,53 +467,60 @@ export function PublicProfilePage() {
         ) : null}
 
         {!isBlockedByMe && !diaryEmpty ? (
-          <CapsuleDiaryFilters
-            years={years}
-            availableTags={availableTags}
-            searchAriaLabel="Buscar en el diario público"
-            ariaLabel="Filtros del diario público"
-            qDraft={qDraft}
-            year={year}
-            ratingMin={ratingMin}
-            watchContext={watchContext}
-            tag={tag}
-            hasFilters={hasFilters}
-            isUpdating={isFetching && !isFetchingNextPage}
-            onQDraftChange={setQDraft}
-            patchParams={patchParams}
-            clearFilters={clearFilters}
-          />
-        ) : null}
-
-        {!isBlockedByMe && filterEmpty ? (
-          <EmptyState
-            title="Ningún partido con estos filtros"
-            description="Prueba otro año, valoración o limpia la búsqueda."
-          >
-            <Button type="button" variant="secondary" onClick={clearFilters}>
-              Limpiar filtros
-            </Button>
-          </EmptyState>
-        ) : null}
-
-        {!isBlockedByMe && capsules.length > 0 ? (
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold">
-              Capsules
-              {hasFilters ? (
-                <span className="ml-2 text-sm font-normal text-muted-foreground">
-                  {total} {total === 1 ? 'partido' : 'partidos'}
-                </span>
-              ) : null}
-            </h2>
-            {capsules.map((capsule) => (
-              <PublicCapsuleCard key={capsule.id} capsule={capsule} currentUserId={user?.id} />
-            ))}
-            <InfiniteScrollSentinel
-              hasNextPage={Boolean(hasNextPage)}
-              isFetchingNextPage={isFetchingNextPage}
-              fetchNextPage={fetchNextPage}
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <h2 className="text-lg font-semibold">
+                Capsules
+                {(hasFilters || total > 0) && !isLoading ? (
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    {total} {total === 1 ? 'partido' : 'partidos'}
+                    {hasFilters ? ' filtrados' : ''}
+                  </span>
+                ) : null}
+              </h2>
+            </div>
+
+            <CapsuleDiaryFilters
+              years={years}
+              availableTags={availableTags}
+              collapsible
+              searchAriaLabel="Buscar en el diario público"
+              ariaLabel="Filtros del diario público"
+              qDraft={qDraft}
+              year={year}
+              ratingMin={ratingMin}
+              watchContext={watchContext}
+              tag={tag}
+              hasFilters={hasFilters}
+              isUpdating={isFetching && !isFetchingNextPage}
+              onQDraftChange={setQDraft}
+              patchParams={patchParams}
+              clearFilters={clearFilters}
             />
+
+            {filterEmpty ? (
+              <EmptyState
+                title="Ningún partido con estos filtros"
+                description="Prueba otro año, valoración o limpia la búsqueda."
+              >
+                <Button type="button" variant="secondary" onClick={clearFilters}>
+                  Limpiar filtros
+                </Button>
+              </EmptyState>
+            ) : null}
+
+            {capsules.length > 0 ? (
+              <>
+                {capsules.map((capsule) => (
+                  <PublicCapsuleCard key={capsule.id} capsule={capsule} currentUserId={user?.id} />
+                ))}
+                <InfiniteScrollSentinel
+                  hasNextPage={Boolean(hasNextPage)}
+                  isFetchingNextPage={isFetchingNextPage}
+                  fetchNextPage={fetchNextPage}
+                />
+              </>
+            ) : null}
           </section>
         ) : null}
 

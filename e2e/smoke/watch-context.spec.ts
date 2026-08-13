@@ -26,6 +26,8 @@ test.describe('Smoke — contexto de visionado @smoke', () => {
     await expect(page.getByRole('heading', { name: /mis capsules/i })).toBeVisible({
       timeout: 15_000,
     });
+    const clear = page.getByRole('button', { name: /limpiar filtros/i });
+    if (await clear.isVisible()) await clear.click();
     await expect(page.getByRole('group', { name: /filtrar por contexto/i })).toBeVisible();
     await page.getByRole('button', { name: /^tv$/i }).click();
     await expect(page).toHaveURL(/context=tv/);
@@ -37,10 +39,34 @@ test.describe('Smoke — contexto de visionado @smoke', () => {
     await expect(page.getByRole('heading', { name: /mis capsules/i })).toBeVisible({
       timeout: 15_000,
     });
+    const clear = page.getByRole('button', { name: /limpiar filtros/i });
+    if (await clear.isVisible()) await clear.click();
     await expect(page.getByRole('group', { name: /filtrar por valoración/i })).toBeVisible();
     await page.getByRole('button', { name: /4\+\s*★/i }).click();
     await expect(page).toHaveURL(/rating=4/);
     await page.getByRole('button', { name: /limpiar filtros/i }).click();
     await expect(page).not.toHaveURL(/rating=/);
+  });
+
+  test('Mis Capsules recuerda el último filtro al volver', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page.goto('/capsules');
+    await expect(page.getByRole('heading', { name: /mis capsules/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    const clear = page.getByRole('button', { name: /limpiar filtros/i });
+    if (await clear.isVisible()) await clear.click();
+
+    await page.getByRole('button', { name: /4\+\s*★/i }).click();
+    await expect(page).toHaveURL(/rating=4/);
+
+    await page.goto('/search');
+    await expect(page.getByRole('heading', { name: /buscar/i })).toBeVisible({ timeout: 15_000 });
+
+    await page.goto('/capsules');
+    await expect(page.getByRole('heading', { name: /mis capsules/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page).toHaveURL(/rating=4/);
   });
 });
