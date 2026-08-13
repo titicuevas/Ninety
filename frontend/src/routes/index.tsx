@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute, GuestRoute } from '@/components/ProtectedRoute';
+import { ActivityPage } from '@/pages/ActivityPage';
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
 import { CapsulesPage } from '@/pages/CapsulesPage';
 import { CollectionDetailPage } from '@/pages/CollectionDetailPage';
@@ -62,6 +63,7 @@ export const appRouter = createBrowserRouter([
     children: [
       { path: '/home', element: <HomePage /> },
       { path: '/feed', element: <FeedPage /> },
+      { path: '/activity', element: <ActivityPage /> },
       { path: '/search', element: <SearchMatchPage /> },
       { path: '/search/manual', element: <ManualMatchPage /> },
       { path: '/capsules', element: <CapsulesPage /> },

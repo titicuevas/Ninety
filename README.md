@@ -262,6 +262,7 @@ Probar en **móvil** (375px), **tablet** (768px) y **desktop** (1280px):
 | `/login` | Formulario centrado, inputs táctiles |
 | `/home` | Wrapped en grid, banner perfil en columna en móvil |
 | `/feed` | Cards a ancho completo, likes/comentarios sin overflow |
+| `/activity` | Timeline de follows (Capsules + listas); empty states y scroll infinito |
 | `/search` | Grid 1 col móvil → 2 cols tablet+ |
 | `/capsules/new` | Formulario `max-w-md` → `lg:max-w-xl` |
 | `/profile` | Avatar y formulario legibles |
@@ -359,6 +360,7 @@ Ninety/
 | GET | `/api/capsules/me/export` | ✅ | Export diario JSON/CSV (GDPR) |
 | POST | `/api/capsules/me/import` | ✅ | Import diario desde export JSON (omite `match_id` existentes; `restore_photos` opcional re-sube `photo_urls` remotas) |
 | GET | `/api/capsules/feed` | ✅ | Feed (seguidos + tuyo); `scope`, `sort`, `photos=1`, `competition` |
+| GET | `/api/activity` | ✅ | Timeline de actividad de follows (Capsules + colecciones públicas nuevas; blocks; `limit`/`offset`) |
 | GET | `/api/capsules/user/:username` | opcional | Perfil + capsules + stats (base del cara a cara `/u/:username/vs`) |
 | GET | `/api/capsules/:id` | opcional | Capsule pública (compartir) |
 | POST/PATCH/DELETE | `/api/capsules`… | ✅ | CRUD capsules |
@@ -492,6 +494,14 @@ Ninety/
 - [x] Quiero ir en común — ver quién de tus follows también tiene ese partido (`GET /api/want-to-go/me/:matchId/following`; UI ligera en `/want-to-go`)
 - [x] Tags en diario público — filtrar Capsules públicas por tag en perfil ajeno (`?tag=` + chips; `tags` en respuesta de `GET /api/capsules/user/:username`)
 - [x] Colección destacada en perfil — pin de una lista pública (`featured_collection_id` en profiles; `PATCH /api/profile/me`; visible en perfil público; migración `20250826120000_featured_collection.sql`)
+
+### 🚧 v13 — Descubrimiento & ritmo diario
+- [x] Feed de actividad de follows — timeline ligera aparte del feed de Capsules (`GET /api/activity` + `/activity`; nuevas Capsules/colecciones públicas de gente que sigues; respeta blocks; paginación `limit`/`offset`)
+- [ ] Guardar búsqueda / filtros del diario — recordar último tag/filtro en Mis Capsules (localStorage o query sticky)
+- [ ] Estadio favorito / mapa enriquecido — destacar estadios más visitados con deep link al diario/mapa
+- [ ] Notificación de like en colección — opt-in reutilizando prefs (`notification_preferences` + tipo o flag; in-app + push)
+- [ ] Export Wrapped / mes como texto compartible mejorado — copy one-tap desde calendario o Wrapped
+- [ ] Soft nudge «completa tu Capsule» — si hay rating sin nota/fotos, card discreta en Home (on-device; sin backend)
 
 ## 🎨 Identidad visual
 

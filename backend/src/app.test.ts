@@ -240,6 +240,11 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/activity requiere auth', async () => {
+    const res = await request(createApp()).get('/api/activity');
+    assert.equal(res.status, 401);
+  });
+
   it('POST /api/capsules valida el body', async () => {
     const res = await request(createApp()).post('/api/capsules').send({});
     assert.equal(res.status, 401);

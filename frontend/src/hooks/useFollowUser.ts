@@ -191,6 +191,7 @@ export function useToggleFollow(username: string) {
       void queryClient.invalidateQueries({ queryKey: ['profile', 'by-team'] });
       void queryClient.invalidateQueries({ queryKey: ['collections', 'discover'] });
       void queryClient.invalidateQueries({ queryKey: ['capsules', 'feed'] });
+      void queryClient.invalidateQueries({ queryKey: ['activity', 'follows'] });
       void queryClient.invalidateQueries({ queryKey: ['capsules', 'public'] });
       void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },

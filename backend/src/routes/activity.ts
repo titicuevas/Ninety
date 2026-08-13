@@ -1,0 +1,49 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { requireAuth, type AuthRequest } from '../middleware/auth.js';
+import { listFollowActivity } from '../lib/followActivity.js';
+import { createUserClient } from '../lib/supabase.js';
+
+export const activityRouter = Router();
+
+activityRouter.use(requireAuth);
+
+const activityQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+function getAccessToken(req: AuthRequest): string | null {
+  return req.headers.authorization?.replace('Bearer ', '') ?? null;
+}
+
+/** GET /api/activity — timeline de Capsules/colecciones públicas de follows. */
+activityRouter.get('/', async (req: AuthRequest, res, next) => {
+  try {
+    const token = getAccessToken(req);
+    if (!token) {
+      res.status(401).json({ error: 'Token requerido' });
+      return;
+    }
+
+    const parsed = activityQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() });
+      return;
+    }
+
+    const { limit, offset } = parsed.data;
+    const supabase = createUserClient(token);
+    const result = await listFollowActivity(supabase, req.userId!, { limit, offset });
+
+    res.json({
+      events: result.events,
+      total: result.total,
+      following_count: result.following_count,
+      limit,
+      offset,
+    });
+  } catch (err) {
+    next(err);
+  }
+});

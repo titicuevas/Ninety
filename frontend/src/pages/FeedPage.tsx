@@ -1,4 +1,4 @@
-import { Compass, Library, Users } from 'lucide-react';
+import { Activity, Compass, Library, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
@@ -255,7 +255,15 @@ export function FeedPage() {
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Feed</h1>
             <p className="mt-1 text-sm text-muted-foreground sm:text-base">{subtitle}</p>
           </div>
-          <ScopeTabs scope={scope} onChange={setScope} />
+          <div className="flex flex-wrap items-center gap-2">
+            <ScopeTabs scope={scope} onChange={setScope} />
+            <Button asChild variant="outline" size="sm" className="rounded-full">
+              <Link to="/activity">
+                <Activity className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                Actividad
+              </Link>
+            </Button>
+          </div>
           <div className="flex flex-wrap items-center gap-3">
             <SortTabs sort={sort} onChange={setSort} />
             {isFetching && !isLoading && !isFetchingNextPage ? (

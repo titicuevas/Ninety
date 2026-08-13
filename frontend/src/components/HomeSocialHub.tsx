@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Bell, Compass, Library, Newspaper, User, UserPlus, Users } from 'lucide-react';
+import { Activity, Bell, Compass, Library, Newspaper, User, UserPlus, Users } from 'lucide-react';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -118,6 +118,12 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
           <Link to={feedPath()}>
             <Newspaper className="mr-1.5 h-3.5 w-3.5" aria-hidden />
             Feed
+          </Link>
+        </Button>
+        <Button asChild variant="secondary" size="sm">
+          <Link to="/activity">
+            <Activity className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+            Actividad
           </Link>
         </Button>
         <Button asChild variant="secondary" size="sm">

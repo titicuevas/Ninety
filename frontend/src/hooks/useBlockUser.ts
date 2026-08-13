@@ -111,6 +111,7 @@ export function useToggleBlockUser(username: string) {
       void queryClient.invalidateQueries({ queryKey: ['profile', 'public', username] });
       void queryClient.invalidateQueries({ queryKey: BLOCKED_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['capsules', 'feed'] });
+      void queryClient.invalidateQueries({ queryKey: ['activity', 'follows'] });
       void queryClient.invalidateQueries({ queryKey: ['profile', 'discover'] });
       void queryClient.invalidateQueries({ queryKey: ['collections', 'discover'] });
     },
