@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Compass, Library } from 'lucide-react';
+import { capsuleCardListClass } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
 import { FollowsYouBadge } from '@/components/FollowsYouBadge';
@@ -123,7 +124,7 @@ export function ExploreCollectionsPage() {
 
   return (
     <Layout>
-      <div className="mx-auto max-w-2xl space-y-8">
+      <div className="space-y-5 sm:space-y-8">
         <section aria-labelledby="explore-collections-heading">
           <h1
             id="explore-collections-heading"
@@ -171,7 +172,7 @@ export function ExploreCollectionsPage() {
             <h2 id="explore-collections-list-heading" className="sr-only">
               Colecciones sugeridas
             </h2>
-            <ul className="space-y-3">
+            <ul className={capsuleCardListClass}>
               {collections.map((collection) => (
                 <DiscoverCollectionCard key={collection.id} collection={collection} />
               ))}

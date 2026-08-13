@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Library, Lock, Plus } from 'lucide-react';
+import { capsuleCardListClass } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
 import { NinetyLoader } from '@/components/NinetyLoader';
@@ -75,7 +76,7 @@ export function CollectionsPage() {
 
   return (
     <Layout>
-      <div className="mx-auto max-w-2xl space-y-8">
+      <div className="space-y-5 sm:space-y-8">
         <section
           className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
           aria-labelledby="collections-heading"
@@ -105,7 +106,7 @@ export function CollectionsPage() {
         </section>
 
         {formOpen ? (
-          <Card className="border-border" id="create-collection-panel">
+          <Card className="max-w-2xl border-border" id="create-collection-panel">
             <CardHeader>
               <CardTitle className="text-base" id="create-collection-heading">
                 Crear colección
@@ -208,7 +209,7 @@ export function CollectionsPage() {
             <h2 id="collections-list-heading" className="sr-only">
               Tus colecciones
             </h2>
-            <ul className="space-y-3">
+            <ul className={capsuleCardListClass}>
               {collections.map((collection) => (
                 <li key={collection.id}>
                   <Link

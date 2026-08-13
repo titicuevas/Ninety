@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Activity, Library, Newspaper, Ticket, Users } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
+import { capsuleCardListClass } from '@/components/CapsuleListCard';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { Layout } from '@/components/Layout';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
@@ -15,7 +16,7 @@ import type { FollowActivityEvent } from '@/types/activity';
 
 function ActivityListSkeleton() {
   return (
-    <ul className="space-y-3" role="status" aria-label="Cargando actividad">
+    <ul className={capsuleCardListClass} role="status" aria-label="Cargando actividad">
       {Array.from({ length: 4 }, (_, i) => (
         <li key={i} className="rounded-xl border border-border p-4">
           <Skeleton className="h-3 w-28" />
@@ -152,7 +153,7 @@ export function ActivityPage() {
 
   return (
     <Layout>
-      <div className="space-y-8">
+      <div className="space-y-5 sm:space-y-8">
         <section className="space-y-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Actividad</h1>
@@ -219,7 +220,7 @@ export function ActivityPage() {
 
         {!isLoading && !isError && events.length > 0 ? (
           <>
-            <ul className="space-y-3">
+            <ul className={capsuleCardListClass}>
               {events.map((event) => (
                 <ActivityRow key={event.id} event={event} />
               ))}

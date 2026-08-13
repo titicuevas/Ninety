@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
-import { FilterChip } from '@/components/FilterChip';
+import { FilterChip, filterChipRowClass } from '@/components/FilterChip';
 import { MatchListSkeleton } from '@/components/ListSkeletons';
 import { MatchCard } from '@/components/MatchCard';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
@@ -230,7 +230,7 @@ export function MatchSearchPanel() {
   const showIdle = !query.trim() && !activeCompetition;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-8">
       <section className="grid max-w-2xl gap-4 sm:grid-cols-2">
         <div className="space-y-1.5 sm:col-span-2">
           <Label htmlFor="match-search">Equipo o rival</Label>
@@ -285,7 +285,7 @@ export function MatchSearchPanel() {
         {showSeasonChips ? (
           <div className="space-y-1.5 sm:col-span-2">
             <Label id="season-filter-label">Temporada</Label>
-            <div className="flex flex-wrap gap-2" role="group" aria-labelledby="season-filter-label">
+            <div className={filterChipRowClass} role="group" aria-labelledby="season-filter-label">
               {seasonChips.map((chip) => (
                 <FilterChip
                   key={chip.value ?? 'any'}
@@ -302,7 +302,7 @@ export function MatchSearchPanel() {
         {showMonthChips ? (
           <div className="space-y-1.5 sm:col-span-2">
             <Label id="month-filter-label">Mes</Label>
-            <div className="flex flex-wrap gap-2" role="group" aria-labelledby="month-filter-label">
+            <div className={filterChipRowClass} role="group" aria-labelledby="month-filter-label">
               {MONTH_CHIPS.map((chip) => (
                 <FilterChip
                   key={chip.value ?? 'any-month'}
@@ -361,7 +361,7 @@ export function MatchSearchPanel() {
       {!isSearching && canSearch && !isError ? (
         <div aria-live="polite" aria-atomic="true">
           {matches.length > 0 ? (
-            <div className="space-y-8">
+            <div className="space-y-5 sm:space-y-8">
               {showGrouped
                 ? matchGroups.map((group) => (
                     <section key={group.key} className="space-y-3">
