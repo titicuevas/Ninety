@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
+import { isInfiniteQueryData } from '@/lib/queryCache';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 import type { Profile } from '@/types/profile';
@@ -67,7 +68,7 @@ export function useToggleBlockUser(username: string) {
       queryClient.setQueriesData<PublicProfileInfinite>(
         { queryKey: ['profile', 'public', username] },
         (old) =>
-          old
+          isInfiniteQueryData<PublicProfilePage>(old)
             ? {
                 ...old,
                 pages: old.pages.map((page) => ({

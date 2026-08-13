@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import type { NotificationListFilter } from '@/lib/notificationTypeFilter';
+import { isInfiniteQueryData } from '@/lib/queryCache';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -118,11 +119,11 @@ export function useMarkNotificationsRead() {
       });
       const idSet = new Set(ids);
       qc.setQueriesData<InfiniteData<NotificationsResponse>>({ queryKey: QUERY_KEY }, (old) => {
-        if (!old) return old;
+        if (!isInfiniteQueryData<NotificationsResponse>(old)) return old;
         let unreadDelta = 0;
         const pages = old.pages.map((page) => ({
           ...page,
-          notifications: page.notifications.map((n) => {
+          notifications: (page.notifications ?? []).map((n) => {
             if (!idSet.has(n.id) || n.read) return n;
             unreadDelta += 1;
             return { ...n, read: true };
@@ -132,7 +133,7 @@ export function useMarkNotificationsRead() {
           ...old,
           pages: pages.map((page, index) =>
             index === 0
-              ? { ...page, unread_count: Math.max(0, page.unread_count - unreadDelta) }
+              ? { ...page, unread_count: Math.max(0, (page.unread_count ?? 0) - unreadDelta) }
               : page,
           ),
         };
@@ -169,13 +170,14 @@ export function useClearReadNotifications() {
         queryKey: QUERY_KEY,
       });
       qc.setQueriesData<InfiniteData<NotificationsResponse>>({ queryKey: QUERY_KEY }, (old) => {
-        if (!old) return old;
+        if (!isInfiniteQueryData<NotificationsResponse>(old)) return old;
         const pages = old.pages.map((page) => {
-          const notifications = page.notifications.filter((n) => !n.read);
+          const list = page.notifications ?? [];
+          const notifications = list.filter((n) => !n.read);
           return {
             ...page,
             notifications,
-            total: Math.max(0, (page.total ?? 0) - (page.notifications.length - notifications.length)),
+            total: Math.max(0, (page.total ?? 0) - (list.length - notifications.length)),
           };
         });
         return { ...old, pages };

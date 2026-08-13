@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
+import { isInfiniteQueryData, isProfilesList } from '@/lib/queryCache';
 import { markPushPromptEligible } from '@/lib/pushPromptMemory';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
@@ -40,7 +41,7 @@ function patchProfilesList(
   username: string,
   followed: boolean,
 ): ProfilesListResponse | undefined {
-  if (!old) return old;
+  if (!isProfilesList<Profile>(old)) return old;
   return {
     ...old,
     profiles: old.profiles.map((profile) =>
@@ -53,7 +54,7 @@ function bumpFeedFollowingCount(
   old: InfiniteData<FeedResponse> | undefined,
   delta: number,
 ): InfiniteData<FeedResponse> | undefined {
-  if (!old) return old;
+  if (!isInfiniteQueryData<FeedResponse>(old)) return old;
   return {
     ...old,
     pages: old.pages.map((page, index) =>
@@ -69,13 +70,13 @@ function patchNotificationActors(
   username: string,
   followed: boolean,
 ): InfiniteData<NotificationsResponse> | undefined {
-  if (!old) return old;
+  if (!isInfiniteQueryData<NotificationsResponse>(old)) return old;
   const nextFollowed = !followed;
   return {
     ...old,
     pages: old.pages.map((page) => ({
       ...page,
-      notifications: page.notifications.map((n) =>
+      notifications: (page.notifications ?? []).map((n) =>
         n.actor?.username === username
           ? { ...n, actor: { ...n.actor, followed_by_me: nextFollowed } }
           : n,
@@ -108,7 +109,9 @@ export function useToggleFollow(username: string) {
       const previousProfiles = queryClient.getQueriesData<PublicProfileInfinite>({
         queryKey: ['profile', 'public', username],
       });
-      const previousFeed = queryClient.getQueryData<InfiniteData<FeedResponse>>(['capsules', 'feed']);
+      const previousFeed = queryClient.getQueriesData<InfiniteData<FeedResponse>>({
+        queryKey: ['capsules', 'feed'],
+      });
       const previousSearch = queryClient.getQueriesData<ProfilesListResponse>({
         queryKey: ['profile', 'search'],
       });
@@ -122,19 +125,20 @@ export function useToggleFollow(username: string) {
       queryClient.setQueriesData<PublicProfileInfinite>(
         { queryKey: ['profile', 'public', username] },
         (old) =>
-          old
+          isInfiniteQueryData<PublicProfilePage>(old)
             ? {
                 ...old,
                 pages: old.pages.map((page) => ({
                   ...page,
-                  profile: updateProfileFollow(page.profile, followed),
+                  profile: page.profile ? updateProfileFollow(page.profile, followed) : page.profile,
                 })),
               }
             : old,
       );
 
-      queryClient.setQueryData<InfiniteData<FeedResponse>>(['capsules', 'feed'], (old) =>
-        bumpFeedFollowingCount(old, followed ? -1 : 1),
+      queryClient.setQueriesData<InfiniteData<FeedResponse>>(
+        { queryKey: ['capsules', 'feed'] },
+        (old) => bumpFeedFollowingCount(old, followed ? -1 : 1),
       );
 
       queryClient.setQueriesData<ProfilesListResponse>({ queryKey: ['profile', 'search'] }, (old) =>
@@ -162,9 +166,9 @@ export function useToggleFollow(username: string) {
       context?.previousProfiles?.forEach(([key, data]) => {
         queryClient.setQueryData(key, data);
       });
-      if (context?.previousFeed) {
-        queryClient.setQueryData(['capsules', 'feed'], context.previousFeed);
-      }
+      context?.previousFeed?.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
       context?.previousSearch?.forEach(([key, data]) => {
         queryClient.setQueryData(key, data);
       });

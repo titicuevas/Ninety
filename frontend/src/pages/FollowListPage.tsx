@@ -116,7 +116,7 @@ function FollowListPage({ kind }: { kind: FollowListKind }) {
     me.username.toLowerCase() === username.toLowerCase();
 
   const profiles = useMemo(
-    () => data?.pages.flatMap((page) => page.profiles) ?? [],
+    () => data?.pages.flatMap((page) => page.profiles ?? []) ?? [],
     [data],
   );
   const total = data?.pages[0]?.total ?? profiles.length;
