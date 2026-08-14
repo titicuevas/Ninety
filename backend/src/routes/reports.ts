@@ -37,8 +37,8 @@ const createReportSchema = z
   .refine((body) => !!body.target_id || !!body.username, {
     message: 'Indica target_id o username',
   })
-  .refine((body) => body.target_type !== 'capsule' || !!body.target_id, {
-    message: 'Capsule requiere target_id',
+  .refine((body) => body.target_type === 'user' || !!body.target_id, {
+    message: 'Este tipo de reporte requiere target_id',
   });
 
 function reportErrorStatus(err: unknown): number | undefined {

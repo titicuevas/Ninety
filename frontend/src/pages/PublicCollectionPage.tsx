@@ -10,6 +10,7 @@ import { Layout } from '@/components/Layout';
 import { NinetyLoader } from '@/components/NinetyLoader';
 import { PublicLayout } from '@/components/PublicLayout';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
+import { ReportContentButton } from '@/components/ReportContentButton';
 import { ShareCollectionButton } from '@/components/ShareCollectionButton';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuthInit';
@@ -76,6 +77,7 @@ export function PublicCollectionPage() {
 
   const capsules = data?.capsules ?? [];
   const likesCount = collection.likes_count ?? 0;
+  const isOwn = !!user && user.id === collection.user_id;
   const coverUrl =
     collection.cover_url ??
     (capsules.find((c) => c.id === collection.cover_capsule_id)?.photo_urls?.[0] ??
@@ -139,6 +141,13 @@ export function PublicCollectionPage() {
               >
                 {formatLikesPanelTitle(likesCount)}
               </button>
+            ) : null}
+            {user && !isOwn ? (
+              <ReportContentButton
+                targetType="collection"
+                targetId={collection.id}
+                size="icon"
+              />
             ) : null}
             {authorHref && profile?.username ? (
               <ShareCollectionButton

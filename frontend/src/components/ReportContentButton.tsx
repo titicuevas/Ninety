@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 
 type ReportContentButtonProps = {
   targetType: ContentReportTargetType;
-  /** UUID del usuario o de la Capsule. */
+  /** UUID del usuario, Capsule o colección. */
   targetId: string;
   /** Solo para targetType=user: envía username al API (más legible en logs). */
   username?: string;

@@ -9,7 +9,7 @@ export const CONTENT_REPORT_REASONS = [
 
 export type ContentReportReason = (typeof CONTENT_REPORT_REASONS)[number];
 
-export type ContentReportTargetType = 'user' | 'capsule';
+export type ContentReportTargetType = 'user' | 'capsule' | 'collection';
 
 export const CONTENT_REPORT_REASON_LABELS: Record<ContentReportReason, string> = {
   spam: 'Spam o engaño',

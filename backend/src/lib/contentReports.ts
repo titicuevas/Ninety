@@ -1,6 +1,6 @@
 import { getBlockRelation, isBlockActive } from './userBlocks.js';
 
-export const CONTENT_REPORT_TARGET_TYPES = ['user', 'capsule'] as const;
+export const CONTENT_REPORT_TARGET_TYPES = ['user', 'capsule', 'collection'] as const;
 export type ContentReportTargetType = (typeof CONTENT_REPORT_TARGET_TYPES)[number];
 
 export const CONTENT_REPORT_REASONS = [
@@ -63,6 +63,19 @@ export function isMissingReportsTable(error: unknown): boolean {
   );
 }
 
+/** Enum `content_report_target_type` aún sin el valor `collection`. */
+export function isMissingCollectionReportEnum(error: unknown): boolean {
+  const err = error as { code?: string; message?: string } | null;
+  if (!err) return false;
+  const message = (err.message ?? '').toLowerCase();
+  if (!message.includes('collection')) return false;
+  return (
+    err.code === '22P02' ||
+    message.includes('invalid input value for enum') ||
+    message.includes('content_report_target_type')
+  );
+}
+
 export type CreateContentReportInput = {
   reporterId: string;
   targetType: ContentReportTargetType;
@@ -73,7 +86,7 @@ export type CreateContentReportInput = {
 
 /**
  * Crea un reporte. Valida existencia del objetivo y respeta bloqueos en Capsules
- * (no se puede reportar contenido que el bloqueo ya oculta).
+ * y colecciones (no se puede reportar contenido que el bloqueo ya oculta).
  */
 export async function createContentReport(
   input: CreateContentReportInput,
@@ -108,7 +121,7 @@ export async function createContentReport(
     if (!profile?.id) {
       throw Object.assign(new Error('Usuario no encontrado'), { status: 404 });
     }
-  } else {
+  } else if (targetType === 'capsule') {
     const { data: capsule, error: capsuleError } = await supabaseAdmin
       .from('capsules')
       .select('id, user_id, is_public')
@@ -130,6 +143,28 @@ export async function createContentReport(
     if (isBlockActive(block)) {
       throw Object.assign(new Error('Capsule no encontrada'), { status: 404 });
     }
+  } else {
+    const { data: collection, error: collectionError } = await supabaseAdmin
+      .from('collections')
+      .select('id, user_id, is_public')
+      .eq('id', targetId)
+      .maybeSingle();
+
+    if (collectionError) throw collectionError;
+    if (!collection?.id) {
+      throw Object.assign(new Error('Colección no encontrada'), { status: 404 });
+    }
+    if (collection.user_id === reporterId) {
+      throw Object.assign(new Error('No puedes reportar tu propia colección'), { status: 400 });
+    }
+    if (collection.is_public === false) {
+      throw Object.assign(new Error('Colección no encontrada'), { status: 404 });
+    }
+
+    const block = await getBlockRelation(reporterId, collection.user_id as string);
+    if (isBlockActive(block)) {
+      throw Object.assign(new Error('Colección no encontrada'), { status: 404 });
+    }
   }
 
   const { data, error } = await supabaseAdmin
@@ -149,6 +184,12 @@ export async function createContentReport(
       throw Object.assign(new Error('Ejecuta la migración content_reports en Supabase.'), {
         status: 503,
       });
+    }
+    if (targetType === 'collection' && isMissingCollectionReportEnum(error)) {
+      throw Object.assign(
+        new Error('Ejecuta la migración content_reports_collection en Supabase.'),
+        { status: 503 },
+      );
     }
     if (error.code === '23505') {
       throw Object.assign(new Error('Ya has reportado este contenido'), { status: 409 });

@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   isContentReportReason,
   isContentReportTargetType,
+  isMissingCollectionReportEnum,
   isMissingReportsTable,
   isUuid,
   normalizeReportNote,
@@ -12,7 +13,8 @@ describe('contentReports helpers', () => {
   it('valida target_type y reason', () => {
     assert.equal(isContentReportTargetType('user'), true);
     assert.equal(isContentReportTargetType('capsule'), true);
-    assert.equal(isContentReportTargetType('collection'), false);
+    assert.equal(isContentReportTargetType('collection'), true);
+    assert.equal(isContentReportTargetType('comment'), false);
     assert.equal(isContentReportReason('spam'), true);
     assert.equal(isContentReportReason('harassment'), true);
     assert.equal(isContentReportReason('hate'), true);
@@ -43,5 +45,23 @@ describe('contentReports helpers', () => {
     );
     assert.equal(isMissingReportsTable({ code: '23505', message: 'duplicate key' }), false);
     assert.equal(isMissingReportsTable(new Error('network')), false);
+  });
+
+  it('detecta enum collection ausente', () => {
+    assert.equal(
+      isMissingCollectionReportEnum({
+        code: '22P02',
+        message: 'invalid input value for enum content_report_target_type: "collection"',
+      }),
+      true,
+    );
+    assert.equal(isMissingCollectionReportEnum({ code: '23505', message: 'duplicate key' }), false);
+    assert.equal(
+      isMissingCollectionReportEnum({
+        code: '22P02',
+        message: 'invalid input value for enum content_report_reason: "spamx"',
+      }),
+      false,
+    );
   });
 });

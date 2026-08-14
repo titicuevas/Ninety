@@ -394,6 +394,7 @@ Ninety/
 | GET/PATCH | `/api/notifications/preferences` | ✅ | Preferencias por tipo + push aniversario/hito/Quiero ir opt-in + digest email opt-in + horario silencioso (`push_quiet`) |
 | GET/POST/DELETE | `/api/notifications/muted`… | ✅ | Silenciar / reactivar usuario (alertas in-app + push) |
 | GET/POST/DELETE | `/api/profile/blocked`… | ✅ | Bloquear / desbloquear usuario (ocultar perfil + Capsules) |
+| POST/GET | `/api/reports`… | ✅ | Reportar usuario, Capsule o colección pública (`target_type`; cola admin-ready) |
 | GET | `/api/notifications` | ✅ | Lista de alertas (`actor.followed_by_me` para seguir de vuelta) |
 | POST | `/api/internal/cron/push-digest` | cron | Digest push periódico (`CRON_SECRET`; agrupa likes/comentarios/follows) |
 | POST | `/api/internal/cron/push-diary` | cron | Push opt-in aniversarios/hitos + recordatorio Quiero ir (`CRON_SECRET`; `diary_push_sent` idempotente) |
@@ -481,7 +482,7 @@ Ninety/
 - [x] Discovery en frío — perfiles/colecciones útiles sin follows ni equipo favorito (`match_reason: active` en discover; empty states del feed/Inicio enlazan a `/collections/explore`)
 
 ### ✅ v10 — Confianza & crecimiento
-- [x] Reportar usuario / Capsule — denunciar abuso; complementa bloquear (migración `20250814120000_content_reports.sql` + `POST/GET /api/reports` + UI en perfil/cápsula pública; cola admin-ready vía service role, sin panel admin)
+- [x] Reportar usuario / Capsule — denunciar abuso; complementa bloquear (migración `20250814120000_content_reports.sql` + `POST/GET /api/reports` + UI en perfil/cápsula pública; cola admin-ready vía service role, sin panel admin; colecciones en v16)
 - [x] Enlace de invitación — compartir Ninety con deep link/código que atribuya o lleve a registro (`/invite/:username` + `?ref=`; migración `20250815120000_invite_attributions.sql`; `GET/POST /api/invites`; UI Perfil/Ajustes)
 - [x] Lista «Quiero ir» — partidos futuros/interesantes tipo watchlist Letterboxd (`/want-to-go` + `GET/POST/DELETE /api/want-to-go`; migración `20250816120000_want_to_go_matches.sql`; CTA en búsqueda/partido manual; subnav Listas + Perfil)
 - [x] Calendario del diario — vista mes de Capsules por fecha (`/diary/calendar` + `GET /api/capsules/me/calendar` por `watched_at`; acceso desde Mis Capsules / Perfil)
@@ -529,7 +530,7 @@ Ninety/
 
 ### 🚧 v16 — Paridad Capsule & partidos en común
 - [x] Compartir Capsule como texto — resumen one-tap (`Copiar texto` / Compartir) con equipos, rating y nota además del enlace (`buildCapsuleShareText`; paridad con perfil / colección / mes)
-- [ ] Reportar colección — denunciar listas abusivas; extender `content_report_target_type` con `collection` + UI en página pública (hoy solo `user` / `capsule`)
+- [x] Reportar colección — denunciar listas abusivas; `content_report_target_type` + `collection` (migración `20250829120000_content_reports_collection.sql`) + UI en lista pública (`POST/GET /api/reports`; misma cola que usuario/Capsule)
 - [ ] También lo vieron — quién de tus follows tiene Capsule del mismo partido (`GET` por `match_id`; respeta `is_public` y blocks; análogo a Quiero ir en común)
 - [ ] Mis me gusta — archivo de Capsules que te gustaron (`GET /api/capsules/me/liked` + ruta tipo `/likes`)
 - [ ] Quiero ir: próximos vs ya jugados — chips en `/want-to-go` + CTA «limpiar ya jugados sin Capsule»
