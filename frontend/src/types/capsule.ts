@@ -86,5 +86,16 @@ export interface FeedResponse {
   competition?: string | null;
 }
 
+export interface LikedCapsule extends FeedCapsule {
+  liked_at: string;
+}
+
+export interface LikedCapsulesResponse {
+  capsules: LikedCapsule[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 /** Capsule pública (detalle /c/:id) */
 export type PublicCapsule = FeedCapsule;

@@ -367,6 +367,7 @@ Ninety/
 | GET | `/api/profile/search` | ✅ | Buscar aficionados (`?q=`; anota `followed_by_me` + `follows_me`) |
 | POST/DELETE | `/api/profile/:username/follow` | ✅ | Seguir / dejar de seguir |
 | GET | `/api/capsules/me` | ✅ | Mis capsules |
+| GET | `/api/capsules/me/liked` | ✅ | Capsules a las que di me gusta (públicas + propias; filtra blocks) |
 | GET | `/api/capsules/me/:matchId/following` | ✅ | Follows con Capsule pública del mismo partido (`is_public` + blocks) |
 | GET | `/api/capsules/me/export` | ✅ | Export diario JSON/CSV (GDPR) |
 | POST | `/api/capsules/me/import` | ✅ | Import diario desde export JSON (omite `match_id` existentes; `restore_photos` opcional re-sube `photo_urls` remotas) |
@@ -533,7 +534,7 @@ Ninety/
 - [x] Compartir Capsule como texto — resumen one-tap (`Copiar texto` / Compartir) con equipos, rating y nota además del enlace (`buildCapsuleShareText`; paridad con perfil / colección / mes)
 - [x] Reportar colección — denunciar listas abusivas; `content_report_target_type` + `collection` (migración `20250829120000_content_reports_collection.sql`) + UI en lista pública (`POST/GET /api/reports`; misma cola que usuario/Capsule)
 - [x] También lo vieron — quién de tus follows tiene Capsule del mismo partido (`GET /api/capsules/me/:matchId/following`; respeta `is_public` y blocks; UI en Capsule pública; índice `capsules_public_match_id_idx`)
-- [ ] Mis me gusta — archivo de Capsules que te gustaron (`GET /api/capsules/me/liked` + ruta tipo `/likes`)
+- [x] Mis me gusta — archivo de Capsules que te gustaron (`GET /api/capsules/me/liked` + `/likes`; índice `capsule_likes_user_created_idx`)
 - [ ] Quiero ir: próximos vs ya jugados — chips en `/want-to-go` + CTA «limpiar ya jugados sin Capsule»
 
 ## 🎨 Identidad visual

@@ -5,6 +5,7 @@ import { CollectionsShellNav } from '@/components/CollectionsShellNav';
 import { SkipLink } from '@/components/SkipLink';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useUnreadCount } from '@/hooks/useNotifications';
+import { isCapsulesSectionPath } from '@/lib/capsulesNav';
 import { isCollectionsSectionPath } from '@/lib/collectionsNav';
 import { cn } from '@/lib/utils';
 
@@ -21,7 +22,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/home', label: 'Inicio', icon: Home, end: true },
   { to: '/feed', label: 'Feed', icon: Newspaper },
   { to: '/search', label: 'Buscar', icon: Search },
-  { to: '/capsules', label: 'Capsules', icon: Ticket },
+  { to: '/capsules', label: 'Capsules', icon: Ticket, section: true },
   { to: '/collections', label: 'Listas', icon: Library, section: true },
   { to: '/profile', label: 'Perfil', icon: User },
 ];
@@ -29,6 +30,9 @@ const NAV_ITEMS: NavItem[] = [
 function navItemActive(pathname: string, item: NavItem, routerActive: boolean): boolean {
   if (item.section && item.to === '/collections') {
     return isCollectionsSectionPath(pathname);
+  }
+  if (item.section && item.to === '/capsules') {
+    return isCapsulesSectionPath(pathname);
   }
   return routerActive;
 }

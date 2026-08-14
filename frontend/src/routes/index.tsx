@@ -14,6 +14,7 @@ import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { HomePage } from '@/pages/HomePage';
 import { InvitePage } from '@/pages/InvitePage';
 import { LandingPage } from '@/pages/LandingPage';
+import { LikesPage } from '@/pages/LikesPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { ManualMatchPage } from '@/pages/ManualMatchPage';
 import { ProfilePage } from '@/pages/ProfilePage';
@@ -69,6 +70,7 @@ export const appRouter = createBrowserRouter([
       { path: '/capsules', element: <CapsulesPage /> },
       { path: '/capsules/new', element: <CreateCapsulePage /> },
       { path: '/capsules/:id/edit', element: <EditCapsulePage /> },
+      { path: '/likes', element: <LikesPage /> },
       { path: '/diary/calendar', element: <DiaryCalendarPage /> },
       { path: '/collections', element: <CollectionsPage /> },
       { path: '/collections/explore', element: <ExploreCollectionsPage /> },

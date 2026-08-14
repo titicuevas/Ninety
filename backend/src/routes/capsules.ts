@@ -31,7 +31,7 @@ import {
   isMissingParentIdColumn,
 } from '../lib/capsuleComments.js';
 import { notifyCommentMentions } from '../lib/commentMentions.js';
-import { attachLikeStats, fetchLikesWithProfiles, isMissingLikesTable } from '../lib/capsuleLikes.js';
+import { attachLikeStats, fetchLikesWithProfiles, isMissingLikesTable, listLikedCapsules } from '../lib/capsuleLikes.js';
 import { applyFeedContentFilters, resolveFeedContentFilters } from '../lib/feedFilters.js';
 import { listAlsoWatched } from '../lib/capsuleAlsoWatched.js';
 import { isValidCapsuleMatchId } from '../lib/manualMatch.js';
@@ -462,11 +462,46 @@ const calendarQuerySchema = z.object({
   month: z.coerce.number().int().min(1).max(12),
 });
 
+const likedQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).optional().default(20),
+  offset: z.coerce.number().int().min(0).optional().default(0),
+});
+
 function capsuleRouteErrorStatus(err: unknown): number | undefined {
   return typeof (err as { status?: unknown })?.status === 'number'
     ? (err as { status: number }).status
     : undefined;
 }
+
+/** GET /api/capsules/me/liked — archivo de Capsules a las que di me gusta. */
+capsulesRouter.get('/me/liked', requireAuth, async (req: AuthRequest, res, next) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const parsed = likedQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Parámetros inválidos' });
+    return;
+  }
+
+  try {
+    const supabase = createUserClient(token);
+    const result = await listLikedCapsules(supabase, req.userId!, parsed.data);
+    res.json(result);
+  } catch (err) {
+    const status = capsuleRouteErrorStatus(err);
+    if (status === 400 || status === 503) {
+      res.status(status).json({
+        error: err instanceof Error ? err.message : 'No se pudieron cargar tus me gusta',
+      });
+      return;
+    }
+    next(err);
+  }
+});
 
 /** GET /api/capsules/me/:matchId/following — follows con Capsule pública del mismo partido. */
 capsulesRouter.get('/me/:matchId/following', requireAuth, async (req: AuthRequest, res, next) => {

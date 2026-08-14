@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, Pencil, Search, Trash2 } from 'lucide-react';
+import { CalendarDays, Heart, Pencil, Search, Trash2 } from 'lucide-react';
 import { AddToCollectionButton } from '@/components/AddToCollectionButton';
 import { CapsuleDiaryFilters } from '@/components/CapsuleDiaryFilters';
 import { CapsuleListCard, capsuleCardListClass } from '@/components/CapsuleListCard';
@@ -144,6 +144,12 @@ export function CapsulesPage() {
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <Button asChild variant="secondary" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
+              <Link to="/likes">
+                <Heart className="h-4 w-4" aria-hidden />
+                <span className="sr-only sm:not-sr-only sm:ml-1.5">Me gusta</span>
+              </Link>
+            </Button>
             <Button asChild variant="secondary" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
               <Link to="/diary/calendar">
                 <CalendarDays className="h-4 w-4" aria-hidden />

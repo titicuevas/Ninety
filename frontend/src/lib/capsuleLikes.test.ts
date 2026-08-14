@@ -5,6 +5,7 @@ import {
   buildCapsuleLikesQuery,
   formatLikesCountLabel,
   formatLikesPanelTitle,
+  nextLikedPageOffset,
 } from './capsuleLikes.ts';
 
 describe('buildCapsuleLikesQuery', () => {
@@ -27,5 +28,13 @@ describe('formatLikesPanelTitle', () => {
     assert.equal(formatLikesPanelTitle(0), 'Me gusta');
     assert.equal(formatLikesPanelTitle(1), '1 me gusta');
     assert.equal(formatLikesPanelTitle(12), '12 me gusta');
+  });
+});
+
+describe('nextLikedPageOffset', () => {
+  it('avanza por offset de likes, no por ítems visibles', () => {
+    assert.equal(nextLikedPageOffset({ offset: 0, limit: 20, total: 45 }), 20);
+    assert.equal(nextLikedPageOffset({ offset: 40, limit: 20, total: 45 }), undefined);
+    assert.equal(nextLikedPageOffset({ offset: 0, limit: 20, total: 0 }), undefined);
   });
 });

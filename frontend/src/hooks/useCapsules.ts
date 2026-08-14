@@ -1,10 +1,11 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { ApiError, apiFetch } from '@/lib/api';
 import type { FeedContentFilters, FeedScope, FeedSort } from '@/lib/feedParams';
+import { nextLikedPageOffset } from '@/lib/capsuleLikes';
 import { mapInfinitePages } from '@/lib/queryCache';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
-import type { Capsule, CapsulesResponse, CreateCapsuleInput, FeedCapsule, FeedResponse, UpdateCapsuleInput } from '@/types/capsule';
+import type { Capsule, CapsulesResponse, CreateCapsuleInput, FeedCapsule, FeedResponse, LikedCapsulesResponse, UpdateCapsuleInput } from '@/types/capsule';
 
 export type { FeedContentFilters, FeedScope, FeedSort } from '@/lib/feedParams';
 
@@ -72,6 +73,23 @@ export function useMyCapsulesInfinite(filters: MyCapsulesFilters = {}) {
       const total = lastPage.total ?? loaded;
       return loaded < total ? loaded : undefined;
     },
+    enabled: !!session,
+  });
+}
+
+export function useLikedCapsulesInfinite() {
+  const session = useAuthStore((s) => s.session);
+
+  return useInfiniteQuery({
+    queryKey: ['capsules', 'liked'],
+    queryFn: ({ pageParam }) =>
+      apiFetch<LikedCapsulesResponse>(
+        `/api/capsules/me/liked?limit=20&offset=${pageParam}`,
+        {},
+        session?.access_token,
+      ),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => nextLikedPageOffset(lastPage),
     enabled: !!session,
   });
 }
