@@ -146,8 +146,8 @@ export function CreateCapsulePage() {
           </h1>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
             {isManualMatchId(match.id)
-              ? 'Partido manual — fotos y recuerdos en tu diario.'
-              : 'Fotos y recuerdos en tu diario.'}
+              ? 'Partido manual: guarda cómo lo viviste en una Capsule.'
+              : 'Una Capsule guarda cómo viviste este partido: valoración, nota y fotos.'}
           </p>
         </header>
 

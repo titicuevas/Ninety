@@ -136,12 +136,12 @@ export function CapsulesPage() {
         <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Mis Capsules</h1>
-            {!isLoading && (hasFilters || total > 0) ? (
-              <p className="mt-1 text-sm text-muted-foreground">
-                {total} {total === 1 ? 'partido' : 'partidos'}
-                {hasFilters ? ' con estos filtros' : ''}
-              </p>
-            ) : null}
+            <p className="mt-1 text-sm text-muted-foreground">
+              Cada Capsule es un partido que viste
+              {!isLoading && (hasFilters || total > 0)
+                ? ` · ${total} ${total === 1 ? 'partido' : 'partidos'}${hasFilters ? ' con estos filtros' : ''}`
+                : '.'}
+            </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <Button asChild variant="secondary" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
@@ -191,7 +191,7 @@ export function CapsulesPage() {
         {diaryEmpty ? (
           <EmptyState
             title="Aún no tienes Capsules"
-            description="Busca un partido que hayas visto y guarda tu primer recuerdo."
+            description="Una Capsule es un partido que viste, con tu valoración, nota y fotos. Busca el primero y empieza el diario."
           >
             <Button asChild>
               <Link to="/search">Buscar partido</Link>

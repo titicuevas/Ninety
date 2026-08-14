@@ -23,8 +23,8 @@ const steps = [
   {
     key: 'capsule',
     icon: Camera,
-    title: 'Crea tu primera cápsula',
-    description: 'Busca un partido y guarda la experiencia: fotos, nota y puntuación.',
+    title: 'Crea tu primera Capsule',
+    description: 'Una Capsule es un partido que viste. Añade fotos, nota y puntuación.',
     link: '/search',
   },
   {

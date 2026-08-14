@@ -17,7 +17,7 @@ const features = [
   {
     icon: Camera,
     title: 'Capsules',
-    desc: 'Fotos, nota y valoración. Tu recuerdo de cada encuentro.',
+    desc: 'Una Capsule es un partido que viste: valoración, nota y fotos. La entrada de tu diario.',
   },
   {
     icon: BarChart3,
@@ -69,8 +69,8 @@ export function LandingPage() {
           </h1>
 
           <p className="mb-10 max-w-lg text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Guarda los partidos que has visto, valóralos y revive la temporada con tu Wrapped. Letterboxd, pero para el
-            fútbol.
+            Guarda cada partido que has visto como una Capsule — valoración, nota y fotos — y revive
+            la temporada con tu Wrapped. Letterboxd, pero para el fútbol.
           </p>
 
           <div
