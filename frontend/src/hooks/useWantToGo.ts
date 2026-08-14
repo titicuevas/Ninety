@@ -97,3 +97,32 @@ export function useRemoveWantToGo() {
     },
   });
 }
+
+export function useClearPlayedWantToGo() {
+  const session = useAuthStore((s) => s.session);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () =>
+      apiFetch<{ ok: boolean; removed: number }>(
+        '/api/want-to-go/played',
+        { method: 'DELETE' },
+        session?.access_token,
+      ),
+    onSuccess: (data) => {
+      void queryClient.invalidateQueries({ queryKey: ['want-to-go'] });
+      if (data.removed === 0) {
+        toast.success('Nada que limpiar');
+        return;
+      }
+      toast.success(
+        data.removed === 1
+          ? 'Quitado 1 partido ya jugado'
+          : `Quitados ${data.removed} partidos ya jugados`,
+      );
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'No se pudo limpiar');
+    },
+  });
+}

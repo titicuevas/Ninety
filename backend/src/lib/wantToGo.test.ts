@@ -3,6 +3,8 @@ import { describe, it } from 'node:test';
 import {
   clearWantToGoAfterCapsule,
   isMissingWantToGoTable,
+  isWantToGoMatchPlayed,
+  matchIdsToClearPlayedWithoutCapsule,
   normalizeMatchPlayedAt,
   normalizeOptionalScore,
   normalizeTeamName,
@@ -90,6 +92,28 @@ describe('wantToGo helpers', () => {
       true,
     );
     assert.equal(isMissingWantToGoTable({ code: '23505', message: 'duplicate key' }), false);
+  });
+
+  it('clasifica ya jugados y candidatos a limpiar', () => {
+    const now = new Date('2026-08-14T12:00:00.000Z');
+    assert.equal(isWantToGoMatchPlayed('2026-08-14T11:00:00.000Z', now), true);
+    assert.equal(isWantToGoMatchPlayed('2026-08-14T13:00:00.000Z', now), false);
+    assert.equal(isWantToGoMatchPlayed(null, now), false);
+    assert.equal(isWantToGoMatchPlayed('no-fecha', now), false);
+
+    assert.deepEqual(
+      matchIdsToClearPlayedWithoutCapsule(
+        [
+          { match_id: 1, match_played_at: '2026-08-14T11:00:00.000Z' },
+          { match_id: 2, match_played_at: '2026-08-14T11:00:00.000Z' },
+          { match_id: 3, match_played_at: '2026-08-14T18:00:00.000Z' },
+          { match_id: 4, match_played_at: null },
+        ],
+        new Set([2]),
+        now,
+      ),
+      [1],
+    );
   });
 
   it('clearWantToGoAfterCapsule no lanza con match o user inválido', async () => {

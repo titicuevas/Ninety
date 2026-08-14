@@ -75,6 +75,31 @@ export function normalizeMatchPlayedAt(value: unknown): string | null {
   return new Date(ms).toISOString();
 }
 
+/** Kickoff en el pasado. Sin fecha o inválida → aún no se considera jugado. */
+export function isWantToGoMatchPlayed(
+  matchPlayedAt: string | null | undefined,
+  now: Date = new Date(),
+): boolean {
+  if (matchPlayedAt == null || matchPlayedAt === '') return false;
+  const kickoffMs = Date.parse(matchPlayedAt);
+  if (Number.isNaN(kickoffMs)) return false;
+  return kickoffMs < now.getTime();
+}
+
+/** Ya jugados y sin Capsule (para limpiar la watchlist). */
+export function matchIdsToClearPlayedWithoutCapsule(
+  items: Array<{ match_id: number; match_played_at: string | null }>,
+  capsuleMatchIds: ReadonlySet<number>,
+  now: Date = new Date(),
+): number[] {
+  return items
+    .filter(
+      (item) =>
+        isWantToGoMatchPlayed(item.match_played_at, now) && !capsuleMatchIds.has(item.match_id),
+    )
+    .map((item) => item.match_id);
+}
+
 export function sanitizeWantToGoInput(raw: WantToGoMatchInput): WantToGoMatchInput | null {
   if (!isValidCapsuleMatchId(raw.match_id)) return null;
 
@@ -331,6 +356,68 @@ export async function removeWantToGoMatch(userId: string, matchId: number): Prom
   }
 
   return !!data;
+}
+
+/** Quita de Quiero ir los partidos ya jugados sin Capsule. */
+export async function clearPlayedWantToGoWithoutCapsule(
+  userId: string,
+  now: Date = new Date(),
+): Promise<{ removed: number }> {
+  const { supabaseAdmin } = await import('./supabase.js');
+  if (!supabaseAdmin) {
+    throw Object.assign(new Error('Quiero ir no disponible'), { status: 503 });
+  }
+
+  const { data: rows, error } = await supabaseAdmin
+    .from('want_to_go_matches')
+    .select('match_id, match_played_at')
+    .eq('user_id', userId)
+    .limit(500);
+
+  if (error) {
+    if (isMissingWantToGoTable(error)) {
+      throw Object.assign(new Error('Quiero ir no disponible (aplica la migración)'), {
+        status: 503,
+      });
+    }
+    throw error;
+  }
+
+  const items = (rows ?? []) as Array<{ match_id: number; match_played_at: string | null }>;
+  if (items.length === 0) return { removed: 0 };
+
+  const { data: capsuleRows, error: capsulesError } = await supabaseAdmin
+    .from('capsules')
+    .select('match_id')
+    .eq('user_id', userId);
+
+  if (capsulesError) throw capsulesError;
+
+  const saved = new Set(
+    (capsuleRows ?? [])
+      .map((row) => Number(row.match_id))
+      .filter((id) => Number.isFinite(id)),
+  );
+  const toRemove = matchIdsToClearPlayedWithoutCapsule(items, saved, now);
+  if (toRemove.length === 0) return { removed: 0 };
+
+  const { data: deleted, error: deleteError } = await supabaseAdmin
+    .from('want_to_go_matches')
+    .delete()
+    .eq('user_id', userId)
+    .in('match_id', toRemove)
+    .select('match_id');
+
+  if (deleteError) {
+    if (isMissingWantToGoTable(deleteError)) {
+      throw Object.assign(new Error('Quiero ir no disponible (aplica la migración)'), {
+        status: 503,
+      });
+    }
+    throw deleteError;
+  }
+
+  return { removed: deleted?.length ?? toRemove.length };
 }
 
 /**

@@ -397,6 +397,7 @@ Ninety/
 | GET/POST/DELETE | `/api/notifications/muted`… | ✅ | Silenciar / reactivar usuario (alertas in-app + push) |
 | GET/POST/DELETE | `/api/profile/blocked`… | ✅ | Bloquear / desbloquear usuario (ocultar perfil + Capsules) |
 | POST/GET | `/api/reports`… | ✅ | Reportar usuario, Capsule o colección pública (`target_type`; cola admin-ready) |
+| DELETE | `/api/want-to-go/played` | ✅ | Quitar de Quiero ir los ya jugados sin Capsule |
 | GET | `/api/notifications` | ✅ | Lista de alertas (`actor.followed_by_me` para seguir de vuelta) |
 | POST | `/api/internal/cron/push-digest` | cron | Digest push periódico (`CRON_SECRET`; agrupa likes/comentarios/follows) |
 | POST | `/api/internal/cron/push-diary` | cron | Push opt-in aniversarios/hitos + recordatorio Quiero ir (`CRON_SECRET`; `diary_push_sent` idempotente) |
@@ -530,12 +531,12 @@ Ninety/
 - [x] Soft nudge «ya jugó» en Quiero ir — card en Home cuando un partido de la lista ya pasó y aún no hay Capsule (on-device; CTA a crear Capsule; ventana ~14 días; prioridad tras el nudge pre-partido)
 - [x] Compartir colección como texto — resumen one-tap (`Copiar texto` / Compartir) además del enlace (`buildCollectionShareText`)
 
-### 🚧 v16 — Paridad Capsule & partidos en común
+### ✅ v16 — Paridad Capsule & partidos en común
 - [x] Compartir Capsule como texto — resumen one-tap (`Copiar texto` / Compartir) con equipos, rating y nota además del enlace (`buildCapsuleShareText`; paridad con perfil / colección / mes)
 - [x] Reportar colección — denunciar listas abusivas; `content_report_target_type` + `collection` (migración `20250829120000_content_reports_collection.sql`) + UI en lista pública (`POST/GET /api/reports`; misma cola que usuario/Capsule)
 - [x] También lo vieron — quién de tus follows tiene Capsule del mismo partido (`GET /api/capsules/me/:matchId/following`; respeta `is_public` y blocks; UI en Capsule pública; índice `capsules_public_match_id_idx`)
 - [x] Mis me gusta — archivo de Capsules que te gustaron (`GET /api/capsules/me/liked` + `/likes`; índice `capsule_likes_user_created_idx`)
-- [ ] Quiero ir: próximos vs ya jugados — chips en `/want-to-go` + CTA «limpiar ya jugados sin Capsule»
+- [x] Quiero ir: próximos vs ya jugados — chips en `/want-to-go` (`?when=upcoming|played`) + CTA «limpiar ya jugados sin Capsule» (`DELETE /api/want-to-go/played`)
 
 ## 🎨 Identidad visual
 

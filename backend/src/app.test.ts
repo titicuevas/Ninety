@@ -182,6 +182,11 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('DELETE /api/want-to-go/played requiere auth', async () => {
+    const res = await request(createApp()).delete('/api/want-to-go/played');
+    assert.equal(res.status, 401);
+  });
+
   it('DELETE /api/want-to-go/:matchId requiere auth', async () => {
     const res = await request(createApp()).delete('/api/want-to-go/123');
     assert.equal(res.status, 401);

@@ -2,9 +2,12 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   footballMatchToWantToGoInput,
+  parseWantToGoWhenParam,
+  partitionWantToGoMatches,
+  playedWantToGoWithoutCapsule,
   wantToGoButtonLabel,
   wantToGoToFootballMatch,
-} from './wantToGo.js';
+} from './wantToGo.ts';
 import type { WantToGoMatch } from '@/types/wantToGo';
 
 describe('wantToGo helpers', () => {
@@ -50,5 +53,44 @@ describe('wantToGo helpers', () => {
     assert.equal(wantToGoButtonLabel({}), 'Quiero ir');
     assert.equal(wantToGoButtonLabel({ saved: true }), 'En Quiero ir');
     assert.equal(wantToGoButtonLabel({ busy: true }), 'Guardando…');
+  });
+
+  it('parsea chip de próximos / ya jugados', () => {
+    assert.equal(parseWantToGoWhenParam(null), 'all');
+    assert.equal(parseWantToGoWhenParam('upcoming'), 'upcoming');
+    assert.equal(parseWantToGoWhenParam('PLAYED'), 'played');
+    assert.equal(parseWantToGoWhenParam('otros'), 'all');
+  });
+
+  it('parte la lista y ordena por kickoff', () => {
+    const now = new Date('2026-08-14T12:00:00.000Z');
+    const { upcoming, played } = partitionWantToGoMatches(
+      [
+        { match_id: 1, match_played_at: '2026-08-14T18:00:00.000Z' },
+        { match_id: 2, match_played_at: '2026-08-14T08:00:00.000Z' },
+        { match_id: 3, match_played_at: null },
+        { match_id: 4, match_played_at: '2026-08-13T08:00:00.000Z' },
+      ],
+      now,
+    );
+    assert.deepEqual(
+      upcoming.map((row) => row.match_id),
+      [1, 3],
+    );
+    assert.deepEqual(
+      played.map((row) => row.match_id),
+      [2, 4],
+    );
+    assert.deepEqual(
+      playedWantToGoWithoutCapsule(
+        [
+          { match_id: 2, match_played_at: '2026-08-14T08:00:00.000Z' },
+          { match_id: 4, match_played_at: '2026-08-13T08:00:00.000Z' },
+        ],
+        new Set([4]),
+        now,
+      ).map((row) => row.match_id),
+      [2],
+    );
   });
 });

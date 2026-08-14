@@ -5,6 +5,7 @@ import { requireAuth, type AuthRequest } from '../middleware/auth.js';
 import { isValidCapsuleMatchId } from '../lib/manualMatch.js';
 import {
   addWantToGoMatch,
+  clearPlayedWantToGoWithoutCapsule,
   listWantToGoInCommon,
   listWantToGoMatchIds,
   listWantToGoMatches,
@@ -114,6 +115,22 @@ wantToGoRouter.post('/', mutateLimiter, async (req: AuthRequest, res, next) => {
     if (status === 400 || status === 503) {
       res.status(status).json({
         error: err instanceof Error ? err.message : 'No se pudo guardar en Quiero ir',
+      });
+      return;
+    }
+    next(err);
+  }
+});
+
+wantToGoRouter.delete('/played', mutateLimiter, async (req: AuthRequest, res, next) => {
+  try {
+    const result = await clearPlayedWantToGoWithoutCapsule(req.userId!);
+    res.json({ ok: true, removed: result.removed });
+  } catch (err) {
+    const status = wantToGoErrorStatus(err);
+    if (status === 400 || status === 503) {
+      res.status(status).json({
+        error: err instanceof Error ? err.message : 'No se pudo limpiar Quiero ir',
       });
       return;
     }
