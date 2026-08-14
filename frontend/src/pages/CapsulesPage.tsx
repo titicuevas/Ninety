@@ -11,6 +11,7 @@ import { Layout } from '@/components/Layout';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { Button } from '@/components/ui/button';
+import { capsuleShareSummaryFrom } from '@/lib/capsuleShare';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useCapsules, useDeleteCapsule, useMyCapsulesInfinite } from '@/hooks/useCapsules';
 import { useDiaryFilterParams } from '@/hooks/useDiaryFilterParams';
@@ -40,6 +41,7 @@ function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: s
           <ShareCapsuleButton
             capsuleId={capsule.id}
             title={shareTitle}
+            share={capsuleShareSummaryFrom(capsule)}
             variant="outline"
             isPublic={isPublic}
             compact

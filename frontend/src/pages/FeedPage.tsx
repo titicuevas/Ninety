@@ -18,6 +18,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useFeedFilterParams } from '@/hooks/useFeedFilterParams';
 import { discoverCollectionMatchLabel } from '@/lib/discoverCollections';
 import { feedDocumentTitle, feedPath, hasFeedContentFilters } from '@/lib/feedParams';
+import { capsuleShareSummaryFrom } from '@/lib/capsuleShare';
 import { formatRelativeTime } from '@/lib/format';
 import {
   postImportFeedHint,
@@ -125,6 +126,7 @@ function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; cur
           className="mt-0"
           capsuleId={capsule.id}
           shareTitle={shareTitle}
+          share={capsuleShareSummaryFrom(capsule, capsule.profiles)}
           likesCount={capsule.likes_count}
           likedByMe={capsule.liked_by_me}
           commentsCount={capsule.comments_count}

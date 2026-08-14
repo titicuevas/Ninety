@@ -22,6 +22,7 @@ import { useAuth } from '@/hooks/useAuthInit';
 import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { usePublicCapsule } from '@/hooks/usePublicCapsule';
+import { capsuleShareSummaryFrom } from '@/lib/capsuleShare';
 import { formatCapsuleScore, formatWatchedDate } from '@/lib/format';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { profilePath } from '@/lib/profilePath';
@@ -85,6 +86,7 @@ export function PublicCapsulePage() {
   const username = capsule.profiles?.username;
   const avatarUrl = capsule.profiles?.avatar_url;
   const shareTitle = `${capsule.home_team_name} vs ${capsule.away_team_name}`;
+  const shareSummary = capsuleShareSummaryFrom(capsule, capsule.profiles);
   const isOwn = !!user && capsule.user_id === user.id;
   const canFollow = !!username && !isAutoUsername(username) && !isOwn;
 
@@ -160,6 +162,7 @@ export function PublicCapsulePage() {
             <ShareCapsuleButton
               capsuleId={capsule.id}
               title={shareTitle}
+              share={shareSummary}
               variant="outline"
               isPublic={capsule.is_public !== false}
               compact
@@ -184,6 +187,7 @@ export function PublicCapsulePage() {
                 <ShareCapsuleButton
                   capsuleId={capsule.id}
                   title={shareTitle}
+                  share={shareSummary}
                   variant="secondary"
                   isPublic
                   compact
@@ -256,6 +260,7 @@ export function PublicCapsulePage() {
               className="mt-5"
               capsuleId={capsule.id}
               shareTitle={shareTitle}
+              share={shareSummary}
               likesCount={capsule.likes_count}
               likedByMe={capsule.liked_by_me}
               commentsCount={capsule.comments_count}

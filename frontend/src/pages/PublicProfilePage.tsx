@@ -31,15 +31,18 @@ import {
 } from '@/lib/achievements';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { isPublicProfileNotFound } from '@/lib/publicProfileError';
+import { capsuleShareSummaryFrom } from '@/lib/capsuleShare';
 import { teamPathFromFavorite } from '@/lib/teamPath';
 import type { Capsule } from '@/types/capsule';
 
 function PublicCapsuleCard({
   capsule,
   currentUserId,
+  author,
 }: {
   capsule: Capsule & { likes_count?: number; liked_by_me?: boolean; comments_count?: number };
   currentUserId?: string;
+  author?: { display_name?: string | null; username?: string | null } | null;
 }) {
   const shareTitle = `${capsule.home_team_name} vs ${capsule.away_team_name}`;
 
@@ -54,6 +57,7 @@ function PublicCapsuleCard({
           className="mt-0"
           capsuleId={capsule.id}
           shareTitle={shareTitle}
+          share={capsuleShareSummaryFrom(capsule, author)}
           likesCount={capsule.likes_count}
           likedByMe={capsule.liked_by_me}
           commentsCount={capsule.comments_count}
@@ -391,6 +395,7 @@ function PublicDiaryCapsulesSection({
   query,
   capsules,
   userId,
+  author,
   onQDraftChange,
   patchParams,
   clearFilters,
@@ -414,6 +419,7 @@ function PublicDiaryCapsulesSection({
   };
   capsules: Capsule[];
   userId: string | undefined;
+  author?: { display_name?: string | null; username?: string | null } | null;
   onQDraftChange: (value: string) => void;
   patchParams: ReturnType<typeof useDiaryFilterParams>['patchParams'];
   clearFilters: () => void;
@@ -467,7 +473,11 @@ function PublicDiaryCapsulesSection({
           <ul className={capsuleCardListClass}>
             {capsules.map((capsule) => (
               <li key={capsule.id}>
-                <PublicCapsuleCard capsule={capsule} currentUserId={userId} />
+                <PublicCapsuleCard
+                  capsule={capsule}
+                  currentUserId={userId}
+                  author={author}
+                />
               </li>
             ))}
           </ul>
@@ -661,6 +671,7 @@ export function PublicProfilePage() {
             }}
             capsules={capsules}
             userId={user?.id}
+            author={profile}
             onQDraftChange={setQDraft}
             patchParams={patchParams}
             clearFilters={clearFilters}

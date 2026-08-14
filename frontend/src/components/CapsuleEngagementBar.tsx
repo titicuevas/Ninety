@@ -6,11 +6,13 @@ import { CapsuleLikersDialog } from '@/components/CapsuleLikersDialog';
 import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { formatLikesPanelTitle } from '@/lib/capsuleLikes';
+import type { CapsuleShareSummary } from '@/lib/capsuleShare';
 import { cn } from '@/lib/utils';
 
 type CapsuleEngagementBarProps = {
   capsuleId: string;
   shareTitle: string;
+  share?: CapsuleShareSummary;
   likesCount?: number;
   likedByMe?: boolean;
   commentsCount?: number;
@@ -29,6 +31,7 @@ type CapsuleEngagementBarProps = {
 export function CapsuleEngagementBar({
   capsuleId,
   shareTitle,
+  share,
   likesCount = 0,
   likedByMe,
   commentsCount = 0,
@@ -89,7 +92,12 @@ export function CapsuleEngagementBar({
       ) : null}
 
       {showShare ? (
-        <ShareCapsuleButton capsuleId={capsuleId} title={shareTitle} isPublic={isPublic} />
+        <ShareCapsuleButton
+          capsuleId={capsuleId}
+          title={shareTitle}
+          share={share}
+          isPublic={isPublic}
+        />
       ) : null}
 
       {!currentUserId ? (
