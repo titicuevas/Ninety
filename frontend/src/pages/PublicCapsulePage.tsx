@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { AddToCollectionButton } from '@/components/AddToCollectionButton';
+import { CapsuleAlsoWatched } from '@/components/CapsuleAlsoWatched';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsuleNoteText } from '@/components/CapsuleNoteText';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
@@ -255,6 +256,14 @@ export function PublicCapsulePage() {
             {capsule.note ? <CapsuleNoteText note={capsule.note} /> : null}
 
             <CapsuleTagsList tags={capsule.tags} />
+
+            {user ? (
+              <CapsuleAlsoWatched
+                className="mt-4"
+                matchId={capsule.match_id}
+                exceptUserId={capsule.user_id}
+              />
+            ) : null}
 
             <CapsuleEngagementBar
               className="mt-5"

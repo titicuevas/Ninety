@@ -33,6 +33,8 @@ import {
 import { notifyCommentMentions } from '../lib/commentMentions.js';
 import { attachLikeStats, fetchLikesWithProfiles, isMissingLikesTable } from '../lib/capsuleLikes.js';
 import { applyFeedContentFilters, resolveFeedContentFilters } from '../lib/feedFilters.js';
+import { listAlsoWatched } from '../lib/capsuleAlsoWatched.js';
+import { isValidCapsuleMatchId } from '../lib/manualMatch.js';
 import { attachFollowStats, getFollowingIds } from '../lib/userFollows.js';
 import { attachMutedByMe } from '../lib/notificationMutes.js';
 import {
@@ -458,6 +460,34 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
 const calendarQuerySchema = z.object({
   year: z.coerce.number().int().min(1990).max(2100),
   month: z.coerce.number().int().min(1).max(12),
+});
+
+function capsuleRouteErrorStatus(err: unknown): number | undefined {
+  return typeof (err as { status?: unknown })?.status === 'number'
+    ? (err as { status: number }).status
+    : undefined;
+}
+
+/** GET /api/capsules/me/:matchId/following — follows con Capsule pública del mismo partido. */
+capsulesRouter.get('/me/:matchId/following', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const matchId = Number(req.params.matchId);
+    if (!isValidCapsuleMatchId(matchId)) {
+      res.status(400).json({ error: 'match_id inválido' });
+      return;
+    }
+    const people = await listAlsoWatched(req.userId!, matchId);
+    res.json({ people, total: people.length });
+  } catch (err) {
+    const status = capsuleRouteErrorStatus(err);
+    if (status === 400 || status === 503) {
+      res.status(status).json({
+        error: err instanceof Error ? err.message : 'También lo vieron no disponible',
+      });
+      return;
+    }
+    next(err);
+  }
 });
 
 /** GET /api/capsules/me/calendar — Capsules del mes por watched_at (vista diario). */
