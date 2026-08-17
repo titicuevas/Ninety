@@ -39,10 +39,13 @@ export function useWantToGoNudge({
     return userId ? readWantToGoNudgePrefs(userId) : null;
   }, [userId, tick]);
 
-  const capsuleMatchIds = useMemo(
-    () => capsules.map((c) => c.match_id).filter((id) => Number.isFinite(id)),
-    [capsules],
-  );
+  const capsuleMatchIds = useMemo(() => {
+    const ids: number[] = [];
+    for (const capsule of capsules) {
+      if (Number.isFinite(capsule.match_id)) ids.push(capsule.match_id);
+    }
+    return ids;
+  }, [capsules]);
 
   const nudge: WantToGoNudge | null = useMemo(
     () =>

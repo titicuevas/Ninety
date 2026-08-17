@@ -23,8 +23,6 @@ export function formatLikesPanelTitle(total: number): string {
   return `${total} me gusta`;
 }
 
-export const LIKED_CAPSULES_PAGE_SIZE = 20;
-
 export function nextLikedPageOffset(page: {
   offset: number;
   limit: number;

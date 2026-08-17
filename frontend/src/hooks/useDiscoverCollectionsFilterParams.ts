@@ -20,11 +20,12 @@ export function useDiscoverCollectionsFilterParams(): DiscoverCollectionsFilterP
   const [searchParams, setSearchParams] = useSearchParams();
   const q = parseDiscoverCollectionsQueryParam(searchParams.get('q'));
   const sort = parseDiscoverCollectionsSortParam(searchParams.get('sort'));
-  const [qDraft, setQDraft] = useState(q);
+  const [draftEntry, setDraftEntry] = useState<{ forQ: string; value: string } | null>(null);
+  const qDraft = draftEntry?.forQ === q ? draftEntry.value : q;
 
-  useEffect(() => {
-    setQDraft(q);
-  }, [q]);
+  const setQDraft = (value: string) => {
+    setDraftEntry({ forQ: q, value });
+  };
 
   useEffect(() => {
     const next = qDraft.trim().slice(0, 80);
@@ -49,7 +50,7 @@ export function useDiscoverCollectionsFilterParams(): DiscoverCollectionsFilterP
     const params = new URLSearchParams(searchParams);
     params.delete('q');
     params.delete('sort');
-    setQDraft('');
+    setDraftEntry(null);
     setSearchParams(params, { replace: true });
   };
 
