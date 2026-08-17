@@ -597,6 +597,9 @@ Ninety/
 ### ✅ v33 — Badge en atajo Actividad
 - [x] Contador en el botón **Actividad** de Home y Feed cuando hay eventos de follows (aria-label accesible)
 
+### ✅ v34 — Actividad en la navegación
+- [x] Enlace **Actividad** con badge en nav desktop (≥ lg) y en el header móvil; la tab bar sigue con 6 ítems
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

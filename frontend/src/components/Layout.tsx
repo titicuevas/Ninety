@@ -1,6 +1,7 @@
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import { Bell, Home, Library, LogOut, Newspaper, Search, Ticket, User } from 'lucide-react';
+import { ActivityNavLink } from '@/components/ActivityNavLink';
 import { CollectionsShellNav } from '@/components/CollectionsShellNav';
 import { SkipLink } from '@/components/SkipLink';
 import { useAuth } from '@/hooks/useAuthInit';
@@ -18,13 +19,19 @@ type NavItem = {
   section?: boolean;
 };
 
-const NAV_ITEMS: NavItem[] = [
+const TAB_NAV_ITEMS: NavItem[] = [
   { to: '/home', label: 'Inicio', icon: Home, end: true },
   { to: '/feed', label: 'Feed', icon: Newspaper },
   { to: '/search', label: 'Buscar', icon: Search },
   { to: '/capsules', label: 'Capsules', icon: Ticket, section: true },
   { to: '/collections', label: 'Listas', icon: Library, section: true },
   { to: '/profile', label: 'Perfil', icon: User },
+];
+
+/** Tab bar móvil (6 ítems) + Actividad solo en nav desktop y header móvil. */
+const DESKTOP_NAV_ITEMS: NavItem[] = [
+  ...TAB_NAV_ITEMS.slice(0, 2),
+  ...TAB_NAV_ITEMS.slice(2),
 ];
 
 function navItemActive(pathname: string, item: NavItem, routerActive: boolean): boolean {
@@ -106,7 +113,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Link>
 
           <nav className="hidden items-center gap-1 lg:flex" aria-label="Navegación principal">
-            {NAV_ITEMS.map((item) => (
+            {DESKTOP_NAV_ITEMS.slice(0, 2).map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  desktopNavClass(navItemActive(pathname, item, isActive))
+                }
+              >
+                <item.icon className="h-4 w-4 shrink-0" aria-hidden />
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+            <ActivityNavLink
+              className="inline-flex min-h-10 items-center rounded-lg px-2.5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              activeClassName="bg-primary/15 text-primary"
+              inactiveClassName="text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
+            />
+            {DESKTOP_NAV_ITEMS.slice(2).map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
@@ -131,6 +156,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-0.5 lg:hidden">
+            <ActivityNavLink
+              compact
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              activeClassName="text-primary"
+              inactiveClassName="text-muted-foreground hover:text-foreground"
+            />
             <NotificationBell className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
             <button
               type="button"
@@ -161,7 +192,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         aria-label="Navegación principal"
       >
         <ul className="mx-auto flex h-[4.25rem] max-w-2xl list-none items-stretch gap-0.5 px-0.5 py-0.5 sm:h-16 sm:max-w-3xl sm:px-2">
-          {NAV_ITEMS.map((item) => (
+          {TAB_NAV_ITEMS.map((item) => (
             <li key={item.to} className="flex flex-1">
               <NavLink
                 to={item.to}

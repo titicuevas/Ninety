@@ -17,6 +17,16 @@ test.describe('Crítico — navegación móvil @critical @mobile', () => {
     await expect(page).toHaveURL(/\/home/);
   });
 
+  test('header móvil incluye atajo Actividad', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await expect(
+      page.getByRole('link', { name: /^actividad$|^actividad \(/i }).first(),
+    ).toBeVisible({ timeout: 20_000 });
+    await page.getByRole('link', { name: /^actividad$|^actividad \(/i }).first().click();
+    await expect(page).toHaveURL(/\/activity/);
+    await expect(page.getByRole('heading', { name: /^actividad$/i })).toBeVisible();
+  });
+
   test('buscar desde tab bar abre Aficionados', async ({ page }) => {
     await openAuthenticatedHome(page);
     const tabBar = page.getByRole('navigation', { name: /navegación principal/i });

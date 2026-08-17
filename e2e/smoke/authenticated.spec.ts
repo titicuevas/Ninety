@@ -63,6 +63,33 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(shortcut).toBeVisible({ timeout: 20_000 });
   });
 
+  test('nav desktop incluye Actividad con badge', async ({ page, request }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(`${API_BASE}/api/activity?limit=1`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as { total?: number; following_count?: number };
+    if ((body.following_count ?? 0) === 0 || (body.total ?? 0) === 0) {
+      test.skip(true, 'Ejecuta npm run seed:fans para eventos de actividad');
+      return;
+    }
+
+    const nav = page.getByRole('navigation', { name: /navegación principal/i });
+    await expect(
+      nav.getByRole('link', {
+        name: /actividad \(\d+ eventos?\)|actividad \(más de 9 eventos\)/i,
+      }),
+    ).toBeVisible({ timeout: 20_000 });
+    await nav.getByRole('link', { name: /actividad/i }).click();
+    await expect(page).toHaveURL(/\/activity/);
+    await expect(page.getByRole('heading', { name: /^actividad$/i })).toBeVisible();
+  });
+
   test('Wrapped permite cambiar periodo y compartir', async ({ page }) => {
     await openAuthenticatedHome(page);
     const teaserHeading = page.getByRole('heading', { name: /esto es tu fútbol/i });
