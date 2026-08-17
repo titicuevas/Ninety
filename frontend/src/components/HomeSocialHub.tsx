@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Activity, UserPlus, Users } from 'lucide-react';
+import { UserPlus, Users } from 'lucide-react';
+import { ActivityShortcutLink } from '@/components/ActivityShortcutLink';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -138,12 +139,7 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
             <span className="sr-only sm:not-sr-only">Aficionados</span>
           </Link>
         </Button>
-        <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
-          <Link to="/activity">
-            <Activity className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
-            <span className="sr-only sm:not-sr-only">Actividad</span>
-          </Link>
-        </Button>
+        <ActivityShortcutLink variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3" />
         {followingHref ? (
           <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
             <Link to={followingHref}>

@@ -29,7 +29,7 @@ test.describe('Smoke — autenticado @smoke', () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(res.ok()).toBeTruthy();
-    const body = (await res.json()) as { following_count?: number; events?: unknown[] };
+    const body = (await res.json()) as { following_count?: number; events?: unknown[]; total?: number };
     if ((body.following_count ?? 0) === 0 || (body.events ?? []).length === 0) {
       test.skip(true, 'Ejecuta npm run seed:fans y sigue aficionados con la cuenta QA');
       return;
@@ -40,6 +40,27 @@ test.describe('Smoke — autenticado @smoke', () => {
     });
     await expect(page.getByRole('link', { name: /ver toda la actividad/i })).toBeVisible();
     await expect(page.getByText(/le gustó|comentó en|publicó/i).first()).toBeVisible();
+  });
+
+  test('atajo Actividad en Home muestra contador cuando hay eventos', async ({ page, request }) => {
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(`${API_BASE}/api/activity?limit=1`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as { total?: number; following_count?: number };
+    if ((body.following_count ?? 0) === 0 || (body.total ?? 0) === 0) {
+      test.skip(true, 'Ejecuta npm run seed:fans para eventos de actividad');
+      return;
+    }
+
+    const shortcut = page
+      .getByRole('navigation', { name: /atajos sociales/i })
+      .getByRole('link', { name: /actividad \(\d+ eventos?\)|actividad \(más de 9 eventos\)/i });
+    await expect(shortcut).toBeVisible({ timeout: 20_000 });
   });
 
   test('Wrapped permite cambiar periodo y compartir', async ({ page }) => {

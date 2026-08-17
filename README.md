@@ -594,6 +594,9 @@ Ninety/
 - [x] Preview de likes/comentarios/publicaciones de follows en **Comunidad** (`/home`) con enlace a `/activity`
 - [x] Suite e2e `demo-showcase.spec.ts` que valida diario demo, Favoritos, Capsule social y Actividad
 
+### ✅ v33 — Badge en atajo Actividad
+- [x] Contador en el botón **Actividad** de Home y Feed cuando hay eventos de follows (aria-label accesible)
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

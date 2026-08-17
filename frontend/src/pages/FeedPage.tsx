@@ -1,5 +1,6 @@
-import { Activity, Compass, Library, Users } from 'lucide-react';
+import { Compass, Library, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { ActivityShortcutLink } from '@/components/ActivityShortcutLink';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsuleListCard, capsuleCardListClass } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
@@ -251,17 +252,11 @@ export function FeedPage() {
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Feed</h1>
           <div className="flex flex-nowrap items-center gap-2 overflow-x-auto overscroll-x-contain pb-0.5 sm:flex-wrap sm:overflow-visible">
             <ScopeTabs scope={scope} onChange={setScope} />
-            <Button
-              asChild
+            <ActivityShortcutLink
               variant="outline"
               size="sm"
               className="h-9 w-9 shrink-0 rounded-full px-0 sm:w-auto sm:px-3"
-            >
-              <Link to="/activity">
-                <Activity className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
-                <span className="sr-only sm:not-sr-only">Actividad</span>
-              </Link>
-            </Button>
+            />
             <span className="hidden h-5 w-px bg-border sm:block" aria-hidden />
             <SortTabs sort={sort} onChange={setSort} />
             {isFetching && !isLoading && !isFetchingNextPage ? (
