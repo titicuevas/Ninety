@@ -141,9 +141,11 @@ test.describe('Smoke — likes y comentarios @smoke', () => {
     await page.getByRole('button', { name: /^publicar$/i }).click();
     await expect(page.getByText(note)).toBeVisible({ timeout: 15_000 });
     await page.getByRole('button', { name: /ocultar comentarios/i }).click();
-    await expect(page.getByRole('button', { name: /\d+ comentarios/i }).first()).toBeVisible();
+    const commentsToggle = page.getByRole('button', { name: /\d+ comentarios/i }).first();
+    await expect(commentsToggle).toBeVisible();
+    await expect(commentsToggle).toHaveAttribute('aria-expanded', 'false');
 
-    await page.getByRole('button', { name: /\d+ comentarios/i }).first().click();
+    await commentsToggle.click();
     await page.getByRole('button', { name: /^borrar comentario$/i }).first().click();
     const dialog = page.getByRole('dialog', { name: /borrar este comentario/i });
     await expect(dialog).toBeVisible();

@@ -57,6 +57,7 @@ export function useAddCapsuleComment(capsuleId: string) {
       void queryClient.invalidateQueries({ queryKey: ['capsules', capsuleId, 'comments'] });
       void queryClient.invalidateQueries({ queryKey: ['capsules', 'feed'] });
       void queryClient.invalidateQueries({ queryKey: ['capsules', capsuleId] });
+      void queryClient.invalidateQueries({ queryKey: ['capsules', 'public', capsuleId] });
       void queryClient.invalidateQueries({ queryKey: ['profile', 'public'] });
     },
     onError: (err) => {
@@ -124,6 +125,7 @@ export function useDeleteCapsuleComment(capsuleId: string) {
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['capsules', capsuleId, 'comments'] });
       void queryClient.invalidateQueries({ queryKey: ['capsules', 'feed'] });
+      void queryClient.invalidateQueries({ queryKey: ['capsules', 'public', capsuleId] });
       void queryClient.invalidateQueries({ queryKey: ['profile', 'public'] });
     },
   });

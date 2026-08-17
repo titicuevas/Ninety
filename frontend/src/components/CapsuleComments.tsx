@@ -250,6 +250,8 @@ export function CapsuleComments({
   className,
 }: CapsuleCommentsProps) {
   const [open, setOpen] = useState(defaultOpen);
+  const commentsLoadedRef = useRef(defaultOpen);
+  if (open) commentsLoadedRef.current = true;
   const [draft, setDraft] = useState('');
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [replyDraft, setReplyDraft] = useState('');
@@ -260,7 +262,7 @@ export function CapsuleComments({
   const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
   const { data, isLoading, isError, isFetching, refetch, isRefetching } = useCapsuleComments(
     capsuleId,
-    open,
+    commentsLoadedRef.current,
   );
   const addComment = useAddCapsuleComment(capsuleId);
   const deleteComment = useDeleteCapsuleComment(capsuleId);

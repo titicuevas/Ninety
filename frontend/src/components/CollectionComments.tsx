@@ -234,6 +234,8 @@ export function CollectionComments({
   className,
 }: CollectionCommentsProps) {
   const [open, setOpen] = useState(true);
+  const commentsLoadedRef = useRef(true);
+  if (open) commentsLoadedRef.current = true;
   const [draft, setDraft] = useState('');
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [replyDraft, setReplyDraft] = useState('');
@@ -243,7 +245,7 @@ export function CollectionComments({
   const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
   const { data, isLoading, isError, error, refetch, isRefetching } = useCollectionComments(
     collectionId,
-    open,
+    commentsLoadedRef.current,
   );
   const addComment = useAddCollectionComment(collectionId);
   const deleteComment = useDeleteCollectionComment(collectionId);

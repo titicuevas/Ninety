@@ -252,7 +252,7 @@ test.describe('Smoke — onboarding de valor @smoke', () => {
     const vsLink = page.getByRole('link', { name: /cara a cara con @/i }).first();
     const suggestions = page.getByRole('heading', { name: /aficionados sugeridos/i });
     const emptyHint = page.getByText(/encuentra aficionados/i);
-    await expect(suggestions.or(emptyHint).or(vsLink)).toBeVisible({ timeout: 20_000 });
+    await expect(suggestions.or(emptyHint).or(vsLink).first()).toBeVisible({ timeout: 20_000 });
 
     let targetUsername: string | null = null;
     if (await vsLink.isVisible().catch(() => false)) {
