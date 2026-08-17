@@ -62,6 +62,19 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(page.getByText(/\d+ comentarios?/i).first()).toBeVisible();
   });
 
+  test('perfil público invitado muestra engagement en el diario', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'smoke-public', 'vista invitado');
+    const { socialCapsule } = await requireDemoShowcaseProfile(request);
+    const note = (socialCapsule.note ?? '').trim();
+    expect(note.length).toBeGreaterThan(0);
+
+    await page.goto(`/u/${DEMO_USERNAME}`);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(note)).toBeVisible();
+    await expect(page.getByRole('button', { name: /\d+ me gusta/i }).first()).toBeVisible();
+    await expect(page.getByText(/\d+ comentarios?/i).first()).toBeVisible();
+  });
+
   test('Actividad QA incluye eventos sociales del seed demo', async ({ page, request }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
     await openAuthenticatedHome(page);

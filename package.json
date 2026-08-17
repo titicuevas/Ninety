@@ -26,6 +26,8 @@
     "test:e2e:critical": "playwright test --project=chromium --project=mobile --project=tablet --project=desktop-shell --grep @critical",
     "test:e2e:a11y": "playwright test --project=a11y --project=a11y-auth",
     "test:e2e:mobile": "playwright test --project=mobile --project=tablet",
+    "test:e2e:demo": "playwright test e2e/smoke/demo-showcase.spec.ts e2e/smoke/public.spec.ts e2e/smoke/social-engagement.spec.ts e2e/smoke/collections.spec.ts --grep \"demo|Favoritos|me gusta|también|showcase|Actividad\"",
+    "test:demo": "npm run test:demo-seed --prefix backend && npm run test:e2e:demo",
     "test:qa": "npm test && npm run test --prefix frontend && npm run test:e2e:public",
     "doctor:install": "react-doctor install -y"
   },

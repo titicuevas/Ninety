@@ -600,6 +600,10 @@ Ninety/
 ### ✅ v34 — Actividad en la navegación
 - [x] Enlace **Actividad** con badge en nav desktop (≥ lg) y en el header móvil; la tab bar sigue con 6 ítems
 
+### ✅ v35 — Cierre demo social (v25–v34)
+- [x] E2e: perfil público invitado muestra me gusta/comentarios en el diario del demo
+- [x] `npm run test:demo` — unit `demoSocialSeed` + e2e showcase (requiere API local y `npm run seed:fans`)
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium
