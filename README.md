@@ -218,7 +218,7 @@ Sin necesidad de tener la API en marcha:
 npm run seed:fans
 ```
 
-Crea **24 usuarios** (`fan01@ninety.app` … `fan24@ninety.app`) con perfil, **avatar del escudo de su equipo**, 1–4 partidos públicos y red de follows (incluye enlaces con `@aficionado_demo` si ya existe). Comparten la contraseña de `DEMO_FANS_PASSWORD` o, si no está definida, `TEST_USER_PASSWORD` en `backend/.env`.
+Crea **24 usuarios** (`fan01@ninety.app` … `fan24@ninety.app`) con perfil, **avatar del escudo de su equipo**, 1–4 partidos públicos, red de follows (incluye enlaces con `@aficionado_demo` si ya existe) y likes/comentarios entre los fans que sigue el demo. Comparten la contraseña de `DEMO_FANS_PASSWORD` o, si no está definida, `TEST_USER_PASSWORD` en `backend/.env`. También limpia listas residuales `E2E …` del perfil demo.
 
 ### 3. Tests automatizados (pirámide QE)
 
@@ -568,6 +568,9 @@ Ninety/
 
 ### ✅ v24 — También comentaron esta lista
 - [x] También comentaron — quién de tus follows comentó una lista pública (`GET /api/collections/:id/comments/following`; paridad con Capsules)
+
+### ✅ v25 — Demo social visible
+- [x] Seed de likes/comentarios entre fans que sigue el demo (`npm run seed:fans`) y limpieza de listas `E2E …` para no ensuciar el perfil público
 
 ## 🎨 Identidad visual
 

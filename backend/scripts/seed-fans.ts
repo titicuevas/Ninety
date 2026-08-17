@@ -11,6 +11,11 @@ import { config } from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
 import { requireTestCredentials } from './testCredentials.js';
+import {
+  demoFollowedSocialActions,
+  demoSeedCommentBody,
+  isE2eLeftoverCollectionName,
+} from '../src/lib/demoSocialSeed.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: resolve(__dirname, '../.env') });
@@ -524,6 +529,163 @@ async function seedFollows(fanIds: string[], demoUserId: string | null) {
   }
 }
 
+async function firstCapsuleId(userId: string): Promise<string | null> {
+  if (!admin) return null;
+  const { data, error } = await admin
+    .from('capsules')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('is_public', true)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(`Capsule de ${userId}: ${error.message}`);
+  return (data?.id as string | undefined) ?? null;
+}
+
+async function ensureShowcaseCollection(ownerId: string, capsuleId: string): Promise<string> {
+  if (!admin) throw new Error('Admin requerido');
+
+  const slug = 'derbis-seed';
+  const { data: existing, error: existingError } = await admin
+    .from('collections')
+    .select('id')
+    .eq('user_id', ownerId)
+    .eq('slug', slug)
+    .maybeSingle();
+  if (existingError) throw new Error(`Lista seed lookup: ${existingError.message}`);
+
+  let collectionId = existing?.id as string | undefined;
+  if (!collectionId) {
+    const { data, error } = await admin
+      .from('collections')
+      .insert({
+        user_id: ownerId,
+        name: 'Derbis',
+        slug,
+        description: 'Clásicos y derbis para el seed social.',
+        is_public: true,
+      })
+      .select('id')
+      .single();
+    if (error || !data) throw new Error(`Lista seed: ${error?.message ?? 'sin id'}`);
+    collectionId = data.id as string;
+  }
+
+  const { error: itemError } = await admin.from('collection_items').upsert(
+    { collection_id: collectionId, capsule_id: capsuleId, position: 0 },
+    { onConflict: 'collection_id,capsule_id' },
+  );
+  if (itemError) throw new Error(`Ítem lista seed: ${itemError.message}`);
+  return collectionId;
+}
+
+async function ensureSeedComment(
+  table: 'capsule_comments' | 'collection_comments',
+  userId: string,
+  targetColumn: 'capsule_id' | 'collection_id',
+  targetId: string,
+  body: string,
+) {
+  if (!admin) return;
+  const { data: existing, error: lookupError } = await admin
+    .from(table)
+    .select('id')
+    .eq('user_id', userId)
+    .eq(targetColumn, targetId)
+    .eq('body', body)
+    .limit(1);
+  if (lookupError) throw new Error(`Lookup comentario seed: ${lookupError.message}`);
+  if ((existing ?? []).length > 0) return;
+
+  const { error } = await admin.from(table).insert({
+    user_id: userId,
+    [targetColumn]: targetId,
+    body,
+  });
+  if (error) throw new Error(`Comentario seed: ${error.message}`);
+}
+
+async function seedFanSocial(fanIds: string[]) {
+  if (!admin || fanIds.length < 6) return;
+
+  const ownerId = fanIds[0]!;
+  const ownerCapsuleId = await firstCapsuleId(ownerId);
+  if (!ownerCapsuleId) return;
+
+  const collectionId = await ensureShowcaseCollection(ownerId, ownerCapsuleId);
+  const capsuleByFan = new Map<number, string>();
+  capsuleByFan.set(0, ownerCapsuleId);
+
+  for (const action of demoFollowedSocialActions()) {
+    const actorId = fanIds[action.actorIndex];
+    const targetId = fanIds[action.targetIndex];
+    if (!actorId || !targetId) continue;
+
+    if (action.kind.startsWith('capsule_')) {
+      let capsuleId = capsuleByFan.get(action.targetIndex);
+      if (!capsuleId) {
+        capsuleId = (await firstCapsuleId(targetId)) ?? undefined;
+        if (capsuleId) capsuleByFan.set(action.targetIndex, capsuleId);
+      }
+      if (!capsuleId) continue;
+      if (action.kind === 'capsule_like') {
+        const { error } = await admin.from('capsule_likes').upsert(
+          { user_id: actorId, capsule_id: capsuleId },
+          { onConflict: 'user_id,capsule_id', ignoreDuplicates: true },
+        );
+        if (error) throw new Error(`Like Capsule seed: ${error.message}`);
+      } else {
+        await ensureSeedComment(
+          'capsule_comments',
+          actorId,
+          'capsule_id',
+          capsuleId,
+          demoSeedCommentBody('capsule'),
+        );
+      }
+      continue;
+    }
+
+    if (action.targetIndex !== 0) continue;
+    if (action.kind === 'collection_like') {
+      const { error } = await admin.from('collection_likes').upsert(
+        { user_id: actorId, collection_id: collectionId },
+        { onConflict: 'user_id,collection_id', ignoreDuplicates: true },
+      );
+      if (error) throw new Error(`Like lista seed: ${error.message}`);
+    } else {
+      await ensureSeedComment(
+        'collection_comments',
+        actorId,
+        'collection_id',
+        collectionId,
+        demoSeedCommentBody('collection'),
+      );
+    }
+  }
+}
+
+async function cleanupDemoE2eCollections(demoUserId: string | null) {
+  if (!admin || !demoUserId) return;
+  const { data, error } = await admin
+    .from('collections')
+    .select('id, name')
+    .eq('user_id', demoUserId);
+  if (error) throw new Error(`Cleanup E2E lookup: ${error.message}`);
+  const junk = (data ?? []).filter((row) => isE2eLeftoverCollectionName(String(row.name ?? '')));
+  if (junk.length === 0) return;
+  const { error: deleteError } = await admin
+    .from('collections')
+    .delete()
+    .in(
+      'id',
+      junk.map((row) => row.id as string),
+    );
+  if (deleteError) throw new Error(`Cleanup E2E delete: ${deleteError.message}`);
+  console.log(`   Limpiadas ${junk.length} lista(s) E2E del perfil demo`);
+}
+
 async function main() {
   if (!admin) {
     throw new Error('Faltan SUPABASE_URL y SUPABASE_SECRET_KEY en backend/.env');
@@ -545,13 +707,15 @@ async function main() {
 
   const demoUserId = await lookupDemoUserId();
   await seedFollows(fanIds, demoUserId);
+  await seedFanSocial(fanIds);
+  await cleanupDemoE2eCollections(demoUserId);
 
   console.log('\n📋 Resumen');
   console.log(`   Aficionados: ${FANS.length}`);
   console.log(`   Contraseña:  DEMO_FANS_PASSWORD o TEST_USER_PASSWORD en backend/.env`);
   console.log(`   Emails:      fan01@ninety.app … fan${String(FANS.length).padStart(2, '0')}@ninety.app`);
   if (demoUserId) {
-    console.log(`   Demo (@${process.env.DEMO_USERNAME ?? 'aficionado_demo'}) enlazado con follows`);
+    console.log(`   Demo (@${process.env.DEMO_USERNAME ?? 'aficionado_demo'}) enlazado con follows + likes/comentarios`);
   } else {
     console.log('   ℹ️  Usuario demo no encontrado — ejecuta npm run seed:demo para enlazar follows');
   }

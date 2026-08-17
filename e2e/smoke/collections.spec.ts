@@ -1,7 +1,11 @@
 import { expect, test } from '@playwright/test';
 import { openAuthenticatedHome } from '../helpers/auth';
+import { deleteOwnE2eCollections } from '../helpers/e2eCollections';
 
 test.describe('Smoke — colecciones @smoke', () => {
+  test.afterEach(async ({ page, request }) => {
+    await deleteOwnE2eCollections(page, request);
+  });
   test('Listas en nav principal abre Mis listas y Explorar', async ({ page }) => {
     await openAuthenticatedHome(page);
 
