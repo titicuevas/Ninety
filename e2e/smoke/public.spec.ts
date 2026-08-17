@@ -161,6 +161,19 @@ test.describe('Smoke — público @smoke', () => {
     ).toBeVisible();
   });
 
+  test('Capsule pública del demo muestra me gusta y comentario', async ({ page, request }) => {
+    const body = await requirePublicDemoProfile(request, 'limit=20&offset=0');
+    const capsule = (body.capsules ?? []).find(
+      (row) => (row.likes_count ?? 0) > 0 && (row.comments_count ?? 0) > 0,
+    );
+    test.skip(!capsule?.id, 'Ejecuta npm run seed:fans para sembrar likes/comentarios en el demo');
+
+    await page.goto(`/c/${capsule!.id}`);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/\d+ me gusta/i).first()).toBeVisible();
+    await expect(page.getByText(/\d+ comentarios?/i).first()).toBeVisible();
+  });
+
   test('API health', async ({ request }) => {
     const res = await request.get(`${API_BASE}/api/health`);
     expect(res.ok()).toBeTruthy();

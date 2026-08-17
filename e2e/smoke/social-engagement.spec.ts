@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
-import { API_BASE, openAuthenticatedHome, readAccessToken } from '../helpers/auth';
+import {
+  API_BASE,
+  DEMO_USERNAME,
+  openAuthenticatedHome,
+  readAccessToken,
+} from '../helpers/auth';
 
 type CapsuleSummary = { id: string; match_id: number; liked_by_me?: boolean };
 
@@ -197,5 +202,25 @@ test.describe('Smoke — likes y comentarios @smoke', () => {
     await dialog.getByRole('button', { name: /^borrar$/i }).click();
     await expect(dialog).toBeHidden();
     await expect(posted).toBeHidden({ timeout: 15_000 });
+  });
+
+  test('Capsule pública del demo muestra también le gusta y comentó', async ({ page, request }) => {
+    await openAuthenticatedHome(page);
+    const res = await request.get(
+      `${API_BASE}/api/capsules/user/${encodeURIComponent(DEMO_USERNAME)}?limit=20&offset=0`,
+    );
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      capsules?: Array<{ id?: string; likes_count?: number; comments_count?: number }>;
+    };
+    const capsule = (body.capsules ?? []).find(
+      (row) => (row.likes_count ?? 0) > 0 && (row.comments_count ?? 0) > 0,
+    );
+    test.skip(!capsule?.id, 'Ejecuta npm run seed:fans para sembrar likes/comentarios en el demo');
+
+    await page.goto(`/c/${capsule!.id}`);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/también le gusta/i)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/también comentó/i)).toBeVisible();
   });
 });

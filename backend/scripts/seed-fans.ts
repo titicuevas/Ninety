@@ -14,6 +14,7 @@ import { requireTestCredentials } from './testCredentials.js';
 import {
   DEMO_FEATURED_COLLECTION_NAME,
   DEMO_FEATURED_COLLECTION_SLUG,
+  demoCapsuleSocialActions,
   demoFeaturedSocialActions,
   demoFollowedSocialActions,
   demoSeedCommentBody,
@@ -823,6 +824,42 @@ async function seedDemoFeaturedSocial(demoUserId: string | null, fanIds: string[
   console.log(`   Likes/comentarios en «${DEMO_FEATURED_COLLECTION_NAME}»`);
 }
 
+async function seedDemoCapsuleSocial(demoUserId: string | null, fanIds: string[]) {
+  if (!admin || !demoUserId || fanIds.length < 6) return;
+
+  const { data: capsules, error } = await admin
+    .from('capsules')
+    .select('id')
+    .eq('user_id', demoUserId)
+    .eq('is_public', true)
+    .order('watched_at', { ascending: false })
+    .limit(1);
+  if (error) throw new Error(`Demo capsule social lookup: ${error.message}`);
+  const capsuleId = capsules?.[0]?.id as string | undefined;
+  if (!capsuleId) return;
+
+  for (const action of demoCapsuleSocialActions()) {
+    const actorId = fanIds[action.actorIndex];
+    if (!actorId) continue;
+    if (action.kind === 'capsule_like') {
+      const { error: likeError } = await admin.from('capsule_likes').upsert(
+        { user_id: actorId, capsule_id: capsuleId },
+        { onConflict: 'user_id,capsule_id', ignoreDuplicates: true },
+      );
+      if (likeError) throw new Error(`Like Capsule demo seed: ${likeError.message}`);
+    } else {
+      await ensureSeedComment(
+        'capsule_comments',
+        actorId,
+        'capsule_id',
+        capsuleId,
+        demoSeedCommentBody('capsule'),
+      );
+    }
+  }
+  console.log('   Likes/comentarios en Capsule pública del demo');
+}
+
 async function main() {
   if (!admin) {
     throw new Error('Faltan SUPABASE_URL y SUPABASE_SECRET_KEY en backend/.env');
@@ -849,6 +886,7 @@ async function main() {
   await cleanupDemoE2eNotes(demoUserId);
   await ensureDemoFeaturedCollection(demoUserId);
   await seedDemoFeaturedSocial(demoUserId, fanIds);
+  await seedDemoCapsuleSocial(demoUserId, fanIds);
 
   console.log('\n📋 Resumen');
   console.log(`   Aficionados: ${FANS.length}`);

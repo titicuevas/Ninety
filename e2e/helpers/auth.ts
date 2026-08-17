@@ -278,7 +278,7 @@ export type DemoPublicProfile = {
     username?: string | null;
     display_name?: string | null;
   };
-  capsules?: Array<{ id?: string }>;
+  capsules?: Array<{ id?: string; likes_count?: number; comments_count?: number }>;
   total?: number;
   stats?: { totalMatches?: number };
   years?: number[];

@@ -4,6 +4,7 @@ import {
   DEMO_FEATURED_COLLECTION_NAME,
   DEMO_FEATURED_COLLECTION_SLUG,
   DEMO_SOCIAL_COMMENT_MARKER,
+  demoCapsuleSocialActions,
   demoFeaturedSocialActions,
   demoFollowedSocialActions,
   demoSeedCommentBody,
@@ -61,5 +62,15 @@ describe('demoSocialSeed', () => {
     }
     assert.ok(actions.some((row) => row.kind === 'collection_like'));
     assert.ok(actions.some((row) => row.kind === 'collection_comment'));
+  });
+
+  it('acciones sociales en Capsule del demo entre fans que sigue', () => {
+    const actions = demoCapsuleSocialActions();
+    assert.equal(actions.length, 2);
+    for (const action of actions) {
+      assert.ok(action.actorIndex < 6);
+    }
+    assert.ok(actions.some((row) => row.kind === 'capsule_like'));
+    assert.ok(actions.some((row) => row.kind === 'capsule_comment'));
   });
 });

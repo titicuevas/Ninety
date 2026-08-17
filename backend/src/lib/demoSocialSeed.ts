@@ -65,3 +65,16 @@ export function demoFeaturedSocialActions(): DemoFeaturedSocialAction[] {
     { actorIndex: 5, kind: 'collection_comment' },
   ];
 }
+
+export type DemoCapsuleSocialAction = {
+  actorIndex: number;
+  kind: 'capsule_like' | 'capsule_comment';
+};
+
+/** Likes/comentarios en una Capsule pública del demo (mismo círculo de follows). */
+export function demoCapsuleSocialActions(): DemoCapsuleSocialAction[] {
+  return [
+    { actorIndex: 1, kind: 'capsule_comment' },
+    { actorIndex: 2, kind: 'capsule_like' },
+  ];
+}
