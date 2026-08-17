@@ -20,6 +20,7 @@ export type FollowActivityCollection = {
   name: string;
   slug: string;
   description: string | null;
+  author_username?: string | null;
 };
 
 export type FollowActivityEvent =
@@ -32,7 +33,21 @@ export type FollowActivityEvent =
     }
   | {
       id: string;
+      type: 'capsule_like';
+      occurred_at: string;
+      actor: FollowActivityActor;
+      capsule: FollowActivityCapsule;
+    }
+  | {
+      id: string;
       type: 'collection';
+      occurred_at: string;
+      actor: FollowActivityActor;
+      collection: FollowActivityCollection;
+    }
+  | {
+      id: string;
+      type: 'collection_like';
       occurred_at: string;
       actor: FollowActivityActor;
       collection: FollowActivityCollection;

@@ -372,7 +372,7 @@ Ninety/
 | GET | `/api/capsules/me/export` | ✅ | Export diario JSON/CSV (GDPR) |
 | POST | `/api/capsules/me/import` | ✅ | Import diario desde export JSON (omite `match_id` existentes; `restore_photos` opcional re-sube `photo_urls` remotas) |
 | GET | `/api/capsules/feed` | ✅ | Feed (seguidos + tuyo); `scope`, `sort`, `photos=1`, `competition` |
-| GET | `/api/activity` | ✅ | Timeline de actividad de follows (Capsules + colecciones públicas nuevas; `type=capsule|collection`; blocks; `limit`/`offset`) |
+| GET | `/api/activity` | ✅ | Timeline de actividad de follows (Capsules + colecciones públicas nuevas + me gusta; `type=capsule|collection`; blocks; `limit`/`offset`) |
 | GET | `/api/capsules/user/:username` | opcional | Perfil + capsules + stats (base del cara a cara `/u/:username/vs`) |
 | GET | `/api/capsules/:id` | opcional | Capsule pública (compartir) |
 | POST/PATCH/DELETE | `/api/capsules`… | ✅ | CRUD capsules |
@@ -554,6 +554,9 @@ Ninety/
 
 ### ✅ v20 — También le gusta esta Capsule
 - [x] También le gusta — quién de tus follows dio me gusta a una Capsule (`GET /api/capsules/:id/likes/following`; paridad con listas)
+
+### ✅ v21 — Me gusta en Actividad
+- [x] Actividad de me gusta — ver cuando alguien que sigues da me gusta a una Capsule o lista pública (`capsule_like` / `collection_like` en `GET /api/activity`)
 
 ## 🎨 Identidad visual
 

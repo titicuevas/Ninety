@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Activity, Library, Ticket, Users } from 'lucide-react';
+import { Activity, Heart, Library, Ticket, Users } from 'lucide-react';
 import { ActivityTypeFiltersBar } from '@/components/ActivityTypeFiltersBar';
 import { EmptyState } from '@/components/EmptyState';
 import { capsuleCardListClass } from '@/components/CapsuleListCard';
@@ -49,8 +49,13 @@ function ActorLink({ event }: { event: FollowActivityEvent }) {
   return <span className="font-medium text-foreground">{name}</span>;
 }
 
-function CapsuleActivityRow({ event }: { event: Extract<FollowActivityEvent, { type: 'capsule' }> }) {
+function CapsuleActivityRow({
+  event,
+}: {
+  event: Extract<FollowActivityEvent, { type: 'capsule' | 'capsule_like' }>;
+}) {
   const match = `${event.capsule.home_team_name} vs ${event.capsule.away_team_name}`;
+  const liked = event.type === 'capsule_like';
 
   return (
     <li className="rounded-xl border border-border bg-card p-4">
@@ -59,11 +64,12 @@ function CapsuleActivityRow({ event }: { event: Extract<FollowActivityEvent, { t
           className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary"
           aria-hidden
         >
-          <Ticket className="h-4 w-4" />
+          {liked ? <Heart className="h-4 w-4" /> : <Ticket className="h-4 w-4" />}
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-sm text-muted-foreground">
-            <ActorLink event={event} /> publicó una Capsule
+            <ActorLink event={event} />{' '}
+            {liked ? 'le dio me gusta a una Capsule' : 'publicó una Capsule'}
           </p>
           <Link
             to={`/c/${event.capsule.id}`}
@@ -91,9 +97,10 @@ function CapsuleActivityRow({ event }: { event: Extract<FollowActivityEvent, { t
 function CollectionActivityRow({
   event,
 }: {
-  event: Extract<FollowActivityEvent, { type: 'collection' }>;
+  event: Extract<FollowActivityEvent, { type: 'collection' | 'collection_like' }>;
 }) {
-  const username = event.actor.username;
+  const liked = event.type === 'collection_like';
+  const username = event.collection.author_username ?? event.actor.username;
   const href =
     username && event.collection.slug
       ? `/u/${encodeURIComponent(username)}/lists/${encodeURIComponent(event.collection.slug)}`
@@ -106,11 +113,11 @@ function CollectionActivityRow({
           className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground"
           aria-hidden
         >
-          <Library className="h-4 w-4" />
+          {liked ? <Heart className="h-4 w-4" /> : <Library className="h-4 w-4" />}
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-sm text-muted-foreground">
-            <ActorLink event={event} /> creó una lista
+            <ActorLink event={event} /> {liked ? 'le dio me gusta a una lista' : 'creó una lista'}
           </p>
           {href ? (
             <Link
@@ -135,8 +142,10 @@ function CollectionActivityRow({
 }
 
 function ActivityRow({ event }: { event: FollowActivityEvent }) {
-  if (event.type === 'capsule') return <CapsuleActivityRow event={event} />;
-  return <CollectionActivityRow event={event} />;
+  if (event.type === 'collection' || event.type === 'collection_like') {
+    return <CollectionActivityRow event={event} />;
+  }
+  return <CapsuleActivityRow event={event} />;
 }
 
 export function ActivityPage() {
@@ -218,7 +227,7 @@ export function ActivityPage() {
             description={
               followingCount === 0
                 ? 'Sigue aficionados para ver aquí sus Capsules y listas.'
-                : 'Cuando publiquen Capsules o listas, aparecerán aquí.'
+                : 'Cuando publiquen Capsules o listas, o den me gusta, aparecerán aquí.'
             }
           >
             {followingCount === 0 ? (

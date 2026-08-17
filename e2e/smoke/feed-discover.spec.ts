@@ -249,7 +249,7 @@ test.describe('Smoke — feed y discover @smoke', () => {
     };
     expect(body.type).toBe('capsule');
     for (const event of body.events ?? []) {
-      expect(event.type).toBe('capsule');
+      expect(['capsule', 'capsule_like']).toContain(event.type);
     }
 
     await page.getByRole('button', { name: /^listas$/i }).click();

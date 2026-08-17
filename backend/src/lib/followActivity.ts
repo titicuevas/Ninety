@@ -24,6 +24,7 @@ export type FollowActivityCollectionPayload = {
   name: string;
   slug: string;
   description: string | null;
+  author_username: string | null;
 };
 
 export type FollowActivityEvent =
@@ -36,23 +37,48 @@ export type FollowActivityEvent =
     }
   | {
       id: string;
+      type: 'capsule_like';
+      occurred_at: string;
+      actor: FollowActivityActor;
+      capsule: FollowActivityCapsulePayload;
+    }
+  | {
+      id: string;
       type: 'collection';
+      occurred_at: string;
+      actor: FollowActivityActor;
+      collection: FollowActivityCollectionPayload;
+    }
+  | {
+      id: string;
+      type: 'collection_like';
       occurred_at: string;
       actor: FollowActivityActor;
       collection: FollowActivityCollectionPayload;
     };
 
-type CapsuleCandidate = {
-  kind: 'capsule';
-  id: string;
-  user_id: string;
-  occurred_at: string;
+type CapsuleFields = {
   home_team_name: string;
   away_team_name: string;
   competition_name: string | null;
   rating: number | null;
   photo_urls: string[] | null;
   watched_at: string | null;
+};
+
+type CapsuleCandidate = CapsuleFields & {
+  kind: 'capsule';
+  id: string;
+  user_id: string;
+  occurred_at: string;
+};
+
+type CapsuleLikeCandidate = CapsuleFields & {
+  kind: 'capsule_like';
+  id: string;
+  user_id: string;
+  occurred_at: string;
+  capsule_id: string;
 };
 
 type CollectionCandidate = {
@@ -63,11 +89,35 @@ type CollectionCandidate = {
   name: string;
   slug: string;
   description: string | null;
+  author_username: string | null;
 };
 
-export type FollowActivityCandidate = CapsuleCandidate | CollectionCandidate;
+type CollectionLikeCandidate = {
+  kind: 'collection_like';
+  id: string;
+  user_id: string;
+  occurred_at: string;
+  collection_id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  author_username: string | null;
+};
 
-function isMissingCollectionsTable(error: unknown): boolean {
+export type FollowActivityCandidate =
+  | CapsuleCandidate
+  | CapsuleLikeCandidate
+  | CollectionCandidate
+  | CollectionLikeCandidate;
+
+const KIND_RANK: Record<FollowActivityCandidate['kind'], number> = {
+  capsule: 0,
+  capsule_like: 1,
+  collection: 2,
+  collection_like: 3,
+};
+
+function isMissingRelation(error: unknown, table: string): boolean {
   const message =
     error && typeof error === 'object' && 'message' in error && typeof error.message === 'string'
       ? error.message
@@ -81,21 +131,25 @@ function isMissingCollectionsTable(error: unknown): boolean {
 
   return (
     code === '42P01' ||
-    (message.includes('collections') &&
+    (message.includes(table) &&
       (message.includes('schema cache') ||
         message.includes('Could not find') ||
         message.includes('does not exist')))
   );
 }
 
-/** Mezcla candidatos de Capsules y colecciones por fecha (más reciente primero). */
+export function followActivityKindRank(kind: FollowActivityCandidate['kind']): number {
+  return KIND_RANK[kind];
+}
+
+/** Mezcla candidatos por fecha (más reciente primero). */
 export function mergeFollowActivityCandidates(
   candidates: FollowActivityCandidate[],
 ): FollowActivityCandidate[] {
   return [...candidates].sort((a, b) => {
     const byTime = b.occurred_at.localeCompare(a.occurred_at);
     if (byTime !== 0) return byTime;
-    if (a.kind !== b.kind) return a.kind === 'capsule' ? -1 : 1;
+    if (a.kind !== b.kind) return KIND_RANK[a.kind] - KIND_RANK[b.kind];
     return a.id.localeCompare(b.id);
   });
 }
@@ -109,6 +163,94 @@ export function paginateFollowActivity<T>(
   const safeOffset = Math.max(0, offset);
   const safeLimit = Math.max(0, limit);
   return items.slice(safeOffset, safeOffset + safeLimit);
+}
+
+type CapsuleLikeSource = {
+  user_id: string;
+  capsule_id: string;
+  created_at: string;
+};
+
+type CapsuleLikeTarget = CapsuleFields & {
+  id: string;
+  user_id: string;
+  is_public?: boolean | null;
+};
+
+/** Likes de follows a Capsules públicas ajenas (no bloqueadas). */
+export function visibleCapsuleLikeCandidates(
+  likes: CapsuleLikeSource[],
+  capsulesById: Map<string, CapsuleLikeTarget>,
+  blockedIds: ReadonlySet<string>,
+  viewerId: string,
+): CapsuleLikeCandidate[] {
+  const out: CapsuleLikeCandidate[] = [];
+  for (const like of likes) {
+    const capsule = capsulesById.get(like.capsule_id);
+    if (!capsule) continue;
+    if (capsule.is_public === false) continue;
+    if (capsule.user_id === viewerId) continue;
+    if (capsule.user_id !== viewerId && blockedIds.has(capsule.user_id)) continue;
+    out.push({
+      kind: 'capsule_like',
+      id: `${like.user_id}:${capsule.id}`,
+      user_id: like.user_id,
+      occurred_at: like.created_at,
+      capsule_id: capsule.id,
+      home_team_name: capsule.home_team_name,
+      away_team_name: capsule.away_team_name,
+      competition_name: capsule.competition_name,
+      rating: capsule.rating,
+      photo_urls: capsule.photo_urls,
+      watched_at: capsule.watched_at,
+    });
+  }
+  return out;
+}
+
+type CollectionLikeSource = {
+  user_id: string;
+  collection_id: string;
+  created_at: string;
+};
+
+type CollectionLikeTarget = {
+  id: string;
+  user_id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  is_public?: boolean | null;
+};
+
+/** Likes de follows a listas públicas ajenas (no bloqueadas). */
+export function visibleCollectionLikeCandidates(
+  likes: CollectionLikeSource[],
+  collectionsById: Map<string, CollectionLikeTarget>,
+  ownerUsernameById: ReadonlyMap<string, string | null>,
+  blockedIds: ReadonlySet<string>,
+  viewerId: string,
+): CollectionLikeCandidate[] {
+  const out: CollectionLikeCandidate[] = [];
+  for (const like of likes) {
+    const collection = collectionsById.get(like.collection_id);
+    if (!collection) continue;
+    if (collection.is_public === false) continue;
+    if (collection.user_id === viewerId) continue;
+    if (blockedIds.has(collection.user_id)) continue;
+    out.push({
+      kind: 'collection_like',
+      id: `${like.user_id}:${collection.id}`,
+      user_id: like.user_id,
+      occurred_at: like.created_at,
+      collection_id: collection.id,
+      name: collection.name,
+      slug: collection.slug,
+      description: collection.description,
+      author_username: ownerUsernameById.get(collection.user_id) ?? null,
+    });
+  }
+  return out;
 }
 
 function toActor(
@@ -131,44 +273,155 @@ function toActor(
   };
 }
 
+function capsulePayload(
+  candidate: CapsuleCandidate | CapsuleLikeCandidate,
+): FollowActivityCapsulePayload {
+  return {
+    id: candidate.kind === 'capsule_like' ? candidate.capsule_id : candidate.id,
+    home_team_name: candidate.home_team_name,
+    away_team_name: candidate.away_team_name,
+    competition_name: candidate.competition_name,
+    rating: candidate.rating,
+    photo_urls: candidate.photo_urls,
+    watched_at: candidate.watched_at,
+  };
+}
+
 function toEvent(
   candidate: FollowActivityCandidate,
   actor: FollowActivityActor,
 ): FollowActivityEvent {
-  if (candidate.kind === 'capsule') {
+  if (candidate.kind === 'capsule' || candidate.kind === 'capsule_like') {
     return {
-      id: `capsule:${candidate.id}`,
-      type: 'capsule',
+      id: `${candidate.kind}:${candidate.id}`,
+      type: candidate.kind,
       occurred_at: candidate.occurred_at,
       actor,
-      capsule: {
-        id: candidate.id,
-        home_team_name: candidate.home_team_name,
-        away_team_name: candidate.away_team_name,
-        competition_name: candidate.competition_name,
-        rating: candidate.rating,
-        photo_urls: candidate.photo_urls,
-        watched_at: candidate.watched_at,
-      },
+      capsule: capsulePayload(candidate),
     };
   }
 
   return {
-    id: `collection:${candidate.id}`,
-    type: 'collection',
+    id: `${candidate.kind}:${candidate.id}`,
+    type: candidate.kind,
     occurred_at: candidate.occurred_at,
     actor,
     collection: {
-      id: candidate.id,
+      id: candidate.kind === 'collection_like' ? candidate.collection_id : candidate.id,
       name: candidate.name,
       slug: candidate.slug,
       description: candidate.description,
+      author_username: candidate.author_username ?? actor.username,
     },
   };
 }
 
+async function loadCapsuleLikeCandidates(
+  supabase: SupabaseClient,
+  authorIds: string[],
+  blockedIds: ReadonlySet<string>,
+  viewerId: string,
+  poolSize: number,
+): Promise<{ rows: CapsuleLikeCandidate[]; total: number }> {
+  const { data, error, count } = await supabase
+    .from('capsule_likes')
+    .select('user_id, capsule_id, created_at', { count: 'exact' })
+    .in('user_id', authorIds)
+    .order('created_at', { ascending: false })
+    .range(0, poolSize - 1);
+
+  if (error) {
+    if (isMissingRelation(error, 'capsule_likes')) return { rows: [], total: 0 };
+    throw error;
+  }
+
+  const likes = (data ?? []) as CapsuleLikeSource[];
+  const total = count ?? likes.length;
+  if (likes.length === 0) return { rows: [], total };
+
+  const capsuleIds = [...new Set(likes.map((row) => row.capsule_id))];
+  const { data: capsuleRows, error: capsulesError } = await supabase
+    .from('capsules')
+    .select(
+      'id, user_id, is_public, home_team_name, away_team_name, competition_name, rating, photo_urls, watched_at',
+    )
+    .in('id', capsuleIds);
+
+  if (capsulesError) throw capsulesError;
+
+  const capsulesById = new Map(
+    ((capsuleRows ?? []) as CapsuleLikeTarget[]).map((row) => [row.id, row]),
+  );
+  return {
+    rows: visibleCapsuleLikeCandidates(likes, capsulesById, blockedIds, viewerId),
+    total,
+  };
+}
+
+async function loadCollectionLikeCandidates(
+  supabase: SupabaseClient,
+  authorIds: string[],
+  blockedIds: ReadonlySet<string>,
+  viewerId: string,
+  poolSize: number,
+): Promise<{ rows: CollectionLikeCandidate[]; total: number }> {
+  const { data, error, count } = await supabase
+    .from('collection_likes')
+    .select('user_id, collection_id, created_at', { count: 'exact' })
+    .in('user_id', authorIds)
+    .order('created_at', { ascending: false })
+    .range(0, poolSize - 1);
+
+  if (error) {
+    if (isMissingRelation(error, 'collection_likes')) return { rows: [], total: 0 };
+    throw error;
+  }
+
+  const likes = (data ?? []) as CollectionLikeSource[];
+  const total = count ?? likes.length;
+  if (likes.length === 0) return { rows: [], total };
+
+  const collectionIds = [...new Set(likes.map((row) => row.collection_id))];
+  const { data: collectionRows, error: collectionsError } = await supabase
+    .from('collections')
+    .select('id, user_id, name, slug, description, is_public')
+    .in('id', collectionIds);
+
+  if (collectionsError) {
+    if (isMissingRelation(collectionsError, 'collections')) return { rows: [], total: 0 };
+    throw collectionsError;
+  }
+
+  const collections = (collectionRows ?? []) as CollectionLikeTarget[];
+  const collectionsById = new Map(collections.map((row) => [row.id, row]));
+  const ownerIds = [...new Set(collections.map((row) => row.user_id))];
+  const ownerUsernameById = new Map<string, string | null>();
+
+  if (ownerIds.length > 0) {
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, username')
+      .in('id', ownerIds);
+    if (profilesError) throw profilesError;
+    for (const profile of profiles ?? []) {
+      ownerUsernameById.set(profile.id as string, (profile.username as string | null) ?? null);
+    }
+  }
+
+  return {
+    rows: visibleCollectionLikeCandidates(
+      likes,
+      collectionsById,
+      ownerUsernameById,
+      blockedIds,
+      viewerId,
+    ),
+    total,
+  };
+}
+
 /**
- * Timeline ligera de gente que sigues: Capsules y colecciones públicas nuevas.
+ * Timeline ligera de gente que sigues: Capsules, listas y me gusta públicos.
  * Sin tabla de eventos — consulta fuentes existentes + filtra blocks.
  */
 export async function listFollowActivity(
@@ -193,7 +446,8 @@ export async function listFollowActivity(
     return { events: [], total: 0, following_count: followingIds?.length ?? 0 };
   }
 
-  const authorIds = excludeBlockedIds(followingIds, new Set(blockedList));
+  const blockedIds = new Set(blockedList);
+  const authorIds = excludeBlockedIds(followingIds, blockedIds);
   if (authorIds.length === 0) {
     return { events: [], total: 0, following_count: followingIds.length };
   }
@@ -202,33 +456,38 @@ export async function listFollowActivity(
   const wantCapsules = typeFilter !== 'collection';
   const wantCollections = typeFilter !== 'capsule';
 
-  const [capsulesResult, collectionsResult] = await Promise.all([
-    wantCapsules
-      ? supabase
-          .from('capsules')
-          .select(
-            'id, user_id, home_team_name, away_team_name, competition_name, rating, photo_urls, watched_at, created_at',
-            { count: 'exact' },
-          )
-          .eq('is_public', true)
-          .in('user_id', authorIds)
-          .order('created_at', { ascending: false })
-          .range(0, poolSize - 1)
-      : Promise.resolve({ data: [], error: null, count: 0 }),
-    wantCollections
-      ? supabase
-          .from('collections')
-          .select('id, user_id, name, slug, description, created_at', { count: 'exact' })
-          .eq('is_public', true)
-          .in('user_id', authorIds)
-          .order('created_at', { ascending: false })
-          .range(0, poolSize - 1)
-      : Promise.resolve({ data: [], error: null, count: 0 }),
-  ]);
+  const [capsulesResult, collectionsResult, capsuleLikesResult, collectionLikesResult] =
+    await Promise.all([
+      wantCapsules
+        ? supabase
+            .from('capsules')
+            .select(
+              'id, user_id, home_team_name, away_team_name, competition_name, rating, photo_urls, watched_at, created_at',
+              { count: 'exact' },
+            )
+            .eq('is_public', true)
+            .in('user_id', authorIds)
+            .order('created_at', { ascending: false })
+            .range(0, poolSize - 1)
+        : Promise.resolve({ data: [], error: null, count: 0 }),
+      wantCollections
+        ? supabase
+            .from('collections')
+            .select('id, user_id, name, slug, description, created_at', { count: 'exact' })
+            .eq('is_public', true)
+            .in('user_id', authorIds)
+            .order('created_at', { ascending: false })
+            .range(0, poolSize - 1)
+        : Promise.resolve({ data: [], error: null, count: 0 }),
+      wantCapsules
+        ? loadCapsuleLikeCandidates(supabase, authorIds, blockedIds, viewerId, poolSize)
+        : Promise.resolve({ rows: [] as CapsuleLikeCandidate[], total: 0 }),
+      wantCollections
+        ? loadCollectionLikeCandidates(supabase, authorIds, blockedIds, viewerId, poolSize)
+        : Promise.resolve({ rows: [] as CollectionLikeCandidate[], total: 0 }),
+    ]);
 
-  if (capsulesResult.error) {
-    throw capsulesResult.error;
-  }
+  if (capsulesResult.error) throw capsulesResult.error;
 
   let collectionRows: Array<{
     id: string;
@@ -241,7 +500,7 @@ export async function listFollowActivity(
   let collectionTotal = 0;
 
   if (collectionsResult.error) {
-    if (!isMissingCollectionsTable(collectionsResult.error)) {
+    if (!isMissingRelation(collectionsResult.error, 'collections')) {
       throw collectionsResult.error;
     }
   } else {
@@ -277,6 +536,7 @@ export async function listFollowActivity(
         watched_at: row.watched_at,
       }),
     ),
+    ...capsuleLikesResult.rows,
     ...collectionRows.map(
       (row): CollectionCandidate => ({
         kind: 'collection',
@@ -286,18 +546,20 @@ export async function listFollowActivity(
         name: row.name,
         slug: row.slug,
         description: row.description,
+        author_username: null,
       }),
     ),
+    ...collectionLikesResult.rows,
   ];
 
   const merged = mergeFollowActivityCandidates(candidates);
   const page = paginateFollowActivity(merged, offset, limit);
   const total =
     typeFilter === 'capsule'
-      ? capsuleTotal
+      ? capsuleTotal + capsuleLikesResult.total
       : typeFilter === 'collection'
-        ? collectionTotal
-        : capsuleTotal + collectionTotal;
+        ? collectionTotal + collectionLikesResult.total
+        : capsuleTotal + collectionTotal + capsuleLikesResult.total + collectionLikesResult.total;
 
   const userIds = [...new Set(page.map((row) => row.user_id))];
   const profileMap = new Map<
