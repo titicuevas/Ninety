@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { BookOpen, Library } from 'lucide-react';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
+import { CollectionAlsoLiked } from '@/components/CollectionAlsoLiked';
 import { CollectionComments } from '@/components/CollectionComments';
 import { CollectionLikeButton } from '@/components/CollectionLikeButton';
 import { CollectionLikersDialog } from '@/components/CollectionLikersDialog';
@@ -122,6 +123,13 @@ export function PublicCollectionPage() {
             {' · '}
             {capsules.length} {capsules.length === 1 ? 'partido' : 'partidos'}
           </p>
+          {user ? (
+            <CollectionAlsoLiked
+              className="justify-center sm:justify-start"
+              collectionId={collection.id}
+              exceptUserId={collection.user_id}
+            />
+          ) : null}
           <div
             className="flex flex-wrap items-center justify-center gap-2 sm:justify-start"
             role="group"

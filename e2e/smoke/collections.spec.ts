@@ -77,6 +77,50 @@ test.describe('Smoke — colecciones @smoke', () => {
     await expect(page.getByRole('button', { name: /compartir/i })).toBeVisible();
   });
 
+  test('Lista pública muestra follows que también le dieron me gusta', async ({ page }) => {
+    await openAuthenticatedHome(page);
+
+    await page.route('**/api/collections/*/likes/following', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        json: {
+          people: [
+            {
+              id: 'e2e-friend',
+              username: 'amigo_e2e',
+              display_name: 'Amigo E2E',
+              avatar_url: null,
+            },
+          ],
+          total: 1,
+        },
+      });
+    });
+
+    await page
+      .getByRole('navigation', { name: /navegación principal/i })
+      .getByRole('link', { name: /listas/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/collections$/);
+
+    const uniqueName = `E2E likes ${Date.now()}`;
+    const newBtn = page.getByRole('button', { name: /nueva colección|crear la primera/i }).first();
+    await newBtn.click();
+    await page.getByLabel(/^nombre$/i).fill(uniqueName);
+    await page.getByRole('button', { name: /^crear$/i }).click();
+    await expect(page).toHaveURL(/\/collections\/[0-9a-f-]+/i, { timeout: 20_000 });
+
+    await expect(page.getByText(/también le gusta/i)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('link', { name: /amigo e2e/i })).toBeVisible();
+
+    await page.getByRole('link', { name: /ver pública/i }).click();
+    await expect(page).toHaveURL(/\/u\/[^/]+\/lists\/[^/]+/, { timeout: 15_000 });
+    await expect(page.getByText(/también le gusta/i)).toBeVisible();
+    await expect(page.getByRole('link', { name: /amigo e2e/i })).toBeVisible();
+  });
+
   test('Perfil y Listas en nav abren Mis listas', async ({ page }) => {
     await openAuthenticatedHome(page);
     await page

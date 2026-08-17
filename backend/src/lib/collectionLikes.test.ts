@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  assembleAlsoLikedPeople,
   canEngageCollectionLikes,
   collectionLikesMigrationHint,
   isMissingCollectionLikesTable,
@@ -72,6 +73,23 @@ describe('isVisibleLikedCollection', () => {
       isVisibleLikedCollection({ user_id: 'blocked', is_public: true }, 'me', blocked),
       false,
     );
+  });
+});
+
+describe('assembleAlsoLikedPeople', () => {
+  it('ordena por nombre y omite ids sin perfil', () => {
+    const people = assembleAlsoLikedPeople(
+      ['b', 'a', 'missing', 'b'],
+      [
+        { id: 'a', username: 'ana', display_name: 'Ana', avatar_url: null },
+        { id: 'b', username: 'bruno', full_name: 'Bruno', avatar_url: null },
+      ],
+    );
+    assert.deepEqual(
+      people.map((row) => row.id),
+      ['a', 'b'],
+    );
+    assert.equal(people[1]?.display_name, 'Bruno');
   });
 });
 

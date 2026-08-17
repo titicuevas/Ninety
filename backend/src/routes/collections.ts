@@ -17,6 +17,7 @@ import {
   collectionLikesMigrationHint,
   fetchCollectionLikesWithProfiles,
   isMissingCollectionLikesTable,
+  listCollectionAlsoLiked,
   listLikedCollections,
 } from '../lib/collectionLikes.js';
 import { buildCollectionReorder } from '../lib/collectionReorder.js';
@@ -1448,6 +1449,32 @@ collectionsRouter.delete('/:id/like', requireAuth, async (req: AuthRequest, res)
   }
 
   res.status(204).end();
+});
+
+/** GET /api/collections/:id/likes/following — follows que dieron me gusta. */
+collectionsRouter.get('/:id/likes/following', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const id = routeParam(req.params.id);
+    const people = await listCollectionAlsoLiked(req.userId!, id);
+    res.json({ people, total: people.length });
+  } catch (err) {
+    const status = collectionRouteErrorStatus(err);
+    if (status === 400 || status === 404 || status === 503) {
+      res.status(status).json({
+        error: err instanceof Error ? err.message : 'No se pudieron cargar los me gusta',
+      });
+      return;
+    }
+    if (isMissingCollectionLikesTable(err)) {
+      res.status(503).json({ error: collectionLikesMigrationHint() });
+      return;
+    }
+    if (isMissingCollectionsTable(err as { message?: string; code?: string })) {
+      res.status(503).json({ error: collectionsMigrationHint() });
+      return;
+    }
+    next(err);
+  }
 });
 
 /** GET /api/collections/:id/likes — quién dio me gusta */

@@ -392,6 +392,7 @@ Ninety/
 | GET | `/api/collections/user/:username/:slug` | opcional | Detalle colección (`/u/:username/lists/:slug`) |
 | POST/DELETE | `/api/collections/:id/like` | ✅ | Me gusta en colección (pública o propia; respeta blocks) |
 | GET | `/api/collections/:id/likes` | opcional | Quién dio me gusta |
+| GET | `/api/collections/:id/likes/following` | ✅ | Follows que dieron me gusta a esta lista |
 | GET | `/api/football/matches/search` | ✅ | Buscar partidos |
 | GET | `/api/football/competitions` | ✅ | Competiciones |
 | GET/PATCH | `/api/notifications/preferences` | ✅ | Preferencias por tipo + push aniversario/hito/Quiero ir opt-in + digest email opt-in + horario silencioso (`push_quiet`) |
@@ -546,6 +547,9 @@ Ninety/
 
 ### ✅ v18 — Archivo de listas con me gusta
 - [x] Listas que te gustaron — archivo de colecciones (`GET /api/collections/me/liked` + `/collections/likes`; índice `collection_likes_user_created_idx`)
+
+### ✅ v19 — También les gusta esta lista
+- [x] También les gusta — quién de tus follows dio me gusta a una lista pública (`GET /api/collections/:id/likes/following`; paridad con También lo vieron / Quiero ir en común)
 
 ## 🎨 Identidad visual
 

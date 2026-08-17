@@ -1,6 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { candidateAlsoWatchedIds } from './capsuleAlsoWatched.js';
+import { fetchProfilesByIds } from './profileLookup.js';
 import { listBlockedEitherWayIds } from './userBlocks.js';
-import { followRelationFlags, isMissingFollowsTable, loadFollowRelationSets } from './userFollows.js';
+import { followRelationFlags, getFollowingIds, isMissingFollowsTable, loadFollowRelationSets } from './userFollows.js';
 
 export interface CollectionLikeStats {
   likes_count: number;
@@ -331,4 +333,109 @@ export async function listLikedCollections(
     limit,
     offset,
   };
+}
+
+export const ALSO_LIKED_LIMIT = 50;
+
+export type CollectionAlsoLikedPerson = {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+};
+
+export function assembleAlsoLikedPeople(
+  userIds: string[],
+  profiles: Array<{
+    id: string;
+    username: string | null;
+    display_name?: string | null;
+    full_name?: string | null;
+    avatar_url: string | null;
+  }>,
+): CollectionAlsoLikedPerson[] {
+  const byId = new Map(
+    profiles.map((profile) => [
+      profile.id,
+      {
+        id: profile.id,
+        username: profile.username,
+        display_name: profile.display_name ?? profile.full_name ?? null,
+        avatar_url: profile.avatar_url,
+      },
+    ]),
+  );
+
+  const seen = new Set<string>();
+  const people: CollectionAlsoLikedPerson[] = [];
+  for (const id of userIds) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const profile = byId.get(id);
+    if (!profile) continue;
+    people.push(profile);
+  }
+
+  return people.sort((a, b) =>
+    (a.display_name ?? a.username ?? '').localeCompare(b.display_name ?? b.username ?? '', 'es'),
+  );
+}
+
+/** Follows del viewer que dieron me gusta a esta lista (sin el dueño ni bloqueados). */
+export async function listCollectionAlsoLiked(
+  viewerId: string,
+  collectionId: string,
+): Promise<CollectionAlsoLikedPerson[]> {
+  const { supabaseAdmin } = await import('./supabase.js');
+  if (!supabaseAdmin) {
+    throw Object.assign(new Error('Me gusta no disponibles'), { status: 503 });
+  }
+
+  const { data: collection, error: collectionError } = await supabaseAdmin
+    .from('collections')
+    .select('id, user_id, is_public')
+    .eq('id', collectionId)
+    .maybeSingle();
+
+  if (collectionError) throw collectionError;
+  if (!collection || !canEngageCollectionLikes(collection, viewerId)) {
+    throw Object.assign(new Error('Colección no encontrada'), { status: 404 });
+  }
+
+  const [followingIds, blockedList] = await Promise.all([
+    getFollowingIds(supabaseAdmin, viewerId),
+    listBlockedEitherWayIds(viewerId),
+  ]);
+
+  const blockedIds = new Set(blockedList);
+  if (collection.user_id !== viewerId && blockedIds.has(collection.user_id)) {
+    throw Object.assign(new Error('Colección no encontrada'), { status: 404 });
+  }
+
+  const candidateIds = candidateAlsoWatchedIds(followingIds, blockedIds, viewerId).filter(
+    (id) => id !== collection.user_id,
+  );
+  if (candidateIds.length === 0) return [];
+
+  const { data: likes, error: likesError } = await supabaseAdmin
+    .from('collection_likes')
+    .select('user_id')
+    .eq('collection_id', collectionId)
+    .in('user_id', candidateIds)
+    .limit(ALSO_LIKED_LIMIT);
+
+  if (likesError) {
+    if (isMissingCollectionLikesTable(likesError)) {
+      throw Object.assign(new Error(collectionLikesMigrationHint()), { status: 503 });
+    }
+    throw likesError;
+  }
+
+  const userIds = [...new Set((likes ?? []).map((row) => row.user_id as string))];
+  if (userIds.length === 0) return [];
+
+  const profiles = await fetchProfilesByIds(supabaseAdmin, userIds);
+  if (profiles.error) throw profiles.error;
+
+  return assembleAlsoLikedPeople(userIds, profiles.rows);
 }
