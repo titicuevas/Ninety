@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Library, Lock, Plus } from 'lucide-react';
+import { Heart, Library, Lock, Plus } from 'lucide-react';
 import { capsuleCardListClass } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
@@ -90,16 +90,24 @@ export function CollectionsPage() {
               Mis listas
             </h1>
           </div>
-          <Button
-            type="button"
-            className="h-9 w-9 shrink-0 px-0 sm:w-auto sm:px-3"
-            aria-expanded={formOpen}
-            aria-controls="create-collection-panel"
-            onClick={() => openForm(!formOpen)}
-          >
-            <Plus className="h-4 w-4 sm:mr-1.5" aria-hidden />
-            <span className="sr-only sm:not-sr-only">Nueva colección</span>
-          </Button>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button asChild variant="secondary" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
+              <Link to="/collections/likes">
+                <Heart className="h-4 w-4" aria-hidden />
+                <span className="sr-only sm:not-sr-only sm:ml-1.5">Me gusta</span>
+              </Link>
+            </Button>
+            <Button
+              type="button"
+              className="h-9 w-9 shrink-0 px-0 sm:w-auto sm:px-3"
+              aria-expanded={formOpen}
+              aria-controls="create-collection-panel"
+              onClick={() => openForm(!formOpen)}
+            >
+              <Plus className="h-4 w-4 sm:mr-1.5" aria-hidden />
+              <span className="sr-only sm:not-sr-only">Nueva colección</span>
+            </Button>
+          </div>
         </section>
 
         {formOpen ? (

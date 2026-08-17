@@ -49,6 +49,18 @@ export interface DiscoverCollectionsResponse {
   sort?: 'relevant' | 'recent' | 'likes';
 }
 
+export interface LikedCollection extends Collection {
+  liked_at: string;
+  author: CollectionAuthor | null;
+}
+
+export interface LikedCollectionsResponse {
+  collections: LikedCollection[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export interface CollectionDetailResponse {
   profile: CollectionAuthor | null;
   collection: Collection;

@@ -1,5 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, apiFetch } from '@/lib/api';
+import { nextLikedPageOffset } from '@/lib/capsuleLikes';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 import type {
@@ -7,6 +8,7 @@ import type {
   CollectionDetailResponse,
   CollectionsListResponse,
   CreateCollectionInput,
+  LikedCollectionsResponse,
   PublicCollectionsResponse,
   UpdateCollectionInput,
 } from '@/types/collection';
@@ -17,6 +19,23 @@ export function useMyCollections() {
   return useQuery({
     queryKey: ['collections', 'me'],
     queryFn: () => apiFetch<CollectionsListResponse>('/api/collections/me', {}, session?.access_token),
+    enabled: !!session,
+  });
+}
+
+export function useLikedCollectionsInfinite() {
+  const session = useAuthStore((s) => s.session);
+
+  return useInfiniteQuery({
+    queryKey: ['collections', 'liked'],
+    queryFn: ({ pageParam }) =>
+      apiFetch<LikedCollectionsResponse>(
+        `/api/collections/me/liked?limit=20&offset=${pageParam}`,
+        {},
+        session?.access_token,
+      ),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => nextLikedPageOffset(lastPage),
     enabled: !!session,
   });
 }
@@ -286,6 +305,29 @@ export function useToggleCollectionLike() {
           queryClient.setQueryData(key, {
             ...detail,
             collection: patchCollection(detail.collection),
+          });
+          continue;
+        }
+
+        if ('pages' in data && Array.isArray((data as { pages: unknown }).pages)) {
+          const inf = data as { pages: unknown[]; pageParams: unknown[] };
+          queryClient.setQueryData(key, {
+            ...inf,
+            pages: inf.pages.map((page) => {
+              if (!page || typeof page !== 'object' || !('collections' in page)) return page;
+              const list = page as { collections: Collection[]; total?: number };
+              const patched = list.collections.map(patchCollection);
+              const collections = liked
+                ? patched.filter((collection) => collection.id !== collectionId)
+                : patched;
+              const removed = liked && collections.length !== patched.length ? 1 : 0;
+              return {
+                ...list,
+                collections,
+                total:
+                  typeof list.total === 'number' ? Math.max(0, list.total - removed) : list.total,
+              };
+            }),
           });
           continue;
         }

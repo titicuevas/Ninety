@@ -4,6 +4,9 @@ import {
   canEngageCollectionLikes,
   collectionLikesMigrationHint,
   isMissingCollectionLikesTable,
+  isVisibleLikedCollection,
+  likedCollectionsPaging,
+  orderCollectionsByLikedIds,
 } from './collectionLikes.js';
 
 describe('isMissingCollectionLikesTable', () => {
@@ -38,5 +41,52 @@ describe('canEngageCollectionLikes', () => {
     assert.equal(canEngageCollectionLikes({ user_id: owner, is_public: false }, owner), true);
     assert.equal(canEngageCollectionLikes({ user_id: owner, is_public: false }, other), false);
     assert.equal(canEngageCollectionLikes({ user_id: owner, is_public: false }, undefined), false);
+  });
+});
+
+describe('likedCollectionsPaging', () => {
+  it('acota limit y offset', () => {
+    assert.deepEqual(likedCollectionsPaging(), { limit: 20, offset: 0 });
+    assert.deepEqual(likedCollectionsPaging(3, 10), { limit: 3, offset: 10 });
+    assert.deepEqual(likedCollectionsPaging(999, -4), { limit: 50, offset: 0 });
+  });
+});
+
+describe('isVisibleLikedCollection', () => {
+  const blocked = new Set(['blocked']);
+
+  it('muestra públicas ajenas y propias privadas', () => {
+    assert.equal(
+      isVisibleLikedCollection({ user_id: 'other', is_public: true }, 'me', blocked),
+      true,
+    );
+    assert.equal(
+      isVisibleLikedCollection({ user_id: 'other', is_public: false }, 'me', blocked),
+      false,
+    );
+    assert.equal(
+      isVisibleLikedCollection({ user_id: 'me', is_public: false }, 'me', blocked),
+      true,
+    );
+    assert.equal(
+      isVisibleLikedCollection({ user_id: 'blocked', is_public: true }, 'me', blocked),
+      false,
+    );
+  });
+});
+
+describe('orderCollectionsByLikedIds', () => {
+  it('respeta el orden de los likes', () => {
+    const ordered = orderCollectionsByLikedIds(
+      ['b', 'a'],
+      [
+        { id: 'a', name: 'A' },
+        { id: 'b', name: 'B' },
+      ],
+    );
+    assert.deepEqual(
+      ordered.map((row) => row.id),
+      ['b', 'a'],
+    );
   });
 });

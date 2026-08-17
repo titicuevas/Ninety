@@ -17,6 +17,7 @@ import {
   collectionLikesMigrationHint,
   fetchCollectionLikesWithProfiles,
   isMissingCollectionLikesTable,
+  listLikedCollections,
 } from '../lib/collectionLikes.js';
 import { buildCollectionReorder } from '../lib/collectionReorder.js';
 import { nextUniqueSlug, slugifyCollectionName } from '../lib/collectionSlug.js';
@@ -385,6 +386,85 @@ collectionsRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
       }),
     ),
   });
+});
+
+const likedCollectionsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).optional().default(20),
+  offset: z.coerce.number().int().min(0).optional().default(0),
+});
+
+function collectionRouteErrorStatus(err: unknown): number | undefined {
+  return typeof (err as { status?: unknown })?.status === 'number'
+    ? (err as { status: number }).status
+    : undefined;
+}
+
+/** GET /api/collections/me/liked — archivo de listas a las que di me gusta. */
+collectionsRouter.get('/me/liked', requireAuth, async (req: AuthRequest, res, next) => {
+  const token = getAccessToken(req);
+  if (!token) {
+    res.status(401).json({ error: 'Token requerido' });
+    return;
+  }
+
+  const parsed = likedCollectionsQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Parámetros inválidos' });
+    return;
+  }
+
+  try {
+    const supabase = createUserClient(token);
+    const result = await listLikedCollections(supabase, req.userId!, parsed.data);
+    const rows = result.collections;
+    const counts = await loadItemCounts(
+      supabase,
+      rows.map((row) => row.id),
+    );
+    const coverUrls = await loadCoverUrls(
+      supabase,
+      rows.map((row) => ({
+        id: row.id,
+        user_id: row.user_id,
+        name: row.name,
+        slug: row.slug,
+        description: row.description,
+        is_public: row.is_public,
+        cover_capsule_id: row.cover_capsule_id,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+      })),
+    );
+
+    res.json({
+      collections: rows.map((row) => ({
+        ...serializeCollection(row, {
+          items_count: counts.get(row.id) ?? 0,
+          cover_url: coverUrls.get(row.id) ?? null,
+          likes_count: row.likes_count,
+          liked_by_me: row.liked_by_me,
+        }),
+        liked_at: row.liked_at,
+        author: row.author,
+      })),
+      total: result.total,
+      limit: result.limit,
+      offset: result.offset,
+    });
+  } catch (err) {
+    const status = collectionRouteErrorStatus(err);
+    if (status === 400 || status === 503) {
+      res.status(status).json({
+        error: err instanceof Error ? err.message : 'No se pudieron cargar tus me gusta',
+      });
+      return;
+    }
+    if (isMissingCollectionsTable(err as { message?: string; code?: string })) {
+      res.status(503).json({ error: collectionsMigrationHint() });
+      return;
+    }
+    next(err);
+  }
 });
 
 /** GET /api/collections/me/containing/:capsuleId — ids de colecciones propias con esa Capsule */

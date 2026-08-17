@@ -209,6 +209,11 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/collections/me/liked requiere auth', async () => {
+    const res = await request(createApp()).get('/api/collections/me/liked');
+    assert.equal(res.status, 401);
+  });
+
   it('GET /api/collections/me/export requiere auth', async () => {
     const res = await request(createApp()).get('/api/collections/me/export');
     assert.equal(res.status, 401);

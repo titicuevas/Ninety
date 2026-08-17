@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, Ticket } from 'lucide-react';
+import { CalendarDays, Library, Ticket } from 'lucide-react';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsuleListCard, capsuleCardListClass } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
@@ -116,6 +116,12 @@ export function LikesPage() {
               <Link to="/capsules">
                 <Ticket className="h-4 w-4" aria-hidden />
                 <span className="sr-only sm:not-sr-only sm:ml-1.5">Mis Capsules</span>
+              </Link>
+            </Button>
+            <Button asChild variant="secondary" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
+              <Link to="/collections/likes">
+                <Library className="h-4 w-4" aria-hidden />
+                <span className="sr-only sm:not-sr-only sm:ml-1.5">Listas</span>
               </Link>
             </Button>
             <Button asChild variant="secondary" className="h-9 w-9 px-0 sm:w-auto sm:px-3">

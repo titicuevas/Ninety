@@ -15,15 +15,20 @@ export function isCollectionsExplorePath(pathname: string): boolean {
   );
 }
 
+export function isCollectionsLikedPath(pathname: string): boolean {
+  return pathname === '/collections/likes' || pathname.startsWith('/collections/likes/');
+}
+
 export function isWantToGoPath(pathname: string): boolean {
   return pathname === '/want-to-go' || pathname.startsWith('/want-to-go/');
 }
 
-/** Mis listas (índice + detalle propio), no descubrir ni Quiero ir. */
+/** Mis listas (índice + detalle propio), no descubrir, me gusta ni Quiero ir. */
 export function isCollectionsMinePath(pathname: string): boolean {
   return (
     isCollectionsSectionPath(pathname) &&
     !isCollectionsExplorePath(pathname) &&
+    !isCollectionsLikedPath(pathname) &&
     !isWantToGoPath(pathname)
   );
 }

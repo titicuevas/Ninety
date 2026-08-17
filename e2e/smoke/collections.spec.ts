@@ -29,6 +29,12 @@ test.describe('Smoke — colecciones @smoke', () => {
     await page.getByRole('button', { name: /^relevantes$/i }).click();
     await expect(page).not.toHaveURL(/sort=/);
 
+    await collectionsNav.getByRole('link', { name: /^me gusta$/i }).click();
+    await expect(page).toHaveURL(/\/collections\/likes/);
+    await expect(page.getByRole('heading', { name: /listas que te gustaron/i })).toBeVisible({
+      timeout: 20_000,
+    });
+
     await collectionsNav.getByRole('link', { name: /mis listas/i }).click();
     await expect(page).toHaveURL(/\/collections$/);
   });

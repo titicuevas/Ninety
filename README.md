@@ -379,6 +379,7 @@ Ninety/
 | POST/DELETE | `/api/capsules/:id/like` | ✅ | Likes |
 | GET/POST/DELETE | `/api/capsules/:id/comments`… | ✅ | Comentarios |
 | GET | `/api/collections/me` | ✅ | Mis colecciones |
+| GET | `/api/collections/me/liked` | ✅ | Listas a las que di me gusta (públicas + propias; filtra blocks) |
 | GET | `/api/collections/me/export` | ✅ | Export colecciones JSON (GDPR; ítems por `match_id`) |
 | POST | `/api/collections/me/import` | ✅ | Import colecciones desde export JSON (omite slug existentes; enlaza Capsules por `match_id`) |
 | GET | `/api/collections/me/containing/:capsuleId` | ✅ | Colecciones que ya incluyen una Capsule |
@@ -542,6 +543,9 @@ Ninety/
 - [x] axe WCAG 2 A/AA en home, feed, Capsule, Mis listas y Quiero ir (además de landing / login / perfil público)
 - [x] Modales nativos (`<dialog>`): foco al abrir, Esc y restauración al cerrar (reportar, confirmar, me gusta)
 - [x] Teclado en chips e iconos de pantallas recientes + contraste de chips inactivos
+
+### ✅ v18 — Archivo de listas con me gusta
+- [x] Listas que te gustaron — archivo de colecciones (`GET /api/collections/me/liked` + `/collections/likes`; índice `collection_likes_user_created_idx`)
 
 ## 🎨 Identidad visual
 

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { listBlockedEitherWayIds } from './userBlocks.js';
 import { followRelationFlags, isMissingFollowsTable, loadFollowRelationSets } from './userFollows.js';
 
 export interface CollectionLikeStats {
@@ -178,4 +179,156 @@ export function canEngageCollectionLikes(
 ): boolean {
   if (collection.is_public) return true;
   return !!viewerId && viewerId === collection.user_id;
+}
+
+export const LIKED_COLLECTIONS_LIMIT_MAX = 50;
+
+export type LikedCollectionAuthor = {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+};
+
+export type LikedCollectionRow = {
+  id: string;
+  user_id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  is_public: boolean;
+  cover_capsule_id: string | null;
+  created_at: string;
+  updated_at: string;
+  liked_at: string;
+  likes_count: number;
+  liked_by_me: boolean;
+  author: LikedCollectionAuthor | null;
+};
+
+export function likedCollectionsPaging(limit?: number, offset?: number): { limit: number; offset: number } {
+  return {
+    limit: Math.min(Math.max(limit ?? 20, 1), LIKED_COLLECTIONS_LIMIT_MAX),
+    offset: Math.max(offset ?? 0, 0),
+  };
+}
+
+/** Pública, o propia; oculta autores bloqueados. */
+export function isVisibleLikedCollection(
+  collection: { user_id: string; is_public: boolean },
+  viewerId: string,
+  blockedIds: ReadonlySet<string>,
+): boolean {
+  if (collection.user_id !== viewerId && blockedIds.has(collection.user_id)) return false;
+  return canEngageCollectionLikes(collection, viewerId);
+}
+
+export function orderCollectionsByLikedIds<T extends { id: string }>(
+  likedIds: string[],
+  collections: T[],
+): T[] {
+  const byId = new Map(collections.map((collection) => [collection.id, collection]));
+  return likedIds.map((id) => byId.get(id)).filter((collection): collection is T => !!collection);
+}
+
+type LikedCollectionSource = {
+  id: string;
+  user_id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  is_public: boolean;
+  cover_capsule_id?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Listas a las que el viewer dio me gusta, más recientes primero. */
+export async function listLikedCollections(
+  supabase: SupabaseClient,
+  viewerId: string,
+  options: { limit?: number; offset?: number } = {},
+): Promise<{ collections: LikedCollectionRow[]; total: number; limit: number; offset: number }> {
+  const { limit, offset } = likedCollectionsPaging(options.limit, options.offset);
+
+  const { data: likeRows, error: likesError, count } = await supabase
+    .from('collection_likes')
+    .select('collection_id, created_at', { count: 'exact' })
+    .eq('user_id', viewerId)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (likesError) {
+    if (isMissingCollectionLikesTable(likesError)) {
+      throw Object.assign(new Error(collectionLikesMigrationHint()), { status: 503 });
+    }
+    throw likesError;
+  }
+
+  const likes = likeRows ?? [];
+  const total = count ?? likes.length;
+  if (likes.length === 0) {
+    return { collections: [], total, limit, offset };
+  }
+
+  const likedAtById = new Map(likes.map((row) => [row.collection_id as string, row.created_at as string]));
+  const likedIds = likes.map((row) => row.collection_id as string);
+
+  const [{ data: collectionRows, error: collectionsError }, blockedList] = await Promise.all([
+    supabase.from('collections').select('*').in('id', likedIds),
+    listBlockedEitherWayIds(viewerId),
+  ]);
+
+  if (collectionsError) throw collectionsError;
+
+  const blockedIds = new Set(blockedList);
+  const visible = orderCollectionsByLikedIds(
+    likedIds,
+    (collectionRows ?? []) as LikedCollectionSource[],
+  ).filter((collection) => isVisibleLikedCollection(collection, viewerId, blockedIds));
+
+  if (visible.length === 0) {
+    return { collections: [], total, limit, offset };
+  }
+
+  const userIds = [...new Set(visible.map((collection) => collection.user_id))];
+  const { data: profiles, error: profilesError } = await supabase
+    .from('profiles')
+    .select('id, username, full_name, avatar_url')
+    .in('id', userIds);
+
+  if (profilesError) throw profilesError;
+
+  const profileMap = new Map<string, LikedCollectionAuthor>();
+  for (const profile of profiles ?? []) {
+    profileMap.set(profile.id as string, {
+      id: profile.id as string,
+      username: (profile.username as string | null) ?? null,
+      display_name: (profile.full_name as string | null) ?? null,
+      avatar_url: (profile.avatar_url as string | null) ?? null,
+    });
+  }
+
+  const withLikes = await attachCollectionLikeStats(supabase, viewerId, visible);
+
+  return {
+    collections: withLikes.map((collection) => ({
+      id: collection.id,
+      user_id: collection.user_id,
+      name: collection.name,
+      slug: collection.slug,
+      description: collection.description,
+      is_public: collection.is_public,
+      cover_capsule_id: collection.cover_capsule_id ?? null,
+      created_at: collection.created_at,
+      updated_at: collection.updated_at,
+      liked_at: likedAtById.get(collection.id) ?? '',
+      likes_count: collection.likes_count,
+      liked_by_me: collection.liked_by_me,
+      author: profileMap.get(collection.user_id) ?? null,
+    })),
+    total,
+    limit,
+    offset,
+  };
 }

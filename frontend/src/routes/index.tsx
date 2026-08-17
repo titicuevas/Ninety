@@ -9,6 +9,7 @@ import { CreateCapsulePage } from '@/pages/CreateCapsulePage';
 import { DiaryCalendarPage } from '@/pages/DiaryCalendarPage';
 import { EditCapsulePage } from '@/pages/EditCapsulePage';
 import { ExploreCollectionsPage } from '@/pages/ExploreCollectionsPage';
+import { LikedCollectionsPage } from '@/pages/LikedCollectionsPage';
 import { FeedPage } from '@/pages/FeedPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { HomePage } from '@/pages/HomePage';
@@ -74,6 +75,7 @@ export const appRouter = createBrowserRouter([
       { path: '/diary/calendar', element: <DiaryCalendarPage /> },
       { path: '/collections', element: <CollectionsPage /> },
       { path: '/collections/explore', element: <ExploreCollectionsPage /> },
+      { path: '/collections/likes', element: <LikedCollectionsPage /> },
       { path: '/collections/:id', element: <CollectionDetailPage /> },
       { path: '/want-to-go', element: <WantToGoPage /> },
       { path: '/teams/:slug', element: <TeamPage /> },
