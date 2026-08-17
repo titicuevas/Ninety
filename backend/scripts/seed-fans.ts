@@ -12,6 +12,8 @@ import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
 import { requireTestCredentials } from './testCredentials.js';
 import {
+  DEMO_FEATURED_COLLECTION_NAME,
+  DEMO_FEATURED_COLLECTION_SLUG,
   demoFollowedSocialActions,
   demoSeedCommentBody,
   isE2eCreatedCapsuleNote,
@@ -715,6 +717,75 @@ async function cleanupDemoE2eNotes(demoUserId: string | null) {
   }
 }
 
+async function ensureDemoFeaturedCollection(demoUserId: string | null) {
+  if (!admin || !demoUserId) return;
+
+  const { data: capsules, error: capsulesError } = await admin
+    .from('capsules')
+    .select('id')
+    .eq('user_id', demoUserId)
+    .eq('is_public', true)
+    .order('watched_at', { ascending: false })
+    .limit(5);
+  if (capsulesError) throw new Error(`Demo featured capsules: ${capsulesError.message}`);
+  const capsuleIds = (capsules ?? []).map((row) => row.id as string).filter(Boolean);
+  if (capsuleIds.length === 0) return;
+
+  const { data: existing, error: existingError } = await admin
+    .from('collections')
+    .select('id')
+    .eq('user_id', demoUserId)
+    .eq('slug', DEMO_FEATURED_COLLECTION_SLUG)
+    .maybeSingle();
+  if (existingError) throw new Error(`Demo featured lookup: ${existingError.message}`);
+
+  let collectionId = existing?.id as string | undefined;
+  if (!collectionId) {
+    const { data, error } = await admin
+      .from('collections')
+      .insert({
+        user_id: demoUserId,
+        name: DEMO_FEATURED_COLLECTION_NAME,
+        slug: DEMO_FEATURED_COLLECTION_SLUG,
+        description: 'Partidos que no me canso de revivir.',
+        is_public: true,
+        cover_capsule_id: capsuleIds[0]!,
+      })
+      .select('id')
+      .single();
+    if (error || !data) throw new Error(`Demo featured insert: ${error?.message ?? 'sin id'}`);
+    collectionId = data.id as string;
+  } else {
+    const { error } = await admin
+      .from('collections')
+      .update({
+        name: DEMO_FEATURED_COLLECTION_NAME,
+        description: 'Partidos que no me canso de revivir.',
+        is_public: true,
+        cover_capsule_id: capsuleIds[0]!,
+      })
+      .eq('id', collectionId);
+    if (error) throw new Error(`Demo featured update: ${error.message}`);
+  }
+
+  const { error: itemsError } = await admin.from('collection_items').upsert(
+    capsuleIds.map((capsuleId, position) => ({
+      collection_id: collectionId,
+      capsule_id: capsuleId,
+      position,
+    })),
+    { onConflict: 'collection_id,capsule_id' },
+  );
+  if (itemsError) throw new Error(`Demo featured items: ${itemsError.message}`);
+
+  const { error: profileError } = await admin
+    .from('profiles')
+    .update({ featured_collection_id: collectionId })
+    .eq('id', demoUserId);
+  if (profileError) throw new Error(`Demo featured pin: ${profileError.message}`);
+  console.log(`   Lista destacada «${DEMO_FEATURED_COLLECTION_NAME}» en el perfil demo`);
+}
+
 async function main() {
   if (!admin) {
     throw new Error('Faltan SUPABASE_URL y SUPABASE_SECRET_KEY en backend/.env');
@@ -739,13 +810,14 @@ async function main() {
   await seedFanSocial(fanIds);
   await cleanupDemoE2eCollections(demoUserId);
   await cleanupDemoE2eNotes(demoUserId);
+  await ensureDemoFeaturedCollection(demoUserId);
 
   console.log('\n📋 Resumen');
   console.log(`   Aficionados: ${FANS.length}`);
   console.log(`   Contraseña:  DEMO_FANS_PASSWORD o TEST_USER_PASSWORD en backend/.env`);
   console.log(`   Emails:      fan01@ninety.app … fan${String(FANS.length).padStart(2, '0')}@ninety.app`);
   if (demoUserId) {
-    console.log(`   Demo (@${process.env.DEMO_USERNAME ?? 'aficionado_demo'}) enlazado con follows + likes/comentarios`);
+    console.log(`   Demo (@${process.env.DEMO_USERNAME ?? 'aficionado_demo'}) enlazado con follows + likes/comentarios + lista destacada`);
   } else {
     console.log('   ℹ️  Usuario demo no encontrado — ejecuta npm run seed:demo para enlazar follows');
   }

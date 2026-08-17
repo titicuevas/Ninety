@@ -57,6 +57,13 @@ test.describe('Smoke — público @smoke', () => {
     await expect(page.getByText(/\d+ partidos? en su diario/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /compartir perfil/i })).toBeVisible();
 
+    if (data.featured_collection?.name) {
+      await expect(page.getByRole('heading', { name: /colección destacada/i })).toBeVisible();
+      await expect(
+        page.getByRole('link', { name: new RegExp(escapeRegExp(data.featured_collection.name), 'i') }).first(),
+      ).toBeVisible();
+    }
+
     const wrapped = page.getByRole('heading', { name: /el fútbol de/i });
     const emptyDiary = page.getByText(/aún no ha publicado partidos/i);
     if (await wrapped.isVisible().catch(() => false)) {

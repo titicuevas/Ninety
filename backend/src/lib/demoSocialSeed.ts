@@ -1,6 +1,10 @@
 /** Marcador en comentarios sembrados — idempotente al re-ejecutar seed:fans. */
 export const DEMO_SOCIAL_COMMENT_MARKER = 'ninety-seed';
 
+/** Lista destacada del perfil demo (seed:fans). */
+export const DEMO_FEATURED_COLLECTION_SLUG = 'favoritos-seed';
+export const DEMO_FEATURED_COLLECTION_NAME = 'Favoritos';
+
 export type DemoSocialKind =
   | 'capsule_like'
   | 'capsule_comment'

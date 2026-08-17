@@ -282,6 +282,7 @@ export type DemoPublicProfile = {
   total?: number;
   stats?: { totalMatches?: number };
   years?: number[];
+  featured_collection?: { name?: string; slug?: string } | null;
 };
 
 /** Carga el perfil demo público o salta el test si no está sembrado en ese entorno. */

@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  DEMO_FEATURED_COLLECTION_NAME,
+  DEMO_FEATURED_COLLECTION_SLUG,
   DEMO_SOCIAL_COMMENT_MARKER,
   demoFollowedSocialActions,
   demoSeedCommentBody,
@@ -42,5 +44,11 @@ describe('demoSocialSeed', () => {
   it('comentario con marcador estable', () => {
     assert.match(demoSeedCommentBody('capsule'), new RegExp(DEMO_SOCIAL_COMMENT_MARKER));
     assert.match(demoSeedCommentBody('collection'), new RegExp(DEMO_SOCIAL_COMMENT_MARKER));
+  });
+
+  it('lista destacada del demo no parece residual e2e', () => {
+    assert.equal(DEMO_FEATURED_COLLECTION_SLUG, 'favoritos-seed');
+    assert.equal(DEMO_FEATURED_COLLECTION_NAME, 'Favoritos');
+    assert.equal(isE2eLeftoverCollectionName(DEMO_FEATURED_COLLECTION_NAME), false);
   });
 });
