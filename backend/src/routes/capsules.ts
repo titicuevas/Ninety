@@ -31,7 +31,7 @@ import {
   isMissingParentIdColumn,
 } from '../lib/capsuleComments.js';
 import { notifyCommentMentions } from '../lib/commentMentions.js';
-import { attachLikeStats, fetchLikesWithProfiles, isMissingLikesTable, listLikedCapsules } from '../lib/capsuleLikes.js';
+import { attachLikeStats, fetchLikesWithProfiles, isMissingLikesTable, listCapsuleAlsoLiked, listLikedCapsules } from '../lib/capsuleLikes.js';
 import { applyFeedContentFilters, resolveFeedContentFilters } from '../lib/feedFilters.js';
 import { listAlsoWatched } from '../lib/capsuleAlsoWatched.js';
 import { isValidCapsuleMatchId } from '../lib/manualMatch.js';
@@ -1285,6 +1285,28 @@ capsulesRouter.delete('/:id/like', requireAuth, async (req: AuthRequest, res) =>
 const likesQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
   offset: z.coerce.number().int().min(0).default(0),
+});
+
+capsulesRouter.get('/:id/likes/following', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const people = await listCapsuleAlsoLiked(req.userId!, routeParam(req.params.id));
+    res.json({ people, total: people.length });
+  } catch (err) {
+    const status = capsuleRouteErrorStatus(err);
+    if (status === 400 || status === 404 || status === 503) {
+      res.status(status).json({
+        error: err instanceof Error ? err.message : 'No se pudieron cargar los me gusta',
+      });
+      return;
+    }
+    if (isMissingLikesTable(err)) {
+      res.status(503).json({
+        error: 'Ejecuta la migración 20250711200000_capsule_likes.sql en Supabase.',
+      });
+      return;
+    }
+    next(err);
+  }
 });
 
 capsulesRouter.get('/:id/likes', optionalAuth, async (req: AuthRequest, res) => {

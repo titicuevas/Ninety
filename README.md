@@ -377,6 +377,7 @@ Ninety/
 | GET | `/api/capsules/:id` | opcional | Capsule pública (compartir) |
 | POST/PATCH/DELETE | `/api/capsules`… | ✅ | CRUD capsules |
 | POST/DELETE | `/api/capsules/:id/like` | ✅ | Likes |
+| GET | `/api/capsules/:id/likes/following` | ✅ | Follows que dieron me gusta a esta Capsule |
 | GET/POST/DELETE | `/api/capsules/:id/comments`… | ✅ | Comentarios |
 | GET | `/api/collections/me` | ✅ | Mis colecciones |
 | GET | `/api/collections/me/liked` | ✅ | Listas a las que di me gusta (públicas + propias; filtra blocks) |
@@ -550,6 +551,9 @@ Ninety/
 
 ### ✅ v19 — También les gusta esta lista
 - [x] También les gusta — quién de tus follows dio me gusta a una lista pública (`GET /api/collections/:id/likes/following`; paridad con También lo vieron / Quiero ir en común)
+
+### ✅ v20 — También le gusta esta Capsule
+- [x] También le gusta — quién de tus follows dio me gusta a una Capsule (`GET /api/capsules/:id/likes/following`; paridad con listas)
 
 ## 🎨 Identidad visual
 

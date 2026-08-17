@@ -1,17 +1,17 @@
 import { AlsoLikedPeople } from '@/components/AlsoLikedPeople';
-import { useCollectionAlsoLiked } from '@/hooks/useCollectionAlsoLiked';
+import { useCapsuleAlsoLiked } from '@/hooks/useCapsuleAlsoLiked';
 import { filterAlsoLikedPeople } from '@/lib/collectionAlsoLiked';
 
-export function CollectionAlsoLiked({
-  collectionId,
+export function CapsuleAlsoLiked({
+  capsuleId,
   exceptUserId,
   className,
 }: {
-  collectionId: string;
+  capsuleId: string;
   exceptUserId?: string | null;
   className?: string;
 }) {
-  const { data, isLoading, isError } = useCollectionAlsoLiked(collectionId);
+  const { data, isLoading, isError } = useCapsuleAlsoLiked(capsuleId);
   const people = filterAlsoLikedPeople(data?.people ?? [], exceptUserId);
 
   if (isLoading || isError || people.length === 0) return null;

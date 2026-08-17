@@ -1,6 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { candidateAlsoWatchedIds } from './capsuleAlsoWatched.js';
 import { attachCommentCounts } from './capsuleComments.js';
-import { followRelationFlags, isMissingFollowsTable, loadFollowRelationSets } from './userFollows.js';
+import { ALSO_LIKED_LIMIT, assembleAlsoLikedPeople } from './collectionLikes.js';
+import { fetchProfilesByIds } from './profileLookup.js';
+import { followRelationFlags, getFollowingIds, isMissingFollowsTable, loadFollowRelationSets } from './userFollows.js';
 import { listBlockedEitherWayIds } from './userBlocks.js';
 
 export interface LikeStats {
@@ -294,4 +297,64 @@ export async function listLikedCapsules(
     limit,
     offset,
   };
+}
+
+function likesMigrationHint(): string {
+  return 'Ejecuta la migración 20250711200000_capsule_likes.sql en Supabase.';
+}
+
+/** Follows del viewer que dieron me gusta a esta Capsule (sin el dueño ni bloqueados). */
+export async function listCapsuleAlsoLiked(viewerId: string, capsuleId: string) {
+  const { supabaseAdmin } = await import('./supabase.js');
+  if (!supabaseAdmin) {
+    throw Object.assign(new Error('Me gusta no disponibles'), { status: 503 });
+  }
+
+  const { data: capsule, error: capsuleError } = await supabaseAdmin
+    .from('capsules')
+    .select('id, user_id, is_public')
+    .eq('id', capsuleId)
+    .maybeSingle();
+
+  if (capsuleError) throw capsuleError;
+  if (!capsule) {
+    throw Object.assign(new Error('Capsule no encontrada'), { status: 404 });
+  }
+
+  const [followingIds, blockedList] = await Promise.all([
+    getFollowingIds(supabaseAdmin, viewerId),
+    listBlockedEitherWayIds(viewerId),
+  ]);
+
+  const blockedIds = new Set(blockedList);
+  if (!isVisibleLikedCapsule(capsule, viewerId, blockedIds)) {
+    throw Object.assign(new Error('Capsule no encontrada'), { status: 404 });
+  }
+
+  const candidateIds = candidateAlsoWatchedIds(followingIds, blockedIds, viewerId).filter(
+    (id) => id !== capsule.user_id,
+  );
+  if (candidateIds.length === 0) return [];
+
+  const { data: likes, error: likesError } = await supabaseAdmin
+    .from('capsule_likes')
+    .select('user_id')
+    .eq('capsule_id', capsuleId)
+    .in('user_id', candidateIds)
+    .limit(ALSO_LIKED_LIMIT);
+
+  if (likesError) {
+    if (isMissingLikesTable(likesError)) {
+      throw Object.assign(new Error(likesMigrationHint()), { status: 503 });
+    }
+    throw likesError;
+  }
+
+  const userIds = [...new Set((likes ?? []).map((row) => row.user_id as string))];
+  if (userIds.length === 0) return [];
+
+  const profiles = await fetchProfilesByIds(supabaseAdmin, userIds);
+  if (profiles.error) throw profiles.error;
+
+  return assembleAlsoLikedPeople(userIds, profiles.rows);
 }
