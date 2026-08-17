@@ -14,6 +14,7 @@ import {
 } from '@/hooks/useCapsuleComments';
 import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { splitCommentMentions } from '@/lib/commentMentions';
+import { formatCommentsCountLabel } from '@/lib/commentsCount';
 import { formatRelativeTime } from '@/lib/format';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { publicProfilePath } from '@/lib/profilePath';
@@ -273,7 +274,7 @@ export function CapsuleComments({
   const threads = useMemo(() => buildCommentThreads(comments), [comments]);
   const liveCount = data?.comments?.length;
   const labelCount = liveCount ?? commentsCount;
-  const label = labelCount > 0 ? `${labelCount} comentarios` : 'Comentar';
+  const label = formatCommentsCountLabel(labelCount);
   const rootId = `comments-${capsuleId}`;
   const panelId = `comments-panel-${capsuleId}`;
 

@@ -572,6 +572,9 @@ Ninety/
 ### ✅ v25 — Demo social visible
 - [x] Seed de likes/comentarios entre fans que sigue el demo (`npm run seed:fans`) y limpieza de listas `E2E …` para no ensuciar el perfil público
 
+### ✅ v26 — 1 comentario
+- [x] Gramática del contador — `1 comentario` / `N comentarios` en Capsules, listas y barra de invitados
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

@@ -7,6 +7,7 @@ import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { formatLikesPanelTitle } from '@/lib/capsuleLikes';
 import type { CapsuleShareSummary } from '@/lib/capsuleShare';
+import { formatCommentsCountLabel } from '@/lib/commentsCount';
 import { cn } from '@/lib/utils';
 
 type CapsuleEngagementBarProps = {
@@ -83,7 +84,7 @@ export function CapsuleEngagementBar({
             </button>
           ) : null}
           {likesCount > 0 && commentsCount > 0 ? ' · ' : null}
-          {commentsCount > 0 ? `${commentsCount} comentarios` : null}
+          {commentsCount > 0 ? formatCommentsCountLabel(commentsCount) : null}
           {(likesCount > 0 || commentsCount > 0) && ' · '}
           <Link to={loginTo} className="text-primary hover:underline">
             Inicia sesión para interactuar

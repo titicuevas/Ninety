@@ -14,6 +14,7 @@ import {
 } from '@/hooks/useCollectionComments';
 import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { splitCommentMentions } from '@/lib/commentMentions';
+import { formatCommentsCountLabel } from '@/lib/commentsCount';
 import { formatRelativeTime } from '@/lib/format';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { publicProfilePath } from '@/lib/profilePath';
@@ -254,7 +255,7 @@ export function CollectionComments({
 
   const comments = data?.comments ?? NO_COMMENTS;
   const threads = useMemo(() => buildCommentThreads(comments), [comments]);
-  const label = comments.length > 0 ? `${comments.length} comentarios` : 'Comentar';
+  const label = formatCommentsCountLabel(comments.length);
 
   useEffect(() => {
     if (!open || !currentUserId) return;
