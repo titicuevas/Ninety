@@ -32,6 +32,35 @@ export function isE2eCreatedCapsuleNote(note: string | null | undefined): boolea
   return /^(E2E fotos \d+|Test E2E\b)/i.test((note ?? '').trim());
 }
 
+/** Clave estable para reseñas canónicas del perfil demo (home|away). */
+export function demoShowcaseNoteKey(homeTeam: string, awayTeam: string): string {
+  return `${homeTeam.trim()}|${awayTeam.trim()}`;
+}
+
+/** Reseñas del diario demo — se restauran tras limpiar «Guardado E2E …». */
+export const DEMO_SHOWCASE_NOTES: Readonly<Record<string, string>> = {
+  [demoShowcaseNoteKey('AFC Bournemouth', 'Liverpool FC')]:
+    'Premier League en Vitality. El Salah de siempre cerró el partido.',
+  [demoShowcaseNoteKey('Liverpool FC', 'Manchester City FC')]:
+    'Partidazo en Anfield. Salah y Haaland en estado de gracia.',
+  [demoShowcaseNoteKey('Spain', 'France')]:
+    'Selección sólida en defensa. Oyarzabal cerró el partido.',
+  [demoShowcaseNoteKey('Real Madrid CF', 'FC Barcelona')]:
+    'Clásico intenso. Vinicius decidió en el minuto 90.',
+  [demoShowcaseNoteKey('Real Betis', 'Sevilla FC')]:
+    'Derbi sevillano en el Villamarín. Ambiente espectacular.',
+};
+
+export function demoShowcaseNote(homeTeam: string, awayTeam: string): string | null {
+  return DEMO_SHOWCASE_NOTES[demoShowcaseNoteKey(homeTeam, awayTeam)] ?? null;
+}
+
+/** Reseña vacía o residual E2E que puede sustituirse por la canónica del demo. */
+export function needsDemoShowcaseNoteRestore(note: string | null | undefined): boolean {
+  const trimmed = (note ?? '').trim();
+  return trimmed.length === 0 || isE2eLeftoverNote(note);
+}
+
 /**
  * El demo sigue a los 6 primeros fans: likes/comentarios entre ellos
  * salen en /activity y en «también le gusta / comentaron».

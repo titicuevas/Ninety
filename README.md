@@ -587,6 +587,9 @@ Ninety/
 ### ✅ v30 — Capsule demo con vida social
 - [x] Likes/comentarios de follows en una Capsule pública del demo (`npm run seed:fans`) para que el diario y «también le gusta / comentó» no se vean vacíos
 
+### ✅ v31 — Reseñas del demo restauradas
+- [x] Tras limpiar «Guardado E2E …», `npm run seed:fans` vuelve a poner las reseñas canónicas del diario demo (p. ej. Bournemouth–Liverpool con likes/comentarios)
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

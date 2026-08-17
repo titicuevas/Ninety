@@ -8,9 +8,12 @@ import {
   demoFeaturedSocialActions,
   demoFollowedSocialActions,
   demoSeedCommentBody,
+  demoShowcaseNote,
+  demoShowcaseNoteKey,
   isE2eCreatedCapsuleNote,
   isE2eLeftoverCollectionName,
   isE2eLeftoverNote,
+  needsDemoShowcaseNoteRestore,
 } from './demoSocialSeed.js';
 
 describe('demoSocialSeed', () => {
@@ -72,5 +75,18 @@ describe('demoSocialSeed', () => {
     }
     assert.ok(actions.some((row) => row.kind === 'capsule_like'));
     assert.ok(actions.some((row) => row.kind === 'capsule_comment'));
+  });
+
+  it('reseñas canónicas del demo y cuándo restaurarlas', () => {
+    assert.equal(demoShowcaseNoteKey('Liverpool FC', 'Manchester City FC'), 'Liverpool FC|Manchester City FC');
+    assert.match(demoShowcaseNote('AFC Bournemouth', 'Liverpool FC') ?? '', /Vitality/i);
+    assert.equal(demoShowcaseNote('Equipo X', 'Equipo Y'), null);
+    assert.equal(needsDemoShowcaseNoteRestore(null), true);
+    assert.equal(needsDemoShowcaseNoteRestore(''), true);
+    assert.equal(needsDemoShowcaseNoteRestore('Guardado E2E 1786992152329'), true);
+    assert.equal(
+      needsDemoShowcaseNoteRestore('Partidazo en Anfield. Salah y Haaland en estado de gracia.'),
+      false,
+    );
   });
 });

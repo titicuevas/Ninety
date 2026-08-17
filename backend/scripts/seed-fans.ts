@@ -18,9 +18,11 @@ import {
   demoFeaturedSocialActions,
   demoFollowedSocialActions,
   demoSeedCommentBody,
+  demoShowcaseNote,
   isE2eCreatedCapsuleNote,
   isE2eLeftoverCollectionName,
   isE2eLeftoverNote,
+  needsDemoShowcaseNoteRestore,
 } from '../src/lib/demoSocialSeed.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -719,6 +721,35 @@ async function cleanupDemoE2eNotes(demoUserId: string | null) {
   }
 }
 
+async function restoreDemoShowcaseNotes(demoUserId: string | null) {
+  if (!admin || !demoUserId) return;
+
+  const { data, error } = await admin
+    .from('capsules')
+    .select('id, home_team_name, away_team_name, note')
+    .eq('user_id', demoUserId);
+  if (error) throw new Error(`Demo showcase notes lookup: ${error.message}`);
+
+  let restored = 0;
+  for (const row of data ?? []) {
+    if (!needsDemoShowcaseNoteRestore(row.note as string | null)) continue;
+    const canonical = demoShowcaseNote(
+      row.home_team_name as string,
+      row.away_team_name as string,
+    );
+    if (!canonical) continue;
+    const { error: updateError } = await admin
+      .from('capsules')
+      .update({ note: canonical })
+      .eq('id', row.id as string);
+    if (updateError) throw new Error(`Demo showcase note restore: ${updateError.message}`);
+    restored++;
+  }
+  if (restored > 0) {
+    console.log(`   Restauradas ${restored} reseña(s) canónicas del demo`);
+  }
+}
+
 async function ensureDemoFeaturedCollection(demoUserId: string | null) {
   if (!admin || !demoUserId) return;
 
@@ -884,6 +915,7 @@ async function main() {
   await seedFanSocial(fanIds);
   await cleanupDemoE2eCollections(demoUserId);
   await cleanupDemoE2eNotes(demoUserId);
+  await restoreDemoShowcaseNotes(demoUserId);
   await ensureDemoFeaturedCollection(demoUserId);
   await seedDemoFeaturedSocial(demoUserId, fanIds);
   await seedDemoCapsuleSocial(demoUserId, fanIds);
