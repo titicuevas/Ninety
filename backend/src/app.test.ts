@@ -309,6 +309,13 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/capsules/:id/comments/following requiere auth', async () => {
+    const res = await request(createApp()).get(
+      '/api/capsules/00000000-0000-4000-8000-000000000001/comments/following',
+    );
+    assert.equal(res.status, 401);
+  });
+
   it('GET /api/capsules/:id/comments no requiere auth', async () => {
     const res = await request(createApp()).get('/api/capsules/00000000-0000-4000-8000-000000000001/comments');
     assert.notEqual(res.status, 401);

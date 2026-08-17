@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { AddToCollectionButton } from '@/components/AddToCollectionButton';
+import { CapsuleAlsoCommented } from '@/components/CapsuleAlsoCommented';
 import { CapsuleAlsoLiked } from '@/components/CapsuleAlsoLiked';
 import { CapsuleAlsoWatched } from '@/components/CapsuleAlsoWatched';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
@@ -268,6 +269,14 @@ export function PublicCapsulePage() {
 
             {user ? (
               <CapsuleAlsoLiked
+                className="mt-2"
+                capsuleId={capsule.id}
+                exceptUserId={capsule.user_id}
+              />
+            ) : null}
+
+            {user ? (
+              <CapsuleAlsoCommented
                 className="mt-2"
                 capsuleId={capsule.id}
                 exceptUserId={capsule.user_id}

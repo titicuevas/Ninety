@@ -378,6 +378,7 @@ Ninety/
 | POST/PATCH/DELETE | `/api/capsules`… | ✅ | CRUD capsules |
 | POST/DELETE | `/api/capsules/:id/like` | ✅ | Likes |
 | GET | `/api/capsules/:id/likes/following` | ✅ | Follows que dieron me gusta a esta Capsule |
+| GET | `/api/capsules/:id/comments/following` | ✅ | Follows que comentaron esta Capsule |
 | GET/POST/DELETE | `/api/capsules/:id/comments`… | ✅ | Comentarios |
 | GET | `/api/collections/me` | ✅ | Mis colecciones |
 | GET | `/api/collections/me/liked` | ✅ | Listas a las que di me gusta (públicas + propias; filtra blocks) |
@@ -560,6 +561,9 @@ Ninety/
 
 ### ✅ v22 — Comentarios en Actividad
 - [x] Actividad de comentarios — ver cuando alguien que sigues comenta una Capsule o lista pública (`capsule_comment` / `collection_comment` en `GET /api/activity`; índices `capsule_comments_user_created_idx` / `collection_comments_user_created_idx`)
+
+### ✅ v23 — También comentaron esta Capsule
+- [x] También comentaron — quién de tus follows comentó una Capsule (`GET /api/capsules/:id/comments/following`; paridad con También le gusta)
 
 ## 🎨 Identidad visual
 

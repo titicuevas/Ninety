@@ -143,10 +143,30 @@ test.describe('Smoke — likes y comentarios @smoke', () => {
       });
     });
 
+    await page.route('**/api/capsules/*/comments/following', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        json: {
+          people: [
+            {
+              id: 'e2e-commenter',
+              username: 'comentarista_e2e',
+              display_name: 'Comentarista E2E',
+              avatar_url: null,
+            },
+          ],
+          total: 1,
+        },
+      });
+    });
+
     await page.goto(`/c/${capsule.id}`);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/también le gusta/i)).toBeVisible();
     await expect(page.getByRole('link', { name: /amigo e2e/i })).toBeVisible();
+    await expect(page.getByText(/también comentó/i)).toBeVisible();
+    await expect(page.getByRole('link', { name: /comentarista e2e/i })).toBeVisible();
 
     const likeBtn = page.getByRole('button', { name: /me gusta/i }).first();
     await expect(likeBtn).toBeVisible();

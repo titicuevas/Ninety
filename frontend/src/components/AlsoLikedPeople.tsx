@@ -15,9 +15,13 @@ export type AlsoLikedPerson = {
 export function AlsoLikedPeople({
   people,
   className,
+  label,
+  ariaLabel = 'También les gusta a personas que sigues',
 }: {
   people: AlsoLikedPerson[];
   className?: string;
+  label?: string;
+  ariaLabel?: string;
 }) {
   if (people.length === 0) return null;
 
@@ -27,11 +31,11 @@ export function AlsoLikedPeople({
         'flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground',
         className,
       )}
-      aria-label="También les gusta a personas que sigues"
+      aria-label={ariaLabel}
     >
       <Users className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
       <span>
-        {alsoLikedLabel(people.length)}:{' '}
+        {label ?? alsoLikedLabel(people.length)}:{' '}
         {people.map((person, index) => {
           const name = person.display_name ?? person.username ?? 'Aficionado';
           const href =

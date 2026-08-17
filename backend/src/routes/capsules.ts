@@ -22,6 +22,7 @@ import {
 } from '../lib/diaryImport.js';
 import { restorePhotosForCapsules } from '../lib/diaryImportPhotos.js';
 import { validateCommentBody, validateImageBuffer } from '../lib/contentModeration.js';
+import { listCapsuleAlsoCommented } from '../lib/capsuleAlsoCommented.js';
 import {
   assertValidReplyParent,
   attachCommentCounts,
@@ -1362,6 +1363,29 @@ capsulesRouter.get('/:id/likes', optionalAuth, async (req: AuthRequest, res) => 
 const commentBodySchema = z.object({
   body: z.string().trim().min(1, 'Escribe un comentario').max(500),
   parent_id: z.string().uuid().optional().nullable(),
+});
+
+/** GET /api/capsules/:id/comments/following — follows que comentaron esta Capsule. */
+capsulesRouter.get('/:id/comments/following', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const people = await listCapsuleAlsoCommented(req.userId!, routeParam(req.params.id));
+    res.json({ people, total: people.length });
+  } catch (err) {
+    const status = capsuleRouteErrorStatus(err);
+    if (status === 400 || status === 404 || status === 503) {
+      res.status(status).json({
+        error: err instanceof Error ? err.message : 'No se pudieron cargar los comentarios',
+      });
+      return;
+    }
+    if (isMissingCommentsTable(err)) {
+      res.status(503).json({
+        error: 'Ejecuta la migración 20250711210000_capsule_comments.sql en Supabase.',
+      });
+      return;
+    }
+    next(err);
+  }
 });
 
 capsulesRouter.get('/:id/comments', optionalAuth, async (req: AuthRequest, res) => {
