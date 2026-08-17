@@ -272,7 +272,7 @@ Probar en **móvil** (375px), **tablet** (768px) y **desktop** (1280px):
 | `/login` | Formulario centrado, inputs táctiles |
 | `/home` | Wrapped en grid, banner perfil en columna en móvil |
 | `/feed` | Cards a ancho completo, likes/comentarios sin overflow |
-| `/activity` | Timeline de follows (Capsules + listas); filtros `?type=`; empty states y scroll infinito |
+| `/activity` | Timeline de follows (Capsules + listas + me gusta + comentarios); filtros `?type=`; empty states y scroll infinito |
 | `/search` | Grid 1 col móvil → 2 cols tablet+ |
 | `/capsules/new` | Formulario `max-w-md` → `lg:max-w-xl` |
 | `/profile` | Avatar y formulario legibles |
@@ -372,7 +372,7 @@ Ninety/
 | GET | `/api/capsules/me/export` | ✅ | Export diario JSON/CSV (GDPR) |
 | POST | `/api/capsules/me/import` | ✅ | Import diario desde export JSON (omite `match_id` existentes; `restore_photos` opcional re-sube `photo_urls` remotas) |
 | GET | `/api/capsules/feed` | ✅ | Feed (seguidos + tuyo); `scope`, `sort`, `photos=1`, `competition` |
-| GET | `/api/activity` | ✅ | Timeline de actividad de follows (Capsules + colecciones públicas nuevas + me gusta; `type=capsule|collection`; blocks; `limit`/`offset`) |
+| GET | `/api/activity` | ✅ | Timeline de actividad de follows (Capsules + colecciones públicas nuevas + me gusta + comentarios; `type=capsule|collection`; blocks; `limit`/`offset`) |
 | GET | `/api/capsules/user/:username` | opcional | Perfil + capsules + stats (base del cara a cara `/u/:username/vs`) |
 | GET | `/api/capsules/:id` | opcional | Capsule pública (compartir) |
 | POST/PATCH/DELETE | `/api/capsules`… | ✅ | CRUD capsules |
@@ -557,6 +557,9 @@ Ninety/
 
 ### ✅ v21 — Me gusta en Actividad
 - [x] Actividad de me gusta — ver cuando alguien que sigues da me gusta a una Capsule o lista pública (`capsule_like` / `collection_like` en `GET /api/activity`)
+
+### ✅ v22 — Comentarios en Actividad
+- [x] Actividad de comentarios — ver cuando alguien que sigues comenta una Capsule o lista pública (`capsule_comment` / `collection_comment` en `GET /api/activity`; índices `capsule_comments_user_created_idx` / `collection_comments_user_created_idx`)
 
 ## 🎨 Identidad visual
 

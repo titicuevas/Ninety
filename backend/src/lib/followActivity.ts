@@ -44,6 +44,14 @@ export type FollowActivityEvent =
     }
   | {
       id: string;
+      type: 'capsule_comment';
+      occurred_at: string;
+      actor: FollowActivityActor;
+      capsule: FollowActivityCapsulePayload;
+      comment_body: string;
+    }
+  | {
+      id: string;
       type: 'collection';
       occurred_at: string;
       actor: FollowActivityActor;
@@ -55,6 +63,14 @@ export type FollowActivityEvent =
       occurred_at: string;
       actor: FollowActivityActor;
       collection: FollowActivityCollectionPayload;
+    }
+  | {
+      id: string;
+      type: 'collection_comment';
+      occurred_at: string;
+      actor: FollowActivityActor;
+      collection: FollowActivityCollectionPayload;
+      comment_body: string;
     };
 
 type CapsuleFields = {
@@ -81,6 +97,15 @@ type CapsuleLikeCandidate = CapsuleFields & {
   capsule_id: string;
 };
 
+type CapsuleCommentCandidate = CapsuleFields & {
+  kind: 'capsule_comment';
+  id: string;
+  user_id: string;
+  occurred_at: string;
+  capsule_id: string;
+  comment_body: string;
+};
+
 type CollectionCandidate = {
   kind: 'collection';
   id: string;
@@ -104,17 +129,36 @@ type CollectionLikeCandidate = {
   author_username: string | null;
 };
 
+type CollectionCommentCandidate = {
+  kind: 'collection_comment';
+  id: string;
+  user_id: string;
+  occurred_at: string;
+  collection_id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  author_username: string | null;
+  comment_body: string;
+};
+
 export type FollowActivityCandidate =
   | CapsuleCandidate
   | CapsuleLikeCandidate
+  | CapsuleCommentCandidate
   | CollectionCandidate
-  | CollectionLikeCandidate;
+  | CollectionLikeCandidate
+  | CollectionCommentCandidate;
+
+export const ACTIVITY_COMMENT_SNIPPET_MAX = 140;
 
 const KIND_RANK: Record<FollowActivityCandidate['kind'], number> = {
   capsule: 0,
   capsule_like: 1,
-  collection: 2,
-  collection_like: 3,
+  capsule_comment: 2,
+  collection: 3,
+  collection_like: 4,
+  collection_comment: 5,
 };
 
 function isMissingRelation(error: unknown, table: string): boolean {
@@ -140,6 +184,16 @@ function isMissingRelation(error: unknown, table: string): boolean {
 
 export function followActivityKindRank(kind: FollowActivityCandidate['kind']): number {
   return KIND_RANK[kind];
+}
+
+/** Recorte de comentario para la timeline (un renglón). */
+export function activityCommentSnippet(
+  body: string,
+  max = ACTIVITY_COMMENT_SNIPPET_MAX,
+): string {
+  const trimmed = body.trim().replace(/\s+/g, ' ');
+  if (trimmed.length <= max) return trimmed;
+  return `${trimmed.slice(0, Math.max(0, max - 1)).trimEnd()}…`;
 }
 
 /** Mezcla candidatos por fecha (más reciente primero). */
@@ -253,6 +307,83 @@ export function visibleCollectionLikeCandidates(
   return out;
 }
 
+type CapsuleCommentSource = {
+  id: string;
+  user_id: string;
+  capsule_id: string;
+  body: string;
+  created_at: string;
+};
+
+export function visibleCapsuleCommentCandidates(
+  comments: CapsuleCommentSource[],
+  capsulesById: Map<string, CapsuleLikeTarget>,
+  blockedIds: ReadonlySet<string>,
+  viewerId: string,
+): CapsuleCommentCandidate[] {
+  const out: CapsuleCommentCandidate[] = [];
+  for (const comment of comments) {
+    const capsule = capsulesById.get(comment.capsule_id);
+    if (!capsule) continue;
+    if (capsule.is_public === false) continue;
+    if (capsule.user_id === viewerId) continue;
+    if (blockedIds.has(capsule.user_id)) continue;
+    out.push({
+      kind: 'capsule_comment',
+      id: comment.id,
+      user_id: comment.user_id,
+      occurred_at: comment.created_at,
+      capsule_id: capsule.id,
+      comment_body: activityCommentSnippet(comment.body),
+      home_team_name: capsule.home_team_name,
+      away_team_name: capsule.away_team_name,
+      competition_name: capsule.competition_name,
+      rating: capsule.rating,
+      photo_urls: capsule.photo_urls,
+      watched_at: capsule.watched_at,
+    });
+  }
+  return out;
+}
+
+type CollectionCommentSource = {
+  id: string;
+  user_id: string;
+  collection_id: string;
+  body: string;
+  created_at: string;
+};
+
+export function visibleCollectionCommentCandidates(
+  comments: CollectionCommentSource[],
+  collectionsById: Map<string, CollectionLikeTarget>,
+  ownerUsernameById: ReadonlyMap<string, string | null>,
+  blockedIds: ReadonlySet<string>,
+  viewerId: string,
+): CollectionCommentCandidate[] {
+  const out: CollectionCommentCandidate[] = [];
+  for (const comment of comments) {
+    const collection = collectionsById.get(comment.collection_id);
+    if (!collection) continue;
+    if (collection.is_public === false) continue;
+    if (collection.user_id === viewerId) continue;
+    if (blockedIds.has(collection.user_id)) continue;
+    out.push({
+      kind: 'collection_comment',
+      id: comment.id,
+      user_id: comment.user_id,
+      occurred_at: comment.created_at,
+      collection_id: collection.id,
+      name: collection.name,
+      slug: collection.slug,
+      description: collection.description,
+      author_username: ownerUsernameById.get(collection.user_id) ?? null,
+      comment_body: activityCommentSnippet(comment.body),
+    });
+  }
+  return out;
+}
+
 function toActor(
   profile: {
     id: string;
@@ -274,10 +405,13 @@ function toActor(
 }
 
 function capsulePayload(
-  candidate: CapsuleCandidate | CapsuleLikeCandidate,
+  candidate: CapsuleCandidate | CapsuleLikeCandidate | CapsuleCommentCandidate,
 ): FollowActivityCapsulePayload {
   return {
-    id: candidate.kind === 'capsule_like' ? candidate.capsule_id : candidate.id,
+    id:
+      candidate.kind === 'capsule_like' || candidate.kind === 'capsule_comment'
+        ? candidate.capsule_id
+        : candidate.id,
     home_team_name: candidate.home_team_name,
     away_team_name: candidate.away_team_name,
     competition_name: candidate.competition_name,
@@ -291,6 +425,17 @@ function toEvent(
   candidate: FollowActivityCandidate,
   actor: FollowActivityActor,
 ): FollowActivityEvent {
+  if (candidate.kind === 'capsule_comment') {
+    return {
+      id: `${candidate.kind}:${candidate.id}`,
+      type: candidate.kind,
+      occurred_at: candidate.occurred_at,
+      actor,
+      capsule: capsulePayload(candidate),
+      comment_body: candidate.comment_body,
+    };
+  }
+
   if (candidate.kind === 'capsule' || candidate.kind === 'capsule_like') {
     return {
       id: `${candidate.kind}:${candidate.id}`,
@@ -298,6 +443,23 @@ function toEvent(
       occurred_at: candidate.occurred_at,
       actor,
       capsule: capsulePayload(candidate),
+    };
+  }
+
+  if (candidate.kind === 'collection_comment') {
+    return {
+      id: `${candidate.kind}:${candidate.id}`,
+      type: candidate.kind,
+      occurred_at: candidate.occurred_at,
+      actor,
+      collection: {
+        id: candidate.collection_id,
+        name: candidate.name,
+        slug: candidate.slug,
+        description: candidate.description,
+        author_username: candidate.author_username ?? actor.username,
+      },
+      comment_body: candidate.comment_body,
     };
   }
 
@@ -420,8 +582,112 @@ async function loadCollectionLikeCandidates(
   };
 }
 
+async function loadCapsuleCommentCandidates(
+  supabase: SupabaseClient,
+  authorIds: string[],
+  blockedIds: ReadonlySet<string>,
+  viewerId: string,
+  poolSize: number,
+): Promise<{ rows: CapsuleCommentCandidate[]; total: number }> {
+  const { data, error, count } = await supabase
+    .from('capsule_comments')
+    .select('id, user_id, capsule_id, body, created_at', { count: 'exact' })
+    .in('user_id', authorIds)
+    .order('created_at', { ascending: false })
+    .range(0, poolSize - 1);
+
+  if (error) {
+    if (isMissingRelation(error, 'capsule_comments')) return { rows: [], total: 0 };
+    throw error;
+  }
+
+  const comments = (data ?? []) as CapsuleCommentSource[];
+  const total = count ?? comments.length;
+  if (comments.length === 0) return { rows: [], total };
+
+  const capsuleIds = [...new Set(comments.map((row) => row.capsule_id))];
+  const { data: capsuleRows, error: capsulesError } = await supabase
+    .from('capsules')
+    .select(
+      'id, user_id, is_public, home_team_name, away_team_name, competition_name, rating, photo_urls, watched_at',
+    )
+    .in('id', capsuleIds);
+
+  if (capsulesError) throw capsulesError;
+
+  const capsulesById = new Map(
+    ((capsuleRows ?? []) as CapsuleLikeTarget[]).map((row) => [row.id, row]),
+  );
+  return {
+    rows: visibleCapsuleCommentCandidates(comments, capsulesById, blockedIds, viewerId),
+    total,
+  };
+}
+
+async function loadCollectionCommentCandidates(
+  supabase: SupabaseClient,
+  authorIds: string[],
+  blockedIds: ReadonlySet<string>,
+  viewerId: string,
+  poolSize: number,
+): Promise<{ rows: CollectionCommentCandidate[]; total: number }> {
+  const { data, error, count } = await supabase
+    .from('collection_comments')
+    .select('id, user_id, collection_id, body, created_at', { count: 'exact' })
+    .in('user_id', authorIds)
+    .order('created_at', { ascending: false })
+    .range(0, poolSize - 1);
+
+  if (error) {
+    if (isMissingRelation(error, 'collection_comments')) return { rows: [], total: 0 };
+    throw error;
+  }
+
+  const comments = (data ?? []) as CollectionCommentSource[];
+  const total = count ?? comments.length;
+  if (comments.length === 0) return { rows: [], total };
+
+  const collectionIds = [...new Set(comments.map((row) => row.collection_id))];
+  const { data: collectionRows, error: collectionsError } = await supabase
+    .from('collections')
+    .select('id, user_id, name, slug, description, is_public')
+    .in('id', collectionIds);
+
+  if (collectionsError) {
+    if (isMissingRelation(collectionsError, 'collections')) return { rows: [], total: 0 };
+    throw collectionsError;
+  }
+
+  const collections = (collectionRows ?? []) as CollectionLikeTarget[];
+  const collectionsById = new Map(collections.map((row) => [row.id, row]));
+  const ownerIds = [...new Set(collections.map((row) => row.user_id))];
+  const ownerUsernameById = new Map<string, string | null>();
+
+  if (ownerIds.length > 0) {
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, username')
+      .in('id', ownerIds);
+    if (profilesError) throw profilesError;
+    for (const profile of profiles ?? []) {
+      ownerUsernameById.set(profile.id as string, (profile.username as string | null) ?? null);
+    }
+  }
+
+  return {
+    rows: visibleCollectionCommentCandidates(
+      comments,
+      collectionsById,
+      ownerUsernameById,
+      blockedIds,
+      viewerId,
+    ),
+    total,
+  };
+}
+
 /**
- * Timeline ligera de gente que sigues: Capsules, listas y me gusta públicos.
+ * Timeline ligera de gente que sigues: Capsules, listas, me gusta y comentarios públicos.
  * Sin tabla de eventos — consulta fuentes existentes + filtra blocks.
  */
 export async function listFollowActivity(
@@ -456,8 +722,14 @@ export async function listFollowActivity(
   const wantCapsules = typeFilter !== 'collection';
   const wantCollections = typeFilter !== 'capsule';
 
-  const [capsulesResult, collectionsResult, capsuleLikesResult, collectionLikesResult] =
-    await Promise.all([
+  const [
+    capsulesResult,
+    collectionsResult,
+    capsuleLikesResult,
+    collectionLikesResult,
+    capsuleCommentsResult,
+    collectionCommentsResult,
+  ] = await Promise.all([
       wantCapsules
         ? supabase
             .from('capsules')
@@ -485,6 +757,12 @@ export async function listFollowActivity(
       wantCollections
         ? loadCollectionLikeCandidates(supabase, authorIds, blockedIds, viewerId, poolSize)
         : Promise.resolve({ rows: [] as CollectionLikeCandidate[], total: 0 }),
+      wantCapsules
+        ? loadCapsuleCommentCandidates(supabase, authorIds, blockedIds, viewerId, poolSize)
+        : Promise.resolve({ rows: [] as CapsuleCommentCandidate[], total: 0 }),
+      wantCollections
+        ? loadCollectionCommentCandidates(supabase, authorIds, blockedIds, viewerId, poolSize)
+        : Promise.resolve({ rows: [] as CollectionCommentCandidate[], total: 0 }),
     ]);
 
   if (capsulesResult.error) throw capsulesResult.error;
@@ -537,6 +815,7 @@ export async function listFollowActivity(
       }),
     ),
     ...capsuleLikesResult.rows,
+    ...capsuleCommentsResult.rows,
     ...collectionRows.map(
       (row): CollectionCandidate => ({
         kind: 'collection',
@@ -550,16 +829,22 @@ export async function listFollowActivity(
       }),
     ),
     ...collectionLikesResult.rows,
+    ...collectionCommentsResult.rows,
   ];
 
   const merged = mergeFollowActivityCandidates(candidates);
   const page = paginateFollowActivity(merged, offset, limit);
   const total =
     typeFilter === 'capsule'
-      ? capsuleTotal + capsuleLikesResult.total
+      ? capsuleTotal + capsuleLikesResult.total + capsuleCommentsResult.total
       : typeFilter === 'collection'
-        ? collectionTotal + collectionLikesResult.total
-        : capsuleTotal + collectionTotal + capsuleLikesResult.total + collectionLikesResult.total;
+        ? collectionTotal + collectionLikesResult.total + collectionCommentsResult.total
+        : capsuleTotal +
+          collectionTotal +
+          capsuleLikesResult.total +
+          collectionLikesResult.total +
+          capsuleCommentsResult.total +
+          collectionCommentsResult.total;
 
   const userIds = [...new Set(page.map((row) => row.user_id))];
   const profileMap = new Map<

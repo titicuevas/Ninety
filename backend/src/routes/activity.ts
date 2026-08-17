@@ -18,7 +18,7 @@ function getAccessToken(req: AuthRequest): string | null {
   return req.headers.authorization?.replace('Bearer ', '') ?? null;
 }
 
-/** GET /api/activity — timeline de Capsules, listas y me gusta públicos de follows. */
+/** GET /api/activity — timeline de Capsules, listas, me gusta y comentarios públicos de follows. */
 activityRouter.get('/', async (req: AuthRequest, res, next) => {
   try {
     const token = getAccessToken(req);

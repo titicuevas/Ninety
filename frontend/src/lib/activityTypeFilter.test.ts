@@ -21,6 +21,8 @@ describe('activityTypeFilter', () => {
     assert.equal(activityTypePath('capsule'), '/activity?type=capsule');
     assert.equal(hasActivityTypeFilter('collection'), true);
     assert.match(activityTypeEmptyCopy('capsule').title, /Capsules/i);
+    assert.match(activityTypeEmptyCopy('capsule').description, /comente/i);
+    assert.match(activityTypeEmptyCopy('collection').description, /comenten/i);
     assert.match(activityDocumentTitle('collection'), /Listas/i);
   });
 });

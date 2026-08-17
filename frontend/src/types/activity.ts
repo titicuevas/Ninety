@@ -40,6 +40,14 @@ export type FollowActivityEvent =
     }
   | {
       id: string;
+      type: 'capsule_comment';
+      occurred_at: string;
+      actor: FollowActivityActor;
+      capsule: FollowActivityCapsule;
+      comment_body: string;
+    }
+  | {
+      id: string;
       type: 'collection';
       occurred_at: string;
       actor: FollowActivityActor;
@@ -51,6 +59,14 @@ export type FollowActivityEvent =
       occurred_at: string;
       actor: FollowActivityActor;
       collection: FollowActivityCollection;
+    }
+  | {
+      id: string;
+      type: 'collection_comment';
+      occurred_at: string;
+      actor: FollowActivityActor;
+      collection: FollowActivityCollection;
+      comment_body: string;
     };
 
 export type FollowActivityResponse = {

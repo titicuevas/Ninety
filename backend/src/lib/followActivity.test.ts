@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  activityCommentSnippet,
   mergeFollowActivityCandidates,
   paginateFollowActivity,
+  visibleCapsuleCommentCandidates,
   visibleCapsuleLikeCandidates,
+  visibleCollectionCommentCandidates,
   visibleCollectionLikeCandidates,
   type FollowActivityCandidate,
 } from './followActivity.js';
@@ -58,6 +61,25 @@ const capsuleLike = (
   watched_at: occurred_at,
 });
 
+const capsuleComment = (
+  id: string,
+  occurred_at: string,
+  user_id = 'u4',
+): FollowActivityCandidate => ({
+  kind: 'capsule_comment',
+  id,
+  user_id,
+  occurred_at,
+  capsule_id: 'c1',
+  comment_body: 'Qué partidazo',
+  home_team_name: 'Betis',
+  away_team_name: 'Sevilla',
+  competition_name: 'LaLiga',
+  rating: 8,
+  photo_urls: null,
+  watched_at: occurred_at,
+});
+
 describe('mergeFollowActivityCandidates', () => {
   it('ordena por occurred_at descendente', () => {
     const merged = mergeFollowActivityCandidates([
@@ -91,6 +113,26 @@ describe('mergeFollowActivityCandidates', () => {
     ]);
     assert.equal(merged[0]?.kind, 'capsule');
     assert.equal(merged[1]?.kind, 'capsule_like');
+  });
+
+  it('ante empate prioriza me gusta frente a comentario', () => {
+    const ts = '2025-03-01T12:00:00Z';
+    const merged = mergeFollowActivityCandidates([
+      capsuleComment('cm1', ts),
+      capsuleLike('u3:c1', ts),
+    ]);
+    assert.equal(merged[0]?.kind, 'capsule_like');
+    assert.equal(merged[1]?.kind, 'capsule_comment');
+  });
+});
+
+describe('activityCommentSnippet', () => {
+  it('recorta y colapsa espacios', () => {
+    assert.equal(activityCommentSnippet('  hola   mundo  '), 'hola mundo');
+    const long = 'a'.repeat(160);
+    const snippet = activityCommentSnippet(long);
+    assert.equal(snippet.endsWith('…'), true);
+    assert.equal(snippet.length, 140);
   });
 });
 
@@ -184,5 +226,106 @@ describe('visibleCollectionLikeCandidates', () => {
     );
     assert.equal(visible[0]?.author_username, 'owner_user');
     assert.equal(visible[0]?.collection_id, 'l1');
+  });
+});
+
+describe('visibleCapsuleCommentCandidates', () => {
+  const capsule = {
+    id: 'c1',
+    user_id: 'owner',
+    is_public: true,
+    home_team_name: 'Betis',
+    away_team_name: 'Sevilla',
+    competition_name: null,
+    rating: null,
+    photo_urls: null,
+    watched_at: null,
+  };
+
+  it('omite privadas, propias y bloqueadas', () => {
+    const comments = [
+      {
+        id: 'cm1',
+        user_id: 'f1',
+        capsule_id: 'c1',
+        body: '  gran partido  ',
+        created_at: '2026-01-01T00:00:00Z',
+      },
+      {
+        id: 'cm2',
+        user_id: 'f1',
+        capsule_id: 'missing',
+        body: 'no',
+        created_at: '2026-01-01T00:00:00Z',
+      },
+    ];
+    const visible = visibleCapsuleCommentCandidates(
+      comments,
+      new Map([['c1', capsule]]),
+      new Set(),
+      'me',
+    );
+    assert.equal(visible.length, 1);
+    assert.equal(visible[0]?.id, 'cm1');
+    assert.equal(visible[0]?.comment_body, 'gran partido');
+
+    assert.equal(
+      visibleCapsuleCommentCandidates(
+        comments,
+        new Map([['c1', { ...capsule, is_public: false }]]),
+        new Set(),
+        'me',
+      ).length,
+      0,
+    );
+    assert.equal(
+      visibleCapsuleCommentCandidates(comments, new Map([['c1', capsule]]), new Set(), 'owner')
+        .length,
+      0,
+    );
+    assert.equal(
+      visibleCapsuleCommentCandidates(
+        comments,
+        new Map([['c1', capsule]]),
+        new Set(['owner']),
+        'me',
+      ).length,
+      0,
+    );
+  });
+});
+
+describe('visibleCollectionCommentCandidates', () => {
+  it('rellena author_username del dueño', () => {
+    const visible = visibleCollectionCommentCandidates(
+      [
+        {
+          id: 'cm1',
+          user_id: 'f1',
+          collection_id: 'l1',
+          body: 'brutal',
+          created_at: '2026-01-01T00:00:00Z',
+        },
+      ],
+      new Map([
+        [
+          'l1',
+          {
+            id: 'l1',
+            user_id: 'owner',
+            name: 'Clásicos',
+            slug: 'clasicos',
+            description: null,
+            is_public: true,
+          },
+        ],
+      ]),
+      new Map([['owner', 'owner_user']]),
+      new Set(),
+      'me',
+    );
+    assert.equal(visible[0]?.author_username, 'owner_user');
+    assert.equal(visible[0]?.collection_id, 'l1');
+    assert.equal(visible[0]?.comment_body, 'brutal');
   });
 });
