@@ -6,9 +6,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCapsuleFeed } from '@/hooks/useCapsules';
 import { useDiscoverCollections } from '@/hooks/useDiscoverCollections';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
+import { useFollowActivity } from '@/hooks/useFollowActivity';
+import { summarizeFollowActivityEvent } from '@/lib/followActivitySummary';
 import { formatRelativeTime } from '@/lib/format';
 import { publicProfilePath } from '@/lib/profilePath';
 import type { FeedCapsule } from '@/types/capsule';
+import type { FollowActivityEvent } from '@/types/activity';
 
 const PREVIEW_COUNT = 3;
 
@@ -56,6 +59,48 @@ function FeedPreviewSkeleton() {
   );
 }
 
+function ActivityPreviewRow({ event }: { event: FollowActivityEvent }) {
+  const actor = event.actor.display_name ?? event.actor.username ?? 'Aficionado';
+  const actorHref = publicProfilePath(event.actor.username);
+  const summary = summarizeFollowActivityEvent(event);
+
+  return (
+    <li className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card p-3 sm:p-3.5">
+      <p className="min-w-0 text-sm text-muted-foreground">
+        {actorHref ? (
+          <Link to={actorHref} className="font-medium text-primary hover:underline">
+            {actor}
+          </Link>
+        ) : (
+          <span className="font-medium text-foreground">{actor}</span>
+        )}{' '}
+        {summary.action}{' '}
+        <Link to={summary.href} className="font-medium text-foreground hover:text-primary hover:underline">
+          {summary.label}
+        </Link>
+      </p>
+      <time
+        className="shrink-0 text-xs text-muted-foreground"
+        dateTime={event.occurred_at}
+      >
+        {formatRelativeTime(event.occurred_at)}
+      </time>
+    </li>
+  );
+}
+
+function ActivityPreviewSkeleton() {
+  return (
+    <ul className="space-y-2" role="status" aria-label="Cargando actividad reciente">
+      {Array.from({ length: 2 }, (_, i) => (
+        <li key={i} className="rounded-xl border border-border p-3">
+          <Skeleton className="h-4 w-full max-w-md" />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 type HomeSocialHubProps = {
   username?: string | null;
 };
@@ -63,8 +108,12 @@ type HomeSocialHubProps = {
 /** Atajos sociales + preview del feed (o sugerencias si está vacío). */
 export function HomeSocialHub({ username }: HomeSocialHubProps) {
   const { data: feedData, isLoading: feedLoading } = useCapsuleFeed('following', 'recent');
+  const { data: activityData, isLoading: activityLoading } = useFollowActivity();
   const preview = feedData?.pages[0]?.capsules.slice(0, PREVIEW_COUNT) ?? [];
+  const activityPreview = activityData?.pages[0]?.events.slice(0, PREVIEW_COUNT) ?? [];
+  const followingCount = activityData?.pages[0]?.following_count ?? 0;
   const feedEmpty = !feedLoading && preview.length === 0;
+  const showActivityPreview = followingCount > 0 && (activityLoading || activityPreview.length > 0);
   const { data: discoverData } = useDiscoverProfiles(feedEmpty);
   const { data: discoverCollectionsData } = useDiscoverCollections(feedEmpty);
   const suggestions = (discoverData?.profiles ?? [])
@@ -122,6 +171,35 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
           para abrir tus listas de siguiendo y seguidores.
         </p>
       )}
+
+      {showActivityPreview ? (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold tracking-wide text-primary uppercase">
+              Actividad reciente
+            </h3>
+            <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-primary">
+              <Link to="/activity">Ver toda la actividad</Link>
+            </Button>
+          </div>
+          {activityLoading ? <ActivityPreviewSkeleton /> : null}
+          {!activityLoading && activityPreview.length > 0 ? (
+            <ul className="space-y-2">
+              {activityPreview.map((event) => (
+                <ActivityPreviewRow key={event.id} event={event} />
+              ))}
+            </ul>
+          ) : null}
+          {!activityLoading && activityPreview.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Sin actividad reciente.{' '}
+              <Link to="/activity" className="text-primary hover:underline">
+                Abrir actividad
+              </Link>
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       {feedLoading ? <FeedPreviewSkeleton /> : null}
 

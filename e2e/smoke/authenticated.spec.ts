@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openAuthenticatedHome } from '../helpers/auth';
+import { API_BASE, openAuthenticatedHome, readAccessToken } from '../helpers/auth';
 import { restoreCapsuleNote } from '../helpers/e2eCapsuleNotes';
 
 test.describe('Smoke — autenticado @smoke', () => {
@@ -18,6 +18,28 @@ test.describe('Smoke — autenticado @smoke', () => {
     const shortcuts = page.getByRole('navigation', { name: /atajos sociales/i });
     await expect(shortcuts.getByRole('link', { name: /aficionados/i })).toBeVisible();
     await expect(shortcuts.getByRole('link', { name: /actividad/i })).toBeVisible();
+  });
+
+  test('home muestra preview de actividad cuando hay follows', async ({ page, request }) => {
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(`${API_BASE}/api/activity?limit=1`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as { following_count?: number; events?: unknown[] };
+    if ((body.following_count ?? 0) === 0 || (body.events ?? []).length === 0) {
+      test.skip(true, 'Ejecuta npm run seed:fans y sigue aficionados con la cuenta QA');
+      return;
+    }
+
+    await expect(page.getByRole('heading', { name: /actividad reciente/i })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByRole('link', { name: /ver toda la actividad/i })).toBeVisible();
+    await expect(page.getByText(/le gustó|comentó en|publicó/i).first()).toBeVisible();
   });
 
   test('Wrapped permite cambiar periodo y compartir', async ({ page }) => {

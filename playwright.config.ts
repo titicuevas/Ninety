@@ -39,7 +39,7 @@ export default defineConfig({
     },
     {
       name: 'smoke-public',
-      testMatch: /smoke\/public\.spec\.ts/,
+      testMatch: /smoke\/(public|demo-showcase)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {
@@ -58,7 +58,7 @@ export default defineConfig({
     },
     {
       name: 'chromium',
-      testMatch: /smoke\/(authenticated|collections|notifications|onboarding|value-onboarding|diary-anniversary|diary-milestone|want-to-go-nudge|feed-discover|push-activation|social-engagement|watch-context)\.spec\.ts|critical\/(people-search|follow-lists|capsule-create-photos|capsule-privacy)\.spec\.ts/,
+      testMatch: /smoke\/(authenticated|collections|notifications|onboarding|value-onboarding|diary-anniversary|diary-milestone|want-to-go-nudge|feed-discover|push-activation|social-engagement|watch-context|demo-showcase)\.spec\.ts|critical\/(people-search|follow-lists|capsule-create-photos|capsule-privacy)\.spec\.ts/,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],

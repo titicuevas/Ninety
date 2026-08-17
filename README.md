@@ -590,6 +590,10 @@ Ninety/
 ### ✅ v31 — Reseñas del demo restauradas
 - [x] Tras limpiar «Guardado E2E …», `npm run seed:fans` vuelve a poner las reseñas canónicas del diario demo (p. ej. Bournemouth–Liverpool con likes/comentarios)
 
+### ✅ v32 — Actividad reciente en Home + e2e demo showcase
+- [x] Preview de likes/comentarios/publicaciones de follows en **Comunidad** (`/home`) con enlace a `/activity`
+- [x] Suite e2e `demo-showcase.spec.ts` que valida diario demo, Favoritos, Capsule social y Actividad
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium
