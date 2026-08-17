@@ -27,6 +27,8 @@ import {
 } from '@/lib/wantToGo';
 import type { WantToGoMatch } from '@/types/wantToGo';
 
+const EMPTY_WANT_TO_GO: WantToGoMatch[] = [];
+
 function WantToGoMatchItem({
   item,
   capsuleId,
@@ -124,7 +126,7 @@ export function WantToGoPage() {
     return map;
   }, [capsulesData?.capsules]);
 
-  const items = data?.items ?? [];
+  const items = data?.items ?? EMPTY_WANT_TO_GO;
   const { upcoming, played } = useMemo(() => partitionWantToGoMatches(items), [items]);
   const stalePlayed = useMemo(
     () => playedWantToGoWithoutCapsule(items, new Set(savedByMatchId.keys())),
@@ -302,9 +304,7 @@ export function WantToGoPage() {
             onSuccess: () => setConfirmClear(false),
           });
         }}
-        onCancel={() => {
-          if (!clearPlayed.isPending) setConfirmClear(false);
-        }}
+        onCancel={() => setConfirmClear(false)}
       />
     </Layout>
   );

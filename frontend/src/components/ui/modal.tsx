@@ -1,4 +1,4 @@
-import { useEffect, useId, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,12 +15,19 @@ type ModalProps = {
   /** Oculta el botón Cerrar del header (p. ej. si el caller lo pone aparte). */
   hideCloseButton?: boolean;
   closeLabel?: string;
+  /** id del texto de apoyo (`aria-describedby`). */
+  describedBy?: string;
 };
 
+function focusIfPresent(el: HTMLElement | null) {
+  if (!el || !document.contains(el) || typeof el.focus !== 'function') return;
+  el.focus();
+}
+
 /**
- * Modal controlado por React vía portal.
- * Evita los fallos de `<dialog showModal>` con overlay/pointer-events/z-index.
- * Cerrar, Escape y click en backdrop siempre llaman onClose (busy no bloquea).
+ * Modal nativo `<dialog showModal>` con portal (z-index / overlay estables).
+ * Escape, foco atrapado y backdrop los aporta el browser; al cerrar se restaura
+ * el foco al control que abrió el diálogo. onClose siempre se notifica.
  */
 export function Modal({
   open,
@@ -30,48 +37,83 @@ export function Modal({
   className,
   hideCloseButton = false,
   closeLabel = 'Cerrar',
+  describedBy,
 }: ModalProps) {
   const titleId = useId();
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseEvent = useEffectEvent(onClose);
 
   useEffect(() => {
-    if (!open) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
 
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      event.preventDefault();
-      dismissModal({ onClose });
+    if (!open) {
+      if (dialog.open) dialog.close();
+      return;
+    }
+
+    let closedByCleanup = false;
+    const active = document.activeElement;
+    restoreFocusRef.current = active instanceof HTMLElement ? active : null;
+
+    if (!dialog.open) dialog.showModal();
+
+    const restoreFocus = () => {
+      const el = restoreFocusRef.current;
+      restoreFocusRef.current = null;
+      focusIfPresent(el);
     };
 
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    document.addEventListener('keydown', onKeyDown);
+    const onBackdropClick = (event: MouseEvent) => {
+      if (event.target === dialog) {
+        dismissModal({ onClose: () => dialog.close() });
+      }
+    };
+
+    const onDialogClose = () => {
+      restoreFocus();
+      if (!closedByCleanup) onCloseEvent();
+    };
+
+    dialog.addEventListener('click', onBackdropClick);
+    dialog.addEventListener('close', onDialogClose);
 
     return () => {
-      document.body.style.overflow = prevOverflow;
-      document.removeEventListener('keydown', onKeyDown);
+      closedByCleanup = true;
+      dialog.removeEventListener('click', onBackdropClick);
+      dialog.removeEventListener('close', onDialogClose);
+      if (dialog.open) dialog.close();
+      restoreFocus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open || typeof document === 'undefined') return null;
 
-  const close = () => dismissModal({ onClose });
+  const close = () => {
+    dismissModal({
+      onClose: () => dialogRef.current?.close(),
+    });
+  };
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-      <div
-        className="absolute inset-0 z-0 bg-black/70"
-        aria-hidden="true"
-        onClick={close}
-      />
+    <dialog
+      ref={dialogRef}
+      aria-labelledby={titleId}
+      aria-describedby={describedBy}
+      aria-modal="true"
+      className={cn(
+        'fixed inset-0 z-[100] m-0 flex h-full max-h-none w-full max-w-none items-center justify-center',
+        'border-0 bg-transparent p-4 open:flex sm:p-6',
+        '[&::backdrop]:bg-black/70',
+      )}
+    >
       {/* Glow esmeralda — marca Ninety, sin purple */}
       <div
         className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.12),transparent_65%)]"
         aria-hidden="true"
       />
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
         className={cn(
           'relative z-10 flex max-h-[min(85dvh,34rem)] w-[min(100%,26rem)] flex-col overflow-hidden',
           'rounded-2xl border border-primary/25 bg-card text-card-foreground',
@@ -111,7 +153,7 @@ export function Modal({
         </header>
         {children}
       </div>
-    </div>,
+    </dialog>,
     document.body,
   );
 }

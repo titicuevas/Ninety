@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 
@@ -29,10 +30,22 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const descriptionId = useId();
+
   return (
-    <Modal open={open} title={title} onClose={onCancel} hideCloseButton>
+    <Modal
+      open={open}
+      title={title}
+      onClose={onCancel}
+      hideCloseButton
+      describedBy={description ? descriptionId : undefined}
+    >
       <div className="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
-        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+        {description ? (
+          <p id={descriptionId} className="text-sm text-muted-foreground">
+            {description}
+          </p>
+        ) : null}
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
             type="button"

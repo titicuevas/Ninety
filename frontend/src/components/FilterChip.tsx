@@ -25,7 +25,7 @@ export function FilterChip({
         'active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         active
           ? 'bg-primary text-primary-foreground'
-          : 'bg-secondary text-muted-foreground hover:text-foreground',
+          : 'bg-secondary text-foreground/80 hover:text-foreground',
       )}
     >
       {children}

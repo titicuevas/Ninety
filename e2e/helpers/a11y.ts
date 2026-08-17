@@ -1,6 +1,16 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
 
+/** El foco debe estar dentro del diálogo abierto (trap de `<dialog showModal>`). */
+export async function expectFocusInsideOpenDialog(page: Page) {
+  const inside = await page.evaluate(() => {
+    const dialog = document.querySelector('dialog[open]');
+    const active = document.activeElement;
+    return !!dialog && !!active && dialog.contains(active);
+  });
+  expect(inside, 'el foco debe estar dentro del diálogo abierto').toBe(true);
+}
+
 /** Auditoría WCAG 2 A/AA con axe. Falla el test si hay violaciones. */
 export async function expectNoA11yViolations(page: Page, label: string) {
   const results = await new AxeBuilder({ page })

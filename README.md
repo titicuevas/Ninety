@@ -242,7 +242,7 @@ npm run demo:flow
 npm run test:e2e:public    # smoke público + a11y (sin login; CI)
 npm run test:e2e:smoke     # smoke público + home/feed autenticados
 npm run test:e2e:critical  # búsqueda, follow lists, nav móvil
-npm run test:e2e:a11y      # axe WCAG 2 A/AA
+npm run test:e2e:a11y      # axe público + autenticado (auth: TEST_USER_PASSWORD)
 npm run test:e2e:mobile    # Pixel 5
 npm run test:e2e           # suite completa
 npm run test:e2e:ui        # modo UI Playwright
@@ -257,7 +257,7 @@ Estructura `e2e/`:
 |---------|-----------|
 | `smoke/` | Salud mínima (landing, login form, API health, home) |
 | `critical/` | Flujos de negocio (buscar aficionados, listas, capsule pública, nav móvil) |
-| `a11y/` | Accesibilidad con axe-core |
+| `a11y/` | Accesibilidad con axe-core (público + autenticado) |
 | `helpers/` | Login, token, asserts a11y |
 
 Tags: `@smoke` · `@critical` · `@a11y` · `@mobile`
@@ -537,6 +537,11 @@ Ninety/
 - [x] También lo vieron — quién de tus follows tiene Capsule del mismo partido (`GET /api/capsules/me/:matchId/following`; respeta `is_public` y blocks; UI en Capsule pública; índice `capsules_public_match_id_idx`)
 - [x] Mis me gusta — archivo de Capsules que te gustaron (`GET /api/capsules/me/liked` + `/likes`; índice `capsule_likes_user_created_idx`)
 - [x] Quiero ir: próximos vs ya jugados — chips en `/want-to-go` (`?when=upcoming|played`) + CTA «limpiar ya jugados sin Capsule» (`DELETE /api/want-to-go/played`)
+
+### ✅ v17 — Accesibilidad en la app autenticada
+- [x] axe WCAG 2 A/AA en home, feed, Capsule, Mis listas y Quiero ir (además de landing / login / perfil público)
+- [x] Modales nativos (`<dialog>`): foco al abrir, Esc y restauración al cerrar (reportar, confirmar, me gusta)
+- [x] Teclado en chips e iconos de pantallas recientes + contraste de chips inactivos
 
 ## 🎨 Identidad visual
 

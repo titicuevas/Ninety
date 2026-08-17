@@ -11,6 +11,7 @@ const authFile = 'e2e/.auth/user.json';
  * Proyectos QE:
  * - setup: login + storageState
  * - smoke-public / a11y: sin auth (CI-friendly)
+ * - a11y-auth: axe + teclado/modales con sesión
  * - chromium / mobile: flujos autenticados + críticos
  */
 export default defineConfig({
@@ -43,8 +44,17 @@ export default defineConfig({
     },
     {
       name: 'a11y',
-      testMatch: /a11y\/.*\.spec\.ts/,
+      testMatch: /a11y\/public\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'a11y-auth',
+      testMatch: /a11y\/authenticated\.spec\.ts/,
+      dependencies: ['setup'],
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: authFile,
+      },
     },
     {
       name: 'chromium',
