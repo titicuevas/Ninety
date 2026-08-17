@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { openAuthenticatedHome } from '../helpers/auth';
+import { restoreCapsuleNote } from '../helpers/e2eCapsuleNotes';
 
 test.describe('Smoke — autenticado @smoke', () => {
   test('home muestra Wrapped o empty state', async ({ page }) => {
@@ -218,7 +219,7 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(page).toHaveURL(/\/capsules\/.+\/edit/);
   });
 
-  test('Editar Capsule muestra confirmación al guardar', async ({ page }) => {
+  test('Editar Capsule muestra confirmación al guardar', async ({ page, request }) => {
     await openAuthenticatedHome(page);
     await page
       .getByRole('navigation', { name: /navegación principal/i })
@@ -236,15 +237,23 @@ test.describe('Smoke — autenticado @smoke', () => {
     await editLink.click();
     await expect(page).toHaveURL(/\/capsules\/.+\/edit/);
 
+    const capsuleId = page.url().match(/\/capsules\/([^/]+)\/edit/)?.[1];
     const note = page.getByLabel('Reseña corta (opcional)');
+    const originalNote = await note.inputValue();
     const stamp = `Guardado E2E ${Date.now()}`;
-    await note.fill(stamp);
-    await page.getByRole('button', { name: /guardar cambios/i }).click();
+    try {
+      await note.fill(stamp);
+      await page.getByRole('button', { name: /guardar cambios/i }).click();
 
-    await expect(page).toHaveURL(/\/c\/.+/, { timeout: 30_000 });
-    await expect(page.getByRole('status').filter({ hasText: /cambios guardados/i })).toBeVisible({
-      timeout: 15_000,
-    });
+      await expect(page).toHaveURL(/\/c\/.+/, { timeout: 30_000 });
+      await expect(page.getByRole('status').filter({ hasText: /cambios guardados/i })).toBeVisible({
+        timeout: 15_000,
+      });
+    } finally {
+      if (capsuleId) {
+        await restoreCapsuleNote(page, request, capsuleId, originalNote);
+      }
+    }
   });
 
   test('Perfil comprueba disponibilidad de username', async ({ page }) => {

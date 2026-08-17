@@ -18,6 +18,16 @@ export function isE2eLeftoverCollectionName(name: string): boolean {
   return /^E2E(\s|$)/i.test(name.trim());
 }
 
+/** Reseñas que dejan los e2e en el perfil público si no se restauran o borran. */
+export function isE2eLeftoverNote(note: string | null | undefined): boolean {
+  return /^(Guardado E2E \d+|E2E fotos \d+|Test E2E\b)/i.test((note ?? '').trim());
+}
+
+/** Capsules creadas por e2e (no son partidos del seed demo): se pueden borrar. */
+export function isE2eCreatedCapsuleNote(note: string | null | undefined): boolean {
+  return /^(E2E fotos \d+|Test E2E\b)/i.test((note ?? '').trim());
+}
+
 /**
  * El demo sigue a los 6 primeros fans: likes/comentarios entre ellos
  * salen en /activity y en «también le gusta / comentaron».

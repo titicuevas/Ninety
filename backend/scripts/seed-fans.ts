@@ -14,7 +14,9 @@ import { requireTestCredentials } from './testCredentials.js';
 import {
   demoFollowedSocialActions,
   demoSeedCommentBody,
+  isE2eCreatedCapsuleNote,
   isE2eLeftoverCollectionName,
+  isE2eLeftoverNote,
 } from '../src/lib/demoSocialSeed.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -686,6 +688,33 @@ async function cleanupDemoE2eCollections(demoUserId: string | null) {
   console.log(`   Limpiadas ${junk.length} lista(s) E2E del perfil demo`);
 }
 
+async function cleanupDemoE2eNotes(demoUserId: string | null) {
+  if (!admin || !demoUserId) return;
+  const { data, error } = await admin
+    .from('capsules')
+    .select('id, note')
+    .eq('user_id', demoUserId);
+  if (error) throw new Error(`Cleanup E2E notes lookup: ${error.message}`);
+  const leftover = (data ?? []).filter((row) => isE2eLeftoverNote(row.note as string | null));
+  const createdIds = leftover
+    .filter((row) => isE2eCreatedCapsuleNote(row.note as string | null))
+    .map((row) => row.id as string);
+  const editedIds = leftover
+    .filter((row) => !isE2eCreatedCapsuleNote(row.note as string | null))
+    .map((row) => row.id as string);
+
+  if (createdIds.length > 0) {
+    const { error: deleteError } = await admin.from('capsules').delete().in('id', createdIds);
+    if (deleteError) throw new Error(`Cleanup E2E created capsules: ${deleteError.message}`);
+    console.log(`   Borradas ${createdIds.length} Capsule(s) E2E del perfil demo`);
+  }
+  if (editedIds.length > 0) {
+    const { error: updateError } = await admin.from('capsules').update({ note: null }).in('id', editedIds);
+    if (updateError) throw new Error(`Cleanup E2E notes: ${updateError.message}`);
+    console.log(`   Limpiadas ${editedIds.length} reseña(s) E2E del perfil demo`);
+  }
+}
+
 async function main() {
   if (!admin) {
     throw new Error('Faltan SUPABASE_URL y SUPABASE_SECRET_KEY en backend/.env');
@@ -709,6 +738,7 @@ async function main() {
   await seedFollows(fanIds, demoUserId);
   await seedFanSocial(fanIds);
   await cleanupDemoE2eCollections(demoUserId);
+  await cleanupDemoE2eNotes(demoUserId);
 
   console.log('\n📋 Resumen');
   console.log(`   Aficionados: ${FANS.length}`);

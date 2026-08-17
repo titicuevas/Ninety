@@ -1,5 +1,6 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
 import { API_BASE, goAppNav, openAuthenticatedHome, readAccessToken } from '../helpers/auth';
+import { deleteOwnCapsule } from '../helpers/e2eCapsuleNotes';
 
 type CapsuleSummary = { match_id: number };
 type CapsulesResponse = { capsules?: CapsuleSummary[] };
@@ -57,73 +58,81 @@ test.describe('Crítico — creación de capsule con fotos @critical', () => {
 
     const { query, match } = await pickUnsavedMatch(token!, request);
     const note = `E2E fotos ${Date.now()}`;
+    let createdId: string | undefined;
 
-    await goAppNav(page, /buscar/i);
-    await expect(page).toHaveURL(/\/search/);
-    await page.getByLabel('Equipo o rival').fill(query);
+    try {
+      await goAppNav(page, /buscar/i);
+      await expect(page).toHaveURL(/\/search/);
+      await page.getByLabel('Equipo o rival').fill(query);
 
-    const matchButton = page.getByRole('button', {
-      name: new RegExp(
-        `Guardar partido: ${escapeRegExp(match.homeTeam.name)}.*${escapeRegExp(match.awayTeam.name)}`,
-        'i',
-      ),
-    });
-    await expect(matchButton.first()).toBeVisible({ timeout: 20_000 });
-    await matchButton.first().click();
+      const matchButton = page.getByRole('button', {
+        name: new RegExp(
+          `Guardar partido: ${escapeRegExp(match.homeTeam.name)}.*${escapeRegExp(match.awayTeam.name)}`,
+          'i',
+        ),
+      });
+      await expect(matchButton.first()).toBeVisible({ timeout: 20_000 });
+      await matchButton.first().click();
 
-    await expect(page).toHaveURL(/\/capsules\/new/);
-    await expect(page.getByRole('heading', { name: /nueva capsule/i })).toBeVisible();
-    await expect(page.getByText(match.homeTeam.name).first()).toBeVisible();
+      await expect(page).toHaveURL(/\/capsules\/new/);
+      await expect(page.getByRole('heading', { name: /nueva capsule/i })).toBeVisible();
+      await expect(page.getByText(match.homeTeam.name).first()).toBeVisible();
 
-    // Refresh no debe tirar a /search: el partido queda en sessionStorage
-    await page.reload();
-    await expect(page).toHaveURL(/\/capsules\/new/);
-    await expect(page.getByRole('heading', { name: /nueva capsule/i })).toBeVisible();
-    await expect(page.getByText(match.homeTeam.name).first()).toBeVisible();
+      // Refresh no debe tirar a /search: el partido queda en sessionStorage
+      await page.reload();
+      await expect(page).toHaveURL(/\/capsules\/new/);
+      await expect(page.getByRole('heading', { name: /nueva capsule/i })).toBeVisible();
+      await expect(page.getByText(match.homeTeam.name).first()).toBeVisible();
 
-    const draftNote = `Borrador E2E ${Date.now()}`;
-    await page.getByRole('radio', { name: '3 de 5 estrellas' }).click();
-    await page.getByLabel('Reseña corta (opcional)').fill(draftNote);
-    await page.getByRole('radio', { name: /estadio/i }).click();
+      const draftNote = `Borrador E2E ${Date.now()}`;
+      await page.getByRole('radio', { name: '3 de 5 estrellas' }).click();
+      await page.getByLabel('Reseña corta (opcional)').fill(draftNote);
+      await page.getByRole('radio', { name: /estadio/i }).click();
 
-    // Debounce 250ms en saveDraftCapsuleMemory — esperar persistencia real
-    await page.waitForFunction(
-      (note) => {
-        try {
-          const raw = sessionStorage.getItem('ninety.draftCapsuleMemory');
-          if (!raw) return false;
-          return (JSON.parse(raw) as { note?: string }).note === note;
-        } catch {
-          return false;
-        }
-      },
-      draftNote,
-      { timeout: 5_000 },
-    );
+      // Debounce 250ms en saveDraftCapsuleMemory — esperar persistencia real
+      await page.waitForFunction(
+        (note) => {
+          try {
+            const raw = sessionStorage.getItem('ninety.draftCapsuleMemory');
+            if (!raw) return false;
+            return (JSON.parse(raw) as { note?: string }).note === note;
+          } catch {
+            return false;
+          }
+        },
+        draftNote,
+        { timeout: 5_000 },
+      );
 
-    // El borrador de memoria también sobrevive al refresh (fotos no)
-    await page.reload();
-    await expect(page).toHaveURL(/\/capsules\/new/);
-    await expect(page.getByLabel('Reseña corta (opcional)')).toHaveValue(draftNote, { timeout: 10_000 });
-    await expect(page.getByRole('radio', { name: '3 de 5 estrellas' })).toHaveAttribute(
-      'aria-checked',
-      'true',
-    );
-    await expect(page.getByRole('radio', { name: /estadio/i })).toHaveAttribute('aria-checked', 'true');
+      // El borrador de memoria también sobrevive al refresh (fotos no)
+      await page.reload();
+      await expect(page).toHaveURL(/\/capsules\/new/);
+      await expect(page.getByLabel('Reseña corta (opcional)')).toHaveValue(draftNote, { timeout: 10_000 });
+      await expect(page.getByRole('radio', { name: '3 de 5 estrellas' })).toHaveAttribute(
+        'aria-checked',
+        'true',
+      );
+      await expect(page.getByRole('radio', { name: /estadio/i })).toHaveAttribute('aria-checked', 'true');
 
-    await page.locator('input[type="file"]').first().setInputFiles([
-      { name: 'photo-1.jpg', mimeType: 'image/jpeg', buffer: JPEG_BUFFER },
-      { name: 'photo-2.jpg', mimeType: 'image/jpeg', buffer: JPEG_BUFFER },
-    ]);
+      await page.locator('input[type="file"]').first().setInputFiles([
+        { name: 'photo-1.jpg', mimeType: 'image/jpeg', buffer: JPEG_BUFFER },
+        { name: 'photo-2.jpg', mimeType: 'image/jpeg', buffer: JPEG_BUFFER },
+      ]);
 
-    await expect(page.getByText(/^2\/9\b/)).toBeVisible({ timeout: 20_000 });
-    await page.getByRole('radio', { name: '4 de 5 estrellas' }).click();
-    await page.getByLabel('Reseña corta (opcional)').fill(note);
-    await page.getByRole('button', { name: /guardar capsule/i }).click();
+      await expect(page.getByText(/^2\/9\b/)).toBeVisible({ timeout: 20_000 });
+      await page.getByRole('radio', { name: '4 de 5 estrellas' }).click();
+      await page.getByLabel('Reseña corta (opcional)').fill(note);
+      await page.getByRole('button', { name: /guardar capsule/i }).click();
 
-    await expect(page).toHaveURL(/\/c\/[0-9a-f-]{8,}/i, { timeout: 30_000 });
-    await expect(page.getByText(note)).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByRole('button', { name: /ampliar foto 1 de/i })).toBeVisible();
+      await expect(page).toHaveURL(/\/c\/[0-9a-f-]{8,}/i, { timeout: 30_000 });
+      createdId = page.url().match(/\/c\/([0-9a-f-]{8,})/i)?.[1];
+      await expect(page.getByText(note)).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByRole('button', { name: /ampliar foto 1 de/i })).toBeVisible();
+    } finally {
+      if (createdId) {
+        await deleteOwnCapsule(page, request, createdId);
+      }
+    }
   });
 
   test('partido ya guardado abre la Capsule desde Buscar', async ({ page, request }) => {

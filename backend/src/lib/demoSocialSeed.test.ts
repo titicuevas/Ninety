@@ -4,7 +4,9 @@ import {
   DEMO_SOCIAL_COMMENT_MARKER,
   demoFollowedSocialActions,
   demoSeedCommentBody,
+  isE2eCreatedCapsuleNote,
   isE2eLeftoverCollectionName,
+  isE2eLeftoverNote,
 } from './demoSocialSeed.js';
 
 describe('demoSocialSeed', () => {
@@ -13,6 +15,16 @@ describe('demoSocialSeed', () => {
     assert.equal(isE2eLeftoverCollectionName('E2E 1786994887257'), true);
     assert.equal(isE2eLeftoverCollectionName('Derbis'), false);
     assert.equal(isE2eLeftoverCollectionName('e2e-interno'), false);
+  });
+
+  it('detecta reseñas residuales de e2e', () => {
+    assert.equal(isE2eLeftoverNote('Guardado E2E 1786992152329'), true);
+    assert.equal(isE2eLeftoverNote('E2E fotos 1785312235800'), true);
+    assert.equal(isE2eLeftoverNote('Test E2E — Con amigos fuimos campeones (6 fotos)'), true);
+    assert.equal(isE2eLeftoverNote('Partidazo en Anfield. Salah y Haaland en estado de gracia.'), false);
+    assert.equal(isE2eLeftoverNote(null), false);
+    assert.equal(isE2eCreatedCapsuleNote('E2E fotos 1785312235800'), true);
+    assert.equal(isE2eCreatedCapsuleNote('Guardado E2E 1786992152329'), false);
   });
 
   it('acciones entre fans que el demo sigue, sin self', () => {

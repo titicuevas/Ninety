@@ -218,7 +218,7 @@ Sin necesidad de tener la API en marcha:
 npm run seed:fans
 ```
 
-Crea **24 usuarios** (`fan01@ninety.app` … `fan24@ninety.app`) con perfil, **avatar del escudo de su equipo**, 1–4 partidos públicos, red de follows (incluye enlaces con `@aficionado_demo` si ya existe) y likes/comentarios entre los fans que sigue el demo. Comparten la contraseña de `DEMO_FANS_PASSWORD` o, si no está definida, `TEST_USER_PASSWORD` en `backend/.env`. También limpia listas residuales `E2E …` del perfil demo.
+Crea **24 usuarios** (`fan01@ninety.app` … `fan24@ninety.app`) con perfil, **avatar del escudo de su equipo**, 1–4 partidos públicos, red de follows (incluye enlaces con `@aficionado_demo` si ya existe) y likes/comentarios entre los fans que sigue el demo. Comparten la contraseña de `DEMO_FANS_PASSWORD` o, si no está definida, `TEST_USER_PASSWORD` en `backend/.env`. También limpia listas residuales `E2E …` y reseñas/Capsules de e2e (`Guardado E2E`, `E2E fotos`, `Test E2E`) del perfil demo.
 
 ### 3. Tests automatizados (pirámide QE)
 
@@ -574,6 +574,9 @@ Ninety/
 
 ### ✅ v26 — 1 comentario
 - [x] Gramática del contador — `1 comentario` / `N comentarios` en Capsules, listas y barra de invitados
+
+### ✅ v27 — Perfil demo sin reseñas E2E
+- [x] Limpieza de reseñas `Guardado E2E …` / Capsules `E2E fotos` y `Test E2E` en el perfil demo (`npm run seed:fans`); el e2e de editar restaura la reseña y el de fotos borra la Capsule creada
 
 ## 🎨 Identidad visual
 
