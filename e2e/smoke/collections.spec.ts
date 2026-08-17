@@ -98,6 +98,24 @@ test.describe('Smoke — colecciones @smoke', () => {
       });
     });
 
+    await page.route('**/api/collections/*/comments/following', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        json: {
+          people: [
+            {
+              id: 'e2e-commenter',
+              username: 'comentarista_e2e',
+              display_name: 'Comentarista E2E',
+              avatar_url: null,
+            },
+          ],
+          total: 1,
+        },
+      });
+    });
+
     await page
       .getByRole('navigation', { name: /navegación principal/i })
       .getByRole('link', { name: /listas/i })
@@ -114,11 +132,15 @@ test.describe('Smoke — colecciones @smoke', () => {
 
     await expect(page.getByText(/también le gusta/i)).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('link', { name: /amigo e2e/i })).toBeVisible();
+    await expect(page.getByText(/también comentó/i)).toBeVisible();
+    await expect(page.getByRole('link', { name: /comentarista e2e/i })).toBeVisible();
 
     await page.getByRole('link', { name: /ver pública/i }).click();
     await expect(page).toHaveURL(/\/u\/[^/]+\/lists\/[^/]+/, { timeout: 15_000 });
     await expect(page.getByText(/también le gusta/i)).toBeVisible();
     await expect(page.getByRole('link', { name: /amigo e2e/i })).toBeVisible();
+    await expect(page.getByText(/también comentó/i)).toBeVisible();
+    await expect(page.getByRole('link', { name: /comentarista e2e/i })).toBeVisible();
   });
 
   test('Perfil y Listas en nav abren Mis listas', async ({ page }) => {

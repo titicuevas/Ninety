@@ -395,6 +395,7 @@ Ninety/
 | POST/DELETE | `/api/collections/:id/like` | ✅ | Me gusta en colección (pública o propia; respeta blocks) |
 | GET | `/api/collections/:id/likes` | opcional | Quién dio me gusta |
 | GET | `/api/collections/:id/likes/following` | ✅ | Follows que dieron me gusta a esta lista |
+| GET | `/api/collections/:id/comments/following` | ✅ | Follows que comentaron esta lista |
 | GET | `/api/football/matches/search` | ✅ | Buscar partidos |
 | GET | `/api/football/competitions` | ✅ | Competiciones |
 | GET/PATCH | `/api/notifications/preferences` | ✅ | Preferencias por tipo + push aniversario/hito/Quiero ir opt-in + digest email opt-in + horario silencioso (`push_quiet`) |
@@ -564,6 +565,9 @@ Ninety/
 
 ### ✅ v23 — También comentaron esta Capsule
 - [x] También comentaron — quién de tus follows comentó una Capsule (`GET /api/capsules/:id/comments/following`; paridad con También le gusta)
+
+### ✅ v24 — También comentaron esta lista
+- [x] También comentaron — quién de tus follows comentó una lista pública (`GET /api/collections/:id/comments/following`; paridad con Capsules)
 
 ## 🎨 Identidad visual
 

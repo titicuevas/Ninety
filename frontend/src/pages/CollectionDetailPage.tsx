@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowDown, ArrowLeft, ArrowUp, ImageIcon, Plus, Trash2 } from 'lucide-react';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
+import { CollectionAlsoCommented } from '@/components/CollectionAlsoCommented';
 import { CollectionAlsoLiked } from '@/components/CollectionAlsoLiked';
 import { CollectionLikeButton } from '@/components/CollectionLikeButton';
 import { EmptyState } from '@/components/EmptyState';
@@ -434,10 +435,16 @@ export function CollectionDetailPage() {
         </nav>
 
         {collection.is_public ? (
-          <CollectionAlsoLiked
-            collectionId={collection.id}
-            exceptUserId={collection.user_id}
-          />
+          <>
+            <CollectionAlsoLiked
+              collectionId={collection.id}
+              exceptUserId={collection.user_id}
+            />
+            <CollectionAlsoCommented
+              collectionId={collection.id}
+              exceptUserId={collection.user_id}
+            />
+          </>
         ) : null}
 
         {coverUrl ? (

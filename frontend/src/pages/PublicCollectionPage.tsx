@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { BookOpen, Library } from 'lucide-react';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
+import { CollectionAlsoCommented } from '@/components/CollectionAlsoCommented';
 import { CollectionAlsoLiked } from '@/components/CollectionAlsoLiked';
 import { CollectionComments } from '@/components/CollectionComments';
 import { CollectionLikeButton } from '@/components/CollectionLikeButton';
@@ -125,6 +126,13 @@ export function PublicCollectionPage() {
           </p>
           {user ? (
             <CollectionAlsoLiked
+              className="justify-center sm:justify-start"
+              collectionId={collection.id}
+              exceptUserId={collection.user_id}
+            />
+          ) : null}
+          {user ? (
+            <CollectionAlsoCommented
               className="justify-center sm:justify-start"
               collectionId={collection.id}
               exceptUserId={collection.user_id}

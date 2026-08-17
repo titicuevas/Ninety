@@ -221,6 +221,13 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/collections/:id/comments/following requiere auth', async () => {
+    const res = await request(createApp()).get(
+      '/api/collections/00000000-0000-4000-8000-000000000001/comments/following',
+    );
+    assert.equal(res.status, 401);
+  });
+
   it('GET /api/collections/me/export requiere auth', async () => {
     const res = await request(createApp()).get('/api/collections/me/export');
     assert.equal(res.status, 401);

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { resolveCollectionCoverUrl } from '../lib/collectionCover.js';
+import { listCollectionAlsoCommented } from '../lib/collectionAlsoCommented.js';
 import {
   assertValidCollectionReplyParent,
   canEngageCollectionComments,
@@ -1554,6 +1555,32 @@ async function loadCollectionForComments(
   }
   return data;
 }
+
+/** GET /api/collections/:id/comments/following — follows que comentaron esta lista. */
+collectionsRouter.get('/:id/comments/following', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const id = routeParam(req.params.id);
+    const people = await listCollectionAlsoCommented(req.userId!, id);
+    res.json({ people, total: people.length });
+  } catch (err) {
+    const status = collectionRouteErrorStatus(err);
+    if (status === 400 || status === 404 || status === 503) {
+      res.status(status).json({
+        error: err instanceof Error ? err.message : 'No se pudieron cargar los comentarios',
+      });
+      return;
+    }
+    if (isMissingCollectionCommentsTable(err)) {
+      res.status(503).json({ error: collectionCommentsMigrationHint() });
+      return;
+    }
+    if (isMissingCollectionsTable(err as { message?: string; code?: string })) {
+      res.status(503).json({ error: collectionsMigrationHint() });
+      return;
+    }
+    next(err);
+  }
+});
 
 /** GET /api/collections/:id/comments */
 collectionsRouter.get('/:id/comments', optionalAuth, async (req: AuthRequest, res) => {
