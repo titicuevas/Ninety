@@ -218,7 +218,7 @@ Sin necesidad de tener la API en marcha:
 npm run seed:fans
 ```
 
-Crea **24 usuarios** (`fan01@ninety.app` … `fan24@ninety.app`) con perfil, **avatar del escudo de su equipo**, 1–4 partidos públicos, red de follows (incluye enlaces con `@aficionado_demo` si ya existe) y likes/comentarios entre los fans que sigue el demo. Comparten la contraseña de `DEMO_FANS_PASSWORD` o, si no está definida, `TEST_USER_PASSWORD` en `backend/.env`. También limpia listas residuales `E2E …` y reseñas/Capsules de e2e (`Guardado E2E`, `E2E fotos`, `Test E2E`) del perfil demo, y deja una lista destacada **Favoritos**.
+Crea **24 usuarios** (`fan01@ninety.app` … `fan24@ninety.app`) con perfil, **avatar del escudo de su equipo**, 1–4 partidos públicos, red de follows (incluye enlaces con `@aficionado_demo` si ya existe) y likes/comentarios entre los fans que sigue el demo. Comparten la contraseña de `DEMO_FANS_PASSWORD` o, si no está definida, `TEST_USER_PASSWORD` en `backend/.env`. También limpia listas residuales `E2E …` y reseñas/Capsules de e2e del perfil demo, deja la lista destacada **Favoritos** y sembrar likes/comentarios en ella.
 
 ### 3. Tests automatizados (pirámide QE)
 
@@ -580,6 +580,9 @@ Ninety/
 
 ### ✅ v28 — Colección destacada en el demo
 - [x] Lista **Favoritos** fijada en el perfil público demo (`featured_collection_id` vía `npm run seed:fans`) para que `/u/beta_ninety` se lea como un diario Letterboxd
+
+### ✅ v29 — Favoritos con vida social
+- [x] Likes/comentarios de fans que sigue el demo en **Favoritos** (Actividad + «también le gusta / comentaron» al abrir la lista)
 
 ## 🎨 Identidad visual
 

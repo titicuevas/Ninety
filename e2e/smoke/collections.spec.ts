@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openAuthenticatedHome } from '../helpers/auth';
+import { DEMO_USERNAME, openAuthenticatedHome } from '../helpers/auth';
 import { deleteOwnE2eCollections } from '../helpers/e2eCollections';
 
 test.describe('Smoke — colecciones @smoke', () => {
@@ -145,6 +145,16 @@ test.describe('Smoke — colecciones @smoke', () => {
     await expect(page.getByRole('link', { name: /amigo e2e/i })).toBeVisible();
     await expect(page.getByText(/también comentó/i)).toBeVisible();
     await expect(page.getByRole('link', { name: /comentarista e2e/i })).toBeVisible();
+  });
+
+  test('Favoritos del demo muestra likes y comentarios de follows', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page.goto(`/u/${DEMO_USERNAME}/lists/favoritos-seed`);
+    await expect(page.getByRole('heading', { name: /^favoritos$/i })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByText(/también le gusta/i)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/también comentó/i)).toBeVisible();
   });
 
   test('Perfil y Listas en nav abren Mis listas', async ({ page }) => {

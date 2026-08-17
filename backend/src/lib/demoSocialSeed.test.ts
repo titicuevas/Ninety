@@ -4,6 +4,7 @@ import {
   DEMO_FEATURED_COLLECTION_NAME,
   DEMO_FEATURED_COLLECTION_SLUG,
   DEMO_SOCIAL_COMMENT_MARKER,
+  demoFeaturedSocialActions,
   demoFollowedSocialActions,
   demoSeedCommentBody,
   isE2eCreatedCapsuleNote,
@@ -50,5 +51,15 @@ describe('demoSocialSeed', () => {
     assert.equal(DEMO_FEATURED_COLLECTION_SLUG, 'favoritos-seed');
     assert.equal(DEMO_FEATURED_COLLECTION_NAME, 'Favoritos');
     assert.equal(isE2eLeftoverCollectionName(DEMO_FEATURED_COLLECTION_NAME), false);
+  });
+
+  it('acciones sociales en Favoritos entre fans que el demo sigue', () => {
+    const actions = demoFeaturedSocialActions();
+    assert.equal(actions.length, 2);
+    for (const action of actions) {
+      assert.ok(action.actorIndex < 6);
+    }
+    assert.ok(actions.some((row) => row.kind === 'collection_like'));
+    assert.ok(actions.some((row) => row.kind === 'collection_comment'));
   });
 });

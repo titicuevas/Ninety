@@ -52,3 +52,16 @@ export function demoSeedCommentBody(kind: 'capsule' | 'collection'): string {
     ? `Qué partidazo. ${DEMO_SOCIAL_COMMENT_MARKER}`
     : `Lista redonda. ${DEMO_SOCIAL_COMMENT_MARKER}`;
 }
+
+export type DemoFeaturedSocialAction = {
+  actorIndex: number;
+  kind: 'collection_like' | 'collection_comment';
+};
+
+/** Likes/comentarios en la lista Favoritos del demo (fans que @beta_ninety sigue). */
+export function demoFeaturedSocialActions(): DemoFeaturedSocialAction[] {
+  return [
+    { actorIndex: 2, kind: 'collection_like' },
+    { actorIndex: 5, kind: 'collection_comment' },
+  ];
+}

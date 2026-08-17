@@ -14,6 +14,7 @@ import { requireTestCredentials } from './testCredentials.js';
 import {
   DEMO_FEATURED_COLLECTION_NAME,
   DEMO_FEATURED_COLLECTION_SLUG,
+  demoFeaturedSocialActions,
   demoFollowedSocialActions,
   demoSeedCommentBody,
   isE2eCreatedCapsuleNote,
@@ -784,6 +785,42 @@ async function ensureDemoFeaturedCollection(demoUserId: string | null) {
     .eq('id', demoUserId);
   if (profileError) throw new Error(`Demo featured pin: ${profileError.message}`);
   console.log(`   Lista destacada «${DEMO_FEATURED_COLLECTION_NAME}» en el perfil demo`);
+  return collectionId;
+}
+
+async function seedDemoFeaturedSocial(demoUserId: string | null, fanIds: string[]) {
+  if (!admin || !demoUserId || fanIds.length < 6) return;
+
+  const { data: collection, error: lookupError } = await admin
+    .from('collections')
+    .select('id')
+    .eq('user_id', demoUserId)
+    .eq('slug', DEMO_FEATURED_COLLECTION_SLUG)
+    .maybeSingle();
+  if (lookupError) throw new Error(`Demo featured social lookup: ${lookupError.message}`);
+  const collectionId = collection?.id as string | undefined;
+  if (!collectionId) return;
+
+  for (const action of demoFeaturedSocialActions()) {
+    const actorId = fanIds[action.actorIndex];
+    if (!actorId) continue;
+    if (action.kind === 'collection_like') {
+      const { error } = await admin.from('collection_likes').upsert(
+        { user_id: actorId, collection_id: collectionId },
+        { onConflict: 'user_id,collection_id', ignoreDuplicates: true },
+      );
+      if (error) throw new Error(`Like Favoritos seed: ${error.message}`);
+    } else {
+      await ensureSeedComment(
+        'collection_comments',
+        actorId,
+        'collection_id',
+        collectionId,
+        demoSeedCommentBody('collection'),
+      );
+    }
+  }
+  console.log(`   Likes/comentarios en «${DEMO_FEATURED_COLLECTION_NAME}»`);
 }
 
 async function main() {
@@ -811,13 +848,14 @@ async function main() {
   await cleanupDemoE2eCollections(demoUserId);
   await cleanupDemoE2eNotes(demoUserId);
   await ensureDemoFeaturedCollection(demoUserId);
+  await seedDemoFeaturedSocial(demoUserId, fanIds);
 
   console.log('\n📋 Resumen');
   console.log(`   Aficionados: ${FANS.length}`);
   console.log(`   Contraseña:  DEMO_FANS_PASSWORD o TEST_USER_PASSWORD en backend/.env`);
   console.log(`   Emails:      fan01@ninety.app … fan${String(FANS.length).padStart(2, '0')}@ninety.app`);
   if (demoUserId) {
-    console.log(`   Demo (@${process.env.DEMO_USERNAME ?? 'aficionado_demo'}) enlazado con follows + likes/comentarios + lista destacada`);
+    console.log(`   Demo (@${process.env.DEMO_USERNAME ?? 'aficionado_demo'}) enlazado con follows + likes/comentarios + Favoritos`);
   } else {
     console.log('   ℹ️  Usuario demo no encontrado — ejecuta npm run seed:demo para enlazar follows');
   }
