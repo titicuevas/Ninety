@@ -12,6 +12,7 @@ export interface Collection {
   items_count?: number;
   likes_count?: number;
   liked_by_me?: boolean;
+  comments_count?: number;
 }
 
 export interface CollectionAuthor {

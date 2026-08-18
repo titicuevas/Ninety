@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ActivityShortcutLink } from '@/components/ActivityShortcutLink';
 import { CapsuleCardSocialFooter } from '@/components/CapsuleCardSocialFooter';
 import { CapsuleListCard, capsuleCardListClass } from '@/components/CapsuleListCard';
+import { CollectionCardSocialFooter } from '@/components/CollectionCardSocialFooter';
 import { EmptyState } from '@/components/EmptyState';
 import { FeedContentFiltersBar } from '@/components/FeedContentFiltersBar';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
@@ -17,6 +18,7 @@ import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useFeedFilterParams } from '@/hooks/useFeedFilterParams';
+import { formatCollectionCardMeta } from '@/lib/collectionCardMeta';
 import { discoverCollectionMatchLabel } from '@/lib/discoverCollections';
 import { feedDocumentTitle, feedPath, hasFeedContentFilters } from '@/lib/feedParams';
 import { capsuleShareSummaryFrom } from '@/lib/capsuleShare';
@@ -30,7 +32,13 @@ import { cn } from '@/lib/utils';
 import type { FeedCapsule } from '@/types/capsule';
 import type { DiscoverCollection } from '@/types/collection';
 
-function FeedDiscoverCollectionRow({ collection }: { collection: DiscoverCollection }) {
+function FeedDiscoverCollectionRow({
+  collection,
+  currentUserId,
+}: {
+  collection: DiscoverCollection;
+  currentUserId?: string;
+}) {
   const author = collection.author;
   const username = author.username;
   const matchLabel = discoverCollectionMatchLabel(collection.match_reason);
@@ -69,8 +77,11 @@ function FeedDiscoverCollectionRow({ collection }: { collection: DiscoverCollect
             <p className="font-medium">{collection.name}</p>
           )}
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {collection.items_count ?? 0}{' '}
-            {(collection.items_count ?? 0) === 1 ? 'Capsule' : 'Capsules'}
+            {formatCollectionCardMeta(
+              collection.items_count ?? 0,
+              collection.likes_count ?? 0,
+              collection.comments_count ?? 0,
+            )}
             {matchLabel ? ` · ${matchLabel}` : ''}
             {authorHref && username ? (
               <>
@@ -81,6 +92,14 @@ function FeedDiscoverCollectionRow({ collection }: { collection: DiscoverCollect
               </>
             ) : null}
           </p>
+          <CollectionCardSocialFooter
+            className="mt-2 space-y-1"
+            collectionId={collection.id}
+            ownerId={collection.user_id}
+            currentUserId={currentUserId}
+            likesCount={collection.likes_count}
+            commentsCount={collection.comments_count}
+          />
         </div>
       </div>
     </li>
@@ -332,7 +351,11 @@ export function FeedPage() {
                 </h2>
                 <ul className="space-y-2">
                   {collectionSuggestions.map((collection) => (
-                    <FeedDiscoverCollectionRow key={collection.id} collection={collection} />
+                    <FeedDiscoverCollectionRow
+                      key={collection.id}
+                      collection={collection}
+                      currentUserId={user?.id}
+                    />
                   ))}
                 </ul>
                 <Button asChild variant="ghost" size="sm" className="px-0 text-primary">

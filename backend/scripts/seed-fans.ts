@@ -505,7 +505,7 @@ async function ensureFollow(followerId: string, followingId: string) {
 async function lookupDemoUserId(): Promise<string | null> {
   if (!admin) return null;
 
-  const demoUsername = process.env.DEMO_USERNAME ?? 'aficionado_demo';
+  const demoUsername = process.env.DEMO_USERNAME ?? 'beta_ninety';
   const { data, error } = await admin
     .from('profiles')
     .select('id')
@@ -929,7 +929,7 @@ async function main() {
   console.log(`   Contraseña:  DEMO_FANS_PASSWORD o TEST_USER_PASSWORD en backend/.env`);
   console.log(`   Emails:      fan01@ninety.app … fan${String(FANS.length).padStart(2, '0')}@ninety.app`);
   if (demoUserId) {
-    console.log(`   Demo (@${process.env.DEMO_USERNAME ?? 'aficionado_demo'}) enlazado con follows + likes/comentarios + Favoritos`);
+    console.log(`   Demo (@${process.env.DEMO_USERNAME ?? 'beta_ninety'}) enlazado con follows + likes/comentarios + Favoritos`);
   } else {
     console.log('   ℹ️  Usuario demo no encontrado — ejecuta npm run seed:demo para enlazar follows');
   }

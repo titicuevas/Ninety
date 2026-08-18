@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Compass, Heart, Library, Ticket } from 'lucide-react';
 import { capsuleCardListClass } from '@/components/CapsuleListCard';
-import { CollectionAlsoLiked } from '@/components/CollectionAlsoLiked';
+import { CollectionCardSocialFooter } from '@/components/CollectionCardSocialFooter';
 import { CollectionLikeButton } from '@/components/CollectionLikeButton';
 import { EmptyState } from '@/components/EmptyState';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useLikedCollectionsInfinite } from '@/hooks/useCollections';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { formatCollectionCardMeta } from '@/lib/collectionCardMeta';
 import { formatRelativeTime } from '@/lib/format';
 import { publicProfilePath } from '@/lib/profilePath';
 import type { LikedCollection } from '@/types/collection';
@@ -87,15 +88,20 @@ function LikedCollectionCard({
             </p>
           ) : null}
           <p className="mt-2 text-xs text-muted-foreground">
-            {itemsCount} {itemsCount === 1 ? 'Capsule' : 'Capsules'}
+            {formatCollectionCardMeta(
+              itemsCount,
+              collection.likes_count ?? 0,
+              collection.comments_count ?? 0,
+            )}
           </p>
-          {(collection.likes_count ?? 0) > 0 ? (
-            <CollectionAlsoLiked
-              className="mt-2"
-              collectionId={collection.id}
-              exceptUserId={collection.user_id}
-            />
-          ) : null}
+          <CollectionCardSocialFooter
+            className="mt-2 space-y-1"
+            collectionId={collection.id}
+            ownerId={collection.user_id}
+            currentUserId={currentUserId}
+            likesCount={collection.likes_count}
+            commentsCount={collection.comments_count}
+          />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3">
             <div className="flex min-w-0 items-center gap-2">
               {author?.avatar_url ? (

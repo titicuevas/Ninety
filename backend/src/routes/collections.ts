@@ -5,6 +5,7 @@ import { resolveCollectionCoverUrl } from '../lib/collectionCover.js';
 import { listCollectionAlsoCommented } from '../lib/collectionAlsoCommented.js';
 import {
   assertValidCollectionReplyParent,
+  attachCollectionCommentCounts,
   canEngageCollectionComments,
   collectionCommentRepliesMigrationHint,
   collectionCommentsMigrationHint,
@@ -290,6 +291,7 @@ function serializeCollection(
     cover_url?: string | null;
     likes_count?: number;
     liked_by_me?: boolean;
+    comments_count?: number;
   },
 ) {
   return {
@@ -299,6 +301,7 @@ function serializeCollection(
     cover_url: extras.cover_url ?? null,
     likes_count: extras.likes_count ?? 0,
     liked_by_me: extras.liked_by_me ?? false,
+    comments_count: extras.comments_count ?? 0,
   };
 }
 
@@ -438,6 +441,17 @@ collectionsRouter.get('/me/liked', requireAuth, async (req: AuthRequest, res, ne
       })),
     );
 
+    let commentsById = new Map<string, number>();
+    try {
+      const withComments = await attachCollectionCommentCounts(
+        supabase,
+        rows.map((row) => ({ id: row.id })),
+      );
+      commentsById = new Map(withComments.map((row) => [row.id, row.comments_count]));
+    } catch (err) {
+      if (!isMissingCollectionCommentsTable(err)) throw err;
+    }
+
     res.json({
       collections: rows.map((row) => ({
         ...serializeCollection(row, {
@@ -445,6 +459,7 @@ collectionsRouter.get('/me/liked', requireAuth, async (req: AuthRequest, res, ne
           cover_url: coverUrls.get(row.id) ?? null,
           likes_count: row.likes_count,
           liked_by_me: row.liked_by_me,
+          comments_count: commentsById.get(row.id) ?? 0,
         }),
         liked_at: row.liked_at,
         author: row.author,
@@ -1070,6 +1085,21 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
     }
   }
 
+  let commentsCountById = new Map<string, number>();
+  try {
+    const withComments = await attachCollectionCommentCounts(
+      supabase,
+      ranked.map((row) => ({ id: row.id })),
+    );
+    commentsCountById = new Map(withComments.map((row) => [row.id, row.comments_count]));
+  } catch (err) {
+    if (!isMissingCollectionCommentsTable(err)) {
+      const message = err instanceof Error ? err.message : String(err);
+      res.status(400).json({ error: message });
+      return;
+    }
+  }
+
   res.json({
     collections: ranked.map(({ author, match_reason, ...collection }) => {
       const likes = likeById.get(collection.id);
@@ -1079,6 +1109,7 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
           cover_url: collection.cover_url ?? null,
           likes_count: likes?.likes_count ?? 0,
           liked_by_me: likes?.liked_by_me ?? false,
+          comments_count: commentsCountById.get(collection.id) ?? 0,
         }),
         author: {
           ...author,

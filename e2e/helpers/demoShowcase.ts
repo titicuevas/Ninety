@@ -1,4 +1,4 @@
-import { test, type APIRequestContext } from '@playwright/test';
+import { expect, type APIRequestContext } from '@playwright/test';
 import { API_BASE, DEMO_USERNAME, requirePublicDemoProfile } from './auth';
 import { isE2eLeftoverNote } from './e2eCapsuleNotes';
 
@@ -41,39 +41,36 @@ export async function requireDemoShowcaseProfile(
     (body.featured_collection?.likes_count ?? 0) > 0 &&
     (body.featured_collection?.comments_count ?? 0) > 0;
 
-  test.skip(
-    !featuredReady || !notesClean || socialCapsules.length < DEMO_CAPSULE_SOCIAL_COUNT,
-    `El perfil @${DEMO_USERNAME} no tiene el showcase de seed:fans (Favoritos con likes/comentarios, reseñas y ${DEMO_CAPSULE_SOCIAL_COUNT} Capsules sociales).`,
-  );
+  expect(
+    featuredReady,
+    `El perfil @${DEMO_USERNAME} no tiene Favoritos con likes/comentarios. Ejecuta npm run seed:fans (DEMO_USERNAME=${DEMO_USERNAME}).`,
+  ).toBe(true);
+  expect(
+    notesClean,
+    `El diario @${DEMO_USERNAME} no tiene reseñas limpias (≥5, sin leftovers E2E). Ejecuta npm run seed:fans.`,
+  ).toBe(true);
+  expect(
+    socialCapsules.length,
+    `El diario @${DEMO_USERNAME} necesita ${DEMO_CAPSULE_SOCIAL_COUNT} Capsules con likes y comentarios. Ejecuta npm run seed:fans.`,
+  ).toBeGreaterThanOrEqual(DEMO_CAPSULE_SOCIAL_COUNT);
 
   return { ...body, capsules, socialCapsule: socialCapsules[0]!, socialCapsules };
-}
-
-export function findDemoSocialCapsule(capsules: DemoCapsuleRow[]): DemoCapsuleRow | undefined {
-  return capsules.find(
-    (row) => (row.likes_count ?? 0) > 0 && (row.comments_count ?? 0) > 0,
-  );
 }
 
 export async function requireDemoFeaturedCollection(request: APIRequestContext) {
   const res = await request.get(
     `${API_BASE}/api/collections/user/${encodeURIComponent(DEMO_USERNAME)}/${DEMO_FEATURED_COLLECTION_SLUG}`,
   );
-  if (res.status() === 404 || !res.ok()) {
-    test.skip(
-      true,
-      `No hay lista Favoritos (@${DEMO_USERNAME}/lists/${DEMO_FEATURED_COLLECTION_SLUG}). Ejecuta npm run seed:fans.`,
-    );
-  }
+  expect(
+    res.ok(),
+    `No hay lista Favoritos (@${DEMO_USERNAME}/lists/${DEMO_FEATURED_COLLECTION_SLUG}). Ejecuta npm run seed:fans.`,
+  ).toBeTruthy();
   const body = (await res.json()) as {
     collection?: { id?: string; name?: string; likes_count?: number; slug?: string };
     capsules?: unknown[];
   };
-  test.skip(
-    body.collection?.slug !== DEMO_FEATURED_COLLECTION_SLUG ||
-      (body.collection?.likes_count ?? 0) < 1 ||
-      (body.capsules ?? []).length < 1,
-    'Ejecuta npm run seed:fans para Favoritos con likes',
-  );
+  expect(body.collection?.slug, 'Favoritos seed:fans').toBe(DEMO_FEATURED_COLLECTION_SLUG);
+  expect(body.collection?.likes_count ?? 0, 'Ejecuta npm run seed:fans para likes en Favoritos').toBeGreaterThan(0);
+  expect((body.capsules ?? []).length, 'Favoritos vacío — ejecuta npm run seed:fans').toBeGreaterThan(0);
   return body;
 }

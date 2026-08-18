@@ -38,8 +38,9 @@ jobs:
           CI: true
           E2E_API_URL: https://ninety-api.up.railway.app
           E2E_BASE_URL: https://ninety.up.railway.app
-          # Misma cuenta que seed:demo / README. Si no existe, los tests de perfil se saltan.
-          TEST_USER_USERNAME: aficionado_demo
+          # Showcase vivo (seed:fans). @aficionado_demo es el seed:demo antiguo, sin Favoritos.
+          DEMO_USERNAME: beta_ninety
+          TEST_USER_USERNAME: beta_ninety
         run: npm run test:e2e:public
 
       - name: Upload Playwright report

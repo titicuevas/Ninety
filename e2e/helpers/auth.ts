@@ -14,9 +14,9 @@ export function requireDemoCredentials() {
   return { email, password };
 }
 
-/** Alineado con seed:demo / README (`aficionado_demo`). */
+/** Showcase público (`seed:fans` + cuenta QA). Override: DEMO_USERNAME o TEST_USER_USERNAME. */
 export const DEMO_USERNAME =
-  process.env.TEST_USER_USERNAME ?? process.env.DEMO_USERNAME ?? 'aficionado_demo';
+  process.env.DEMO_USERNAME ?? process.env.TEST_USER_USERNAME ?? 'beta_ninety';
 export const API_BASE = process.env.E2E_API_URL ?? 'http://localhost:3001';
 
 const SESSION_KEY = 'ninety.session:v1';
@@ -296,7 +296,7 @@ export async function requirePublicDemoProfile(
   if (res.status() === 404) {
     test.skip(
       true,
-      `No hay perfil público @${DEMO_USERNAME} en ${API_BASE}. Ejecuta npm run seed:demo o define TEST_USER_USERNAME.`,
+      `No hay perfil público @${DEMO_USERNAME} en ${API_BASE}. Define DEMO_USERNAME o ejecuta npm run seed:fans.`,
     );
   }
   expect(res.ok(), `API perfil @${DEMO_USERNAME} → ${res.status()}`).toBeTruthy();

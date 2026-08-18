@@ -116,7 +116,7 @@ test.describe('Smoke — demo showcase @smoke', () => {
     const social = (body.capsules ?? []).find(
       (row) => (row.likes_count ?? 0) > 0 || (row.comments_count ?? 0) > 0,
     );
-    test.skip(!social, 'Ejecuta npm run seed:fans — el feed Siguiendo no tiene Capsules con likes/comentarios');
+    expect(social, 'Ejecuta npm run seed:fans — el feed Siguiendo no tiene Capsules con likes/comentarios').toBeTruthy();
 
     await page.goto('/feed');
     await expect(page.getByRole('heading', { name: /^feed$/i })).toBeVisible({ timeout: 20_000 });
@@ -140,7 +140,7 @@ test.describe('Smoke — demo showcase @smoke', () => {
       capsules?: Array<{ id?: string; likes_count?: number }>;
     };
     const target = (feedBody.capsules ?? []).find((row) => (row.likes_count ?? 0) > 0 && row.id);
-    test.skip(!target?.id, 'Ejecuta npm run seed:fans — el feed no tiene Capsules con me gusta');
+    expect(target?.id, 'Ejecuta npm run seed:fans — el feed no tiene Capsules con me gusta').toBeTruthy();
 
     const like = await request.post(`${API_BASE}/api/capsules/${target!.id}/like`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -182,10 +182,10 @@ test.describe('Smoke — demo showcase @smoke', () => {
     const social = (body.capsules ?? []).find(
       (row) => (row.likes_count ?? 0) > 0 || (row.comments_count ?? 0) > 0,
     );
-    test.skip(
-      !social,
-      'La cuenta QA no tiene Capsules con likes/comentarios (usa la demo o seed:fans)',
-    );
+    expect(
+      social,
+      'La cuenta QA no tiene Capsules con likes/comentarios (usa @beta_ninety o seed:fans)',
+    ).toBeTruthy();
 
     await page.goto('/capsules');
     await expect(page.getByRole('heading', { name: /mis capsules/i })).toBeVisible({
@@ -222,14 +222,40 @@ test.describe('Smoke — demo showcase @smoke', () => {
       timeout: 15_000,
     });
 
-    const emptyNoFollows = page.getByText(/todavía no sigues a nadie/i);
-    if (await emptyNoFollows.isVisible().catch(() => false)) {
-      test.skip(true, 'La cuenta QA no sigue a nadie — ejecuta seed:fans');
-      return;
-    }
+    await expect(page.getByText(/todavía no sigues a nadie/i)).toHaveCount(0);
 
     await expect(page.getByTestId('activity-type-filters')).toBeVisible({ timeout: 10_000 });
     const eventRow = page.locator('[data-testid="activity-event"], main ul li, main article').first();
     await expect(eventRow).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('Explorar colecciones muestra también le gusta de follows', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(`${API_BASE}/api/collections/discover?limit=24`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      collections?: Array<{ likes_count?: number; comments_count?: number }>;
+    };
+    const social = (body.collections ?? []).find(
+      (row) => (row.likes_count ?? 0) > 0 || (row.comments_count ?? 0) > 0,
+    );
+    expect(social, 'Ejecuta npm run seed:fans — Explorar no tiene listas con likes/comentarios').toBeTruthy();
+
+    await page.goto('/collections/explore');
+    await expect(page.getByRole('heading', { name: /explorar colecciones/i })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(
+      page.getByText(/también le gusta|también comentó/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
   });
 });

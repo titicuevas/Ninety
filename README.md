@@ -188,8 +188,8 @@ Cuenta de prueba (seed en Supabase):
 | Campo | Valor |
 |-------|-------|
 | Email | `demo@ninety.app` |
-| Username | `@aficionado_demo` |
-| Perfil público | [/u/aficionado_demo](https://getninety.app/u/aficionado_demo) (o [Railway](https://ninety.up.railway.app/u/aficionado_demo)) |
+| Username | `@beta_ninety` (showcase vivo) / `@aficionado_demo` (seed:demo) |
+| Perfil público | [/u/beta_ninety](https://getninety.app/u/beta_ninety) (o [Railway](https://ninety.up.railway.app/u/beta_ninety)) |
 
 ### 1. Credenciales locales
 
@@ -218,7 +218,7 @@ Sin necesidad de tener la API en marcha:
 npm run seed:fans
 ```
 
-Crea **24 usuarios** (`fan01@ninety.app` … `fan24@ninety.app`) con perfil, **avatar del escudo de su equipo**, 1–4 partidos públicos, red de follows (incluye enlaces con `@aficionado_demo` si ya existe) y likes/comentarios entre los fans que sigue el demo. Comparten la contraseña de `DEMO_FANS_PASSWORD` o, si no está definida, `TEST_USER_PASSWORD` en `backend/.env`. También limpia listas residuales `E2E …` y reseñas/Capsules de e2e del perfil demo, deja la lista destacada **Favoritos** y siembra likes/comentarios en ella y en una Capsule pública del demo.
+Crea **24 usuarios** (`fan01@ninety.app` … `fan24@ninety.app`) con perfil, **avatar del escudo de su equipo**, 1–4 partidos públicos, red de follows (incluye enlaces con `@beta_ninety` si ya existe) y likes/comentarios entre los fans que sigue el demo. Comparten la contraseña de `DEMO_FANS_PASSWORD` o, si no está definida, `TEST_USER_PASSWORD` en `backend/.env`. También limpia listas residuales `E2E …` y reseñas/Capsules de e2e del perfil demo, deja la lista destacada **Favoritos** y siembra likes/comentarios en ella y en Capsules públicas del demo. El username del demo es `DEMO_USERNAME` (por defecto `@beta_ninety`).
 
 ### 3. Tests automatizados (pirámide QE)
 
@@ -276,9 +276,9 @@ Probar en **móvil** (375px), **tablet** (768px) y **desktop** (1280px):
 | `/search` | Grid 1 col móvil → 2 cols tablet+ |
 | `/capsules/new` | Formulario `max-w-md` → `lg:max-w-xl` |
 | `/profile` | Avatar y formulario legibles |
-| `/u/aficionado_demo` | Perfil público sin login, botón Seguir |
-| `/u/aficionado_demo/followers` | Lista pública de seguidores |
-| `/u/aficionado_demo/following` | Lista pública de seguidos |
+| `/u/beta_ninety` | Perfil público sin login, botón Seguir |
+| `/u/beta_ninety/followers` | Lista pública de seguidores |
+| `/u/beta_ninety/following` | Lista pública de seguidos |
 | `/c/:id` | Capsule pública, compartir, comentarios en lectura |
 
 Nav: **tab bar inferior** en móvil y tablet (&lt;1024px); nav en header desde `lg`. Safe areas (notch / home indicator) en iOS.
@@ -622,6 +622,12 @@ Ninety/
 ### ✅ v41 — Mis Capsules + e2e showcase seguro en QA
 - [x] `/capsules` muestra likes/comentarios y «también le gusta / comentó»; `GET /api/capsules/me` incluye contadores
 - [x] Los e2e de showcase **saltan** si el demo de prod no tiene `seed:fans` (QA E2E público ya no falla)
+
+### ✅ v42 — E2e showcase contra el demo real
+- [x] QA E2E y helpers apuntan a `@beta_ninety` (donde vive `seed:fans`); los tests **exigen** Favoritos, reseñas y Capsules sociales en lugar de saltar
+
+### ✅ v43 — Explorar colecciones con pie social
+- [x] `/collections/explore` (y sugerencias del feed) muestran likes/comentarios y «también le gusta / comentó»; `GET /api/collections/discover` incluye `comments_count`
 
 ## 🎨 Identidad visual
 

@@ -192,3 +192,45 @@ export async function fetchCollectionCommentsWithAuthors(
     author: profileMap.get(comment.user_id) ?? null,
   }));
 }
+
+export interface CollectionCommentStats {
+  comments_count: number;
+}
+
+function defaultCollectionCommentStats<T extends { id: string }>(
+  items: T[],
+): Array<T & CollectionCommentStats> {
+  return items.map((item) => ({ ...item, comments_count: 0 }));
+}
+
+/** Adjunta contador de comentarios a colecciones. */
+export async function attachCollectionCommentCounts<T extends { id: string }>(
+  supabase: SupabaseClient,
+  items: T[],
+): Promise<Array<T & CollectionCommentStats>> {
+  const ids = items.map((item) => item.id);
+  if (ids.length === 0) return [];
+
+  const { data: comments, error } = await supabase
+    .from('collection_comments')
+    .select('collection_id')
+    .in('collection_id', ids);
+
+  if (error) {
+    if (isMissingCollectionCommentsTable(error)) {
+      return defaultCollectionCommentStats(items);
+    }
+    throw error;
+  }
+
+  const countMap = new Map<string, number>();
+  for (const row of comments ?? []) {
+    const collectionId = row.collection_id as string;
+    countMap.set(collectionId, (countMap.get(collectionId) ?? 0) + 1);
+  }
+
+  return items.map((item) => ({
+    ...item,
+    comments_count: countMap.get(item.id) ?? 0,
+  }));
+}

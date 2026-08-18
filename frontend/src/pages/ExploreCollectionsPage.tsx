@@ -2,6 +2,7 @@ import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { Compass, Library, Search } from 'lucide-react';
 import { capsuleCardListClass } from '@/components/CapsuleListCard';
+import { CollectionCardSocialFooter } from '@/components/CollectionCardSocialFooter';
 import { EmptyState } from '@/components/EmptyState';
 import { FilterChip, filterChipRowClass } from '@/components/FilterChip';
 import { FollowButton } from '@/components/FollowButton';
@@ -11,9 +12,11 @@ import { NinetyLoader } from '@/components/NinetyLoader';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/hooks/useAuthInit';
 import { useDiscoverCollections } from '@/hooks/useDiscoverCollections';
 import { useDiscoverCollectionsFilterParams } from '@/hooks/useDiscoverCollectionsFilterParams';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { formatCollectionCardMeta } from '@/lib/collectionCardMeta';
 import { discoverCollectionMatchLabel } from '@/lib/discoverCollections';
 import {
   DISCOVER_COLLECTIONS_SORT_CHIPS,
@@ -22,7 +25,13 @@ import {
 import { profilePath } from '@/lib/profilePath';
 import type { DiscoverCollection } from '@/types/collection';
 
-function DiscoverCollectionCard({ collection }: { collection: DiscoverCollection }) {
+function DiscoverCollectionCard({
+  collection,
+  currentUserId,
+}: {
+  collection: DiscoverCollection;
+  currentUserId?: string;
+}) {
   const author = collection.author;
   const username = author.username;
   const authorName = author.display_name ?? username ?? 'Aficionado';
@@ -67,12 +76,20 @@ function DiscoverCollectionCard({ collection }: { collection: DiscoverCollection
               </p>
             ) : null}
             <p className="mt-2 text-xs text-muted-foreground">
-              {collection.items_count ?? 0}{' '}
-              {(collection.items_count ?? 0) === 1 ? 'Capsule' : 'Capsules'}
-              {(collection.likes_count ?? 0) > 0
-                ? ` · ${collection.likes_count} me gusta`
-                : ''}
+              {formatCollectionCardMeta(
+                collection.items_count ?? 0,
+                collection.likes_count ?? 0,
+                collection.comments_count ?? 0,
+              )}
             </p>
+            <CollectionCardSocialFooter
+              className="mt-2 space-y-1"
+              collectionId={collection.id}
+              ownerId={collection.user_id}
+              currentUserId={currentUserId}
+              likesCount={collection.likes_count}
+              commentsCount={collection.comments_count}
+            />
             <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
               {author.avatar_url ? (
                 <img
@@ -127,6 +144,7 @@ function DiscoverCollectionCard({ collection }: { collection: DiscoverCollection
 export function ExploreCollectionsPage() {
   useDocumentTitle('Explorar colecciones');
   const searchId = useId();
+  const { user } = useAuth();
   const { q, qDraft, setQDraft, sort, setSort, clearFilters } =
     useDiscoverCollectionsFilterParams();
   const { data, isLoading, isError, error, refetch, isRefetching } = useDiscoverCollections({
@@ -237,7 +255,11 @@ export function ExploreCollectionsPage() {
             </h2>
             <ul className={capsuleCardListClass}>
               {collections.map((collection) => (
-                <DiscoverCollectionCard key={collection.id} collection={collection} />
+                <DiscoverCollectionCard
+                  key={collection.id}
+                  collection={collection}
+                  currentUserId={user?.id}
+                />
               ))}
             </ul>
           </section>
