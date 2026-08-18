@@ -11,7 +11,7 @@ type ActivityTypeFiltersBarProps = {
   onClear: () => void;
 };
 
-/** Chips Todas / Capsules / Listas en el feed de actividad. */
+/** Chips Todas / Capsules / Listas / Me gusta / Comentarios. */
 export function ActivityTypeFiltersBar({
   type,
   onTypeChange,

@@ -2,9 +2,11 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   activityCommentSnippet,
+  activitySourceFlags,
   applyActivityEngagement,
   mergeFollowActivityCandidates,
   paginateFollowActivity,
+  parseFollowActivityTypeFilter,
   visibleCapsuleCommentCandidates,
   visibleCapsuleLikeCandidates,
   visibleCollectionCommentCandidates,
@@ -427,5 +429,39 @@ describe('applyActivityEngagement', () => {
       next[1] && 'collection' in next[1] ? next[1].collection.also_liked?.length : 0,
       1,
     );
+  });
+});
+
+describe('activitySourceFlags', () => {
+  it('parsea type o ignora basura', () => {
+    assert.equal(parseFollowActivityTypeFilter('like'), 'like');
+    assert.equal(parseFollowActivityTypeFilter('comment'), 'comment');
+    assert.equal(parseFollowActivityTypeFilter('spam'), null);
+  });
+
+  it('Me gusta solo carga likes', () => {
+    const flags = activitySourceFlags('like');
+    assert.equal(flags.capsulePosts, false);
+    assert.equal(flags.collectionPosts, false);
+    assert.equal(flags.capsuleLikes, true);
+    assert.equal(flags.collectionLikes, true);
+    assert.equal(flags.capsuleComments, false);
+    assert.equal(flags.collectionComments, false);
+  });
+
+  it('Comentarios solo carga comentarios', () => {
+    const flags = activitySourceFlags('comment');
+    assert.equal(flags.capsuleComments, true);
+    assert.equal(flags.collectionComments, true);
+    assert.equal(flags.capsuleLikes, false);
+    assert.equal(flags.capsulePosts, false);
+  });
+
+  it('Capsules incluye posts, likes y comentarios de Capsule', () => {
+    const flags = activitySourceFlags('capsule');
+    assert.equal(flags.capsulePosts, true);
+    assert.equal(flags.capsuleLikes, true);
+    assert.equal(flags.capsuleComments, true);
+    assert.equal(flags.collectionPosts, false);
   });
 });

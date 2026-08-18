@@ -410,6 +410,32 @@ test.describe('Smoke — demo showcase @smoke', () => {
     });
   });
 
+  test('Actividad filtra Me gusta', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(`${API_BASE}/api/activity?limit=20&type=like`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    test.skip(res.status() === 400, 'API aún no acepta type=like — espera al deploy de v66');
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as { events?: Array<{ type?: string }> };
+    const events = body.events ?? [];
+    expect(events.length, 'GET /api/activity?type=like debe traer me gusta — ejecuta npm run seed:fans').toBeGreaterThan(0);
+    expect(
+      events.every((event) => event.type === 'capsule_like' || event.type === 'collection_like'),
+      'type=like solo debe devolver capsule_like o collection_like',
+    ).toBe(true);
+
+    await page.goto('/activity?type=like');
+    const likeChip = page.getByRole('button', { name: /^me gusta$/i });
+    test.skip((await likeChip.count()) === 0, 'front aún no tiene chip Me gusta — espera al deploy de v66');
+    await expect(likeChip).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/le dio me gusta/i).first()).toBeVisible({ timeout: 15_000 });
+  });
+
   test('Actividad muestra También lo vieron del seed', async ({ page, request }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
     await openAuthenticatedHome(page);

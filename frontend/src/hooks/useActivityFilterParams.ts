@@ -10,7 +10,7 @@ export type ActivityFilterParams = {
   clearType: () => void;
 };
 
-/** Tipo de actividad en la URL (`?type=capsule|collection`). */
+/** Tipo de actividad en la URL (`?type=capsule|collection|like|comment`). */
 export function useActivityFilterParams(): ActivityFilterParams {
   const [searchParams, setSearchParams] = useSearchParams();
   const type = parseActivityTypeParam(searchParams.get('type'));

@@ -171,6 +171,29 @@ export type FollowActivityCandidate =
 
 export const ACTIVITY_COMMENT_SNIPPET_MAX = 140;
 
+export type FollowActivityTypeFilter = 'capsule' | 'collection' | 'like' | 'comment';
+
+export function parseFollowActivityTypeFilter(
+  value: string | null | undefined,
+): FollowActivityTypeFilter | null {
+  if (value === 'capsule' || value === 'collection' || value === 'like' || value === 'comment') {
+    return value;
+  }
+  return null;
+}
+
+/** Qué fuentes cargar según `?type=` (Capsules/listas incluyen sus likes y comentarios). */
+export function activitySourceFlags(type: FollowActivityTypeFilter | null) {
+  return {
+    capsulePosts: type == null || type === 'capsule',
+    collectionPosts: type == null || type === 'collection',
+    capsuleLikes: type == null || type === 'capsule' || type === 'like',
+    collectionLikes: type == null || type === 'collection' || type === 'like',
+    capsuleComments: type == null || type === 'capsule' || type === 'comment',
+    collectionComments: type == null || type === 'collection' || type === 'comment',
+  };
+}
+
 const KIND_RANK: Record<FollowActivityCandidate['kind'], number> = {
   capsule: 0,
   capsule_like: 1,
@@ -814,7 +837,7 @@ async function loadCollectionCommentCandidates(
 export async function listFollowActivity(
   supabase: SupabaseClient,
   viewerId: string,
-  opts: { limit: number; offset: number; type?: 'capsule' | 'collection' | null },
+  opts: { limit: number; offset: number; type?: FollowActivityTypeFilter | null },
 ): Promise<{
   events: FollowActivityEvent[];
   total: number;
@@ -822,7 +845,7 @@ export async function listFollowActivity(
 }> {
   const limit = Math.min(Math.max(opts.limit, 1), 50);
   const offset = Math.max(opts.offset, 0);
-  const typeFilter = opts.type === 'capsule' || opts.type === 'collection' ? opts.type : null;
+  const typeFilter = parseFollowActivityTypeFilter(opts.type);
 
   const [followingIds, blockedList] = await Promise.all([
     getFollowingIds(supabase, viewerId),
@@ -840,8 +863,7 @@ export async function listFollowActivity(
   }
 
   const poolSize = Math.max(offset + limit, 1);
-  const wantCapsules = typeFilter !== 'collection';
-  const wantCollections = typeFilter !== 'capsule';
+  const sources = activitySourceFlags(typeFilter);
 
   const [
     capsulesResult,
@@ -851,7 +873,7 @@ export async function listFollowActivity(
     capsuleCommentsResult,
     collectionCommentsResult,
   ] = await Promise.all([
-      wantCapsules
+      sources.capsulePosts
         ? supabase
             .from('capsules')
             .select(
@@ -863,7 +885,7 @@ export async function listFollowActivity(
             .order('created_at', { ascending: false })
             .range(0, poolSize - 1)
         : Promise.resolve({ data: [], error: null, count: 0 }),
-      wantCollections
+      sources.collectionPosts
         ? supabase
             .from('collections')
             .select('id, user_id, name, slug, description, created_at', { count: 'exact' })
@@ -872,16 +894,16 @@ export async function listFollowActivity(
             .order('created_at', { ascending: false })
             .range(0, poolSize - 1)
         : Promise.resolve({ data: [], error: null, count: 0 }),
-      wantCapsules
+      sources.capsuleLikes
         ? loadCapsuleLikeCandidates(supabase, authorIds, blockedIds, viewerId, poolSize)
         : Promise.resolve({ rows: [] as CapsuleLikeCandidate[], total: 0 }),
-      wantCollections
+      sources.collectionLikes
         ? loadCollectionLikeCandidates(supabase, authorIds, blockedIds, viewerId, poolSize)
         : Promise.resolve({ rows: [] as CollectionLikeCandidate[], total: 0 }),
-      wantCapsules
+      sources.capsuleComments
         ? loadCapsuleCommentCandidates(supabase, authorIds, blockedIds, viewerId, poolSize)
         : Promise.resolve({ rows: [] as CapsuleCommentCandidate[], total: 0 }),
-      wantCollections
+      sources.collectionComments
         ? loadCollectionCommentCandidates(supabase, authorIds, blockedIds, viewerId, poolSize)
         : Promise.resolve({ rows: [] as CollectionCommentCandidate[], total: 0 }),
     ]);
@@ -958,16 +980,12 @@ export async function listFollowActivity(
   const merged = mergeFollowActivityCandidates(candidates);
   const page = paginateFollowActivity(merged, offset, limit);
   const total =
-    typeFilter === 'capsule'
-      ? capsuleTotal + capsuleLikesResult.total + capsuleCommentsResult.total
-      : typeFilter === 'collection'
-        ? collectionTotal + collectionLikesResult.total + collectionCommentsResult.total
-        : capsuleTotal +
-          collectionTotal +
-          capsuleLikesResult.total +
-          collectionLikesResult.total +
-          capsuleCommentsResult.total +
-          collectionCommentsResult.total;
+    (sources.capsulePosts ? capsuleTotal : 0) +
+    (sources.collectionPosts ? collectionTotal : 0) +
+    (sources.capsuleLikes ? capsuleLikesResult.total : 0) +
+    (sources.collectionLikes ? collectionLikesResult.total : 0) +
+    (sources.capsuleComments ? capsuleCommentsResult.total : 0) +
+    (sources.collectionComments ? collectionCommentsResult.total : 0);
 
   const userIds = [...new Set(page.map((row) => row.user_id))];
   const profileMap = new Map<

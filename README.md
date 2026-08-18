@@ -372,7 +372,7 @@ Ninety/
 | GET | `/api/capsules/me/export` | ✅ | Export diario JSON/CSV (GDPR) |
 | POST | `/api/capsules/me/import` | ✅ | Import diario desde export JSON (omite `match_id` existentes; `restore_photos` opcional re-sube `photo_urls` remotas) |
 | GET | `/api/capsules/feed` | ✅ | Feed (seguidos + tuyo); `scope`, `sort`, `photos=1`, `competition` |
-| GET | `/api/activity` | ✅ | Timeline de actividad de follows (Capsules + colecciones públicas nuevas + me gusta + comentarios; `type=capsule|collection`; blocks; `limit`/`offset`) |
+| GET | `/api/activity` | ✅ | Timeline de actividad de follows (Capsules + colecciones públicas nuevas + me gusta + comentarios; `type=capsule\|collection\|like\|comment`; blocks; `limit`/`offset`) |
 | GET | `/api/capsules/user/:username` | opcional | Perfil + capsules + stats (base del cara a cara `/u/:username/vs`) |
 | GET | `/api/capsules/:id` | opcional | Capsule pública (compartir) |
 | POST/PATCH/DELETE | `/api/capsules`… | ✅ | CRUD capsules |
@@ -714,6 +714,11 @@ Ninety/
 - [x] La colección destacada del perfil público incluye el mismo pie social
 - [x] Actividad y preview de Home pintan esas listas cuando vienen en la API
 - [x] E2e chromium con skip si prod aún no despliega los campos
+
+### ✅ v66 — Filtros Me gusta y Comentarios en Actividad
+- [x] `GET /api/activity?type=like|comment` (además de Capsules / listas)
+- [x] Chips en `/activity` para ver solo me gusta o solo comentarios
+- [x] E2e chromium con skip si prod aún no acepta `type=like`
 
 ## 🎨 Identidad visual
 
