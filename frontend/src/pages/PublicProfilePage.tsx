@@ -1,6 +1,8 @@
 import { Link, useParams } from 'react-router-dom';
 import { Library, MapPin, Swords, Trophy } from 'lucide-react';
 import { AchievementsSection } from '@/components/AchievementsSection';
+import { CapsuleAlsoCommented } from '@/components/CapsuleAlsoCommented';
+import { CapsuleAlsoLiked } from '@/components/CapsuleAlsoLiked';
 import { CapsuleDiaryFilters } from '@/components/CapsuleDiaryFilters';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsuleListCard, capsuleCardListClass } from '@/components/CapsuleListCard';
@@ -52,19 +54,31 @@ function PublicCapsuleCard({
       showWatchedDate
       footerBordered
       footer={
-        <CapsuleEngagementBar
-          bordered={false}
-          className="mt-0"
-          capsuleId={capsule.id}
-          shareTitle={shareTitle}
-          share={capsuleShareSummaryFrom(capsule, author)}
-          likesCount={capsule.likes_count}
-          likedByMe={capsule.liked_by_me}
-          commentsCount={capsule.comments_count}
-          currentUserId={currentUserId}
-          capsuleOwnerId={capsule.user_id}
-          isPublic={capsule.is_public !== false}
-        />
+        <div className="w-full space-y-2">
+          {currentUserId ? (
+            <>
+              {(capsule.likes_count ?? 0) > 0 ? (
+                <CapsuleAlsoLiked capsuleId={capsule.id} exceptUserId={capsule.user_id} />
+              ) : null}
+              {(capsule.comments_count ?? 0) > 0 ? (
+                <CapsuleAlsoCommented capsuleId={capsule.id} exceptUserId={capsule.user_id} />
+              ) : null}
+            </>
+          ) : null}
+          <CapsuleEngagementBar
+            bordered={false}
+            className="mt-0"
+            capsuleId={capsule.id}
+            shareTitle={shareTitle}
+            share={capsuleShareSummaryFrom(capsule, author)}
+            likesCount={capsule.likes_count}
+            likedByMe={capsule.liked_by_me}
+            commentsCount={capsule.comments_count}
+            currentUserId={currentUserId}
+            capsuleOwnerId={capsule.user_id}
+            isPublic={capsule.is_public !== false}
+          />
+        </div>
       }
     />
   );

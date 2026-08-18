@@ -75,6 +75,19 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(page.getByText(/\d+ comentarios?/i).first()).toBeVisible();
   });
 
+  test('diario público demo autenticado muestra también le gusta y comentó', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await requireDemoShowcaseProfile(request);
+    await openAuthenticatedHome(page);
+    await page.goto(`/u/${DEMO_USERNAME}`);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/también le gusta/i).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/también comentó/i).first()).toBeVisible();
+  });
+
   test('Actividad QA incluye eventos sociales del seed demo', async ({ page, request }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
     await openAuthenticatedHome(page);

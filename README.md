@@ -604,6 +604,9 @@ Ninety/
 - [x] E2e: perfil público invitado muestra me gusta/comentarios en el diario del demo
 - [x] `npm run test:demo` — unit `demoSocialSeed` + e2e showcase (requiere API local y `npm run seed:fans`)
 
+### ✅ v36 — También le gusta en el diario público
+- [x] En el perfil público, las Capsules con likes/comentarios muestran «también le gusta / comentó» sin abrir el detalle (Letterboxd-style)
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium
