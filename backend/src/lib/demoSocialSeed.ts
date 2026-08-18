@@ -116,3 +116,8 @@ export function demoCapsuleSocialActions(capsuleIndex = 0): DemoCapsuleSocialAct
     { actorIndex: likeActor, kind: 'capsule_like' },
   ];
 }
+
+/** Fans que el demo sigue y que siembran Capsule del mismo partido (También lo vieron). */
+export function demoAlsoWatchedActorIndexes(capsuleIndex = 0): number[] {
+  return [...new Set(demoCapsuleSocialActions(capsuleIndex).map((row) => row.actorIndex))];
+}

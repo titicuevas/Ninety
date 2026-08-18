@@ -670,6 +670,11 @@ Ninety/
 - [x] `npm run seed:fans` siembra Capsules de follows con el mismo `match_id` que el demo
 - [x] E2e del pie social en el calendario propio
 
+### ✅ v57 — Cierre También lo vieron
+- [x] Dos follows por partido en `seed:fans` (feed/Home/me gusta) + preview de Home prioriza `also_watched`
+- [x] E2e en feed, Mis Capsules, me gusta, Favoritos, detalle propio, calendarios y Home
+- [x] Lista pública y calendario público recargan con sesión para no perder `also_watched`
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

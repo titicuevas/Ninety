@@ -2,13 +2,18 @@ export type EngagedPreviewItem = {
   id: string;
   likes_count?: number;
   comments_count?: number;
+  also_watched?: unknown[] | null;
 };
 
 function isEngaged(item: EngagedPreviewItem): boolean {
-  return (item.likes_count ?? 0) > 0 || (item.comments_count ?? 0) > 0;
+  return (
+    (item.likes_count ?? 0) > 0 ||
+    (item.comments_count ?? 0) > 0 ||
+    (item.also_watched?.length ?? 0) > 0
+  );
 }
 
-/** Prioriza ítems con likes/comentarios y rellena con el resto, sin duplicar. */
+/** Prioriza ítems con likes, comentarios o «también lo vieron», sin duplicar. */
 export function pickEngagedPreview<T extends EngagedPreviewItem>(items: T[], limit: number): T[] {
   if (limit <= 0) return [];
   const engaged = items.filter(isEngaged);

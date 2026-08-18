@@ -6,9 +6,11 @@ import {
   readAccessToken,
 } from '../helpers/auth';
 import {
+  ALSO_WATCHED_UI,
   DEMO_CAPSULE_SOCIAL_COUNT,
   DEMO_FEATURED_COLLECTION_SLUG,
   DEMO_SOCIAL_COMMENT_MARKER,
+  hasAlsoWatchedPeople,
   requireDemoFeaturedCollection,
   requireDemoShowcaseProfile,
 } from '../helpers/demoShowcase';
@@ -210,13 +212,13 @@ test.describe('Smoke — demo showcase @smoke', () => {
       capsules?: Array<{ also_watched?: unknown[] }>;
     };
     expect(
-      (body.capsules ?? []).some((row) => (row.also_watched?.length ?? 0) > 0),
+      (body.capsules ?? []).some(hasAlsoWatchedPeople),
       'Ejecuta npm run seed:fans — el diario demo no tiene follows que vieran el mismo partido',
     ).toBe(true);
 
     await page.goto(`/u/${DEMO_USERNAME}`);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText(/también lo vieron|también lo vio/i).first()).toBeVisible({
+    await expect(page.getByText(ALSO_WATCHED_UI).first()).toBeVisible({
       timeout: 15_000,
     });
   });
@@ -237,6 +239,7 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(
       page.getByText(/también le gusta|también comentó|\d+ me gusta|\d+ comentarios?/i).first(),
     ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(ALSO_WATCHED_UI).first()).toBeVisible({ timeout: 15_000 });
   });
 
   test('calendario propio muestra pie social en el día', async ({ page, request }, testInfo) => {
@@ -254,6 +257,7 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(
       page.getByText(/también le gusta|también comentó|\d+ me gusta|\d+ comentarios?/i).first(),
     ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(ALSO_WATCHED_UI).first()).toBeVisible({ timeout: 15_000 });
   });
 
   test('feed Siguiendo muestra también le gusta de follows', async ({ page, request }, testInfo) => {
@@ -579,5 +583,164 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(
       hub.getByText(/también le gusta|también comentó/i).first(),
     ).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('feed Siguiendo muestra también lo vieron', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(
+      `${API_BASE}/api/capsules/feed?scope=following&sort=recent&limit=20`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as { capsules?: Array<{ also_watched?: unknown[] }> };
+    expect(
+      (body.capsules ?? []).some(hasAlsoWatchedPeople),
+      'Ejecuta npm run seed:fans — el feed no tiene Capsules con también lo vieron',
+    ).toBe(true);
+
+    await page.goto('/feed');
+    await expect(page.getByRole('heading', { name: /^feed$/i })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(ALSO_WATCHED_UI).first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('Mis Capsules muestra también lo vieron', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(`${API_BASE}/api/capsules/me?limit=20`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as { capsules?: Array<{ also_watched?: unknown[] }> };
+    expect(
+      (body.capsules ?? []).some(hasAlsoWatchedPeople),
+      'Ejecuta npm run seed:fans — Mis Capsules no tiene también lo vieron',
+    ).toBe(true);
+
+    await page.goto('/capsules');
+    await expect(page.getByRole('heading', { name: /mis capsules/i })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByText(ALSO_WATCHED_UI).first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('Mis me gusta muestra también lo vieron', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(`${API_BASE}/api/capsules/me/liked?limit=20`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as { capsules?: Array<{ also_watched?: unknown[] }> };
+    expect(
+      (body.capsules ?? []).some(hasAlsoWatchedPeople),
+      'Ejecuta npm run seed:fans — Mis me gusta no tiene Capsules con también lo vieron',
+    ).toBe(true);
+
+    await page.goto('/likes');
+    await expect(page.getByRole('heading', { name: /^me gusta$/i })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByText(ALSO_WATCHED_UI).first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('Favoritos autenticado muestra también lo vieron en los partidos', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(
+      `${API_BASE}/api/collections/user/${encodeURIComponent(DEMO_USERNAME)}/${DEMO_FEATURED_COLLECTION_SLUG}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as { capsules?: Array<{ also_watched?: unknown[] }> };
+    expect(
+      (body.capsules ?? []).some(hasAlsoWatchedPeople),
+      'Ejecuta npm run seed:fans — Favoritos no tiene partidos con también lo vieron',
+    ).toBe(true);
+
+    await page.goto(`/u/${DEMO_USERNAME}/lists/${DEMO_FEATURED_COLLECTION_SLUG}`);
+    await expect(page.getByRole('heading', { name: /^favoritos$/i })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByText(ALSO_WATCHED_UI).first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('detalle de lista propio muestra también lo vieron en los partidos', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const me = await request.get(`${API_BASE}/api/collections/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(me.ok()).toBeTruthy();
+    const listBody = (await me.json()) as {
+      collections?: Array<{ id?: string; slug?: string; is_public?: boolean }>;
+    };
+    const favoritos = (listBody.collections ?? []).find(
+      (row) => row.id && row.slug === DEMO_FEATURED_COLLECTION_SLUG && row.is_public !== false,
+    );
+    expect(favoritos?.id, 'La cuenta QA no tiene la lista Favoritos (seed:fans)').toBeTruthy();
+
+    const detail = await request.get(`${API_BASE}/api/collections/${favoritos!.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(detail.ok()).toBeTruthy();
+    const detailBody = (await detail.json()) as { capsules?: Array<{ also_watched?: unknown[] }> };
+    expect(
+      (detailBody.capsules ?? []).some(hasAlsoWatchedPeople),
+      'GET /api/collections/:id debe incluir also_watched en los partidos',
+    ).toBe(true);
+
+    await page.goto(`/collections/${favoritos!.id}`);
+    await expect(page.getByRole('heading', { name: /editar colección/i })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByText(ALSO_WATCHED_UI).first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('Home Comunidad muestra también lo vieron en el preview del feed', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(
+      `${API_BASE}/api/capsules/feed?scope=following&sort=recent&limit=20`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as { capsules?: Array<{ also_watched?: unknown[] }> };
+    expect(
+      (body.capsules ?? []).some(hasAlsoWatchedPeople),
+      'Ejecuta npm run seed:fans — el preview de Home no tiene también lo vieron',
+    ).toBe(true);
+
+    await page.goto('/home');
+    const hub = page.getByRole('region', { name: /^comunidad$/i });
+    await expect(hub).toBeVisible({ timeout: 20_000 });
+    await expect(hub.getByText(ALSO_WATCHED_UI).first()).toBeVisible({ timeout: 15_000 });
   });
 });

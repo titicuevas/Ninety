@@ -25,7 +25,7 @@ export function usePublicDiaryCalendar(
   const handle = username?.trim().toLowerCase() ?? '';
 
   return useQuery({
-    queryKey: ['capsules', 'user', handle, 'calendar', year, month],
+    queryKey: ['capsules', 'user', handle, 'calendar', year, month, session?.access_token ?? 'guest'],
     queryFn: () =>
       apiFetch<PublicDiaryCalendarResponse>(
         `/api/capsules/user/${encodeURIComponent(handle)}/calendar?year=${year}&month=${month}`,

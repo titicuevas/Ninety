@@ -11,6 +11,13 @@ export const DEMO_CAPSULE_SOCIAL_COUNT = 3;
 /** Marcador en comentarios sembrados — idempotente al re-ejecutar seed:fans. */
 export const DEMO_SOCIAL_COMMENT_MARKER = 'ninety-seed';
 
+/** Línea «También lo vio / vieron» en tarjetas (sesión QA). */
+export const ALSO_WATCHED_UI = /también lo vieron|también lo vio/i;
+
+export function hasAlsoWatchedPeople(row: { also_watched?: unknown[] | null }): boolean {
+  return (row.also_watched?.length ?? 0) > 0;
+}
+
 export type DemoCapsuleRow = {
   id?: string;
   note?: string | null;

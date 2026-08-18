@@ -8,6 +8,7 @@ import {
   demoCapsuleSocialActions,
   demoFeaturedSocialActions,
   demoFollowedSocialActions,
+  demoAlsoWatchedActorIndexes,
   demoSeedCommentBody,
   demoShowcaseNote,
   demoShowcaseNoteKey,
@@ -90,6 +91,7 @@ describe('demoSocialSeed', () => {
     for (let i = 0; i < DEMO_CAPSULE_SOCIAL_COUNT; i++) {
       const actions = demoCapsuleSocialActions(i);
       assert.notEqual(actions[0]?.actorIndex, actions[1]?.actorIndex);
+      assert.equal(demoAlsoWatchedActorIndexes(i).length, 2);
     }
   });
 

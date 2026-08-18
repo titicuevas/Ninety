@@ -71,7 +71,7 @@ export function usePublicCollections(username: string | undefined) {
   const session = useAuthStore((s) => s.session);
 
   return useQuery({
-    queryKey: ['collections', 'user', username],
+    queryKey: ['collections', 'user', username, session?.access_token ?? 'guest'],
     queryFn: () =>
       apiFetch<PublicCollectionsResponse>(
         `/api/collections/user/${encodeURIComponent(username!)}`,
@@ -86,7 +86,7 @@ export function usePublicCollection(username: string | undefined, slug: string |
   const session = useAuthStore((s) => s.session);
 
   return useQuery({
-    queryKey: ['collections', 'user', username, slug],
+    queryKey: ['collections', 'user', username, slug, session?.access_token ?? 'guest'],
     queryFn: () =>
       apiFetch<CollectionDetailResponse>(
         `/api/collections/user/${encodeURIComponent(username!)}/${encodeURIComponent(slug!)}`,

@@ -15,6 +15,7 @@ import {
   DEMO_FEATURED_COLLECTION_NAME,
   DEMO_FEATURED_COLLECTION_SLUG,
   DEMO_CAPSULE_SOCIAL_COUNT,
+  demoAlsoWatchedActorIndexes,
   demoCapsuleSocialActions,
   demoFeaturedSocialActions,
   demoFollowedSocialActions,
@@ -914,30 +915,51 @@ async function seedDemoAlsoWatched(demoUserId: string | null, fanIds: string[]) 
   let seeded = 0;
   for (let i = 0; i < rows.length; i++) {
     const template = rows[i]!;
-    const watcherId = fanIds[demoCapsuleSocialActions(i)[0]?.actorIndex ?? 0];
-    if (!watcherId) continue;
-    const { error: upsertError } = await admin.from('capsules').upsert(
-      {
-        user_id: watcherId,
-        match_id: template.match_id,
-        match_played_at: template.match_played_at,
-        home_team_name: template.home_team_name,
-        away_team_name: template.away_team_name,
-        home_team_crest: template.home_team_crest,
-        away_team_crest: template.away_team_crest,
-        competition_name: template.competition_name,
-        home_score: template.home_score,
-        away_score: template.away_score,
-        watched_at: template.watched_at,
-        rating: template.rating,
-        note: 'Vi el mismo partido.',
-        photo_urls: [],
-        is_public: true,
-      },
-      { onConflict: 'user_id,match_id' },
-    );
-    if (upsertError) throw new Error(`Also-watched Capsule seed: ${upsertError.message}`);
-    seeded += 1;
+    const watcherIds = demoAlsoWatchedActorIndexes(i)
+      .map((index) => fanIds[index])
+      .filter((id): id is string => Boolean(id));
+    for (const watcherId of watcherIds) {
+      const { error: upsertError } = await admin.from('capsules').upsert(
+        {
+          user_id: watcherId,
+          match_id: template.match_id,
+          match_played_at: template.match_played_at,
+          home_team_name: template.home_team_name,
+          away_team_name: template.away_team_name,
+          home_team_crest: template.home_team_crest,
+          away_team_crest: template.away_team_crest,
+          competition_name: template.competition_name,
+          home_score: template.home_score,
+          away_score: template.away_score,
+          watched_at: template.watched_at,
+          rating: template.rating,
+          note: 'Vi el mismo partido.',
+          photo_urls: [],
+          is_public: true,
+        },
+        { onConflict: 'user_id,match_id' },
+      );
+      if (upsertError) throw new Error(`Also-watched Capsule seed: ${upsertError.message}`);
+      seeded += 1;
+    }
+
+    const firstWatcher = watcherIds[0];
+    if (i === 0 && firstWatcher) {
+      const { data: watcherCapsule, error: lookupError } = await admin
+        .from('capsules')
+        .select('id')
+        .eq('user_id', firstWatcher)
+        .eq('match_id', template.match_id)
+        .maybeSingle();
+      if (lookupError) throw new Error(`Also-watched like lookup: ${lookupError.message}`);
+      if (watcherCapsule?.id) {
+        const { error: likeError } = await admin.from('capsule_likes').upsert(
+          { user_id: demoUserId, capsule_id: watcherCapsule.id },
+          { onConflict: 'user_id,capsule_id', ignoreDuplicates: true },
+        );
+        if (likeError) throw new Error(`Also-watched like seed: ${likeError.message}`);
+      }
+    }
   }
   console.log(`   También lo vieron: ${seeded} Capsule(s) de follows con el mismo partido`);
 }
