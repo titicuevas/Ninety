@@ -21,6 +21,7 @@ interface UserCapsulesResponse {
   capsules: Capsule[];
   total: number;
   stats?: PublicProfileStats;
+  stats_by_year?: Record<string, PublicProfileStats>;
   years?: number[];
   tags?: string[];
   featured_collection?: FeaturedCollectionSummary | null;

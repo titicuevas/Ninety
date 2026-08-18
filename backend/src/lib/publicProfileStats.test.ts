@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { computePublicProfileStats } from './publicProfileStats.js';
+import { computePublicProfileStats, groupPublicProfileStatsByYear } from './publicProfileStats.js';
 
 describe('computePublicProfileStats', () => {
   it('calcula totales, top equipo, mes pico, estadio y collage', () => {
@@ -52,5 +52,36 @@ describe('computePublicProfileStats', () => {
     assert.equal(stats.bestRated?.away_team_name, 'Sevilla');
     assert.equal(stats.bestRated?.rating, 5);
     assert.ok(stats.averageRating != null && stats.averageRating > 4);
+  });
+
+  it('agrupa stats del Wrapped público por año', () => {
+    const grouped = groupPublicProfileStatsByYear([
+      {
+        watched_at: '2025-01-10',
+        rating: 5,
+        home_team_name: 'Betis',
+        away_team_name: 'Sevilla',
+        competition_name: 'LaLiga',
+      },
+      {
+        watched_at: '2026-08-01',
+        rating: 4,
+        home_team_name: 'Betis',
+        away_team_name: 'Madrid',
+        competition_name: 'LaLiga',
+      },
+      {
+        watched_at: '2026-09-01',
+        rating: 3,
+        home_team_name: 'Sevilla',
+        away_team_name: 'Barça',
+        competition_name: 'Champions',
+      },
+    ]);
+    assert.equal(grouped['2025']?.totalMatches, 1);
+    assert.equal(grouped['2025']?.topTeam?.name, 'Betis');
+    assert.equal(grouped['2026']?.totalMatches, 2);
+    assert.equal(grouped['2026']?.topCompetition?.name, 'LaLiga');
+    assert.equal(grouped['2024'], undefined);
   });
 });

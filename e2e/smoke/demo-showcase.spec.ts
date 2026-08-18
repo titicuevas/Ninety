@@ -1198,4 +1198,58 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(page).toHaveURL(/tab=lists/);
     await expect(page).toHaveURL(/sort=recent/);
   });
+
+  test('API perfil incluye stats_by_year del Wrapped', async ({ request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'smoke-public', 'API pública sin auth');
+    const res = await request.get(
+      `${API_BASE}/api/capsules/user/${encodeURIComponent(DEMO_USERNAME)}?limit=1`,
+    );
+    expect(res.ok(), `GET perfil @${DEMO_USERNAME} → ${res.status()}`).toBeTruthy();
+    const body = (await res.json()) as {
+      stats?: unknown;
+      stats_by_year?: Record<string, { totalMatches?: number }>;
+      years?: number[];
+    };
+    test.skip(body.stats == null, `El perfil @${DEMO_USERNAME} no tiene stats públicas`);
+    test.skip(
+      body.stats != null && !('stats_by_year' in body),
+      'API aún no adjunta stats_by_year — espera al deploy de v72',
+    );
+    const yearKeys = Object.keys(body.stats_by_year ?? {});
+    test.skip(yearKeys.length === 0, 'El diario demo no tiene años en el Wrapped');
+    expect(yearKeys.sort()).toEqual([...(body.years ?? [])].map(String).sort());
+  });
+
+  test('Wrapped público cambia de año', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    const res = await request.get(
+      `${API_BASE}/api/capsules/user/${encodeURIComponent(DEMO_USERNAME)}?limit=1`,
+    );
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      stats_by_year?: Record<string, unknown>;
+      years?: number[];
+    };
+    test.skip(
+      body.stats_by_year == null,
+      'API aún no adjunta stats_by_year — espera al deploy de v72',
+    );
+    const year = body.years?.[0] ?? Number(Object.keys(body.stats_by_year)[0]);
+    test.skip(
+      !Number.isInteger(year),
+      `El perfil @${DEMO_USERNAME} no tiene años en el Wrapped`,
+    );
+
+    await openAuthenticatedHome(page);
+    await page.goto(`/u/${encodeURIComponent(DEMO_USERNAME)}`);
+    const tabs = page.getByTestId('public-wrapped-scope');
+    test.skip(
+      (await tabs.count()) === 0,
+      'front aún no pinta chips de año — espera al deploy de v72',
+    );
+    await expect(tabs).toBeVisible({ timeout: 15_000 });
+    await tabs.getByRole('tab', { name: String(year) }).click();
+    await expect(page).toHaveURL(new RegExp(`wrapped=${year}`));
+    await expect(page.getByText(new RegExp(`su ${year}`, 'i'))).toBeVisible();
+  });
 });

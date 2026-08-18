@@ -61,7 +61,11 @@ import {
   fetchProfileByUsername,
   profilesAlignMigrationHint,
 } from '../lib/profileLookup.js';
-import { computePublicProfileStats, type PublicProfileStatsRow } from '../lib/publicProfileStats.js';
+import {
+  computePublicProfileStats,
+  groupPublicProfileStatsByYear,
+  type PublicProfileStatsRow,
+} from '../lib/publicProfileStats.js';
 import {
   buildCalendarDayCounts,
   resolveCalendarMonth,
@@ -1114,6 +1118,7 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
   }
 
   let stats = null;
+  let statsByYear: Record<string, ReturnType<typeof computePublicProfileStats>> | null = null;
   let years: number[] | null = null;
   let tags: string[] | null = null;
   if (offset === 0) {
@@ -1166,6 +1171,7 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
     if (!statsError) {
       const rows = statsRows ?? [];
       stats = computePublicProfileStats(rows);
+      statsByYear = groupPublicProfileStatsByYear(rows);
       years = listYearsFromWatchedAt(rows);
       const tagSet = new Set<string>();
       for (const row of rows) {
@@ -1205,6 +1211,7 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
     capsules: capsulesWithLikes,
     total: count ?? capsulesWithLikes.length,
     ...(stats ? { stats } : {}),
+    ...(statsByYear ? { stats_by_year: statsByYear } : {}),
     ...(years ? { years } : {}),
     ...(tags ? { tags } : {}),
     ...(offset === 0 ? { featured_collection: featuredCollection } : {}),

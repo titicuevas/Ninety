@@ -161,3 +161,29 @@ export function computePublicProfileStats(rows: PublicProfileStatsRow[]): Public
     bestRated,
   };
 }
+
+function watchedYear(watchedAt: string): number | null {
+  const year = Number(String(watchedAt).slice(0, 4));
+  if (Number.isInteger(year) && year >= 1990 && year <= 2100) return year;
+  return null;
+}
+
+/** Stats del Wrapped público por año (mismas filas que el resumen de por vida). */
+export function groupPublicProfileStatsByYear(
+  rows: PublicProfileStatsRow[],
+): Record<string, PublicProfileStats> {
+  const byYear = new Map<number, PublicProfileStatsRow[]>();
+  for (const row of rows) {
+    const year = watchedYear(row.watched_at);
+    if (year == null) continue;
+    const list = byYear.get(year) ?? [];
+    list.push(row);
+    byYear.set(year, list);
+  }
+
+  const grouped: Record<string, PublicProfileStats> = {};
+  for (const [year, list] of byYear) {
+    grouped[String(year)] = computePublicProfileStats(list);
+  }
+  return grouped;
+}

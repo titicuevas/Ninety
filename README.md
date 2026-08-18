@@ -373,7 +373,7 @@ Ninety/
 | POST | `/api/capsules/me/import` | ✅ | Import diario desde export JSON (omite `match_id` existentes; `restore_photos` opcional re-sube `photo_urls` remotas) |
 | GET | `/api/capsules/feed` | ✅ | Feed (seguidos + tuyo); `scope`, `sort`, `photos=1`, `competition` |
 | GET | `/api/activity` | ✅ | Timeline de actividad de follows (Capsules + colecciones públicas nuevas + me gusta + comentarios; `type=capsule\|collection\|like\|comment`; blocks; `limit`/`offset`) |
-| GET | `/api/capsules/user/:username` | opcional | Perfil + capsules + stats (base del cara a cara `/u/:username/vs`) |
+| GET | `/api/capsules/user/:username` | opcional | Perfil + capsules + stats + `stats_by_year` (Wrapped por año) |
 | GET | `/api/capsules/user/:username/in-common` | ✅ | Partidos en común (tu diario ∩ Capsules públicas del otro) |
 | GET | `/api/capsules/:id` | opcional | Capsule pública (compartir) |
 | POST/PATCH/DELETE | `/api/capsules`… | ✅ | CRUD capsules |
@@ -748,6 +748,11 @@ Ninety/
 - [x] `/search?tab=lists` reutiliza Explorar colecciones (`q` + `sort` sticky)
 - [x] Pestaña Listas junto a Partidos y Aficionados
 - [x] E2e chromium con skip si prod aún no trae la pestaña
+
+### ✅ v72 — Wrapped público por año
+- [x] `GET /api/capsules/user/:username` incluye `stats_by_year` (un query; el diario no se refiltra)
+- [x] Chips Todo / año en el Wrapped del perfil (`?wrapped=`)
+- [x] E2e chromium con skip si prod aún no trae el campo
 
 ## 🎨 Identidad visual
 

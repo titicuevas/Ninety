@@ -2,15 +2,25 @@ import { Landmark, Sparkles, Star } from 'lucide-react';
 import { MatchesByMonthChart } from '@/components/MatchesByMonthChart';
 import { StarRating } from '@/components/StarRating';
 import { WrappedPhotoCollage } from '@/components/WrappedPhotoCollage';
-import { formatRating } from '@/lib/capsuleStats';
+import { formatRating, type WrappedScope } from '@/lib/capsuleStats';
+import { publicWrappedPeriodLabel } from '@/lib/publicWrapped';
+import { cn } from '@/lib/utils';
 import type { PublicProfileStats } from '@/types/publicProfile';
+
+const EMPTY_YEARS: number[] = [];
 
 export function PublicWrappedSummary({
   name,
   stats,
+  scope = 'all',
+  years = EMPTY_YEARS,
+  onScopeChange,
 }: {
   name: string;
   stats: PublicProfileStats;
+  scope?: WrappedScope;
+  years?: number[];
+  onScopeChange?: (scope: WrappedScope) => void;
 }) {
   if (stats.totalMatches <= 0) return null;
 
@@ -18,6 +28,7 @@ export function PublicWrappedSummary({
   const photosCount = stats.photosCount ?? 0;
   const photoCollageUrls = stats.photoCollageUrls ?? [];
   const matchesByMonth = stats.matchesByMonth ?? Array.from({ length: 12 }, () => 0);
+  const showYearChips = years.length > 0 && onScopeChange != null;
 
   const chips = [
     {
@@ -75,10 +86,50 @@ export function PublicWrappedSummary({
             El fútbol de {name}
           </h2>
           <p className="mt-1 text-sm text-white/70">
-            Resumen de su diario visible · {stats.totalMatches}{' '}
-            {stats.totalMatches === 1 ? 'partido' : 'partidos'}
+            {publicWrappedPeriodLabel(scope, stats.totalMatches)}
           </p>
         </div>
+
+        {showYearChips ? (
+          <div
+            className="flex flex-wrap items-center gap-2"
+            role="tablist"
+            aria-label="Periodo del Wrapped"
+            data-testid="public-wrapped-scope"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={scope === 'all'}
+              onClick={() => onScopeChange?.('all')}
+              className={cn(
+                'min-h-9 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80',
+                scope === 'all'
+                  ? 'bg-white text-emerald-950'
+                  : 'bg-black/30 text-white/80 hover:text-white',
+              )}
+            >
+              Todo
+            </button>
+            {years.map((year) => (
+              <button
+                key={year}
+                type="button"
+                role="tab"
+                aria-selected={scope === year}
+                onClick={() => onScopeChange?.(year)}
+                className={cn(
+                  'min-h-9 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80',
+                  scope === year
+                    ? 'bg-white text-emerald-950'
+                    : 'bg-black/30 text-white/80 hover:text-white',
+                )}
+              >
+                {year}
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         {photoCollageUrls.length > 0 ? (
           <WrappedPhotoCollage urls={photoCollageUrls} label={`Fotos del diario de ${name}`} />

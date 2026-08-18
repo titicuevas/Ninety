@@ -135,4 +135,22 @@ test.describe('A11y — app autenticada @a11y', () => {
     await expect(recent).toHaveAttribute('aria-pressed', 'true');
     await expect(page).toHaveURL(/sort=recent/);
   });
+
+  test('chips de Wrapped público se activan con teclado', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page.goto(`/u/${DEMO_USERNAME}`);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
+    const tabs = page.getByTestId('public-wrapped-scope');
+    test.skip(
+      (await tabs.count()) === 0,
+      'front aún no pinta chips de año — espera al deploy de v72',
+    );
+    const yearTab = tabs.getByRole('tab').nth(1);
+    test.skip((await yearTab.count()) === 0, `El perfil @${DEMO_USERNAME} no tiene años en el Wrapped`);
+    await yearTab.focus();
+    await expect(yearTab).toBeFocused();
+    await yearTab.press('Enter');
+    await expect(yearTab).toHaveAttribute('aria-selected', 'true');
+    await expect(page).toHaveURL(/wrapped=/);
+  });
 });

@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Library, MapPin, Swords, Trophy } from 'lucide-react';
 import { AchievementsSection } from '@/components/AchievementsSection';
 import { BlockUserButton } from '@/components/BlockUserButton';
@@ -33,6 +33,8 @@ import {
 } from '@/lib/achievements';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { isPublicProfileNotFound } from '@/lib/publicProfileError';
+import { pickPublicWrappedStats } from '@/lib/publicWrapped';
+import { parseWrappedScopeParam, type WrappedScope } from '@/lib/capsuleStats';
 import { capsuleShareSummaryFrom } from '@/lib/capsuleShare';
 import { formatCollectionCardMeta } from '@/lib/collectionCardMeta';
 import { teamPathFromFavorite } from '@/lib/teamPath';
@@ -541,6 +543,7 @@ function PublicDiaryCapsulesSection({
 
 export function PublicProfilePage() {
   const { username } = useParams<{ username: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { loginTo } = useAuthReturnLinks();
   const {
@@ -586,7 +589,24 @@ export function PublicProfilePage() {
   const capsules = isBlockedByMe ? [] : (data?.pages.flatMap((page) => page.capsules ?? []) ?? []);
   const total = isBlockedByMe ? 0 : (data?.pages[0]?.total ?? capsules.length);
   const stats = isBlockedByMe ? undefined : data?.pages[0]?.stats;
+  const statsByYear = isBlockedByMe ? undefined : data?.pages[0]?.stats_by_year;
   const years = isBlockedByMe ? [] : (data?.pages[0]?.years ?? []);
+  const wrappedScopeFromUrl = parseWrappedScopeParam(searchParams.get('wrapped'));
+  const wrappedScopeValid =
+    wrappedScopeFromUrl === 'all' ||
+    (typeof wrappedScopeFromUrl === 'number' && years.includes(wrappedScopeFromUrl));
+  const wrappedScope: WrappedScope =
+    wrappedScopeValid && wrappedScopeFromUrl != null ? wrappedScopeFromUrl : 'all';
+  const canScopeWrapped =
+    years.length > 0 && statsByYear != null && Object.keys(statsByYear).length > 0;
+  const wrappedStats = pickPublicWrappedStats(stats, statsByYear, wrappedScope);
+
+  const onWrappedScopeChange = (next: WrappedScope) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (next === 'all') nextParams.delete('wrapped');
+    else nextParams.set('wrapped', String(next));
+    setSearchParams(nextParams, { replace: true });
+  };
   const availableTags = isBlockedByMe ? [] : (data?.pages[0]?.tags ?? []);
   const featuredCollection = isBlockedByMe ? null : (data?.pages[0]?.featured_collection ?? null);
   const isOwnProfile = !!user && profile?.id === user.id;
@@ -670,8 +690,14 @@ export function PublicProfilePage() {
           />
         ) : null}
 
-        {!isBlockedByMe && stats && stats.totalMatches > 0 ? (
-          <PublicWrappedSummary name={displayName} stats={stats} />
+        {!isBlockedByMe && wrappedStats && wrappedStats.totalMatches > 0 ? (
+          <PublicWrappedSummary
+            name={displayName}
+            stats={wrappedStats}
+            scope={wrappedScope}
+            years={canScopeWrapped ? years : []}
+            onScopeChange={canScopeWrapped ? onWrappedScopeChange : undefined}
+          />
         ) : null}
 
         {!isBlockedByMe && achievements.length > 0 ? (
