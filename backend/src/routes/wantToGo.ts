@@ -14,6 +14,7 @@ import {
   listWantToGoInCommon,
   listWantToGoMatchIds,
   listWantToGoMatches,
+  attachAlsoWantToGo,
   removeWantToGoMatch,
 } from '../lib/wantToGo.js';
 
@@ -105,7 +106,8 @@ wantToGoRouter.get('/me', async (req: AuthRequest, res, next) => {
     const limit = Math.min(Number(req.query.limit) || 50, 100);
     const offset = Number(req.query.offset) || 0;
     const result = await listWantToGoMatches(req.userId!, { limit, offset });
-    res.json({ items: result.items, total: result.total, limit, offset });
+    const items = await attachAlsoWantToGo(req.userId!, result.items);
+    res.json({ items, total: result.total, limit, offset });
   } catch (err) {
     const status = wantToGoErrorStatus(err);
     if (status === 503) {

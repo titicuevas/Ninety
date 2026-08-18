@@ -6,6 +6,7 @@ import type {
   AddWantToGoInput,
   PublicWantToGoResponse,
   WantToGoIdsResponse,
+  WantToGoInCommonProfile,
   WantToGoListResponse,
   WantToGoMatch,
 } from '@/types/wantToGo';
@@ -13,12 +14,7 @@ import type {
 const LIST_KEY = ['want-to-go', 'me'] as const;
 const IDS_KEY = ['want-to-go', 'me', 'ids'] as const;
 
-export type WantToGoInCommonProfile = {
-  id: string;
-  username: string | null;
-  display_name: string | null;
-  avatar_url: string | null;
-};
+export type { WantToGoInCommonProfile };
 
 export function useWantToGoInCommon(matchId: number | undefined) {
   const session = useAuthStore((s) => s.session);

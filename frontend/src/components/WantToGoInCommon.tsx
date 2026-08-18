@@ -4,18 +4,23 @@ import { useWantToGoInCommon } from '@/hooks/useWantToGo';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { publicProfilePath } from '@/lib/profilePath';
 import { cn } from '@/lib/utils';
+import type { WantToGoInCommonProfile } from '@/types/wantToGo';
 
 export function WantToGoInCommon({
   matchId,
+  people,
   className,
 }: {
-  matchId: number;
+  matchId?: number;
+  /** Si viene de `GET /me` (un query por página), no se pide de nuevo. */
+  people?: WantToGoInCommonProfile[];
   className?: string;
 }) {
-  const { data, isLoading, isError } = useWantToGoInCommon(matchId);
-  const profiles = data?.profiles ?? [];
+  const shouldFetch = people == null && matchId != null;
+  const { data, isLoading, isError } = useWantToGoInCommon(shouldFetch ? matchId : undefined);
+  const profiles = people ?? data?.profiles ?? [];
 
-  if (isLoading || isError || profiles.length === 0) return null;
+  if ((shouldFetch && isLoading) || isError || profiles.length === 0) return null;
 
   return (
     <div
@@ -24,6 +29,7 @@ export function WantToGoInCommon({
         className,
       )}
       aria-label="También lo quieren ir personas que sigues"
+      data-testid="want-to-go-in-common"
     >
       <Users className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
       <span>

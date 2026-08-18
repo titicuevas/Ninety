@@ -404,6 +404,7 @@ Ninety/
 | GET/POST/DELETE | `/api/profile/blocked`… | ✅ | Bloquear / desbloquear usuario (ocultar perfil + Capsules) |
 | POST/GET | `/api/reports`… | ✅ | Reportar usuario, Capsule o colección pública (`target_type`; cola admin-ready) |
 | DELETE | `/api/want-to-go/played` | ✅ | Quitar de Quiero ir los ya jugados sin Capsule |
+| GET | `/api/want-to-go/me` | ✅ | Mi Quiero ir (`also_want_to_go` de follows; un query por página) |
 | GET | `/api/want-to-go/user/:username` | opcional | Quiero ir público (próximos; sin notas; respeta blocks) |
 | GET | `/api/notifications` | ✅ | Lista de alertas (`actor.followed_by_me` para seguir de vuelta) |
 | POST | `/api/internal/cron/push-digest` | cron | Digest push periódico (`CRON_SECRET`; agrupa likes/comentarios/follows) |
@@ -737,6 +738,11 @@ Ninety/
 - [x] `GET /api/want-to-go/user/:username` lista próximos partidos (sin notas; respeta blocks)
 - [x] Sección en `/u/:username` y página `/u/:username/want-to-go`
 - [x] E2e chromium con skip si prod aún no despliega el endpoint
+
+### ✅ v70 — También en Quiero ir sin N+1
+- [x] `GET /api/want-to-go/me` adjunta `also_want_to_go` (follows, un query por página)
+- [x] `/want-to-go` pinta esas personas sin un fetch por partido
+- [x] E2e chromium con skip si prod aún no trae el campo
 
 ## 🎨 Identidad visual
 

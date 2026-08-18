@@ -39,6 +39,7 @@ function wantToGoItem(opts: {
     away_score: null,
     note: null,
     created_at: iso,
+    also_want_to_go: [],
   };
 }
 

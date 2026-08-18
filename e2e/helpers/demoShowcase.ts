@@ -25,6 +25,10 @@ export function hasAlsoLikedPeople(row: { also_liked?: unknown[] | null }): bool
   return (row.also_liked?.length ?? 0) > 0;
 }
 
+export function hasAlsoWantToGoPeople(row: { also_want_to_go?: unknown[] | null }): boolean {
+  return (row.also_want_to_go?.length ?? 0) > 0;
+}
+
 export type DemoCapsuleRow = {
   id?: string;
   note?: string | null;

@@ -5,6 +5,8 @@ import {
   isMissingWantToGoTable,
   isWantToGoMatchPlayed,
   matchIdsToClearPlayedWithoutCapsule,
+  assembleWantToGoInCommonPeople,
+  groupAlsoWantToGoByMatch,
   selectUpcomingWantToGo,
   toPublicWantToGoItem,
   normalizeMatchPlayedAt,
@@ -154,6 +156,36 @@ describe('wantToGo helpers', () => {
     assert.equal(pub.home_team_name, 'Betis');
     assert.equal('note' in pub, false);
     assert.equal('user_id' in pub, false);
+  });
+
+  it('agrupa también en Quiero ir por partido y limita nombres', () => {
+    const profiles = [
+      { id: 'b', username: 'beta', full_name: 'Beta', avatar_url: null },
+      { id: 'a', username: 'alpha', full_name: 'Alpha', avatar_url: null },
+      { id: 'c', username: 'gamma', full_name: 'Gamma', avatar_url: null },
+    ];
+    const grouped = groupAlsoWantToGoByMatch(
+      [
+        { match_id: 1, user_id: 'b' },
+        { match_id: 1, user_id: 'a' },
+        { match_id: 1, user_id: 'c' },
+        { match_id: 2, user_id: 'a' },
+      ],
+      profiles,
+      2,
+    );
+    assert.deepEqual(
+      grouped.get(1)?.map((row) => row.username),
+      ['alpha', 'beta'],
+    );
+    assert.deepEqual(
+      grouped.get(2)?.map((row) => row.username),
+      ['alpha'],
+    );
+    assert.deepEqual(
+      assembleWantToGoInCommonPeople(['missing', 'a', 'a'], profiles, 5).map((row) => row.id),
+      ['a'],
+    );
   });
 
   it('clearWantToGoAfterCapsule no lanza con match o user inválido', async () => {

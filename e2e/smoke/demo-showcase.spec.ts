@@ -13,6 +13,7 @@ import {
   DEMO_SOCIAL_COMMENT_MARKER,
   hasAlsoWatchedPeople,
   hasAlsoLikedPeople,
+  hasAlsoWantToGoPeople,
   requireDemoFeaturedCollection,
   requireDemoShowcaseProfile,
 } from '../helpers/demoShowcase';
@@ -1110,5 +1111,70 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(page.getByRole('heading', { name: /^quiero ir$/i })).toBeVisible({
       timeout: 15_000,
     });
+  });
+
+  test('GET Quiero ir incluye also_want_to_go de follows', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(`${API_BASE}/api/want-to-go/me?limit=50`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.ok(), `GET /api/want-to-go/me → ${res.status()}`).toBeTruthy();
+    const body = (await res.json()) as {
+      items?: Array<{ match_id?: number; also_want_to_go?: unknown[] }>;
+    };
+    test.skip((body.items?.length ?? 0) === 0, 'La cuenta QA no tiene partidos en Quiero ir');
+    const sample = body.items!.find((row) => row.match_id != null);
+    test.skip(
+      sample != null && !('also_want_to_go' in sample),
+      'API aún no adjunta also_want_to_go — espera al deploy de v70',
+    );
+    test.skip(
+      !(body.items ?? []).some(hasAlsoWantToGoPeople),
+      'La cuenta QA no tiene follows en común en Quiero ir',
+    );
+  });
+
+  test('Quiero ir pinta también en común sin fetch por partido', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(`${API_BASE}/api/want-to-go/me?limit=50`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      items?: Array<{ also_want_to_go?: unknown[] }>;
+    };
+    test.skip((body.items?.length ?? 0) === 0, 'La cuenta QA no tiene partidos en Quiero ir');
+    const sample = body.items![0];
+    test.skip(
+      sample != null && !('also_want_to_go' in sample),
+      'API aún no adjunta also_want_to_go — espera al deploy de v70',
+    );
+    test.skip(
+      !(body.items ?? []).some(hasAlsoWantToGoPeople),
+      'La cuenta QA no tiene follows en común en Quiero ir',
+    );
+
+    await page.goto('/want-to-go');
+    await expect(page.getByRole('heading', { name: /^quiero ir$/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    const chip = page.getByTestId('want-to-go-in-common');
+    test.skip(
+      (await chip.count()) === 0,
+      'front aún no pinta also_want_to_go — espera al deploy de v70',
+    );
+    await expect(chip.first()).toBeVisible();
+    await expect(chip.first()).toContainText(/también en quiero ir/i);
   });
 });

@@ -76,7 +76,7 @@ function WantToGoMatchItem({
           <span className="sr-only sm:not-sr-only">Quitar</span>
         </Button>
       </div>
-      <WantToGoInCommon matchId={item.match_id} className="pl-1" />
+      <WantToGoInCommon matchId={item.match_id} people={item.also_want_to_go} className="pl-1" />
     </li>
   );
 }

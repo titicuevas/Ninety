@@ -1,3 +1,10 @@
+export type WantToGoInCommonProfile = {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+};
+
 export type WantToGoMatch = {
   user_id: string;
   match_id: number;
@@ -11,6 +18,7 @@ export type WantToGoMatch = {
   away_score: number | null;
   note: string | null;
   created_at: string;
+  also_want_to_go?: WantToGoInCommonProfile[];
 };
 
 export type PublicWantToGoItem = {
