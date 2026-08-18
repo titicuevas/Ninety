@@ -1,5 +1,5 @@
 import type { FootballMatch } from '@/types/football';
-import type { AddWantToGoInput, WantToGoMatch } from '@/types/wantToGo';
+import type { AddWantToGoInput } from '@/types/wantToGo';
 import { footballMatchToCapsuleBase } from '@/lib/matchCapsule';
 
 export type WantToGoWhenFilter = 'all' | 'upcoming' | 'played';
@@ -81,7 +81,17 @@ export function footballMatchToWantToGoInput(match: FootballMatch): AddWantToGoI
   return footballMatchToCapsuleBase(match);
 }
 
-export function wantToGoToFootballMatch(item: WantToGoMatch): FootballMatch {
+export function wantToGoToFootballMatch(item: {
+  match_id: number;
+  match_played_at: string | null;
+  home_team_name: string;
+  away_team_name: string;
+  home_team_crest: string | null;
+  away_team_crest: string | null;
+  competition_name: string | null;
+  home_score: number | null;
+  away_score: number | null;
+}): FootballMatch {
   return {
     id: item.match_id,
     utcDate: item.match_played_at ?? undefined,

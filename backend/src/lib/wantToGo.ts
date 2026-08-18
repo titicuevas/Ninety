@@ -15,6 +15,23 @@ export type WantToGoMatchRow = {
   created_at: string;
 };
 
+/** Payload público: sin nota ni user_id. */
+export type PublicWantToGoItem = {
+  match_id: number;
+  match_played_at: string | null;
+  home_team_name: string;
+  away_team_name: string;
+  home_team_crest: string | null;
+  away_team_crest: string | null;
+  competition_name: string | null;
+  home_score: number | null;
+  away_score: number | null;
+  created_at: string;
+};
+
+const PUBLIC_WANT_TO_GO_SELECT =
+  'match_id, match_played_at, home_team_name, away_team_name, home_team_crest, away_team_crest, competition_name, home_score, away_score, created_at';
+
 export type WantToGoMatchInput = {
   match_id: number;
   match_played_at?: string | null;
@@ -86,6 +103,46 @@ export function isWantToGoMatchPlayed(
   return kickoffMs < now.getTime();
 }
 
+function kickoffMs(playedAt: string | null): number | null {
+  if (!playedAt) return null;
+  const ms = Date.parse(playedAt);
+  return Number.isNaN(ms) ? null : ms;
+}
+
+/** Próximos primero (fecha ascendente; sin fecha al final). */
+export function selectUpcomingWantToGo<T extends { match_played_at: string | null }>(
+  items: T[],
+  now: Date = new Date(),
+): T[] {
+  return items
+    .filter((item) => !isWantToGoMatchPlayed(item.match_played_at, now))
+    .sort((a, b) => {
+      const am = kickoffMs(a.match_played_at);
+      const bm = kickoffMs(b.match_played_at);
+      if (am == null && bm == null) return 0;
+      if (am == null) return 1;
+      if (bm == null) return -1;
+      return am - bm;
+    });
+}
+
+export function toPublicWantToGoItem(
+  row: PublicWantToGoItem & { note?: string | null; user_id?: string },
+): PublicWantToGoItem {
+  return {
+    match_id: row.match_id,
+    match_played_at: row.match_played_at,
+    home_team_name: row.home_team_name,
+    away_team_name: row.away_team_name,
+    home_team_crest: row.home_team_crest,
+    away_team_crest: row.away_team_crest,
+    competition_name: row.competition_name,
+    home_score: row.home_score,
+    away_score: row.away_score,
+    created_at: row.created_at,
+  };
+}
+
 /** Ya jugados y sin Capsule (para limpiar la watchlist). */
 export function matchIdsToClearPlayedWithoutCapsule(
   items: Array<{ match_id: number; match_played_at: string | null }>,
@@ -153,6 +210,39 @@ export async function listWantToGoMatches(
   return {
     items: (data ?? []) as WantToGoMatchRow[],
     total: count ?? 0,
+  };
+}
+
+export async function listPublicWantToGoMatches(
+  userId: string,
+  options: { limit?: number } = {},
+): Promise<{ items: PublicWantToGoItem[]; total: number }> {
+  const limit = Math.min(Math.max(options.limit ?? 24, 1), 50);
+
+  const { supabaseAdmin } = await import('./supabase.js');
+  if (!supabaseAdmin) {
+    throw Object.assign(new Error('Quiero ir no disponible'), { status: 503 });
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('want_to_go_matches')
+    .select(PUBLIC_WANT_TO_GO_SELECT)
+    .eq('user_id', userId)
+    .limit(500);
+
+  if (error) {
+    if (isMissingWantToGoTable(error)) {
+      throw Object.assign(new Error('Quiero ir no disponible (aplica la migración)'), {
+        status: 503,
+      });
+    }
+    throw error;
+  }
+
+  const upcoming = selectUpcomingWantToGo((data ?? []) as PublicWantToGoItem[]);
+  return {
+    items: upcoming.slice(0, limit).map(toPublicWantToGoItem),
+    total: upcoming.length,
   };
 }
 

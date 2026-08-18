@@ -13,6 +13,30 @@ export type WantToGoMatch = {
   created_at: string;
 };
 
+export type PublicWantToGoItem = {
+  match_id: number;
+  match_played_at: string | null;
+  home_team_name: string;
+  away_team_name: string;
+  home_team_crest: string | null;
+  away_team_crest: string | null;
+  competition_name: string | null;
+  home_score: number | null;
+  away_score: number | null;
+  created_at: string;
+};
+
+export type PublicWantToGoResponse = {
+  profile: {
+    username: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
+  };
+  items: PublicWantToGoItem[];
+  total: number;
+  limit: number;
+};
+
 export type WantToGoListResponse = {
   items: WantToGoMatch[];
   total: number;

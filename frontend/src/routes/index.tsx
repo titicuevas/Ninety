@@ -25,6 +25,7 @@ import { PublicCapsulePage } from '@/pages/PublicCapsulePage';
 import { PublicCollectionPage } from '@/pages/PublicCollectionPage';
 import { PublicDiaryMonthPage } from '@/pages/PublicDiaryMonthPage';
 import { PublicProfilePage } from '@/pages/PublicProfilePage';
+import { PublicWantToGoPage } from '@/pages/PublicWantToGoPage';
 import { PrivacyPage } from '@/pages/PrivacyPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
@@ -49,6 +50,7 @@ export const appRouter = createBrowserRouter([
   { path: '/u/:username/vs', element: <CompareProfilePage /> },
   { path: '/u/:username/lists/:slug', element: <PublicCollectionPage /> },
   { path: '/u/:username/calendar/:year/:month', element: <PublicDiaryMonthPage /> },
+  { path: '/u/:username/want-to-go', element: <PublicWantToGoPage /> },
   { path: '/u/:username', element: <PublicProfilePage /> },
   { path: '/c/:id', element: <PublicCapsulePage /> },
   { path: '/invite/:code', element: <InvitePage /> },

@@ -404,6 +404,7 @@ Ninety/
 | GET/POST/DELETE | `/api/profile/blocked`… | ✅ | Bloquear / desbloquear usuario (ocultar perfil + Capsules) |
 | POST/GET | `/api/reports`… | ✅ | Reportar usuario, Capsule o colección pública (`target_type`; cola admin-ready) |
 | DELETE | `/api/want-to-go/played` | ✅ | Quitar de Quiero ir los ya jugados sin Capsule |
+| GET | `/api/want-to-go/user/:username` | opcional | Quiero ir público (próximos; sin notas; respeta blocks) |
 | GET | `/api/notifications` | ✅ | Lista de alertas (`actor.followed_by_me` para seguir de vuelta) |
 | POST | `/api/internal/cron/push-digest` | cron | Digest push periódico (`CRON_SECRET`; agrupa likes/comentarios/follows) |
 | POST | `/api/internal/cron/push-diary` | cron | Push opt-in aniversarios/hitos + recordatorio Quiero ir (`CRON_SECRET`; `diary_push_sent` idempotente) |
@@ -731,6 +732,11 @@ Ninety/
 - [x] Chips Todas / Mismo equipo / Cerca / Activos en `/search?tab=people` cuando la búsqueda está vacía
 - [x] `q` sticky en la URL (como partidos y Explorar colecciones)
 - [x] E2e chromium con skip si prod aún no tiene los chips
+
+### ✅ v69 — Quiero ir público en el perfil
+- [x] `GET /api/want-to-go/user/:username` lista próximos partidos (sin notas; respeta blocks)
+- [x] Sección en `/u/:username` y página `/u/:username/want-to-go`
+- [x] E2e chromium con skip si prod aún no despliega el endpoint
 
 ## 🎨 Identidad visual
 

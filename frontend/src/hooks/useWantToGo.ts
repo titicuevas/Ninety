@@ -4,6 +4,7 @@ import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 import type {
   AddWantToGoInput,
+  PublicWantToGoResponse,
   WantToGoIdsResponse,
   WantToGoListResponse,
   WantToGoMatch,
@@ -53,6 +54,21 @@ export function useWantToGoIds() {
     queryFn: () =>
       apiFetch<WantToGoIdsResponse>('/api/want-to-go/me/ids', {}, session?.access_token),
     enabled: !!session,
+  });
+}
+
+export function usePublicWantToGo(username: string | undefined, limit = 24) {
+  const session = useAuthStore((s) => s.session);
+
+  return useQuery({
+    queryKey: ['want-to-go', 'user', username, limit, session?.access_token ?? 'guest'],
+    queryFn: () =>
+      apiFetch<PublicWantToGoResponse>(
+        `/api/want-to-go/user/${encodeURIComponent(username!)}?limit=${limit}`,
+        {},
+        session?.access_token,
+      ),
+    enabled: !!username,
   });
 }
 

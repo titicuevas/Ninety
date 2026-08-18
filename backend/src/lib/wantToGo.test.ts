@@ -5,6 +5,8 @@ import {
   isMissingWantToGoTable,
   isWantToGoMatchPlayed,
   matchIdsToClearPlayedWithoutCapsule,
+  selectUpcomingWantToGo,
+  toPublicWantToGoItem,
   normalizeMatchPlayedAt,
   normalizeOptionalScore,
   normalizeTeamName,
@@ -114,6 +116,44 @@ describe('wantToGo helpers', () => {
       ),
       [1],
     );
+  });
+
+  it('selectUpcomingWantToGo ordena por fecha y omite jugados', () => {
+    const now = new Date('2026-08-18T12:00:00.000Z');
+    const upcoming = selectUpcomingWantToGo(
+      [
+        { id: 'played', match_played_at: '2026-08-17T20:00:00.000Z' },
+        { id: 'later', match_played_at: '2026-09-02T18:00:00.000Z' },
+        { id: 'soon', match_played_at: '2026-08-20T18:00:00.000Z' },
+        { id: 'nodate', match_played_at: null },
+      ],
+      now,
+    );
+    assert.deepEqual(
+      upcoming.map((row) => row.id),
+      ['soon', 'later', 'nodate'],
+    );
+  });
+
+  it('toPublicWantToGoItem no incluye nota', () => {
+    const pub = toPublicWantToGoItem({
+      user_id: 'secret',
+      note: 'asiento 12',
+      match_id: 1,
+      match_played_at: null,
+      home_team_name: 'Betis',
+      away_team_name: 'Sevilla',
+      home_team_crest: null,
+      away_team_crest: null,
+      competition_name: 'La Liga',
+      home_score: null,
+      away_score: null,
+      created_at: '2026-08-01T00:00:00.000Z',
+    });
+    assert.equal(pub.match_id, 1);
+    assert.equal(pub.home_team_name, 'Betis');
+    assert.equal('note' in pub, false);
+    assert.equal('user_id' in pub, false);
   });
 
   it('clearWantToGoAfterCapsule no lanza con match o user inválido', async () => {

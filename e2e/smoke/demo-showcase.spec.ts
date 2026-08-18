@@ -1063,4 +1063,52 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(section).toBeVisible({ timeout: 15_000 });
     await expect(section.getByRole('link').first()).toBeVisible({ timeout: 10_000 });
   });
+
+  test('API Quiero ir público no requiere auth y omite notas', async ({ request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'smoke-public', 'API pública sin auth');
+    const res = await request.get(
+      `${API_BASE}/api/want-to-go/user/${encodeURIComponent(DEMO_USERNAME)}?limit=6`,
+    );
+    test.skip(res.status() === 401, 'API aún no tiene Quiero ir público — espera al deploy de v69');
+    expect(res.ok(), `GET want-to-go público → ${res.status()}`).toBeTruthy();
+    const body = (await res.json()) as {
+      items?: Array<{ home_team_name?: string; note?: unknown }>;
+      total?: number;
+    };
+    expect(Array.isArray(body.items)).toBe(true);
+    expect(body.items!.length).toBeLessThanOrEqual(6);
+    for (const item of body.items!) {
+      expect(typeof item.home_team_name).toBe('string');
+      expect(item.note).toBeUndefined();
+    }
+  });
+
+  test('perfil demo muestra Quiero ir público si hay próximos', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    const res = await request.get(
+      `${API_BASE}/api/want-to-go/user/${encodeURIComponent(DEMO_USERNAME)}?limit=6`,
+    );
+    test.skip(res.status() === 401, 'API aún no tiene Quiero ir público — espera al deploy de v69');
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as { items?: unknown[]; total?: number };
+    test.skip(
+      (body.items?.length ?? 0) === 0,
+      `El perfil @${DEMO_USERNAME} no tiene próximos en Quiero ir`,
+    );
+
+    await openAuthenticatedHome(page);
+    await page.goto(`/u/${encodeURIComponent(DEMO_USERNAME)}`);
+    const section = page.getByTestId('public-want-to-go');
+    test.skip(
+      (await section.count()) === 0,
+      'front aún no pinta Quiero ir en el perfil — espera al deploy de v69',
+    );
+    await expect(section).toBeVisible({ timeout: 15_000 });
+    await expect(section.getByRole('heading', { name: /quiero ir/i })).toBeVisible();
+    await page.getByRole('link', { name: /ver lista|ver todos/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/u/${DEMO_USERNAME}/want-to-go`));
+    await expect(page.getByRole('heading', { name: /^quiero ir$/i })).toBeVisible({
+      timeout: 15_000,
+    });
+  });
 });

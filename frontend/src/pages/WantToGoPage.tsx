@@ -14,8 +14,11 @@ import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useCapsules } from '@/hooks/useCapsules';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useProfile } from '@/hooks/useProfile';
 import { useClearPlayedWantToGo, useRemoveWantToGo, useWantToGoList } from '@/hooks/useWantToGo';
 import { saveDraftMatch } from '@/lib/draftMatch';
+import { isAutoUsername } from '@/lib/profileHelpers';
+import { profilePath } from '@/lib/profilePath';
 import {
   parseWantToGoWhenParam,
   partitionWantToGoMatches,
@@ -113,6 +116,11 @@ export function WantToGoPage() {
   useDocumentTitle(wantToGoDocumentTitle(when));
   const navigate = useNavigate();
   const { data, isLoading, isError, error, refetch, isRefetching } = useWantToGoList();
+  const { data: me } = useProfile();
+  const publicListHref =
+    me?.username && !isAutoUsername(me.username)
+      ? `${profilePath(me.username)}/want-to-go`
+      : null;
   const { data: capsulesData } = useCapsules();
   const remove = useRemoveWantToGo();
   const clearPlayed = useClearPlayedWantToGo();
@@ -180,6 +188,14 @@ export function WantToGoPage() {
             {data && data.total > 0 ? (
               <p className="mt-1 text-sm text-muted-foreground">
                 {data.total} partido{data.total === 1 ? '' : 's'}
+                {publicListHref ? (
+                  <>
+                    {' · '}
+                    <Link to={publicListHref} className="text-primary hover:underline">
+                      Ver en tu perfil
+                    </Link>
+                  </>
+                ) : null}
               </p>
             ) : null}
           </div>

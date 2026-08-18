@@ -15,6 +15,7 @@ import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { Layout } from '@/components/Layout';
 import { ProfileLoadingSkeleton } from '@/components/ListSkeletons';
 import { PublicLayout } from '@/components/PublicLayout';
+import { PublicWantToGoSection } from '@/components/PublicWantToGoSection';
 import { PublicWrappedSummary } from '@/components/PublicWrappedSummary';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { ShareProfileButton } from '@/components/ShareProfileButton';
@@ -684,6 +685,12 @@ export function PublicProfilePage() {
             }
           />
         ) : null}
+
+        <PublicWantToGoSection
+          username={profile.username}
+          isOwnProfile={isOwnProfile}
+          isBlockedByMe={isBlockedByMe}
+        />
 
         <PublicCollectionsSections
           profile={profile}

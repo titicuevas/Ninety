@@ -183,6 +183,11 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
+  it('GET /api/want-to-go/user/:username no requiere auth', async () => {
+    const res = await request(createApp()).get('/api/want-to-go/user/beta_ninety');
+    assert.notEqual(res.status, 401);
+  });
+
   it('GET /api/want-to-go/me/ids requiere auth', async () => {
     const res = await request(createApp()).get('/api/want-to-go/me/ids');
     assert.equal(res.status, 401);
