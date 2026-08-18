@@ -1,4 +1,4 @@
-# QA E2E — smoke público + a11y (sin secretos de usuario)
+# QA E2E contra prod (www + API Railway)
 name: QA E2E
 
 on:
@@ -12,6 +12,17 @@ concurrency:
   group: qa-e2e-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
+env:
+  CI: true
+  E2E_API_URL: https://ninety-api.up.railway.app
+  E2E_BASE_URL: https://www.getninety.app
+  DEMO_USERNAME: beta_ninety
+  TEST_USER_USERNAME: beta_ninety
+  TEST_USER_EMAIL: beta@ninety.app
+
 jobs:
   e2e-public:
     runs-on: ubuntu-latest
@@ -23,6 +34,10 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+            frontend/package-lock.json
 
       - name: Install root + workspaces
         run: |
@@ -33,20 +48,61 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install chromium --with-deps
 
-      - name: Run smoke público + a11y contra prod
-        env:
-          CI: true
-          E2E_API_URL: https://ninety-api.up.railway.app
-          E2E_BASE_URL: https://ninety.up.railway.app
-          # Showcase vivo (seed:fans). @aficionado_demo es el seed:demo antiguo, sin Favoritos.
-          DEMO_USERNAME: beta_ninety
-          TEST_USER_USERNAME: beta_ninety
+      - name: Smoke público + a11y contra www
         run: npm run test:e2e:public
 
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v5
         with:
-          name: playwright-report
+          name: playwright-report-public
           path: playwright-report/
           retention-days: 7
+
+  e2e-auth:
+    # Secret del repo: TEST_USER_PASSWORD (cuenta beta@ninety.app).
+    # Si no está, el job se omite y el resto de CI sigue.
+    if: ${{ secrets.TEST_USER_PASSWORD != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Install root + workspaces
+        run: |
+          npm ci
+          npm ci --prefix backend
+          npm ci --prefix frontend
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Smoke autenticado contra www
+        env:
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+        run: npx playwright test --project=chromium --grep @smoke
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-report-auth
+          path: playwright-report/
+          retention-days: 7
+
+  e2e-auth-notice:
+    if: ${{ secrets.TEST_USER_PASSWORD == '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Falta el secret de e2e autenticado
+        run: |
+          echo "::notice::Añade el secret TEST_USER_PASSWORD (beta@ninety.app) para el smoke autenticado."

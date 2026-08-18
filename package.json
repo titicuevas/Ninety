@@ -29,6 +29,7 @@
     "test:e2e:demo": "playwright test e2e/smoke/demo-showcase.spec.ts e2e/smoke/public.spec.ts e2e/smoke/social-engagement.spec.ts e2e/smoke/collections.spec.ts --grep \"demo|Favoritos|me gusta|también|showcase|Actividad\"",
     "test:demo": "npm run test:demo-seed --prefix backend && npm run test:e2e:demo",
     "test:qa": "npm test && npm run test --prefix frontend && npm run test:e2e:public",
+    "test:ci": "npm run check:secrets && npm run typecheck && npm test && npm run test --prefix frontend",
     "doctor:install": "react-doctor install -y"
   },
   "engines": {

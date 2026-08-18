@@ -249,6 +249,9 @@ npm run test:e2e:ui        # modo UI Playwright
 
 # Combo rápido QE local
 npm run test:qa
+
+# Lo mismo que GitHub Actions «CI» (secretos + typecheck + unitarios)
+npm run test:ci
 ```
 
 Estructura `e2e/`:
@@ -312,11 +315,23 @@ Evitar filtrar claves (Supabase secret, VAPID, tokens) en el repo:
 | Capa | Qué |
 |------|-----|
 | Local | `npm run check:secrets` — patrones propios (Supabase secret, VAPID, passwords de demo) |
-| CI | [TruffleHog OSS](https://github.com/marketplace/actions/trufflehog-oss) en push/PR a `main` |
+| CI | Typecheck + unitarios (`.github/workflows/ci.yml`); e2e público en www; TruffleHog |
 
-- Workflow: `.github/workflows/trufflehog.yml`
+Workflows en push/PR a `main`:
+
+| Workflow | Qué corre |
+|----------|-----------|
+| **CI** | `check:secrets`, typecheck, unit backend, unit frontend |
+| **QA E2E** | Playwright smoke público + a11y contra `https://www.getninety.app` |
+| **QA E2E** (auth) | Smoke autenticado (`chromium` `@smoke`) si existe el secret `TEST_USER_PASSWORD` |
+| **TruffleHog** | Secretos verificados en el diff |
+| **React Doctor** | Score en el frontend (informativo) |
+
+Para el e2e con sesión: GitHub → Settings → Secrets and variables → Actions → `TEST_USER_PASSWORD` (la de `beta@ninety.app`). Sin ese secret, el job auth se omite y el resto sigue.
+
+- Workflow secretos: `.github/workflows/trufflehog.yml`
 - Escanea el rango del push/PR y **falla** si encuentra secretos **verificados** (`--results=verified`)
-- Los secretos reales viven solo en `.env` (gitignored) y en variables de Railway/Supabase
+- Los secretos reales viven solo en `.env` (gitignored) y en variables de Railway/Supabase/GitHub Actions
 
 ```bash
 npm run check:secrets
