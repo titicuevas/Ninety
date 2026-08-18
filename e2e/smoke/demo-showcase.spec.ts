@@ -435,6 +435,44 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(page.getByText(ALSO_WATCHED_UI).first()).toBeVisible({ timeout: 15_000 });
   });
 
+  test('Actividad muestra También le gusta del seed', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(`${API_BASE}/api/activity?limit=30`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      events?: Array<{
+        capsule?: { also_liked?: unknown[] };
+        collection?: { also_liked?: unknown[] };
+      }>;
+    };
+    const withCapsule = (body.events ?? []).find((event) => event.capsule);
+    test.skip(
+      withCapsule?.capsule != null && !('also_liked' in withCapsule.capsule),
+      'API aún no devuelve also_liked en actividad — espera al deploy de v65',
+    );
+    expect(
+      (body.events ?? []).some(
+        (event) =>
+          hasAlsoLikedPeople(event.capsule ?? {}) || hasAlsoLikedPeople(event.collection ?? {}),
+      ),
+      'GET /api/activity debe incluir also_liked — ejecuta npm run seed:fans',
+    ).toBe(true);
+
+    await page.goto('/activity');
+    await expect(page.getByRole('heading', { name: /^actividad$/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByText(/también le gusta|también les gusta/i).first()).toBeVisible({
+      timeout: 15_000,
+    });
+  });
+
   test('Home Actividad reciente muestra likes o comentarios', async ({ page, request }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
     await openAuthenticatedHome(page);
@@ -492,6 +530,43 @@ test.describe('Smoke — demo showcase @smoke', () => {
     const recent = page.getByRole('region', { name: /actividad reciente/i });
     await expect(recent).toBeVisible({ timeout: 20_000 });
     await expect(recent.getByText(ALSO_WATCHED_UI).first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('Home Actividad reciente muestra También le gusta', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(`${API_BASE}/api/activity?limit=30`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      events?: Array<{
+        capsule?: { also_liked?: unknown[] };
+        collection?: { also_liked?: unknown[] };
+      }>;
+    };
+    const withCapsule = (body.events ?? []).find((event) => event.capsule);
+    test.skip(
+      withCapsule?.capsule != null && !('also_liked' in withCapsule.capsule),
+      'API aún no devuelve also_liked en actividad — espera al deploy de v65',
+    );
+    expect(
+      (body.events ?? []).some(
+        (event) =>
+          hasAlsoLikedPeople(event.capsule ?? {}) || hasAlsoLikedPeople(event.collection ?? {}),
+      ),
+      'GET /api/activity debe incluir also_liked — ejecuta npm run seed:fans',
+    ).toBe(true);
+
+    await page.goto('/home');
+    const recent = page.getByRole('region', { name: /actividad reciente/i });
+    await expect(recent).toBeVisible({ timeout: 20_000 });
+    await expect(recent.getByText(/también le gusta|también les gusta/i).first()).toBeVisible({
+      timeout: 15_000,
+    });
   });
 
   test('Explorar colecciones muestra también le gusta de follows', async ({

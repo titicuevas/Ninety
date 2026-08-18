@@ -18,7 +18,9 @@ export interface Profile {
     cover_url: string | null;
     items_count: number;
     likes_count?: number;
-    comments_count?: number;
+    comments_count: number;
+    also_liked?: import('@/lib/collectionAlsoLiked').CollectionAlsoLikedPerson[];
+    also_commented?: import('@/lib/collectionAlsoLiked').CollectionAlsoLikedPerson[];
   } | null;
   followers_count?: number;
   following_count?: number;

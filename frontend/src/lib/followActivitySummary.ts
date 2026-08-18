@@ -1,6 +1,7 @@
 import { formatEngagementMeta } from './collectionCardMeta.ts';
 import { pickEngagedPreview } from './pickEngagedPreview.ts';
 import type { AlsoWatchedPerson } from '@/lib/capsuleAlsoWatched';
+import type { CollectionAlsoLikedPerson } from '@/lib/collectionAlsoLiked';
 import type { FollowActivityEvent } from '@/types/activity';
 
 export type ActivityEventSummary = {
@@ -73,6 +74,33 @@ export function followActivityAlsoWatched(
   return [];
 }
 
+/** Follows que dieron me gusta (undefined = la API aún no envía el campo). */
+export function followActivityAlsoLiked(
+  event: FollowActivityEvent,
+): CollectionAlsoLikedPerson[] | undefined {
+  if (
+    event.type === 'capsule' ||
+    event.type === 'capsule_like' ||
+    event.type === 'capsule_comment'
+  ) {
+    return event.capsule.also_liked;
+  }
+  return event.collection.also_liked;
+}
+
+export function followActivityAlsoCommented(
+  event: FollowActivityEvent,
+): CollectionAlsoLikedPerson[] | undefined {
+  if (
+    event.type === 'capsule' ||
+    event.type === 'capsule_like' ||
+    event.type === 'capsule_comment'
+  ) {
+    return event.capsule.also_commented;
+  }
+  return event.collection.also_commented;
+}
+
 /** Preview de Home: mezcla likes/comentarios y «también lo vieron». */
 export function pickEngagedActivityPreview(
   events: FollowActivityEvent[],
@@ -91,6 +119,8 @@ export function pickEngagedActivityPreview(
           likes_count: event.capsule.likes_count,
           comments_count: event.capsule.comments_count,
           also_watched: event.capsule.also_watched,
+          also_liked: event.capsule.also_liked,
+          also_commented: event.capsule.also_commented,
         };
       }
       return {
@@ -98,6 +128,8 @@ export function pickEngagedActivityPreview(
         id: event.id,
         likes_count: event.collection.likes_count,
         comments_count: event.collection.comments_count,
+        also_liked: event.collection.also_liked,
+        also_commented: event.collection.also_commented,
       };
     }),
     limit,

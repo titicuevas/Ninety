@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { attachCollectionAlsoFollowed } from './collectionAlsoFollowed.js';
 import { resolveCollectionCoverUrl } from './collectionCover.js';
+import type { CollectionAlsoLikedPerson } from './collectionLikes.js';
 
 export type FeaturedCollectionSummary = {
   id: string;
@@ -10,6 +12,8 @@ export type FeaturedCollectionSummary = {
   items_count: number;
   likes_count: number;
   comments_count: number;
+  also_liked?: CollectionAlsoLikedPerson[];
+  also_commented?: CollectionAlsoLikedPerson[];
 };
 
 export function isMissingFeaturedCollectionColumn(error: unknown): boolean {
@@ -102,6 +106,10 @@ export async function loadFeaturedCollectionSummary(
     }
   }
 
+  const [withFollowed] = await attachCollectionAlsoFollowed(opts.viewerId ?? '', [
+    { id: collection.id as string, user_id: collection.user_id as string },
+  ]);
+
   return {
     id: collection.id as string,
     name: collection.name as string,
@@ -111,6 +119,8 @@ export async function loadFeaturedCollectionSummary(
     items_count: count ?? 0,
     likes_count: likesCount ?? 0,
     comments_count: commentsCount ?? 0,
+    also_liked: withFollowed?.also_liked ?? [],
+    also_commented: withFollowed?.also_commented ?? [],
   };
 }
 

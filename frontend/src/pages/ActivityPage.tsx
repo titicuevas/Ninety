@@ -1,7 +1,11 @@
 import { Link } from 'react-router-dom';
 import { Activity, Heart, Library, MessageCircle, Ticket, Users } from 'lucide-react';
 import { ActivityTypeFiltersBar } from '@/components/ActivityTypeFiltersBar';
+import { CapsuleAlsoCommented } from '@/components/CapsuleAlsoCommented';
+import { CapsuleAlsoLiked } from '@/components/CapsuleAlsoLiked';
 import { CapsuleAlsoWatched } from '@/components/CapsuleAlsoWatched';
+import { CollectionAlsoCommented } from '@/components/CollectionAlsoCommented';
+import { CollectionAlsoLiked } from '@/components/CollectionAlsoLiked';
 import { EmptyState } from '@/components/EmptyState';
 import { capsuleCardListClass } from '@/components/CapsuleListCard';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
@@ -17,7 +21,7 @@ import {
   activityTypeEmptyCopy,
   hasActivityTypeFilter,
 } from '@/lib/activityTypeFilter';
-import { followActivityAlsoWatched, followActivityEngagementMeta } from '@/lib/followActivitySummary';
+import { followActivityAlsoCommented, followActivityAlsoLiked, followActivityAlsoWatched, followActivityEngagementMeta } from '@/lib/followActivitySummary';
 import { formatRelativeTime } from '@/lib/format';
 import { publicProfilePath } from '@/lib/profilePath';
 import type { FollowActivityEvent } from '@/types/activity';
@@ -51,10 +55,51 @@ function ActorLink({ event }: { event: FollowActivityEvent }) {
   return <span className="font-medium text-foreground">{name}</span>;
 }
 
-function ActivityAlsoWatchedLine({ event }: { event: FollowActivityEvent }) {
-  const people = followActivityAlsoWatched(event);
-  if (people.length === 0) return null;
-  return <CapsuleAlsoWatched people={people} className="mt-1 text-xs" />;
+function ActivityAlsoFollowedLines({ event }: { event: FollowActivityEvent }) {
+  const watched = followActivityAlsoWatched(event);
+  const liked = followActivityAlsoLiked(event);
+  const commented = followActivityAlsoCommented(event);
+
+  if (
+    event.type === 'capsule' ||
+    event.type === 'capsule_like' ||
+    event.type === 'capsule_comment'
+  ) {
+    return (
+      <>
+        {watched.length > 0 ? (
+          <CapsuleAlsoWatched people={watched} className="mt-1 text-xs" />
+        ) : null}
+        <CapsuleAlsoLiked
+          capsuleId={event.capsule.id}
+          people={liked}
+          exceptUserId={event.capsule.user_id}
+          className="mt-1 text-xs"
+        />
+        <CapsuleAlsoCommented
+          capsuleId={event.capsule.id}
+          people={commented}
+          exceptUserId={event.capsule.user_id}
+          className="mt-1 text-xs"
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <CollectionAlsoLiked
+        collectionId={event.collection.id}
+        people={liked}
+        className="mt-1 text-xs"
+      />
+      <CollectionAlsoCommented
+        collectionId={event.collection.id}
+        people={commented}
+        className="mt-1 text-xs"
+      />
+    </>
+  );
 }
 
 function ActivityEngagementLine({ event }: { event: FollowActivityEvent }) {
@@ -104,7 +149,7 @@ function CapsuleActivityRow({
             {match}
           </Link>
           <ActivityEngagementLine event={event} />
-          <ActivityAlsoWatchedLine event={event} />
+          <ActivityAlsoFollowedLines event={event} />
           {commented ? (
             <p className="mt-1 line-clamp-2 text-sm text-foreground/90">{event.comment_body}</p>
           ) : null}
@@ -176,6 +221,7 @@ function CollectionActivityRow({
             <p className="mt-1 truncate font-medium">{event.collection.name}</p>
           )}
           <ActivityEngagementLine event={event} />
+          <ActivityAlsoFollowedLines event={event} />
           {commented ? (
             <p className="mt-1 line-clamp-2 text-sm text-foreground/90">{event.comment_body}</p>
           ) : null}

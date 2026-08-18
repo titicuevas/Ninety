@@ -37,6 +37,8 @@ export type FeaturedCollectionSummary = {
   items_count: number;
   likes_count?: number;
   comments_count?: number;
+  also_liked?: import('@/lib/collectionAlsoLiked').CollectionAlsoLikedPerson[];
+  also_commented?: import('@/lib/collectionAlsoLiked').CollectionAlsoLikedPerson[];
 };
 
 function buildPublicProfileQuery(username: string, filters: PublicProfileFilters, offset: number): string {

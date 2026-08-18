@@ -3,21 +3,27 @@ export type EngagedPreviewItem = {
   likes_count?: number;
   comments_count?: number;
   also_watched?: unknown[] | null;
+  also_liked?: unknown[] | null;
+  also_commented?: unknown[] | null;
 };
 
 function hasCounts(item: EngagedPreviewItem): boolean {
   return (item.likes_count ?? 0) > 0 || (item.comments_count ?? 0) > 0;
 }
 
-function hasAlsoWatched(item: EngagedPreviewItem): boolean {
-  return (item.also_watched?.length ?? 0) > 0;
+function hasAlsoFollowed(item: EngagedPreviewItem): boolean {
+  return (
+    (item.also_watched?.length ?? 0) > 0 ||
+    (item.also_liked?.length ?? 0) > 0 ||
+    (item.also_commented?.length ?? 0) > 0
+  );
 }
 
-/** Prioriza likes/comentarios y «también lo vieron» a partes iguales, sin duplicar. */
+/** Prioriza likes/comentarios y pie social de follows, sin duplicar. */
 export function pickEngagedPreview<T extends EngagedPreviewItem>(items: T[], limit: number): T[] {
   if (limit <= 0) return [];
   const withCounts = items.filter(hasCounts);
-  const withAlso = items.filter((item) => hasAlsoWatched(item) && !hasCounts(item));
+  const withAlso = items.filter((item) => hasAlsoFollowed(item) && !hasCounts(item));
   const mixed: T[] = [];
   const seen = new Set<string>();
   let countsIdx = 0;

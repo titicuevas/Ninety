@@ -1,9 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { attachAlsoWatched, type AlsoWatchedPerson } from './capsuleAlsoWatched.js';
-import { attachCommentCounts } from './capsuleComments.js';
-import { attachLikeStats } from './capsuleLikes.js';
+import { type AlsoWatchedPerson } from './capsuleAlsoWatched.js';
+import { attachListSocial } from './capsuleListSocial.js';
+import { attachCollectionAlsoFollowed } from './collectionAlsoFollowed.js';
 import { attachCollectionCommentCounts } from './collectionComments.js';
-import { attachCollectionLikeStats } from './collectionLikes.js';
+import { attachCollectionLikeStats, type CollectionAlsoLikedPerson } from './collectionLikes.js';
 import { excludeBlockedIds, listBlockedEitherWayIds } from './userBlocks.js';
 import { getFollowingIds } from './userFollows.js';
 
@@ -27,6 +27,8 @@ export type FollowActivityCapsulePayload = {
   likes_count?: number;
   comments_count?: number;
   also_watched?: AlsoWatchedPerson[];
+  also_liked?: CollectionAlsoLikedPerson[];
+  also_commented?: CollectionAlsoLikedPerson[];
 };
 
 export type FollowActivityCollectionPayload = {
@@ -37,6 +39,8 @@ export type FollowActivityCollectionPayload = {
   author_username: string | null;
   likes_count?: number;
   comments_count?: number;
+  also_liked?: CollectionAlsoLikedPerson[];
+  also_commented?: CollectionAlsoLikedPerson[];
 };
 
 export type FollowActivityEvent =
@@ -503,13 +507,21 @@ function toEvent(
 }
 
 type ActivityCountStats = { likes_count: number; comments_count: number };
-type ActivityCapsuleStats = ActivityCountStats & { also_watched?: AlsoWatchedPerson[] };
+type ActivityCapsuleStats = ActivityCountStats & {
+  also_watched?: AlsoWatchedPerson[];
+  also_liked?: CollectionAlsoLikedPerson[];
+  also_commented?: CollectionAlsoLikedPerson[];
+};
+type ActivityCollectionStats = ActivityCountStats & {
+  also_liked?: CollectionAlsoLikedPerson[];
+  also_commented?: CollectionAlsoLikedPerson[];
+};
 
-/** Mezcla likes, comentarios y «también lo vieron» en Capsules y listas de actividad. */
+/** Mezcla likes, comentarios y pie social en Capsules y listas de actividad. */
 export function applyActivityEngagement(
   events: FollowActivityEvent[],
   capsuleStats: ReadonlyMap<string, ActivityCapsuleStats>,
-  collectionStats: ReadonlyMap<string, ActivityCountStats>,
+  collectionStats: ReadonlyMap<string, ActivityCollectionStats>,
 ): FollowActivityEvent[] {
   return events.map((event) => {
     if ('capsule' in event) {
@@ -546,37 +558,40 @@ async function loadActivityEngagement(
       });
     }
 
-    const [withLikes, withAlsoWatched] = await Promise.all([
-      attachLikeStats(
-        supabase,
-        viewerId,
-        capsuleIds.map((id) => ({ id })),
-      ),
-      attachAlsoWatched(viewerId, [...uniqueCapsules.values()]),
-    ]);
-    const withComments = await attachCommentCounts(supabase, withLikes);
-    const alsoById = new Map(withAlsoWatched.map((row) => [row.id, row.also_watched]));
-    for (const row of withComments) {
+    const withSocial = await attachListSocial(supabase, viewerId, [...uniqueCapsules.values()]);
+    for (const row of withSocial) {
       capsuleStats.set(row.id, {
         likes_count: row.likes_count,
         comments_count: row.comments_count,
-        also_watched: alsoById.get(row.id) ?? [],
+        also_watched: row.also_watched,
+        also_liked: row.also_liked,
+        also_commented: row.also_commented,
       });
     }
   }
 
-  const collectionStats = new Map<string, ActivityCountStats>();
+  const collectionStats = new Map<string, ActivityCollectionStats>();
   if (collectionIds.length > 0) {
+    const { data: collectionRows } = await supabase
+      .from('collections')
+      .select('id, user_id')
+      .in('id', collectionIds);
+    const owners = (collectionRows ?? []) as Array<{ id: string; user_id: string }>;
     const withLikes = await attachCollectionLikeStats(
       supabase,
       viewerId,
       collectionIds.map((id) => ({ id })),
     );
     const withComments = await attachCollectionCommentCounts(supabase, withLikes);
+    const withFollowed = await attachCollectionAlsoFollowed(viewerId, owners);
+    const followedById = new Map(withFollowed.map((row) => [row.id, row]));
     for (const row of withComments) {
+      const followed = followedById.get(row.id);
       collectionStats.set(row.id, {
         likes_count: row.likes_count,
         comments_count: row.comments_count,
+        also_liked: followed?.also_liked ?? [],
+        also_commented: followed?.also_commented ?? [],
       });
     }
   }

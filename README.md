@@ -709,6 +709,12 @@ Ninety/
 - [x] El pie de la ficha usa esas listas (sin un fetch por tarjeta)
 - [x] E2e chromium con skip si prod aún no despliega los campos
 
+### ✅ v65 — También le gusta en Actividad y lista destacada
+- [x] `GET /api/activity` adjunta `also_liked` y `also_commented` en Capsules y listas (un query por página)
+- [x] La colección destacada del perfil público incluye el mismo pie social
+- [x] Actividad y preview de Home pintan esas listas cuando vienen en la API
+- [x] E2e chromium con skip si prod aún no despliega los campos
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

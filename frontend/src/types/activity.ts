@@ -18,6 +18,8 @@ export type FollowActivityCapsule = {
   likes_count?: number;
   comments_count?: number;
   also_watched?: import('@/lib/capsuleAlsoWatched').AlsoWatchedPerson[];
+  also_liked?: import('@/lib/collectionAlsoLiked').CollectionAlsoLikedPerson[];
+  also_commented?: import('@/lib/collectionAlsoLiked').CollectionAlsoLikedPerson[];
 };
 
 export type FollowActivityCollection = {
@@ -28,6 +30,8 @@ export type FollowActivityCollection = {
   author_username?: string | null;
   likes_count?: number;
   comments_count?: number;
+  also_liked?: import('@/lib/collectionAlsoLiked').CollectionAlsoLikedPerson[];
+  also_commented?: import('@/lib/collectionAlsoLiked').CollectionAlsoLikedPerson[];
 };
 
 export type FollowActivityEvent =

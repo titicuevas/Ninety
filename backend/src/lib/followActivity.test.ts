@@ -399,10 +399,20 @@ describe('applyActivityEngagement', () => {
                 capsule_id: 'c2',
               },
             ],
+            also_liked: [{ id: 'u3', username: 'fan03', display_name: 'Fan Tres', avatar_url: null }],
           },
         ],
       ]),
-      new Map([['l1', { likes_count: 4, comments_count: 3 }]]),
+      new Map([
+        [
+          'l1',
+          {
+            likes_count: 4,
+            comments_count: 3,
+            also_liked: [{ id: 'u4', username: 'fan04', display_name: 'Fan Cuatro', avatar_url: null }],
+          },
+        ],
+      ]),
     );
     assert.equal(next[0] && 'capsule' in next[0] ? next[0].capsule.likes_count : 0, 2);
     assert.equal(next[0] && 'capsule' in next[0] ? next[0].capsule.comments_count : 0, 1);
@@ -410,7 +420,12 @@ describe('applyActivityEngagement', () => {
       next[0] && 'capsule' in next[0] ? next[0].capsule.also_watched?.length : 0,
       1,
     );
+    assert.equal(next[0] && 'capsule' in next[0] ? next[0].capsule.also_liked?.length : 0, 1);
     assert.equal(next[1] && 'collection' in next[1] ? next[1].collection.likes_count : 0, 4);
     assert.equal(next[1] && 'collection' in next[1] ? next[1].collection.comments_count : 0, 3);
+    assert.equal(
+      next[1] && 'collection' in next[1] ? next[1].collection.also_liked?.length : 0,
+      1,
+    );
   });
 });

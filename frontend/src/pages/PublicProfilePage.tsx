@@ -313,6 +313,8 @@ function PublicCollectionsSections({
               currentUserId={viewerUserId}
               likesCount={featuredCollection.likes_count}
               commentsCount={featuredCollection.comments_count}
+              alsoLiked={featuredCollection.also_liked}
+              alsoCommented={featuredCollection.also_commented}
             />
           </div>
         </section>

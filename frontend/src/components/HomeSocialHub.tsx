@@ -1,7 +1,11 @@
 import { Link } from 'react-router-dom';
 import { UserPlus, Users } from 'lucide-react';
 import { ActivityShortcutLink } from '@/components/ActivityShortcutLink';
+import { CapsuleAlsoCommented } from '@/components/CapsuleAlsoCommented';
+import { CapsuleAlsoLiked } from '@/components/CapsuleAlsoLiked';
 import { CapsuleAlsoWatched } from '@/components/CapsuleAlsoWatched';
+import { CollectionAlsoCommented } from '@/components/CollectionAlsoCommented';
+import { CollectionAlsoLiked } from '@/components/CollectionAlsoLiked';
 import { CapsuleCardSocialFooter } from '@/components/CapsuleCardSocialFooter';
 import { CollectionCardSocialFooter } from '@/components/CollectionCardSocialFooter';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
@@ -13,7 +17,7 @@ import { useDiscoverCollections } from '@/hooks/useDiscoverCollections';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { useFollowActivity } from '@/hooks/useFollowActivity';
 import { formatCollectionCardMeta } from '@/lib/collectionCardMeta';
-import { followActivityAlsoWatched, followActivityEngagementMeta, pickEngagedActivityPreview, summarizeFollowActivityEvent } from '@/lib/followActivitySummary';
+import { followActivityAlsoCommented, followActivityAlsoLiked, followActivityAlsoWatched, followActivityEngagementMeta, pickEngagedActivityPreview, summarizeFollowActivityEvent } from '@/lib/followActivitySummary';
 import { formatRelativeTime } from '@/lib/format';
 import { pickEngagedPreview } from '@/lib/pickEngagedPreview';
 import { publicProfilePath } from '@/lib/profilePath';
@@ -141,6 +145,39 @@ function ActivityPreviewRow({ event }: { event: FollowActivityEvent }) {
   const summary = summarizeFollowActivityEvent(event);
   const engagement = followActivityEngagementMeta(event);
   const alsoWatched = followActivityAlsoWatched(event);
+  const alsoLiked = followActivityAlsoLiked(event);
+  const alsoCommented = followActivityAlsoCommented(event);
+  const socialLines =
+    event.type === 'capsule' || event.type === 'capsule_like' || event.type === 'capsule_comment' ? (
+      <>
+        {alsoWatched.length > 0 ? (
+          <CapsuleAlsoWatched people={alsoWatched} className="mt-1 text-xs" />
+        ) : null}
+        <CapsuleAlsoLiked
+          capsuleId={event.capsule.id}
+          people={alsoLiked}
+          className="mt-1 text-xs"
+        />
+        <CapsuleAlsoCommented
+          capsuleId={event.capsule.id}
+          people={alsoCommented}
+          className="mt-1 text-xs"
+        />
+      </>
+    ) : (
+      <>
+        <CollectionAlsoLiked
+          collectionId={event.collection.id}
+          people={alsoLiked}
+          className="mt-1 text-xs"
+        />
+        <CollectionAlsoCommented
+          collectionId={event.collection.id}
+          people={alsoCommented}
+          className="mt-1 text-xs"
+        />
+      </>
+    );
 
   return (
     <li className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card p-3 sm:p-3.5">
@@ -161,9 +198,7 @@ function ActivityPreviewRow({ event }: { event: FollowActivityEvent }) {
         {engagement ? (
           <p className="mt-0.5 text-xs text-muted-foreground">{engagement}</p>
         ) : null}
-        {alsoWatched.length > 0 ? (
-          <CapsuleAlsoWatched people={alsoWatched} className="mt-1 text-xs" />
-        ) : null}
+        {socialLines}
       </div>
       <time
         className="shrink-0 text-xs text-muted-foreground"
