@@ -3,6 +3,7 @@ import express from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { env } from './config/loadEnv.js';
+import { createApiRateLimiter } from './lib/apiRateLimit.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { capsulesRouter } from './routes/capsules.js';
 import { collectionsRouter } from './routes/collections.js';
@@ -38,6 +39,12 @@ const authLimiter = rateLimit({
 
 export function createApp() {
   const app = express();
+
+  // Railway (y cualquier reverse proxy) manda X-Forwarded-For; sin esto el límite
+  // ve una sola IP y un flood colapsa el bucket de todo el mundo.
+  if (env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
+  }
 
   app.use(helmet());
   app.use(
@@ -85,6 +92,8 @@ export function createApp() {
 
   app.use('/', indexRouter);
   app.use('/api/health', healthRouter);
+  app.use('/api/internal', internalRouter);
+  app.use('/api', createApiRateLimiter());
   app.use('/api/auth', authLimiter, authRouter);
   app.use('/api/profile', profileRouter);
   app.use('/api/capsules', capsulesRouter);
@@ -96,7 +105,6 @@ export function createApp() {
   app.use('/api/want-to-go', wantToGoRouter);
   app.use('/api/activity', activityRouter);
   app.use('/api/email-digest', emailDigestRouter);
-  app.use('/api/internal', internalRouter);
 
   app.use(errorHandler);
 

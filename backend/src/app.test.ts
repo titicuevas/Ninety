@@ -38,6 +38,14 @@ describe('API', () => {
     assert.equal(res.body.service, 'ninety-api');
   });
 
+  it('GET /api/health no entra en el tope global', async () => {
+    const app = createApp();
+    for (let i = 0; i < 8; i += 1) {
+      const res = await request(app).get('/api/health');
+      assert.equal(res.status, 200);
+    }
+  });
+
   it('GET /api/football/competitions requiere auth', async () => {
     const res = await request(createApp()).get('/api/football/competitions');
     assert.equal(res.status, 401);
