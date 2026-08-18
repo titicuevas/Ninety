@@ -460,6 +460,48 @@ test.describe('Smoke — demo showcase @smoke', () => {
     ).toBeVisible({ timeout: 15_000 });
   });
 
+  test('PATCH de lista conserva likes y comentarios', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const me = await request.get(`${API_BASE}/api/collections/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(me.ok()).toBeTruthy();
+    const body = (await me.json()) as {
+      collections?: Array<{
+        id?: string;
+        description?: string | null;
+        likes_count?: number;
+        comments_count?: number;
+        is_public?: boolean;
+      }>;
+    };
+    const target = (body.collections ?? []).find(
+      (row) =>
+        row.id &&
+        row.is_public !== false &&
+        ((row.likes_count ?? 0) > 0 || (row.comments_count ?? 0) > 0),
+    );
+    expect(
+      target?.id,
+      'La cuenta QA no tiene listas públicas con likes/comentarios (usa @beta_ninety o seed:fans)',
+    ).toBeTruthy();
+
+    const patch = await request.patch(`${API_BASE}/api/collections/${target!.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { description: target!.description ?? null },
+    });
+    expect(patch.ok()).toBeTruthy();
+    const patched = (await patch.json()) as {
+      collection?: { likes_count?: number; comments_count?: number };
+    };
+    expect(patched.collection?.likes_count ?? 0).toBe(target!.likes_count ?? 0);
+    expect(patched.collection?.comments_count ?? 0).toBe(target!.comments_count ?? 0);
+  });
+
   test('Home Comunidad muestra también le gusta en el preview del feed', async ({
     page,
     request,

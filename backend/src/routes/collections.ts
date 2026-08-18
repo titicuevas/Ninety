@@ -324,6 +324,25 @@ async function commentsCountFor(
   }
 }
 
+async function serializeCollectionWithEngagement(
+  reader: Parameters<typeof attachCollectionLikeStats>[0],
+  row: CollectionRow,
+  extras: {
+    items_count: number;
+    cover_url: string | null;
+    viewerId: string;
+  },
+) {
+  const [withLikes] = await attachCollectionLikeStats(reader, extras.viewerId, [row]);
+  return serializeCollection(withLikes ?? row, {
+    items_count: extras.items_count,
+    cover_url: extras.cover_url,
+    likes_count: withLikes?.likes_count ?? 0,
+    liked_by_me: withLikes?.liked_by_me ?? false,
+    comments_count: await commentsCountFor(reader, row.id),
+  });
+}
+
 async function loadCollectionItems(
   reader: ReturnType<typeof createUserClient>,
   collectionId: string,
@@ -1309,20 +1328,15 @@ collectionsRouter.get('/user/:username/:slug', optionalAuth, async (req: AuthReq
     viewerId: req.userId ?? '',
   });
   const row = collection as CollectionRow;
-  const [withLikes] = await attachCollectionLikeStats(reader, req.userId ?? '', [row]);
-  const commentsCount = await commentsCountFor(reader, row.id);
-
   res.json({
     profile: collectionAuthor(profile),
-    collection: serializeCollection(withLikes ?? row, {
+    collection: await serializeCollectionWithEngagement(reader, row, {
       items_count: capsules.length,
       cover_url: resolveCollectionCoverUrl({
         coverCapsuleId: row.cover_capsule_id ?? null,
         capsules,
       }),
-      likes_count: withLikes?.likes_count ?? 0,
-      liked_by_me: withLikes?.liked_by_me ?? false,
-      comments_count: commentsCount,
+      viewerId: req.userId ?? '',
     }),
     capsules,
   });
@@ -1381,19 +1395,15 @@ collectionsRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
     .maybeSingle();
 
   const row = collection as CollectionRow;
-  const [withLikes] = await attachCollectionLikeStats(reader, req.userId ?? '', [row]);
-  const commentsCount = await commentsCountFor(reader, row.id);
   res.json({
     profile: profile ? collectionAuthor(profile) : null,
-    collection: serializeCollection(withLikes ?? row, {
+    collection: await serializeCollectionWithEngagement(reader, row, {
       items_count: capsules.length,
       cover_url: resolveCollectionCoverUrl({
         coverCapsuleId: row.cover_capsule_id ?? null,
         capsules,
       }),
-      likes_count: withLikes?.likes_count ?? 0,
-      liked_by_me: withLikes?.liked_by_me ?? false,
-      comments_count: commentsCount,
+      viewerId: req.userId ?? '',
     }),
     capsules,
   });
@@ -2173,9 +2183,10 @@ collectionsRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
   const counts = await loadItemCounts(supabase, [id]);
   const coverUrls = await loadCoverUrls(supabase, [row]);
   res.json({
-    collection: serializeCollection(row, {
+    collection: await serializeCollectionWithEngagement(supabase, row, {
       items_count: counts.get(id) ?? 0,
       cover_url: coverUrls.get(id) ?? null,
+      viewerId: req.userId!,
     }),
   });
 });

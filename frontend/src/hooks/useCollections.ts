@@ -128,7 +128,10 @@ export function useUpdateCollection(id: string) {
         { method: 'PATCH', body: JSON.stringify(input) },
         session?.access_token,
       ),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.setQueryData<CollectionDetailResponse>(['collections', 'detail', id], (old) =>
+        old ? { ...old, collection: { ...old.collection, ...data.collection } } : old,
+      );
       void queryClient.invalidateQueries({ queryKey: ['collections'] });
       toast.success('Colección actualizada');
     },

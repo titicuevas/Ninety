@@ -662,6 +662,9 @@ Ninety/
 ### ✅ v54 — Engagement en el preview de Home
 - [x] «Actividad reciente» en Home muestra likes/comentarios de la Capsule o lista, igual que `/activity`
 
+### ✅ v55 — PATCH de lista conserva engagement
+- [x] `PATCH /api/collections/:id` devuelve `likes_count` y `comments_count` (el detalle no parpadea a 0 al editar)
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium
