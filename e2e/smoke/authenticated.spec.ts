@@ -227,6 +227,26 @@ test.describe('Smoke — autenticado @smoke', () => {
     await expect(suggestions.or(emptyHint)).toBeVisible({ timeout: 15_000 });
   });
 
+  test('Buscar listas muestra colecciones o empty', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page.goto('/search?tab=lists');
+    await expect(page.getByRole('heading', { name: /^buscar$/i })).toBeVisible();
+    const listsTab = page.getByRole('tablist', { name: /tipo de búsqueda/i }).getByRole('tab', {
+      name: 'Listas',
+    });
+    test.skip(
+      (await listsTab.count()) === 0,
+      'front aún no tiene pestaña Listas — espera al deploy de v71',
+    );
+    await expect(listsTab).toHaveAttribute('aria-selected', 'true');
+    const panel = page.getByTestId('search-lists-panel');
+    await expect(panel).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByLabel(/nombre, descripción o autor/i)).toBeVisible();
+    await expect(panel.getByRole('list').or(panel.getByRole('status')).first()).toBeVisible({
+      timeout: 20_000,
+    });
+  });
+
   test('Mis Capsules pide confirmación al eliminar', async ({ page }) => {
     await openAuthenticatedHome(page);
     await page

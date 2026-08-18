@@ -113,4 +113,26 @@ test.describe('A11y — app autenticada @a11y', () => {
     await expect(nearby).toHaveAttribute('aria-pressed', 'true');
     await expect(page).toHaveURL(/reason=nearby/);
   });
+
+  test('chips de listas en Buscar se activan con teclado', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page.goto('/search?tab=lists');
+    await expect(page.getByRole('heading', { name: /^buscar$/i })).toBeVisible({
+      timeout: 20_000,
+    });
+    const listsTab = page.getByRole('tablist', { name: /tipo de búsqueda/i }).getByRole('tab', {
+      name: 'Listas',
+    });
+    test.skip(
+      (await listsTab.count()) === 0,
+      'front aún no tiene pestaña Listas — espera al deploy de v71',
+    );
+    const sort = page.getByTestId('explore-collections-sort');
+    const recent = sort.getByRole('button', { name: /^recientes$/i });
+    await recent.focus();
+    await expect(recent).toBeFocused();
+    await recent.press('Enter');
+    await expect(recent).toHaveAttribute('aria-pressed', 'true');
+    await expect(page).toHaveURL(/sort=recent/);
+  });
 });

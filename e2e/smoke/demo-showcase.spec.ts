@@ -1177,4 +1177,25 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(chip.first()).toBeVisible();
     await expect(chip.first()).toContainText(/también en quiero ir/i);
   });
+
+  test('Buscar listas abre colecciones en /search?tab=lists', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    await page.goto('/search?tab=lists');
+    const listsTab = page.getByRole('tablist', { name: /tipo de búsqueda/i }).getByRole('tab', {
+      name: 'Listas',
+    });
+    test.skip(
+      (await listsTab.count()) === 0,
+      'front aún no tiene pestaña Listas — espera al deploy de v71',
+    );
+    await expect(listsTab).toHaveAttribute('aria-selected', 'true');
+    const panel = page.getByTestId('search-lists-panel');
+    await expect(panel).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByLabel(/nombre, descripción o autor/i)).toBeVisible();
+    await expect(panel.getByTestId('explore-collections-sort')).toBeVisible();
+    await page.getByRole('button', { name: /^recientes$/i }).click();
+    await expect(page).toHaveURL(/tab=lists/);
+    await expect(page).toHaveURL(/sort=recent/);
+  });
 });
