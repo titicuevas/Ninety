@@ -638,6 +638,9 @@ Ninety/
 ### ✅ v46 — Pie social en el preview de Home
 - [x] Comunidad en `/home` muestra «también le gusta / comentó» en el preview del feed (prioriza Capsules con engagement; listas sugeridas si el feed está vacío)
 
+### ✅ v47 — A11y de portadas en listas
+- [x] El enlace de la portada en el perfil público (y Mis listas) queda oculto a AT (`aria-hidden`) para no romper `link-name` en QA E2E
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

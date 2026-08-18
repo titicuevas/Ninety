@@ -332,7 +332,12 @@ function PublicCollectionsSections({
                   <article className="rounded-xl border border-border bg-card/50 p-3 transition-colors hover:border-primary/40">
                     <div className="flex items-start gap-3">
                       {col.cover_url ? (
-                        <Link to={href} tabIndex={-1} className="shrink-0">
+                        <Link
+                          to={href}
+                          tabIndex={-1}
+                          aria-hidden
+                          className="shrink-0"
+                        >
                           <img
                             src={col.cover_url}
                             alt=""

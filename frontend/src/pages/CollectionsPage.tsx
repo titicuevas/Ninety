@@ -41,7 +41,7 @@ function MyCollectionCard({
       <article className="rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40">
         <div className="flex items-start gap-3">
           {collection.cover_url ? (
-            <Link to={href} tabIndex={-1} className="shrink-0">
+            <Link to={href} tabIndex={-1} aria-hidden className="shrink-0">
               <img
                 src={collection.cover_url}
                 alt=""
