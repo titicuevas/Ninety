@@ -16,19 +16,11 @@ export function SocialInlineRow({
     <div
       className={cn(
         'flex w-full flex-wrap items-baseline text-xs leading-relaxed text-muted-foreground',
+        '[&>:not(:first-child)]:before:mx-1.5 [&>:not(:first-child)]:before:select-none [&>:not(:first-child)]:before:text-muted-foreground/45 [&>:not(:first-child)]:before:content-["·"]',
         className,
       )}
     >
-      {items.map((child, index) => (
-        <span key={index} className="inline">
-          {index > 0 ? (
-            <span className="mx-1.5 select-none text-muted-foreground/45" aria-hidden>
-              ·
-            </span>
-          ) : null}
-          {child}
-        </span>
-      ))}
+      {items}
     </div>
   );
 }
