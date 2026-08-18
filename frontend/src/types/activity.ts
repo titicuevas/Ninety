@@ -7,14 +7,17 @@ export type FollowActivityActor = {
 
 export type FollowActivityCapsule = {
   id: string;
+  user_id?: string;
   home_team_name: string;
   away_team_name: string;
   competition_name: string | null;
   rating: number | null;
   photo_urls: string[] | null;
   watched_at: string | null;
+  match_id?: number | null;
   likes_count?: number;
   comments_count?: number;
+  also_watched?: import('@/lib/capsuleAlsoWatched').AlsoWatchedPerson[];
 };
 
 export type FollowActivityCollection = {

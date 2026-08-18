@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { UserPlus, Users } from 'lucide-react';
 import { ActivityShortcutLink } from '@/components/ActivityShortcutLink';
+import { CapsuleAlsoWatched } from '@/components/CapsuleAlsoWatched';
 import { CapsuleCardSocialFooter } from '@/components/CapsuleCardSocialFooter';
 import { CollectionCardSocialFooter } from '@/components/CollectionCardSocialFooter';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
@@ -12,7 +13,7 @@ import { useDiscoverCollections } from '@/hooks/useDiscoverCollections';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { useFollowActivity } from '@/hooks/useFollowActivity';
 import { formatCollectionCardMeta } from '@/lib/collectionCardMeta';
-import { followActivityEngagementMeta, summarizeFollowActivityEvent } from '@/lib/followActivitySummary';
+import { followActivityAlsoWatched, followActivityEngagementMeta, pickEngagedActivityPreview, summarizeFollowActivityEvent } from '@/lib/followActivitySummary';
 import { formatRelativeTime } from '@/lib/format';
 import { pickEngagedPreview } from '@/lib/pickEngagedPreview';
 import { publicProfilePath } from '@/lib/profilePath';
@@ -135,6 +136,7 @@ function ActivityPreviewRow({ event }: { event: FollowActivityEvent }) {
   const actorHref = publicProfilePath(event.actor.username);
   const summary = summarizeFollowActivityEvent(event);
   const engagement = followActivityEngagementMeta(event);
+  const alsoWatched = followActivityAlsoWatched(event);
 
   return (
     <li className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card p-3 sm:p-3.5">
@@ -154,6 +156,9 @@ function ActivityPreviewRow({ event }: { event: FollowActivityEvent }) {
         </p>
         {engagement ? (
           <p className="mt-0.5 text-xs text-muted-foreground">{engagement}</p>
+        ) : null}
+        {alsoWatched.length > 0 ? (
+          <CapsuleAlsoWatched people={alsoWatched} className="mt-1 text-xs" />
         ) : null}
       </div>
       <time
@@ -188,7 +193,10 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
   const { data: feedData, isLoading: feedLoading } = useCapsuleFeed('following', 'recent');
   const { data: activityData, isLoading: activityLoading } = useFollowActivity();
   const preview = pickEngagedPreview(feedData?.pages[0]?.capsules ?? [], PREVIEW_COUNT);
-  const activityPreview = activityData?.pages[0]?.events.slice(0, PREVIEW_COUNT) ?? [];
+  const activityPreview = pickEngagedActivityPreview(
+    activityData?.pages[0]?.events ?? [],
+    PREVIEW_COUNT,
+  );
   const followingCount = activityData?.pages[0]?.following_count ?? 0;
   const feedEmpty = !feedLoading && preview.length === 0;
   const showActivityPreview = followingCount > 0 && (activityLoading || activityPreview.length > 0);

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Activity, Heart, Library, MessageCircle, Ticket, Users } from 'lucide-react';
 import { ActivityTypeFiltersBar } from '@/components/ActivityTypeFiltersBar';
+import { CapsuleAlsoWatched } from '@/components/CapsuleAlsoWatched';
 import { EmptyState } from '@/components/EmptyState';
 import { capsuleCardListClass } from '@/components/CapsuleListCard';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
@@ -16,7 +17,7 @@ import {
   activityTypeEmptyCopy,
   hasActivityTypeFilter,
 } from '@/lib/activityTypeFilter';
-import { followActivityEngagementMeta } from '@/lib/followActivitySummary';
+import { followActivityAlsoWatched, followActivityEngagementMeta } from '@/lib/followActivitySummary';
 import { formatRelativeTime } from '@/lib/format';
 import { publicProfilePath } from '@/lib/profilePath';
 import type { FollowActivityEvent } from '@/types/activity';
@@ -48,6 +49,12 @@ function ActorLink({ event }: { event: FollowActivityEvent }) {
   }
 
   return <span className="font-medium text-foreground">{name}</span>;
+}
+
+function ActivityAlsoWatchedLine({ event }: { event: FollowActivityEvent }) {
+  const people = followActivityAlsoWatched(event);
+  if (people.length === 0) return null;
+  return <CapsuleAlsoWatched people={people} className="mt-1 text-xs" />;
 }
 
 function ActivityEngagementLine({ event }: { event: FollowActivityEvent }) {
@@ -97,6 +104,7 @@ function CapsuleActivityRow({
             {match}
           </Link>
           <ActivityEngagementLine event={event} />
+          <ActivityAlsoWatchedLine event={event} />
           {commented ? (
             <p className="mt-1 line-clamp-2 text-sm text-foreground/90">{event.comment_body}</p>
           ) : null}

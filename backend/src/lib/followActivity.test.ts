@@ -55,6 +55,8 @@ const capsuleLike = (
   user_id,
   occurred_at,
   capsule_id: id.split(':')[1] ?? id,
+  capsule_user_id: 'owner',
+  match_id: 42,
   home_team_name: 'Betis',
   away_team_name: 'Sevilla',
   competition_name: 'LaLiga',
@@ -73,6 +75,8 @@ const capsuleComment = (
   user_id,
   occurred_at,
   capsule_id: 'c1',
+  capsule_user_id: 'owner',
+  match_id: 42,
   comment_body: 'Qué partidazo',
   home_team_name: 'Betis',
   away_team_name: 'Sevilla',
@@ -163,6 +167,7 @@ describe('visibleCapsuleLikeCandidates', () => {
     rating: null,
     photo_urls: null,
     watched_at: null,
+    match_id: 42,
   };
 
   it('omite privadas, propias y bloqueadas', () => {
@@ -178,6 +183,8 @@ describe('visibleCapsuleLikeCandidates', () => {
     );
     assert.equal(visible.length, 1);
     assert.equal(visible[0]?.capsule_id, 'c1');
+    assert.equal(visible[0]?.capsule_user_id, 'owner');
+    assert.equal(visible[0]?.match_id, 42);
 
     assert.equal(
       visibleCapsuleLikeCandidates(
@@ -242,6 +249,7 @@ describe('visibleCapsuleCommentCandidates', () => {
     rating: null,
     photo_urls: null,
     watched_at: null,
+    match_id: 42,
   };
 
   it('omite privadas, propias y bloqueadas', () => {
@@ -270,6 +278,8 @@ describe('visibleCapsuleCommentCandidates', () => {
     assert.equal(visible.length, 1);
     assert.equal(visible[0]?.id, 'cm1');
     assert.equal(visible[0]?.comment_body, 'gran partido');
+    assert.equal(visible[0]?.capsule_user_id, 'owner');
+    assert.equal(visible[0]?.match_id, 42);
 
     assert.equal(
       visibleCapsuleCommentCandidates(
@@ -333,7 +343,7 @@ describe('visibleCollectionCommentCandidates', () => {
 });
 
 describe('applyActivityEngagement', () => {
-  it('copia likes y comentarios en Capsules y listas', () => {
+  it('copia likes, comentarios y also_watched en Capsules y listas', () => {
     const actor = {
       id: 'u1',
       username: 'fan',
@@ -348,12 +358,14 @@ describe('applyActivityEngagement', () => {
         actor,
         capsule: {
           id: 'c1',
+          user_id: 'u1',
           home_team_name: 'Betis',
           away_team_name: 'Sevilla',
           competition_name: 'LaLiga',
           rating: 8,
           photo_urls: null,
           watched_at: '2026-01-01',
+          match_id: 42,
         },
       },
       {
@@ -372,11 +384,32 @@ describe('applyActivityEngagement', () => {
     ];
     const next = applyActivityEngagement(
       events,
-      new Map([['c1', { likes_count: 2, comments_count: 1 }]]),
+      new Map([
+        [
+          'c1',
+          {
+            likes_count: 2,
+            comments_count: 1,
+            also_watched: [
+              {
+                id: 'u2',
+                username: 'fan02',
+                display_name: 'Fan Dos',
+                avatar_url: null,
+                capsule_id: 'c2',
+              },
+            ],
+          },
+        ],
+      ]),
       new Map([['l1', { likes_count: 4, comments_count: 3 }]]),
     );
     assert.equal(next[0] && 'capsule' in next[0] ? next[0].capsule.likes_count : 0, 2);
     assert.equal(next[0] && 'capsule' in next[0] ? next[0].capsule.comments_count : 0, 1);
+    assert.equal(
+      next[0] && 'capsule' in next[0] ? next[0].capsule.also_watched?.length : 0,
+      1,
+    );
     assert.equal(next[1] && 'collection' in next[1] ? next[1].collection.likes_count : 0, 4);
     assert.equal(next[1] && 'collection' in next[1] ? next[1].collection.comments_count : 0, 3);
   });

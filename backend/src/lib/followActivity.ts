@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { attachAlsoWatched, type AlsoWatchedPerson } from './capsuleAlsoWatched.js';
 import { attachCommentCounts } from './capsuleComments.js';
 import { attachLikeStats } from './capsuleLikes.js';
 import { attachCollectionCommentCounts } from './collectionComments.js';
@@ -15,14 +16,17 @@ export type FollowActivityActor = {
 
 export type FollowActivityCapsulePayload = {
   id: string;
+  user_id: string;
   home_team_name: string;
   away_team_name: string;
   competition_name: string | null;
   rating: number | null;
   photo_urls: string[] | null;
   watched_at: string | null;
+  match_id?: number | null;
   likes_count?: number;
   comments_count?: number;
+  also_watched?: AlsoWatchedPerson[];
 };
 
 export type FollowActivityCollectionPayload = {
@@ -88,6 +92,7 @@ type CapsuleFields = {
   rating: number | null;
   photo_urls: string[] | null;
   watched_at: string | null;
+  match_id?: number | null;
 };
 
 type CapsuleCandidate = CapsuleFields & {
@@ -103,6 +108,7 @@ type CapsuleLikeCandidate = CapsuleFields & {
   user_id: string;
   occurred_at: string;
   capsule_id: string;
+  capsule_user_id: string;
 };
 
 type CapsuleCommentCandidate = CapsuleFields & {
@@ -111,6 +117,7 @@ type CapsuleCommentCandidate = CapsuleFields & {
   user_id: string;
   occurred_at: string;
   capsule_id: string;
+  capsule_user_id: string;
   comment_body: string;
 };
 
@@ -265,6 +272,8 @@ export function visibleCapsuleLikeCandidates(
       rating: capsule.rating,
       photo_urls: capsule.photo_urls,
       watched_at: capsule.watched_at,
+      match_id: capsule.match_id ?? null,
+      capsule_user_id: capsule.user_id,
     });
   }
   return out;
@@ -349,6 +358,8 @@ export function visibleCapsuleCommentCandidates(
       rating: capsule.rating,
       photo_urls: capsule.photo_urls,
       watched_at: capsule.watched_at,
+      match_id: capsule.match_id ?? null,
+      capsule_user_id: capsule.user_id,
     });
   }
   return out;
@@ -420,12 +431,17 @@ function capsulePayload(
       candidate.kind === 'capsule_like' || candidate.kind === 'capsule_comment'
         ? candidate.capsule_id
         : candidate.id,
+    user_id:
+      candidate.kind === 'capsule_like' || candidate.kind === 'capsule_comment'
+        ? candidate.capsule_user_id
+        : candidate.user_id,
     home_team_name: candidate.home_team_name,
     away_team_name: candidate.away_team_name,
     competition_name: candidate.competition_name,
     rating: candidate.rating,
     photo_urls: candidate.photo_urls,
     watched_at: candidate.watched_at,
+    match_id: candidate.match_id ?? null,
   };
 }
 
@@ -486,13 +502,14 @@ function toEvent(
   };
 }
 
-type ActivityEngagementStats = { likes_count: number; comments_count: number };
+type ActivityCountStats = { likes_count: number; comments_count: number };
+type ActivityCapsuleStats = ActivityCountStats & { also_watched?: AlsoWatchedPerson[] };
 
-/** Mezcla likes/comentarios en Capsules y listas de la página de actividad. */
+/** Mezcla likes, comentarios y «también lo vieron» en Capsules y listas de actividad. */
 export function applyActivityEngagement(
   events: FollowActivityEvent[],
-  capsuleStats: ReadonlyMap<string, ActivityEngagementStats>,
-  collectionStats: ReadonlyMap<string, ActivityEngagementStats>,
+  capsuleStats: ReadonlyMap<string, ActivityCapsuleStats>,
+  collectionStats: ReadonlyMap<string, ActivityCountStats>,
 ): FollowActivityEvent[] {
   return events.map((event) => {
     if ('capsule' in event) {
@@ -514,23 +531,41 @@ async function loadActivityEngagement(
     ...new Set(events.flatMap((event) => ('collection' in event ? [event.collection.id] : []))),
   ];
 
-  const capsuleStats = new Map<string, ActivityEngagementStats>();
+  const capsuleStats = new Map<string, ActivityCapsuleStats>();
   if (capsuleIds.length > 0) {
-    const withLikes = await attachLikeStats(
-      supabase,
-      viewerId,
-      capsuleIds.map((id) => ({ id })),
-    );
+    const uniqueCapsules = new Map<
+      string,
+      { id: string; user_id: string; match_id?: number | null }
+    >();
+    for (const event of events) {
+      if (!('capsule' in event) || uniqueCapsules.has(event.capsule.id)) continue;
+      uniqueCapsules.set(event.capsule.id, {
+        id: event.capsule.id,
+        user_id: event.capsule.user_id,
+        match_id: event.capsule.match_id ?? null,
+      });
+    }
+
+    const [withLikes, withAlsoWatched] = await Promise.all([
+      attachLikeStats(
+        supabase,
+        viewerId,
+        capsuleIds.map((id) => ({ id })),
+      ),
+      attachAlsoWatched(viewerId, [...uniqueCapsules.values()]),
+    ]);
     const withComments = await attachCommentCounts(supabase, withLikes);
+    const alsoById = new Map(withAlsoWatched.map((row) => [row.id, row.also_watched]));
     for (const row of withComments) {
       capsuleStats.set(row.id, {
         likes_count: row.likes_count,
         comments_count: row.comments_count,
+        also_watched: alsoById.get(row.id) ?? [],
       });
     }
   }
 
-  const collectionStats = new Map<string, ActivityEngagementStats>();
+  const collectionStats = new Map<string, ActivityCountStats>();
   if (collectionIds.length > 0) {
     const withLikes = await attachCollectionLikeStats(
       supabase,
@@ -576,7 +611,7 @@ async function loadCapsuleLikeCandidates(
   const { data: capsuleRows, error: capsulesError } = await supabase
     .from('capsules')
     .select(
-      'id, user_id, is_public, home_team_name, away_team_name, competition_name, rating, photo_urls, watched_at',
+      'id, user_id, is_public, home_team_name, away_team_name, competition_name, rating, photo_urls, watched_at, match_id',
     )
     .in('id', capsuleIds);
 
@@ -680,7 +715,7 @@ async function loadCapsuleCommentCandidates(
   const { data: capsuleRows, error: capsulesError } = await supabase
     .from('capsules')
     .select(
-      'id, user_id, is_public, home_team_name, away_team_name, competition_name, rating, photo_urls, watched_at',
+      'id, user_id, is_public, home_team_name, away_team_name, competition_name, rating, photo_urls, watched_at, match_id',
     )
     .in('id', capsuleIds);
 
@@ -805,7 +840,7 @@ export async function listFollowActivity(
         ? supabase
             .from('capsules')
             .select(
-              'id, user_id, home_team_name, away_team_name, competition_name, rating, photo_urls, watched_at, created_at',
+              'id, user_id, home_team_name, away_team_name, competition_name, rating, photo_urls, watched_at, match_id, created_at',
               { count: 'exact' },
             )
             .eq('is_public', true)
@@ -866,6 +901,7 @@ export async function listFollowActivity(
     rating: number | null;
     photo_urls: string[] | null;
     watched_at: string | null;
+    match_id: number | null;
     created_at: string;
   }>;
   const capsuleTotal = capsulesResult.count ?? capsuleRows.length;
@@ -883,6 +919,7 @@ export async function listFollowActivity(
         rating: row.rating,
         photo_urls: row.photo_urls,
         watched_at: row.watched_at,
+        match_id: row.match_id,
       }),
     ),
     ...capsuleLikesResult.rows,

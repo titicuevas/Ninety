@@ -1,4 +1,6 @@
 import { formatEngagementMeta } from './collectionCardMeta.ts';
+import { pickEngagedPreview } from './pickEngagedPreview.ts';
+import type { AlsoWatchedPerson } from '@/lib/capsuleAlsoWatched';
 import type { FollowActivityEvent } from '@/types/activity';
 
 export type ActivityEventSummary = {
@@ -55,4 +57,49 @@ export function followActivityEngagementMeta(event: FollowActivityEvent): string
     event.collection.likes_count ?? 0,
     event.collection.comments_count ?? 0,
   );
+}
+
+/** Follows que vieron el mismo partido (eventos de Capsule). */
+export function followActivityAlsoWatched(
+  event: FollowActivityEvent,
+): AlsoWatchedPerson[] {
+  if (
+    event.type === 'capsule' ||
+    event.type === 'capsule_like' ||
+    event.type === 'capsule_comment'
+  ) {
+    return event.capsule.also_watched ?? [];
+  }
+  return [];
+}
+
+/** Preview de Home: mezcla likes/comentarios y «también lo vieron». */
+export function pickEngagedActivityPreview(
+  events: FollowActivityEvent[],
+  limit: number,
+): FollowActivityEvent[] {
+  return pickEngagedPreview(
+    events.map((event) => {
+      if (
+        event.type === 'capsule' ||
+        event.type === 'capsule_like' ||
+        event.type === 'capsule_comment'
+      ) {
+        return {
+          event,
+          id: event.id,
+          likes_count: event.capsule.likes_count,
+          comments_count: event.capsule.comments_count,
+          also_watched: event.capsule.also_watched,
+        };
+      }
+      return {
+        event,
+        id: event.id,
+        likes_count: event.collection.likes_count,
+        comments_count: event.collection.comments_count,
+      };
+    }),
+    limit,
+  ).map((row) => row.event);
 }

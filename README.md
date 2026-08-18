@@ -675,6 +675,12 @@ Ninety/
 - [x] E2e en feed, Mis Capsules, me gusta, Favoritos, detalle propio, calendarios y Home
 - [x] Lista pública y calendario público recargan con sesión para no perder `also_watched`
 
+### ✅ v58 — También lo vieron en Actividad
+- [x] `/activity` y «Actividad reciente» en Home muestran quién de tus follows vio el mismo partido
+- [x] `GET /api/activity` incluye `also_watched` en eventos de Capsule (un query por página)
+- [x] El preview de Home mezcla likes/comentarios y «también lo vieron»
+- [x] E2e chromium en Actividad y Home (sin asserts nuevos en QA público)
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

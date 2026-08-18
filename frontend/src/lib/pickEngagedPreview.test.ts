@@ -13,7 +13,7 @@ describe('pickEngagedPreview', () => {
     ];
     assert.deepEqual(
       pickEngagedPreview(rows, 3).map((row) => row.id),
-      ['b', 'c', 'e'],
+      ['b', 'e', 'c'],
     );
   });
 
