@@ -359,6 +359,42 @@ test.describe('Smoke — demo showcase @smoke', () => {
     });
   });
 
+  test('Home Actividad reciente muestra likes o comentarios', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(`${API_BASE}/api/activity?limit=30`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      events?: Array<{
+        capsule?: { likes_count?: number; comments_count?: number };
+        collection?: { likes_count?: number; comments_count?: number };
+      }>;
+    };
+    const preview = (body.events ?? []).slice(0, 3);
+    expect(
+      preview.some(
+        (event) =>
+          (event.capsule?.likes_count ?? 0) > 0 ||
+          (event.capsule?.comments_count ?? 0) > 0 ||
+          (event.collection?.likes_count ?? 0) > 0 ||
+          (event.collection?.comments_count ?? 0) > 0,
+      ),
+      'El preview de Home (3 eventos) debe incluir likes/comentarios — ejecuta npm run seed:fans',
+    ).toBe(true);
+
+    await page.goto('/home');
+    const recent = page.getByRole('region', { name: /actividad reciente/i });
+    await expect(recent).toBeVisible({ timeout: 20_000 });
+    await expect(recent.getByText(/\d+ me gusta|\d+ comentarios?/i).first()).toBeVisible({
+      timeout: 15_000,
+    });
+  });
+
   test('Explorar colecciones muestra también le gusta de follows', async ({
     page,
     request,

@@ -659,6 +659,9 @@ Ninety/
 ### ✅ v53 — Engagement en Actividad
 - [x] `/activity` muestra likes/comentarios de la Capsule o lista; `GET /api/activity` incluye `likes_count` y `comments_count`
 
+### ✅ v54 — Engagement en el preview de Home
+- [x] «Actividad reciente» en Home muestra likes/comentarios de la Capsule o lista, igual que `/activity`
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

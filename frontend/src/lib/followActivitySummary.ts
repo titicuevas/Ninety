@@ -1,3 +1,4 @@
+import { formatEngagementMeta } from './collectionCardMeta.ts';
 import type { FollowActivityEvent } from '@/types/activity';
 
 export type ActivityEventSummary = {
@@ -39,4 +40,19 @@ export function summarizeFollowActivityEvent(event: FollowActivityEvent): Activi
         ? 'le gustó'
         : 'creó';
   return { action, href, label: event.collection.name };
+}
+
+/** Recuento de likes/comentarios del objetivo (Capsule o lista). */
+export function followActivityEngagementMeta(event: FollowActivityEvent): string {
+  if (
+    event.type === 'capsule' ||
+    event.type === 'capsule_like' ||
+    event.type === 'capsule_comment'
+  ) {
+    return formatEngagementMeta(event.capsule.likes_count ?? 0, event.capsule.comments_count ?? 0);
+  }
+  return formatEngagementMeta(
+    event.collection.likes_count ?? 0,
+    event.collection.comments_count ?? 0,
+  );
 }

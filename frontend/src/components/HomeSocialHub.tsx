@@ -12,7 +12,7 @@ import { useDiscoverCollections } from '@/hooks/useDiscoverCollections';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { useFollowActivity } from '@/hooks/useFollowActivity';
 import { formatCollectionCardMeta } from '@/lib/collectionCardMeta';
-import { summarizeFollowActivityEvent } from '@/lib/followActivitySummary';
+import { followActivityEngagementMeta, summarizeFollowActivityEvent } from '@/lib/followActivitySummary';
 import { formatRelativeTime } from '@/lib/format';
 import { pickEngagedPreview } from '@/lib/pickEngagedPreview';
 import { publicProfilePath } from '@/lib/profilePath';
@@ -133,22 +133,28 @@ function ActivityPreviewRow({ event }: { event: FollowActivityEvent }) {
   const actor = event.actor.display_name ?? event.actor.username ?? 'Aficionado';
   const actorHref = publicProfilePath(event.actor.username);
   const summary = summarizeFollowActivityEvent(event);
+  const engagement = followActivityEngagementMeta(event);
 
   return (
     <li className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card p-3 sm:p-3.5">
-      <p className="min-w-0 text-sm text-muted-foreground">
-        {actorHref ? (
-          <Link to={actorHref} className="font-medium text-primary hover:underline">
-            {actor}
+      <div className="min-w-0">
+        <p className="text-sm text-muted-foreground">
+          {actorHref ? (
+            <Link to={actorHref} className="font-medium text-primary hover:underline">
+              {actor}
+            </Link>
+          ) : (
+            <span className="font-medium text-foreground">{actor}</span>
+          )}{' '}
+          {summary.action}{' '}
+          <Link to={summary.href} className="font-medium text-foreground hover:text-primary hover:underline">
+            {summary.label}
           </Link>
-        ) : (
-          <span className="font-medium text-foreground">{actor}</span>
-        )}{' '}
-        {summary.action}{' '}
-        <Link to={summary.href} className="font-medium text-foreground hover:text-primary hover:underline">
-          {summary.label}
-        </Link>
-      </p>
+        </p>
+        {engagement ? (
+          <p className="mt-0.5 text-xs text-muted-foreground">{engagement}</p>
+        ) : null}
+      </div>
       <time
         className="shrink-0 text-xs text-muted-foreground"
         dateTime={event.occurred_at}
@@ -242,9 +248,12 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
       )}
 
       {showActivityPreview ? (
-        <div className="space-y-3">
+        <section className="space-y-3" aria-labelledby="home-activity-preview-heading">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-sm font-semibold tracking-wide text-primary uppercase">
+            <h3
+              id="home-activity-preview-heading"
+              className="text-sm font-semibold tracking-wide text-primary uppercase"
+            >
               Actividad reciente
             </h3>
             <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-primary">
@@ -267,7 +276,7 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
               </Link>
             </p>
           ) : null}
-        </div>
+        </section>
       ) : null}
 
       {feedLoading ? <FeedPreviewSkeleton /> : null}
