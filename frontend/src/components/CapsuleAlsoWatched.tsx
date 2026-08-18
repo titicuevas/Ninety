@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { Users } from 'lucide-react';
 import { useCapsuleAlsoWatched } from '@/hooks/useCapsuleAlsoWatched';
 import { alsoWatchedLabel, filterAlsoWatchedPeople, type AlsoWatchedPerson } from '@/lib/capsuleAlsoWatched';
 import { cn } from '@/lib/utils';
@@ -23,31 +22,25 @@ export function CapsuleAlsoWatched({
   if (people.length === 0) return null;
 
   return (
-    <div
-      className={cn(
-        'flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground',
-        className,
-      )}
+    <span
+      className={cn('text-xs text-muted-foreground', className)}
       aria-label="También lo vieron personas que sigues"
     >
-      <Users className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
-      <span>
-        {alsoWatchedLabel(people.length)}:{' '}
-        {people.map((person, index) => {
-          const name = person.display_name ?? person.username ?? 'Aficionado';
-          return (
-            <span key={person.id}>
-              {index > 0 ? ', ' : null}
-              <Link
-                to={`/c/${encodeURIComponent(person.capsule_id)}`}
-                className="font-medium text-primary hover:underline"
-              >
-                {name}
-              </Link>
-            </span>
-          );
-        })}
-      </span>
-    </div>
+      {alsoWatchedLabel(people.length)}:{' '}
+      {people.map((person, index) => {
+        const name = person.display_name ?? person.username ?? 'Aficionado';
+        return (
+          <span key={person.id}>
+            {index > 0 ? ', ' : null}
+            <Link
+              to={`/c/${encodeURIComponent(person.capsule_id)}`}
+              className="font-medium text-primary hover:underline"
+            >
+              {name}
+            </Link>
+          </span>
+        );
+      })}
+    </span>
   );
 }

@@ -2,6 +2,7 @@ import { CapsuleAlsoCommented } from '@/components/CapsuleAlsoCommented';
 import { CapsuleAlsoLiked } from '@/components/CapsuleAlsoLiked';
 import { CapsuleAlsoWatched } from '@/components/CapsuleAlsoWatched';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
+import { SocialInlineRow } from '@/components/SocialInlineRow';
 import type { AlsoWatchedPerson } from '@/lib/capsuleAlsoWatched';
 import type { CapsuleShareSummary } from '@/lib/capsuleShare';
 import type { CollectionAlsoLikedPerson } from '@/lib/collectionAlsoLiked';
@@ -22,6 +23,7 @@ type CapsuleCardSocialFooterProps = {
   isPublic?: boolean;
   showShare?: boolean;
   showBar?: boolean;
+  defaultOpenComments?: boolean;
   className?: string;
 };
 
@@ -41,38 +43,51 @@ export function CapsuleCardSocialFooter({
   isPublic = true,
   showShare = true,
   showBar = true,
+  defaultOpenComments = false,
   className,
 }: CapsuleCardSocialFooterProps) {
-  const alsoWatchedLine =
-    currentUserId && (alsoWatched?.length ?? 0) > 0 ? (
-      <CapsuleAlsoWatched people={alsoWatched} exceptUserId={capsuleOwnerId} />
-    ) : null;
-  const alsoLikedLine =
-    currentUserId && (likesCount > 0 || alsoLiked !== undefined) ? (
-      <CapsuleAlsoLiked
-        capsuleId={capsuleId}
-        people={alsoLiked}
-        exceptUserId={capsuleOwnerId}
-      />
-    ) : null;
-  const alsoCommentedLine =
-    currentUserId && (commentsCount > 0 || alsoCommented !== undefined) ? (
-      <CapsuleAlsoCommented
-        capsuleId={capsuleId}
-        people={alsoCommented}
-        exceptUserId={capsuleOwnerId}
-      />
-    ) : null;
+  const showAlso = Boolean(
+    currentUserId &&
+      ((alsoWatched?.length ?? 0) > 0 ||
+        likesCount > 0 ||
+        commentsCount > 0 ||
+        alsoLiked !== undefined ||
+        alsoCommented !== undefined),
+  );
 
-  if (!showBar && !alsoWatchedLine && (!currentUserId || (likesCount < 1 && commentsCount < 1))) {
+  if (!showBar && !showAlso) return null;
+  if (
+    !showBar &&
+    (alsoWatched?.length ?? 0) === 0 &&
+    likesCount < 1 &&
+    commentsCount < 1
+  ) {
     return null;
   }
 
   return (
-    <div className={cn('w-full space-y-2', className)}>
-      {alsoWatchedLine}
-      {alsoLikedLine}
-      {alsoCommentedLine}
+    <div className={cn('flex w-full flex-col gap-2', className)}>
+      {showAlso ? (
+        <SocialInlineRow>
+          {(alsoWatched?.length ?? 0) > 0 ? (
+            <CapsuleAlsoWatched people={alsoWatched} exceptUserId={capsuleOwnerId} />
+          ) : null}
+          {likesCount > 0 || alsoLiked !== undefined ? (
+            <CapsuleAlsoLiked
+              capsuleId={capsuleId}
+              people={alsoLiked}
+              exceptUserId={capsuleOwnerId}
+            />
+          ) : null}
+          {commentsCount > 0 || alsoCommented !== undefined ? (
+            <CapsuleAlsoCommented
+              capsuleId={capsuleId}
+              people={alsoCommented}
+              exceptUserId={capsuleOwnerId}
+            />
+          ) : null}
+        </SocialInlineRow>
+      ) : null}
       {showBar ? (
         <CapsuleEngagementBar
           bordered={false}
@@ -87,6 +102,7 @@ export function CapsuleCardSocialFooter({
           capsuleOwnerId={capsuleOwnerId}
           isPublic={isPublic}
           showShare={showShare}
+          defaultOpenComments={defaultOpenComments}
         />
       ) : null}
     </div>

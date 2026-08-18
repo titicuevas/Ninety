@@ -1,5 +1,6 @@
 import { CollectionAlsoCommented } from '@/components/CollectionAlsoCommented';
 import { CollectionAlsoLiked } from '@/components/CollectionAlsoLiked';
+import { SocialInlineRow } from '@/components/SocialInlineRow';
 import type { CollectionAlsoLikedPerson } from '@/lib/collectionAlsoLiked';
 
 type CollectionCardSocialFooterProps = {
@@ -29,7 +30,7 @@ export function CollectionCardSocialFooter({
   }
 
   return (
-    <div className={className ?? 'space-y-1'}>
+    <SocialInlineRow className={className}>
       {likesCount > 0 || alsoLiked !== undefined ? (
         <CollectionAlsoLiked
           collectionId={collectionId}
@@ -44,6 +45,6 @@ export function CollectionCardSocialFooter({
           exceptUserId={ownerId}
         />
       ) : null}
-    </div>
+    </SocialInlineRow>
   );
 }

@@ -5,10 +5,10 @@ import { cn } from '@/lib/utils';
 
 function CapsuleCardSkeleton({ withAuthor = false }: { withAuthor?: boolean }) {
   return (
-    <Card>
-      <CardContent className="space-y-3 p-4 sm:p-5">
+    <Card className="overflow-hidden">
+      <CardContent className="p-0">
         {withAuthor ? (
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-2 px-4 pt-4 sm:px-5 sm:pt-5">
             <div className="flex items-center gap-2">
               <Skeleton className="h-8 w-8 rounded-full" />
               <Skeleton className="h-4 w-28" />
@@ -16,19 +16,20 @@ function CapsuleCardSkeleton({ withAuthor = false }: { withAuthor?: boolean }) {
             <Skeleton className="h-3 w-12" />
           </div>
         ) : null}
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1 space-y-2">
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-3 w-24" />
+        <div className="p-4 sm:p-5">
+          <div className="flex items-center gap-2 rounded-xl bg-secondary/55 px-2 py-3 sm:gap-3">
+            <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+            <Skeleton className="h-4 min-w-0 flex-1" />
+            <Skeleton className="h-7 w-12 shrink-0" />
+            <Skeleton className="h-4 min-w-0 flex-1" />
+            <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
           </div>
-          <Skeleton className="h-5 w-10 shrink-0" />
-        </div>
-        <Skeleton className="h-3 w-20" />
-        <div className="flex gap-2 border-t border-border pt-3">
-          <Skeleton className="h-8 w-16" />
-          <Skeleton className="h-8 w-20" />
-          <Skeleton className="h-8 w-16" />
+          <Skeleton className="mx-auto mt-2.5 h-3 w-32" />
+          <div className="mt-4 flex gap-2 border-t border-border pt-3">
+            <Skeleton className="h-8 w-16" />
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-16" />
+          </div>
         </div>
       </CardContent>
     </Card>

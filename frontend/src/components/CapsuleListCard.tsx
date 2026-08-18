@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { CapsuleNoteText } from '@/components/CapsuleNoteText';
 import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { CapsuleTagsList } from '@/components/CapsuleTags';
+import { CapsuleTicket } from '@/components/CapsuleTicket';
 import { StarRating } from '@/components/StarRating';
-import { WatchContextBadge } from '@/components/WatchContextBadge';
 import { Card, CardContent } from '@/components/ui/card';
-import { formatCapsuleScore, formatWatchedDate } from '@/lib/format';
+import { getCapsulePhotoUrls } from '@/lib/capsulePhotos';
 import { cn } from '@/lib/utils';
 import type { Capsule } from '@/types/capsule';
 
@@ -20,7 +20,6 @@ type CapsuleListCardProps = {
   badges?: ReactNode;
   showWatchedDate?: boolean;
   competitionTone?: 'primary' | 'muted';
-  photoClassName?: string;
   footer?: ReactNode;
   footerBordered?: boolean;
   /** Destino del detalle; por defecto `/c/:id`. */
@@ -33,87 +32,64 @@ export function CapsuleListCard({
   badges,
   showWatchedDate = false,
   competitionTone = 'primary',
-  photoClassName = 'mb-4',
   footer,
   footerBordered = false,
   detailHref,
 }: CapsuleListCardProps) {
   const href = detailHref ?? `/c/${capsule.id}`;
-  const score = formatCapsuleScore(capsule.home_score, capsule.away_score);
   const matchLabel = `Ver Capsule: ${capsule.home_team_name} vs ${capsule.away_team_name}`;
+  const hasPhotos = getCapsulePhotoUrls(capsule).length > 0;
 
   return (
-    <Card className="transition-colors has-[[data-capsule-detail]:hover]:border-primary/30 has-[[data-capsule-detail]:focus-visible]:border-primary/30">
-      <CardContent className="p-4 sm:p-5">
-        {header}
+    <Card className="overflow-hidden transition-colors has-[[data-capsule-detail]:hover]:border-primary/30 has-[[data-capsule-detail]:focus-visible]:border-primary/30">
+      <CardContent className="p-0">
+        {header ? <div className="px-4 pt-4 sm:px-5 sm:pt-5">{header}</div> : null}
 
-        <CapsulePhotoGallery
-          capsule={capsule}
-          alt={`Foto del partido ${capsule.home_team_name} vs ${capsule.away_team_name}`}
-          className={photoClassName}
-        />
+        {hasPhotos ? (
+          <CapsulePhotoGallery
+            capsule={capsule}
+            alt={`Foto del partido ${capsule.home_team_name} vs ${capsule.away_team_name}`}
+            layout="hero"
+            className={cn(header ? 'mt-3' : null)}
+          />
+        ) : null}
 
-        <Link
-          to={href}
-          data-capsule-detail
-          aria-label={matchLabel}
-          className="block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="font-medium">
-                <span className="hover:text-primary">{capsule.home_team_name}</span>
-                <span className="text-muted-foreground"> vs </span>
-                <span className="text-muted-foreground hover:text-primary">
-                  {capsule.away_team_name}
-                </span>
-              </p>
-              <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                <WatchContextBadge context={capsule.watch_context} />
-                {badges}
+        <div className="p-4 sm:p-5">
+          <Link
+            to={href}
+            data-capsule-detail
+            aria-label={matchLabel}
+            className="block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <CapsuleTicket
+              capsule={capsule}
+              showWatchedDate={showWatchedDate}
+              competitionTone={competitionTone}
+              badges={badges}
+            />
+
+            {capsule.rating ? (
+              <div className="mt-3">
+                <StarRating rating={capsule.rating} />
               </div>
-              {capsule.competition_name ? (
-                <p
-                  className={cn(
-                    'mt-1 text-xs',
-                    competitionTone === 'primary' ? 'text-primary' : 'text-muted-foreground',
-                  )}
-                >
-                  {capsule.competition_name}
-                </p>
-              ) : null}
-            </div>
-            <div className="shrink-0 text-right">
-              {score ? <p className="font-semibold tabular-nums">{score}</p> : null}
-              {showWatchedDate ? (
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Visto {formatWatchedDate(capsule.watched_at)}
-                </p>
-              ) : null}
-            </div>
-          </div>
+            ) : null}
 
-          {capsule.rating ? (
-            <div className="mt-3">
-              <StarRating rating={capsule.rating} />
+            {capsule.note ? <CapsuleNoteText note={capsule.note} compact /> : null}
+
+            <CapsuleTagsList tags={capsule.tags} compact />
+          </Link>
+
+          {footer ? (
+            <div
+              className={cn(
+                'mt-4 flex flex-wrap gap-2',
+                footerBordered && 'items-start gap-1 border-t border-border pt-3',
+              )}
+            >
+              {footer}
             </div>
           ) : null}
-
-          {capsule.note ? <CapsuleNoteText note={capsule.note} compact /> : null}
-
-          <CapsuleTagsList tags={capsule.tags} compact />
-        </Link>
-
-        {footer ? (
-          <div
-            className={cn(
-              'mt-4 flex flex-wrap gap-2',
-              footerBordered && 'items-start gap-1 border-t border-border pt-3',
-            )}
-          >
-            {footer}
-          </div>
-        ) : null}
+        </div>
       </CardContent>
     </Card>
   );

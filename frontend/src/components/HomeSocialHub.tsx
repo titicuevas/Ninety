@@ -8,6 +8,7 @@ import { CollectionAlsoCommented } from '@/components/CollectionAlsoCommented';
 import { CollectionAlsoLiked } from '@/components/CollectionAlsoLiked';
 import { CapsuleCardSocialFooter } from '@/components/CapsuleCardSocialFooter';
 import { CollectionCardSocialFooter } from '@/components/CollectionCardSocialFooter';
+import { SocialInlineRow } from '@/components/SocialInlineRow';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -149,34 +150,16 @@ function ActivityPreviewRow({ event }: { event: FollowActivityEvent }) {
   const alsoCommented = followActivityAlsoCommented(event);
   const socialLines =
     event.type === 'capsule' || event.type === 'capsule_like' || event.type === 'capsule_comment' ? (
-      <>
-        {alsoWatched.length > 0 ? (
-          <CapsuleAlsoWatched people={alsoWatched} className="mt-1 text-xs" />
-        ) : null}
-        <CapsuleAlsoLiked
-          capsuleId={event.capsule.id}
-          people={alsoLiked}
-          className="mt-1 text-xs"
-        />
-        <CapsuleAlsoCommented
-          capsuleId={event.capsule.id}
-          people={alsoCommented}
-          className="mt-1 text-xs"
-        />
-      </>
+      <SocialInlineRow className="mt-1">
+        {alsoWatched.length > 0 ? <CapsuleAlsoWatched people={alsoWatched} /> : null}
+        <CapsuleAlsoLiked capsuleId={event.capsule.id} people={alsoLiked} />
+        <CapsuleAlsoCommented capsuleId={event.capsule.id} people={alsoCommented} />
+      </SocialInlineRow>
     ) : (
-      <>
-        <CollectionAlsoLiked
-          collectionId={event.collection.id}
-          people={alsoLiked}
-          className="mt-1 text-xs"
-        />
-        <CollectionAlsoCommented
-          collectionId={event.collection.id}
-          people={alsoCommented}
-          className="mt-1 text-xs"
-        />
-      </>
+      <SocialInlineRow className="mt-1">
+        <CollectionAlsoLiked collectionId={event.collection.id} people={alsoLiked} />
+        <CollectionAlsoCommented collectionId={event.collection.id} people={alsoCommented} />
+      </SocialInlineRow>
     );
 
   return (

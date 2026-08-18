@@ -6,6 +6,7 @@ import { CapsuleAlsoLiked } from '@/components/CapsuleAlsoLiked';
 import { CapsuleAlsoWatched } from '@/components/CapsuleAlsoWatched';
 import { CollectionAlsoCommented } from '@/components/CollectionAlsoCommented';
 import { CollectionAlsoLiked } from '@/components/CollectionAlsoLiked';
+import { SocialInlineRow } from '@/components/SocialInlineRow';
 import { EmptyState } from '@/components/EmptyState';
 import { capsuleCardListClass } from '@/components/CapsuleListCard';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
@@ -66,39 +67,27 @@ function ActivityAlsoFollowedLines({ event }: { event: FollowActivityEvent }) {
     event.type === 'capsule_comment'
   ) {
     return (
-      <>
-        {watched.length > 0 ? (
-          <CapsuleAlsoWatched people={watched} className="mt-1 text-xs" />
-        ) : null}
+      <SocialInlineRow className="mt-1">
+        {watched.length > 0 ? <CapsuleAlsoWatched people={watched} /> : null}
         <CapsuleAlsoLiked
           capsuleId={event.capsule.id}
           people={liked}
           exceptUserId={event.capsule.user_id}
-          className="mt-1 text-xs"
         />
         <CapsuleAlsoCommented
           capsuleId={event.capsule.id}
           people={commented}
           exceptUserId={event.capsule.user_id}
-          className="mt-1 text-xs"
         />
-      </>
+      </SocialInlineRow>
     );
   }
 
   return (
-    <>
-      <CollectionAlsoLiked
-        collectionId={event.collection.id}
-        people={liked}
-        className="mt-1 text-xs"
-      />
-      <CollectionAlsoCommented
-        collectionId={event.collection.id}
-        people={commented}
-        className="mt-1 text-xs"
-      />
-    </>
+    <SocialInlineRow className="mt-1">
+      <CollectionAlsoLiked collectionId={event.collection.id} people={liked} />
+      <CollectionAlsoCommented collectionId={event.collection.id} people={commented} />
+    </SocialInlineRow>
   );
 }
 

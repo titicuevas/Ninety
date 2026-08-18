@@ -764,10 +764,10 @@ Ninety/
 - [x] Pestaña Listas junto a Partidos y Aficionados
 - [x] E2e chromium con skip si prod aún no trae la pestaña
 
-### ✅ v72 — Wrapped público por año
-- [x] `GET /api/capsules/user/:username` incluye `stats_by_year` (un query; el diario no se refiltra)
-- [x] Chips Todo / año en el Wrapped del perfil (`?wrapped=`)
-- [x] E2e chromium con skip si prod aún no trae el campo
+### ✅ v73 — Capsule como ticket de partido
+- [x] Tarjeta de Capsule (feed, diario, listas, perfil) con escudos, marcador grande y foto a ancho de tarjeta
+- [x] Pie social en una línea («también lo vieron · le gusta · comentó») en Capsules, listas y Actividad
+- [x] Detalle `/c/:id` con el mismo ticket; copy vacío de Actividad alineado con los chips
 
 ## 🎨 Identidad visual
 

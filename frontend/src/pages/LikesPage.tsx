@@ -47,10 +47,9 @@ function LikedCapsuleCard({
     <CapsuleListCard
       capsule={capsule}
       competitionTone="muted"
-      photoClassName="mb-3"
       footerBordered
       header={
-        <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2">
           <AuthorName capsule={capsule} currentUserId={currentUserId} />
           <time className="shrink-0 text-xs text-muted-foreground" dateTime={capsule.liked_at}>
             {formatRelativeTime(capsule.liked_at)}

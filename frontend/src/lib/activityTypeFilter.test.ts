@@ -24,8 +24,8 @@ describe('activityTypeFilter', () => {
     assert.equal(activityTypePath('like'), '/activity?type=like');
     assert.equal(hasActivityTypeFilter('collection'), true);
     assert.match(activityTypeEmptyCopy('capsule').title, /Capsules/i);
-    assert.match(activityTypeEmptyCopy('capsule').description, /comente/i);
-    assert.match(activityTypeEmptyCopy('collection').description, /comenten/i);
+    assert.match(activityTypeEmptyCopy('capsule').description, /publique una Capsule/i);
+    assert.match(activityTypeEmptyCopy('collection').description, /lista pública/i);
     assert.match(activityTypeEmptyCopy('like').title, /me gusta/i);
     assert.match(activityTypeEmptyCopy('comment').title, /comentarios/i);
     assert.match(activityDocumentTitle('collection'), /Listas/i);

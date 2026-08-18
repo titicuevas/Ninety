@@ -135,15 +135,33 @@ export function CapsulePhotoGallery({
   capsule,
   alt,
   className,
+  layout = 'gallery',
 }: {
   capsule: { photo_urls?: string[] | null; photo_url?: string | null };
   alt: string;
   className?: string;
+  /** `hero`: foto a ancho de tarjeta (ticket). */
+  layout?: 'gallery' | 'hero';
 }) {
   const urls = getCapsulePhotoUrls(capsule);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const isHero = layout === 'hero';
+  const photoClass = isHero
+    ? 'aspect-[16/9] h-full w-full rounded-none border-0'
+    : 'aspect-[4/3] w-full';
 
   if (urls.length === 0) return null;
+
+  const lightbox =
+    lightboxIndex !== null ? (
+      <PhotoLightbox
+        urls={urls}
+        alt={alt}
+        index={lightboxIndex}
+        onIndexChange={setLightboxIndex}
+        onClose={() => setLightboxIndex(null)}
+      />
+    ) : null;
 
   if (urls.length === 1) {
     return (
@@ -154,17 +172,43 @@ export function CapsulePhotoGallery({
           onClick={() => setLightboxIndex(0)}
           aria-label={`Ver foto a tamaño completo: ${alt}`}
         >
-          <CapsulePhoto url={urls[0]} alt={alt} className="aspect-[4/3] w-full" />
+          <CapsulePhoto url={urls[0]} alt={alt} className={photoClass} />
         </button>
-        {lightboxIndex !== null ? (
-          <PhotoLightbox
-            urls={urls}
-            alt={alt}
-            index={lightboxIndex}
-            onIndexChange={setLightboxIndex}
-            onClose={() => setLightboxIndex(null)}
-          />
-        ) : null}
+        {lightbox}
+      </>
+    );
+  }
+
+  if (isHero) {
+    return (
+      <>
+        <div className={cn('relative', className)}>
+          <div
+            className="flex snap-x snap-mandatory overflow-x-auto scrollbar-none"
+            role="region"
+            aria-label={`Galería de fotos: ${urls.length} imágenes. Toca para ampliar.`}
+          >
+            {urls.map((url, index) => (
+              <button
+                key={url}
+                type="button"
+                className="w-full shrink-0 snap-center text-left"
+                onClick={() => setLightboxIndex(index)}
+                aria-label={`Ampliar foto ${index + 1} de ${urls.length}`}
+              >
+                <CapsulePhoto
+                  url={url}
+                  alt={`${alt} (${index + 1} de ${urls.length})`}
+                  className={photoClass}
+                />
+              </button>
+            ))}
+          </div>
+          <p className="pointer-events-none absolute bottom-2 right-2 rounded-full bg-black/65 px-2 py-0.5 text-[11px] text-white">
+            {urls.length} fotos
+          </p>
+        </div>
+        {lightbox}
       </>
     );
   }
@@ -198,15 +242,7 @@ export function CapsulePhotoGallery({
       <p className="mt-1 text-center text-[11px] text-muted-foreground sm:text-left">
         Desliza · toca para ampliar · {urls.length} fotos
       </p>
-      {lightboxIndex !== null ? (
-        <PhotoLightbox
-          urls={urls}
-          alt={alt}
-          index={lightboxIndex}
-          onIndexChange={setLightboxIndex}
-          onClose={() => setLightboxIndex(null)}
-        />
-      ) : null}
+      {lightbox}
     </>
   );
 }

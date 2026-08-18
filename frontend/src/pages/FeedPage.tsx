@@ -132,10 +132,9 @@ function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; cur
     <CapsuleListCard
       capsule={capsule}
       competitionTone="muted"
-      photoClassName="mb-3"
       footerBordered
       header={
-        <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2">
           <AuthorName capsule={capsule} currentUserId={currentUserId} />
           <time className="shrink-0 text-xs text-muted-foreground" dateTime={capsule.created_at}>
             {formatRelativeTime(capsule.created_at)}

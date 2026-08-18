@@ -43,13 +43,12 @@ export function activityTypeEmptyCopy(type: ActivityTypeFilter): {
     case 'capsule':
       return {
         title: 'Sin Capsules recientes',
-        description:
-          'Cuando alguien a quien sigues publique, comente o dé me gusta a una Capsule, aparecerá aquí.',
+        description: 'Cuando alguien a quien sigues publique una Capsule, aparecerá aquí.',
       };
     case 'collection':
       return {
         title: 'Sin listas recientes',
-        description: 'Cuando creen, comenten o den me gusta a una lista pública, aparecerá aquí.',
+        description: 'Cuando alguien a quien sigues cree una lista pública, aparecerá aquí.',
       };
     case 'like':
       return {

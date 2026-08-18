@@ -1,3 +1,4 @@
+import { TeamCrest } from '@/components/TeamCrest';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatMatchDate } from '@/lib/format';
 import { isManualMatchId } from '@/lib/manualMatch';
@@ -19,32 +20,6 @@ function matchSummary(match: FootballMatch) {
   if (date) parts.push(date);
   if (match.competition?.name) parts.push(match.competition.name);
   return parts.join(', ');
-}
-
-function TeamCrest({ team }: { team: FootballMatch['homeTeam'] }) {
-  const label = team.shortName ?? team.name;
-
-  if (!team.crest) {
-    return (
-      <span
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground"
-        aria-hidden
-      >
-        {label.slice(0, 2).toUpperCase()}
-      </span>
-    );
-  }
-
-  return (
-    <img
-      src={team.crest}
-      alt=""
-      width={32}
-      height={32}
-      className="h-8 w-8 shrink-0 object-contain"
-      loading="lazy"
-    />
-  );
 }
 
 interface MatchCardProps {
@@ -80,7 +55,7 @@ export function MatchCard({
     >
       <CardContent className="flex min-h-[4.5rem] items-center gap-3 p-4 sm:min-h-0 sm:gap-4 sm:p-5">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-          <TeamCrest team={match.homeTeam} />
+          <TeamCrest name={match.homeTeam.shortName ?? match.homeTeam.name} crest={match.homeTeam.crest} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <p className="truncate text-sm font-medium sm:text-base">{match.homeTeam.name}</p>
@@ -102,7 +77,7 @@ export function MatchCard({
             </div>
             <p className="truncate text-sm text-muted-foreground sm:text-base">{match.awayTeam.name}</p>
           </div>
-          <TeamCrest team={match.awayTeam} />
+          <TeamCrest name={match.awayTeam.shortName ?? match.awayTeam.name} crest={match.awayTeam.crest} />
         </div>
 
         <div className="shrink-0 text-right">
