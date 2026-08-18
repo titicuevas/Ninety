@@ -323,7 +323,7 @@ Workflows en push/PR a `main`:
 |----------|-----------|
 | **CI** | `check:secrets`, typecheck, unit backend, unit frontend |
 | **QA E2E** | Playwright smoke público + a11y contra `https://www.getninety.app` |
-| **QA E2E** (auth) | Smoke autenticado (`chromium` `@smoke`) si existe el secret `TEST_USER_PASSWORD` |
+| **QA E2E** (auth) | Smoke autenticado (`chromium` `@smoke`) si el secret `TEST_USER_PASSWORD` está definido; si no, el job avisa y sigue en verde |
 | **TruffleHog** | Secretos verificados en el diff |
 | **React Doctor** | Score en el frontend (informativo) |
 

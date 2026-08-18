@@ -60,15 +60,26 @@ jobs:
           retention-days: 7
 
   e2e-auth:
-    # Secret del repo: TEST_USER_PASSWORD (cuenta beta@ninety.app).
-    # Si no está, el job se omite y el resto de CI sigue.
-    if: ${{ secrets.TEST_USER_PASSWORD != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    env:
+      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
     steps:
+      - name: Comprobar secret
+        id: gate
+        run: |
+          if [ -z "$TEST_USER_PASSWORD" ]; then
+            echo "has_password=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Añade el secret TEST_USER_PASSWORD (beta@ninety.app) para el smoke autenticado."
+          else
+            echo "has_password=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v5
+        if: steps.gate.outputs.has_password == 'true'
 
       - uses: actions/setup-node@v5
+        if: steps.gate.outputs.has_password == 'true'
         with:
           node-version: '22'
           cache: npm
@@ -78,31 +89,24 @@ jobs:
             frontend/package-lock.json
 
       - name: Install root + workspaces
+        if: steps.gate.outputs.has_password == 'true'
         run: |
           npm ci
           npm ci --prefix backend
           npm ci --prefix frontend
 
       - name: Install Playwright Chromium
+        if: steps.gate.outputs.has_password == 'true'
         run: npx playwright install chromium --with-deps
 
       - name: Smoke autenticado contra www
-        env:
-          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+        if: steps.gate.outputs.has_password == 'true'
         run: npx playwright test --project=chromium --grep @smoke
 
       - name: Upload Playwright report
-        if: failure()
+        if: failure() && steps.gate.outputs.has_password == 'true'
         uses: actions/upload-artifact@v5
         with:
           name: playwright-report-auth
           path: playwright-report/
           retention-days: 7
-
-  e2e-auth-notice:
-    if: ${{ secrets.TEST_USER_PASSWORD == '' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Falta el secret de e2e autenticado
-        run: |
-          echo "::notice::Añade el secret TEST_USER_PASSWORD (beta@ninety.app) para el smoke autenticado."
