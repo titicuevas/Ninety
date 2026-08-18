@@ -30,6 +30,8 @@ export async function requireDemoShowcaseProfile(
 
   expect(body.featured_collection?.slug).toBe(DEMO_FEATURED_COLLECTION_SLUG);
   expect(body.featured_collection?.name?.trim().length).toBeGreaterThan(0);
+  expect(body.featured_collection?.likes_count ?? 0).toBeGreaterThan(0);
+  expect(body.featured_collection?.comments_count ?? 0).toBeGreaterThan(0);
   expect((body.stats?.totalMatches ?? 0)).toBeGreaterThanOrEqual(5);
   expect(capsules.length).toBeGreaterThanOrEqual(5);
 

@@ -35,6 +35,8 @@ export type FeaturedCollectionSummary = {
   description: string | null;
   cover_url: string | null;
   items_count: number;
+  likes_count?: number;
+  comments_count?: number;
 };
 
 function buildPublicProfileQuery(username: string, filters: PublicProfileFilters, offset: number): string {

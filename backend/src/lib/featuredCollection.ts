@@ -8,6 +8,8 @@ export type FeaturedCollectionSummary = {
   description: string | null;
   cover_url: string | null;
   items_count: number;
+  likes_count: number;
+  comments_count: number;
 };
 
 export function isMissingFeaturedCollectionColumn(error: unknown): boolean {
@@ -56,6 +58,16 @@ export async function loadFeaturedCollectionSummary(
     .select('capsule_id', { count: 'exact', head: true })
     .eq('collection_id', collection.id);
 
+  const { count: likesCount } = await supabase
+    .from('collection_likes')
+    .select('user_id', { count: 'exact', head: true })
+    .eq('collection_id', collection.id);
+
+  const { count: commentsCount } = await supabase
+    .from('collection_comments')
+    .select('id', { count: 'exact', head: true })
+    .eq('collection_id', collection.id);
+
   let coverUrl: string | null = null;
   if (collection.cover_capsule_id) {
     const { data: capsule } = await supabase
@@ -97,6 +109,8 @@ export async function loadFeaturedCollectionSummary(
     description: (collection.description as string | null) ?? null,
     cover_url: coverUrl,
     items_count: count ?? 0,
+    likes_count: likesCount ?? 0,
+    comments_count: commentsCount ?? 0,
   };
 }
 

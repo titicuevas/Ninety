@@ -77,6 +77,10 @@ test.describe('Smoke — demo showcase @smoke', () => {
       DEMO_CAPSULE_SOCIAL_COUNT,
     );
     await expect(page.getByText(/\d+ comentarios?/i).first()).toBeVisible();
+
+    const featured = page.getByRole('region', { name: /colección destacada/i });
+    await expect(featured.getByText(/\d+ me gusta/i)).toBeVisible();
+    await expect(featured.getByText(/\d+ comentarios?/i)).toBeVisible();
   });
 
   test('diario público demo autenticado muestra también le gusta y comentó', async ({
@@ -90,6 +94,9 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/también le gusta/i).first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/también comentó/i).first()).toBeVisible();
+    const featured = page.getByRole('region', { name: /colección destacada/i });
+    await expect(featured.getByText(/también le gusta/i)).toBeVisible();
+    await expect(featured.getByText(/también comentó/i)).toBeVisible();
   });
 
   test('Actividad QA incluye eventos sociales del seed demo', async ({ page, request }, testInfo) => {

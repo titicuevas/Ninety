@@ -610,6 +610,9 @@ Ninety/
 ### ✅ v37 — Diario demo con varias Capsules vivas
 - [x] `npm run seed:fans` siembra likes/comentarios en 3 Capsules públicas del demo (no solo la más reciente)
 
+### ✅ v38 — Favoritos con engagement en el perfil
+- [x] La colección destacada del perfil público muestra me gusta/comentarios (y «también le gusta / comentó» si estás logueado)
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

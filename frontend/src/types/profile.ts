@@ -17,6 +17,8 @@ export interface Profile {
     description: string | null;
     cover_url: string | null;
     items_count: number;
+    likes_count?: number;
+    comments_count?: number;
   } | null;
   followers_count?: number;
   following_count?: number;

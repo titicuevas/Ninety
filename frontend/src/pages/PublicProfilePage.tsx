@@ -1,15 +1,17 @@
 import { Link, useParams } from 'react-router-dom';
 import { Library, MapPin, Swords, Trophy } from 'lucide-react';
 import { AchievementsSection } from '@/components/AchievementsSection';
+import { BlockUserButton } from '@/components/BlockUserButton';
 import { CapsuleAlsoCommented } from '@/components/CapsuleAlsoCommented';
 import { CapsuleAlsoLiked } from '@/components/CapsuleAlsoLiked';
 import { CapsuleDiaryFilters } from '@/components/CapsuleDiaryFilters';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import { CapsuleListCard, capsuleCardListClass } from '@/components/CapsuleListCard';
+import { CollectionAlsoCommented } from '@/components/CollectionAlsoCommented';
+import { CollectionAlsoLiked } from '@/components/CollectionAlsoLiked';
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
 import { FollowsYouBadge } from '@/components/FollowsYouBadge';
-import { BlockUserButton } from '@/components/BlockUserButton';
 import { MuteUserButton } from '@/components/MuteUserButton';
 import { ReportContentButton } from '@/components/ReportContentButton';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
@@ -34,6 +36,7 @@ import {
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { isPublicProfileNotFound } from '@/lib/publicProfileError';
 import { capsuleShareSummaryFrom } from '@/lib/capsuleShare';
+import { formatCollectionCardMeta } from '@/lib/collectionCardMeta';
 import { teamPathFromFavorite } from '@/lib/teamPath';
 import type { Capsule } from '@/types/capsule';
 
@@ -261,12 +264,14 @@ function PublicCollectionsSections({
   collections,
   isOwnProfile,
   isBlockedByMe,
+  viewerUserId,
 }: {
   profile: NonNullable<ReturnType<typeof usePublicProfile>['data']>['pages'][0]['profile'];
   featuredCollection: NonNullable<ReturnType<typeof usePublicProfile>['data']>['pages'][0]['featured_collection'];
   collections: NonNullable<ReturnType<typeof usePublicCollections>['data']>['collections'] | undefined;
   isOwnProfile: boolean;
   isBlockedByMe: boolean;
+  viewerUserId?: string;
 }) {
   if (isBlockedByMe) return null;
 
@@ -281,37 +286,58 @@ function PublicCollectionsSections({
             <Library className="h-5 w-5 text-primary" aria-hidden />
             Colección destacada
           </h2>
-          <Link
-            to={`/u/${encodeURIComponent(profile.username)}/lists/${encodeURIComponent(featuredCollection.slug)}`}
-            className="flex items-center gap-3 rounded-xl border border-primary/40 bg-card/50 px-3 py-3 transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {featuredCollection.cover_url ? (
-              <img
-                src={featuredCollection.cover_url}
-                alt=""
-                className="h-16 w-16 shrink-0 rounded-lg object-cover"
-              />
-            ) : (
-              <div
-                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
-                aria-hidden
-              >
-                <Library className="h-5 w-5" />
-              </div>
-            )}
-            <div className="min-w-0">
-              <p className="font-medium">{featuredCollection.name}</p>
-              {featuredCollection.description ? (
-                <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-                  {featuredCollection.description}
+          <div className="space-y-2">
+            <Link
+              to={`/u/${encodeURIComponent(profile.username)}/lists/${encodeURIComponent(featuredCollection.slug)}`}
+              className="flex items-center gap-3 rounded-xl border border-primary/40 bg-card/50 px-3 py-3 transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {featuredCollection.cover_url ? (
+                <img
+                  src={featuredCollection.cover_url}
+                  alt=""
+                  className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                />
+              ) : (
+                <div
+                  className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+                  aria-hidden
+                >
+                  <Library className="h-5 w-5" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="font-medium">{featuredCollection.name}</p>
+                {featuredCollection.description ? (
+                  <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                    {featuredCollection.description}
+                  </p>
+                ) : null}
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {formatCollectionCardMeta(
+                    featuredCollection.items_count,
+                    featuredCollection.likes_count ?? 0,
+                    featuredCollection.comments_count ?? 0,
+                  )}
                 </p>
-              ) : null}
-              <p className="mt-1 text-xs text-muted-foreground">
-                {featuredCollection.items_count}{' '}
-                {featuredCollection.items_count === 1 ? 'partido' : 'partidos'}
-              </p>
-            </div>
-          </Link>
+              </div>
+            </Link>
+            {viewerUserId ? (
+              <>
+                {(featuredCollection.likes_count ?? 0) > 0 ? (
+                  <CollectionAlsoLiked
+                    collectionId={featuredCollection.id}
+                    exceptUserId={profile.id}
+                  />
+                ) : null}
+                {(featuredCollection.comments_count ?? 0) > 0 ? (
+                  <CollectionAlsoCommented
+                    collectionId={featuredCollection.id}
+                    exceptUserId={profile.id}
+                  />
+                ) : null}
+              </>
+            ) : null}
+          </div>
         </section>
       ) : null}
 
@@ -348,8 +374,7 @@ function PublicCollectionsSections({
                   <div className="min-w-0">
                     <p className="font-medium">{col.name}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {col.items_count ?? 0}{' '}
-                      {(col.items_count ?? 0) === 1 ? 'partido' : 'partidos'}
+                      {formatCollectionCardMeta(col.items_count ?? 0, col.likes_count ?? 0)}
                     </p>
                   </div>
                 </Link>
@@ -659,6 +684,7 @@ export function PublicProfilePage() {
           collections={collectionsData?.collections}
           isOwnProfile={isOwnProfile}
           isBlockedByMe={isBlockedByMe}
+          viewerUserId={user?.id}
         />
 
         {!isBlockedByMe && diaryEmpty ? (
