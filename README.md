@@ -616,6 +616,9 @@ Ninety/
 ### ✅ v39 — También le gusta en el feed
 - [x] El feed Siguiendo muestra «también le gusta / comentó» en las Capsules con engagement, igual que el diario público
 
+### ✅ v40 — También le gusta en Mis me gusta
+- [x] `/likes` y listas que te gustaron muestran follows que también dieron me gusta (archivo Letterboxd)
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

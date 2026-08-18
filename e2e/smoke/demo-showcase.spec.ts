@@ -125,6 +125,44 @@ test.describe('Smoke — demo showcase @smoke', () => {
     ).toBeVisible({ timeout: 15_000 });
   });
 
+  test('Mis me gusta muestra también le gusta de follows', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const feed = await request.get(
+      `${API_BASE}/api/capsules/feed?scope=following&sort=recent&limit=20`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    expect(feed.ok()).toBeTruthy();
+    const feedBody = (await feed.json()) as {
+      capsules?: Array<{ id?: string; likes_count?: number }>;
+    };
+    const target = (feedBody.capsules ?? []).find((row) => (row.likes_count ?? 0) > 0 && row.id);
+    test.skip(!target?.id, 'Ejecuta npm run seed:fans — el feed no tiene Capsules con me gusta');
+
+    const like = await request.post(`${API_BASE}/api/capsules/${target!.id}/like`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect([201, 409]).toContain(like.status());
+    const createdLike = like.status() === 201;
+
+    try {
+      await page.goto('/likes');
+      await expect(page.getByRole('heading', { name: /^me gusta$/i })).toBeVisible({
+        timeout: 20_000,
+      });
+      await expect(page.getByText(/también le gusta/i).first()).toBeVisible({ timeout: 15_000 });
+    } finally {
+      if (createdLike) {
+        await request.delete(`${API_BASE}/api/capsules/${target!.id}/like`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+    }
+  });
+
   test('Actividad QA incluye eventos sociales del seed demo', async ({ page, request }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
     await openAuthenticatedHome(page);

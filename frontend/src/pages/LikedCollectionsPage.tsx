@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Compass, Heart, Library, Ticket } from 'lucide-react';
 import { capsuleCardListClass } from '@/components/CapsuleListCard';
+import { CollectionAlsoLiked } from '@/components/CollectionAlsoLiked';
 import { CollectionLikeButton } from '@/components/CollectionLikeButton';
 import { EmptyState } from '@/components/EmptyState';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
@@ -88,6 +89,13 @@ function LikedCollectionCard({
           <p className="mt-2 text-xs text-muted-foreground">
             {itemsCount} {itemsCount === 1 ? 'Capsule' : 'Capsules'}
           </p>
+          {(collection.likes_count ?? 0) > 0 ? (
+            <CollectionAlsoLiked
+              className="mt-2"
+              collectionId={collection.id}
+              exceptUserId={collection.user_id}
+            />
+          ) : null}
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3">
             <div className="flex min-w-0 items-center gap-2">
               {author?.avatar_url ? (
