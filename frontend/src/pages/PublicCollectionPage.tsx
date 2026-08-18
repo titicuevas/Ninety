@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { BookOpen, Library } from 'lucide-react';
+import { CapsuleCardSocialFooter } from '@/components/CapsuleCardSocialFooter';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { CollectionCardSocialFooter } from '@/components/CollectionCardSocialFooter';
 import { CollectionComments } from '@/components/CollectionComments';
@@ -18,6 +19,7 @@ import { useAuth } from '@/hooks/useAuthInit';
 import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { usePublicCollection } from '@/hooks/useCollections';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { capsuleShareSummaryFrom } from '@/lib/capsuleShare';
 import { formatCollectionCardMeta } from '@/lib/collectionCardMeta';
 import { formatLikesPanelTitle } from '@/lib/collectionLikes';
 import { publicProfilePath } from '@/lib/profilePath';
@@ -204,7 +206,26 @@ export function PublicCollectionPage() {
             <ul className="space-y-3">
               {capsules.map((capsule) => (
                 <li key={capsule.id}>
-                  <CapsuleListCard capsule={capsule} showWatchedDate />
+                  <CapsuleListCard
+                    capsule={capsule}
+                    showWatchedDate
+                    footerBordered={!!user}
+                    footer={
+                      user ? (
+                        <CapsuleCardSocialFooter
+                          capsuleId={capsule.id}
+                          capsuleOwnerId={capsule.user_id}
+                          currentUserId={user.id}
+                          likesCount={capsule.likes_count}
+                          likedByMe={capsule.liked_by_me}
+                          commentsCount={capsule.comments_count}
+                          shareTitle={`${capsule.home_team_name} vs ${capsule.away_team_name}`}
+                          share={capsuleShareSummaryFrom(capsule, profile)}
+                          isPublic={capsule.is_public !== false}
+                        />
+                      ) : undefined
+                    }
+                  />
                 </li>
               ))}
             </ul>

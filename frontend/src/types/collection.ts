@@ -65,7 +65,13 @@ export interface LikedCollectionsResponse {
 export interface CollectionDetailResponse {
   profile: CollectionAuthor | null;
   collection: Collection;
-  capsules: import('@/types/capsule').Capsule[];
+  capsules: Array<
+    import('@/types/capsule').Capsule & {
+      likes_count?: number;
+      liked_by_me?: boolean;
+      comments_count?: number;
+    }
+  >;
 }
 
 export interface CreateCollectionInput {

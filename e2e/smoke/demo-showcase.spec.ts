@@ -50,6 +50,31 @@ test.describe('Smoke — demo showcase @smoke', () => {
     });
   });
 
+  test('Favoritos autenticado muestra pie social en los partidos', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    const { capsules } = await requireDemoFeaturedCollection(request);
+    const socialItem = (
+      (capsules ?? []) as Array<{ likes_count?: number; comments_count?: number }>
+    ).find((row) => (row.likes_count ?? 0) > 0 || (row.comments_count ?? 0) > 0);
+    expect(
+      socialItem,
+      'GET Favoritos debe incluir likes/comentarios en un partido. Ejecuta npm run seed:fans.',
+    ).toBeTruthy();
+
+    await openAuthenticatedHome(page);
+    await page.goto(`/u/${DEMO_USERNAME}/lists/${DEMO_FEATURED_COLLECTION_SLUG}`);
+    await expect(page.getByRole('heading', { name: /^favoritos$/i })).toBeVisible({
+      timeout: 20_000,
+    });
+    const items = page.getByRole('list').filter({ has: page.getByText(/ vs /i) });
+    await expect(
+      items.getByText(/también le gusta|también comentó|\d+ me gusta|\d+ comentarios?/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
+  });
+
   test('detalle de lista autenticado muestra comentarios en la ficha', async ({
     page,
     request,

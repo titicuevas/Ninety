@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
+import { attachCommentCounts } from '../lib/capsuleComments.js';
+import { attachLikeStats } from '../lib/capsuleLikes.js';
 import { resolveCollectionCoverUrl } from '../lib/collectionCover.js';
 import { listCollectionAlsoCommented } from '../lib/collectionAlsoCommented.js';
 import {
@@ -179,6 +181,7 @@ type CollectionRow = {
 
 type CapsuleLite = {
   id: string;
+  user_id: string;
   home_team_name: string;
   away_team_name: string;
   home_team_crest: string | null;
@@ -192,6 +195,9 @@ type CapsuleLite = {
   photo_urls: string[];
   is_public?: boolean;
   watch_context?: string | null;
+  likes_count?: number;
+  liked_by_me?: boolean;
+  comments_count?: number;
 };
 
 async function loadItemCounts(
@@ -321,7 +327,7 @@ async function commentsCountFor(
 async function loadCollectionItems(
   reader: ReturnType<typeof createUserClient>,
   collectionId: string,
-  opts: { onlyPublicCapsules: boolean },
+  opts: { onlyPublicCapsules: boolean; viewerId?: string },
 ): Promise<CapsuleLite[]> {
   const { data: items, error } = await reader
     .from('collection_items')
@@ -334,7 +340,7 @@ async function loadCollectionItems(
 
   const capsuleIds = items.map((row) => row.capsule_id as string);
   let query = reader.from('capsules').select(
-    'id, home_team_name, away_team_name, home_team_crest, away_team_crest, competition_name, home_score, away_score, watched_at, rating, note, photo_urls, is_public, watch_context',
+    'id, user_id, home_team_name, away_team_name, home_team_crest, away_team_crest, competition_name, home_score, away_score, watched_at, rating, note, photo_urls, is_public, watch_context',
   ).in('id', capsuleIds);
 
   if (opts.onlyPublicCapsules) {
@@ -345,9 +351,13 @@ async function loadCollectionItems(
   if (capsulesError || !capsules) return [];
 
   const byId = new Map(capsules.map((c) => [c.id as string, c as CapsuleLite]));
-  return items
+  const ordered = items
     .map((row) => byId.get(row.capsule_id as string))
     .filter((c): c is CapsuleLite => !!c);
+  if (ordered.length === 0) return [];
+
+  const withLikes = await attachLikeStats(reader, opts.viewerId ?? '', ordered);
+  return attachCommentCounts(reader, withLikes);
 }
 
 async function resolveTakenSlugs(
@@ -1296,6 +1306,7 @@ collectionsRouter.get('/user/:username/:slug', optionalAuth, async (req: AuthReq
 
   const capsules = await loadCollectionItems(reader, collection.id as string, {
     onlyPublicCapsules: !isOwner,
+    viewerId: req.userId ?? '',
   });
   const row = collection as CollectionRow;
   const [withLikes] = await attachCollectionLikeStats(reader, req.userId ?? '', [row]);
@@ -1360,6 +1371,7 @@ collectionsRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
 
   const capsules = await loadCollectionItems(reader, collection.id as string, {
     onlyPublicCapsules: !isOwner,
+    viewerId: req.userId ?? '',
   });
 
   const { data: profile } = await supabaseAnon

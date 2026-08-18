@@ -647,6 +647,9 @@ Ninety/
 ### ✅ v49 — Hilo de comentarios en el detalle propio
 - [x] En `/collections/:id` (lista pública) el dueño ve y responde el hilo sin ir a «Ver pública»
 
+### ✅ v50 — Pie social en los partidos de una lista pública
+- [x] El detalle público de una lista muestra likes/comentarios y «también le gusta / comentó» en cada Capsule (`GET` de detalle incluye contadores en `capsules`)
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium
