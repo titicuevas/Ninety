@@ -298,4 +298,37 @@ test.describe('Smoke — demo showcase @smoke', () => {
       page.getByText(/también le gusta|también comentó/i).first(),
     ).toBeVisible({ timeout: 15_000 });
   });
+
+  test('Home Comunidad muestra también le gusta en el preview del feed', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(
+      `${API_BASE}/api/capsules/feed?scope=following&sort=recent&limit=20`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      capsules?: Array<{ likes_count?: number; comments_count?: number }>;
+    };
+    const social = (body.capsules ?? []).find(
+      (row) => (row.likes_count ?? 0) > 0 || (row.comments_count ?? 0) > 0,
+    );
+    expect(
+      social,
+      'Ejecuta npm run seed:fans — el preview de Home no tiene Capsules con likes/comentarios',
+    ).toBeTruthy();
+
+    await page.goto('/home');
+    const hub = page.getByRole('region', { name: /^comunidad$/i });
+    await expect(hub).toBeVisible({ timeout: 20_000 });
+    await expect(
+      hub.getByText(/también le gusta|también comentó/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
+  });
 });

@@ -1,48 +1,117 @@
 import { Link } from 'react-router-dom';
 import { UserPlus, Users } from 'lucide-react';
 import { ActivityShortcutLink } from '@/components/ActivityShortcutLink';
+import { CapsuleCardSocialFooter } from '@/components/CapsuleCardSocialFooter';
+import { CollectionCardSocialFooter } from '@/components/CollectionCardSocialFooter';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/hooks/useAuthInit';
 import { useCapsuleFeed } from '@/hooks/useCapsules';
 import { useDiscoverCollections } from '@/hooks/useDiscoverCollections';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
 import { useFollowActivity } from '@/hooks/useFollowActivity';
+import { formatCollectionCardMeta } from '@/lib/collectionCardMeta';
 import { summarizeFollowActivityEvent } from '@/lib/followActivitySummary';
 import { formatRelativeTime } from '@/lib/format';
+import { pickEngagedPreview } from '@/lib/pickEngagedPreview';
 import { publicProfilePath } from '@/lib/profilePath';
-import type { FeedCapsule } from '@/types/capsule';
 import type { FollowActivityEvent } from '@/types/activity';
+import type { FeedCapsule } from '@/types/capsule';
+import type { DiscoverCollection } from '@/types/collection';
 
 const PREVIEW_COUNT = 3;
 
-function FeedPreviewRow({ capsule }: { capsule: FeedCapsule }) {
+function FeedPreviewRow({
+  capsule,
+  currentUserId,
+}: {
+  capsule: FeedCapsule;
+  currentUserId?: string;
+}) {
   const author = capsule.profiles?.display_name ?? capsule.profiles?.username ?? 'Aficionado';
   const href = publicProfilePath(capsule.profiles?.username);
 
   return (
-    <li className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card p-3 sm:p-3.5">
-      <div className="min-w-0">
-        {href ? (
-          <Link to={href} className="block truncate text-xs text-primary hover:underline">
-            {author}
+    <li className="rounded-xl border border-border bg-card p-3 sm:p-3.5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          {href ? (
+            <Link to={href} className="block truncate text-xs text-primary hover:underline">
+              {author}
+            </Link>
+          ) : (
+            <p className="truncate text-xs text-muted-foreground">{author}</p>
+          )}
+          <Link
+            to={`/c/${capsule.id}`}
+            className="mt-0.5 block truncate font-medium hover:text-primary hover:underline"
+          >
+            {capsule.home_team_name} vs {capsule.away_team_name}
           </Link>
-        ) : (
-          <p className="truncate text-xs text-muted-foreground">{author}</p>
-        )}
-        <Link
-          to={`/c/${capsule.id}`}
-          className="mt-0.5 block truncate font-medium hover:text-primary hover:underline"
+        </div>
+        <time
+          className="shrink-0 text-xs text-muted-foreground"
+          dateTime={capsule.created_at}
         >
-          {capsule.home_team_name} vs {capsule.away_team_name}
-        </Link>
+          {formatRelativeTime(capsule.created_at)}
+        </time>
       </div>
-      <time
-        className="shrink-0 text-xs text-muted-foreground"
-        dateTime={capsule.created_at}
-      >
-        {formatRelativeTime(capsule.created_at)}
-      </time>
+      <CapsuleCardSocialFooter
+        className="mt-2"
+        capsuleId={capsule.id}
+        capsuleOwnerId={capsule.user_id}
+        currentUserId={currentUserId}
+        likesCount={capsule.likes_count}
+        commentsCount={capsule.comments_count}
+        isPublic={capsule.is_public !== false}
+        showBar={false}
+      />
+    </li>
+  );
+}
+
+function HomeDiscoverCollectionRow({
+  collection,
+  currentUserId,
+}: {
+  collection: DiscoverCollection;
+  currentUserId?: string;
+}) {
+  const username = collection.author.username;
+  const href =
+    username && collection.slug
+      ? `/u/${encodeURIComponent(username)}/lists/${encodeURIComponent(collection.slug)}`
+      : null;
+
+  return (
+    <li className="rounded-xl border border-border bg-card p-3 sm:p-3.5">
+      {href ? (
+        <Link
+          to={href}
+          className="block truncate font-medium hover:text-primary hover:underline"
+        >
+          {collection.name}
+        </Link>
+      ) : (
+        <p className="truncate font-medium">{collection.name}</p>
+      )}
+      <p className="mt-0.5 text-xs text-muted-foreground">
+        {formatCollectionCardMeta(
+          collection.items_count ?? 0,
+          collection.likes_count ?? 0,
+          collection.comments_count ?? 0,
+        )}
+        {username ? ` · @${username}` : ''}
+      </p>
+      <CollectionCardSocialFooter
+        className="mt-2 space-y-1"
+        collectionId={collection.id}
+        ownerId={collection.user_id}
+        currentUserId={currentUserId}
+        likesCount={collection.likes_count}
+        commentsCount={collection.comments_count}
+      />
     </li>
   );
 }
@@ -108,9 +177,10 @@ type HomeSocialHubProps = {
 
 /** Atajos sociales + preview del feed (o sugerencias si está vacío). */
 export function HomeSocialHub({ username }: HomeSocialHubProps) {
+  const { user } = useAuth();
   const { data: feedData, isLoading: feedLoading } = useCapsuleFeed('following', 'recent');
   const { data: activityData, isLoading: activityLoading } = useFollowActivity();
-  const preview = feedData?.pages[0]?.capsules.slice(0, PREVIEW_COUNT) ?? [];
+  const preview = pickEngagedPreview(feedData?.pages[0]?.capsules ?? [], PREVIEW_COUNT);
   const activityPreview = activityData?.pages[0]?.events.slice(0, PREVIEW_COUNT) ?? [];
   const followingCount = activityData?.pages[0]?.following_count ?? 0;
   const feedEmpty = !feedLoading && preview.length === 0;
@@ -120,7 +190,10 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
   const suggestions = (discoverData?.profiles ?? [])
     .filter((p) => p.username && !p.followed_by_me)
     .slice(0, PREVIEW_COUNT);
-  const collectionPreview = (discoverCollectionsData?.collections ?? []).slice(0, PREVIEW_COUNT);
+  const collectionPreview = pickEngagedPreview(
+    discoverCollectionsData?.collections ?? [],
+    PREVIEW_COUNT,
+  );
 
   const profileHref = publicProfilePath(username);
   const followingHref = profileHref ? `${profileHref}/following` : null;
@@ -202,7 +275,7 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
       {!feedLoading && preview.length > 0 ? (
         <ul className="space-y-2">
           {preview.map((capsule) => (
-            <FeedPreviewRow key={capsule.id} capsule={capsule} />
+            <FeedPreviewRow key={capsule.id} capsule={capsule} currentUserId={user?.id} />
           ))}
         </ul>
       ) : null}
@@ -213,34 +286,13 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
             Listas para descubrir
           </h3>
           <ul className="space-y-2">
-            {collectionPreview.map((collection) => {
-              const username = collection.author.username;
-              const href =
-                username && collection.slug
-                  ? `/u/${encodeURIComponent(username)}/lists/${encodeURIComponent(collection.slug)}`
-                  : null;
-              return (
-                <li
-                  key={collection.id}
-                  className="rounded-xl border border-border bg-card p-3 sm:p-3.5"
-                >
-                  {href ? (
-                    <Link
-                      to={href}
-                      className="block truncate font-medium hover:text-primary hover:underline"
-                    >
-                      {collection.name}
-                    </Link>
-                  ) : (
-                    <p className="truncate font-medium">{collection.name}</p>
-                  )}
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {collection.items_count ?? 0} Capsules
-                    {username ? ` · @${username}` : ''}
-                  </p>
-                </li>
-              );
-            })}
+            {collectionPreview.map((collection) => (
+              <HomeDiscoverCollectionRow
+                key={collection.id}
+                collection={collection}
+                currentUserId={user?.id}
+              />
+            ))}
           </ul>
           <Button asChild variant="ghost" size="sm" className="px-0 text-primary">
             <Link to="/collections/explore">Ver más listas</Link>

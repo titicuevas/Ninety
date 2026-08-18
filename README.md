@@ -635,6 +635,9 @@ Ninety/
 ### ✅ v45 — Colecciones del perfil público con pie social
 - [x] El grid de colecciones en `/u/:username` muestra comentarios y «también le gusta / comentó»; `GET /api/collections/user/:username` incluye `comments_count`
 
+### ✅ v46 — Pie social en el preview de Home
+- [x] Comunidad en `/home` muestra «también le gusta / comentó» en el preview del feed (prioriza Capsules con engagement; listas sugeridas si el feed está vacío)
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium
