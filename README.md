@@ -653,6 +653,9 @@ Ninety/
 ### ✅ v51 — Pie social en los partidos del detalle propio
 - [x] En `/collections/:id` (lista pública) cada Capsule muestra likes/comentarios y «también le gusta / comentó», igual que la vista pública
 
+### ✅ v52 — Pie social en el calendario del diario
+- [x] El día abierto en `/diary/calendar` y `/u/:username/calendar/:year/:month` muestra likes/comentarios; `GET /api/capsules/me/calendar` incluye contadores
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

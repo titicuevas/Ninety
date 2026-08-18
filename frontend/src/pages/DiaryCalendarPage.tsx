@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CapsuleCardSocialFooter } from '@/components/CapsuleCardSocialFooter';
 import { CapsuleListCard, capsuleCardListClass } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
@@ -11,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useDiaryCalendar } from '@/hooks/useDiaryCalendar';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useProfile } from '@/hooks/useProfile';
+import { capsuleShareSummaryFrom } from '@/lib/capsuleShare';
 import {
   buildMonthGrid,
   capsulesForDate,
@@ -229,7 +231,25 @@ export function DiaryCalendarPage() {
                   <ul className={capsuleCardListClass}>
                     {dayCapsules.map((capsule) => (
                       <li key={capsule.id}>
-                        <CapsuleListCard capsule={capsule} showWatchedDate />
+                        <CapsuleListCard
+                          capsule={capsule}
+                          showWatchedDate
+                          footerBordered
+                          footer={
+                            <CapsuleCardSocialFooter
+                              capsuleId={capsule.id}
+                              capsuleOwnerId={capsule.user_id}
+                              currentUserId={profile?.id}
+                              likesCount={capsule.likes_count}
+                              likedByMe={capsule.liked_by_me}
+                              commentsCount={capsule.comments_count}
+                              shareTitle={`${capsule.home_team_name} vs ${capsule.away_team_name}`}
+                              share={capsuleShareSummaryFrom(capsule, profile)}
+                              isPublic={capsule.is_public !== false}
+                              showShare={false}
+                            />
+                          }
+                        />
                       </li>
                     ))}
                   </ul>

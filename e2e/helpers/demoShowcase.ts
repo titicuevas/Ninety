@@ -18,6 +18,7 @@ export type DemoCapsuleRow = {
   comments_count?: number;
   home_team_name?: string;
   away_team_name?: string;
+  watched_at?: string | null;
 };
 
 /** Perfil demo con diario limpio, Favoritos y Capsules con vida social (`seed:fans`). */

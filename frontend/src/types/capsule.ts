@@ -25,6 +25,9 @@ export interface Capsule {
   photo_url?: string | null;
   created_at: string;
   updated_at: string;
+  likes_count?: number;
+  liked_by_me?: boolean;
+  comments_count?: number;
 }
 
 export interface CreateCapsuleInput {

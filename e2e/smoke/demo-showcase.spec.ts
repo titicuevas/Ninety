@@ -192,6 +192,24 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(lists.getByText(/también comentó/i)).toBeVisible();
   });
 
+  test('calendario público autenticado muestra pie social en el día', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    const { socialCapsule } = await requireDemoShowcaseProfile(request);
+    const day = (socialCapsule.watched_at ?? '').slice(0, 10);
+    expect(day, 'La Capsule social del demo necesita watched_at').toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    const [year, month] = day.split('-');
+
+    await openAuthenticatedHome(page);
+    await page.goto(`/u/${DEMO_USERNAME}/calendar/${year}/${Number(month)}?day=${day}`);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
+    await expect(
+      page.getByText(/también le gusta|también comentó|\d+ me gusta|\d+ comentarios?/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
+  });
+
   test('feed Siguiendo muestra también le gusta de follows', async ({ page, request }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
     await openAuthenticatedHome(page);

@@ -569,15 +569,17 @@ capsulesRouter.get('/me/calendar', requireAuth, async (req: AuthRequest, res) =>
   }
 
   const capsules = data ?? [];
-  const publicTotal = capsules.filter((c) => c.is_public !== false).length;
+  const withLikes = await attachLikeStats(supabase, req.userId!, capsules);
+  const withEngagement = await attachCommentCounts(supabase, withLikes);
+  const publicTotal = withEngagement.filter((c) => c.is_public !== false).length;
   res.json({
     year: range.year,
     month: range.month,
     from: range.from,
     to: range.to,
-    days: buildCalendarDayCounts(capsules),
-    capsules,
-    total: capsules.length,
+    days: buildCalendarDayCounts(withEngagement),
+    capsules: withEngagement,
+    total: withEngagement.length,
     public_total: publicTotal,
   });
 });
