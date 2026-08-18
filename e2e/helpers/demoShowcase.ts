@@ -5,6 +5,9 @@ import { isE2eLeftoverNote } from './e2eCapsuleNotes';
 /** Lista destacada sembrada por `npm run seed:fans`. */
 export const DEMO_FEATURED_COLLECTION_SLUG = 'favoritos-seed';
 
+/** Cuántas Capsules del diario demo deben tener likes y comentarios (`seed:fans`). */
+export const DEMO_CAPSULE_SOCIAL_COUNT = 3;
+
 /** Marcador en comentarios sembrados — idempotente al re-ejecutar seed:fans. */
 export const DEMO_SOCIAL_COMMENT_MARKER = 'ninety-seed';
 
@@ -37,10 +40,15 @@ export async function requireDemoShowcaseProfile(
     expect(isE2eLeftoverNote(capsule.note), 'sin residuos E2E en el diario demo').toBe(false);
   }
 
-  const social = findDemoSocialCapsule(capsules);
-  expect(social?.id, 'ejecuta npm run seed:fans para sembrar likes/comentarios').toBeTruthy();
+  const socialCapsules = capsules.filter(
+    (row) => (row.likes_count ?? 0) > 0 && (row.comments_count ?? 0) > 0,
+  );
+  expect(
+    socialCapsules.length,
+    'ejecuta npm run seed:fans para sembrar likes/comentarios en varias Capsules',
+  ).toBeGreaterThanOrEqual(DEMO_CAPSULE_SOCIAL_COUNT);
 
-  return { ...body, capsules, socialCapsule: social! };
+  return { ...body, capsules, socialCapsule: socialCapsules[0]!, socialCapsules };
 }
 
 export function findDemoSocialCapsule(capsules: DemoCapsuleRow[]): DemoCapsuleRow | undefined {

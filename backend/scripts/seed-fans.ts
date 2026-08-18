@@ -14,6 +14,7 @@ import { requireTestCredentials } from './testCredentials.js';
 import {
   DEMO_FEATURED_COLLECTION_NAME,
   DEMO_FEATURED_COLLECTION_SLUG,
+  DEMO_CAPSULE_SOCIAL_COUNT,
   demoCapsuleSocialActions,
   demoFeaturedSocialActions,
   demoFollowedSocialActions,
@@ -864,31 +865,34 @@ async function seedDemoCapsuleSocial(demoUserId: string | null, fanIds: string[]
     .eq('user_id', demoUserId)
     .eq('is_public', true)
     .order('watched_at', { ascending: false })
-    .limit(1);
+    .limit(DEMO_CAPSULE_SOCIAL_COUNT);
   if (error) throw new Error(`Demo capsule social lookup: ${error.message}`);
-  const capsuleId = capsules?.[0]?.id as string | undefined;
-  if (!capsuleId) return;
+  const rows = (capsules ?? []).filter((row) => row.id);
+  if (rows.length === 0) return;
 
-  for (const action of demoCapsuleSocialActions()) {
-    const actorId = fanIds[action.actorIndex];
-    if (!actorId) continue;
-    if (action.kind === 'capsule_like') {
-      const { error: likeError } = await admin.from('capsule_likes').upsert(
-        { user_id: actorId, capsule_id: capsuleId },
-        { onConflict: 'user_id,capsule_id', ignoreDuplicates: true },
-      );
-      if (likeError) throw new Error(`Like Capsule demo seed: ${likeError.message}`);
-    } else {
-      await ensureSeedComment(
-        'capsule_comments',
-        actorId,
-        'capsule_id',
-        capsuleId,
-        demoSeedCommentBody('capsule'),
-      );
+  for (let i = 0; i < rows.length; i++) {
+    const capsuleId = rows[i]!.id as string;
+    for (const action of demoCapsuleSocialActions(i)) {
+      const actorId = fanIds[action.actorIndex];
+      if (!actorId) continue;
+      if (action.kind === 'capsule_like') {
+        const { error: likeError } = await admin.from('capsule_likes').upsert(
+          { user_id: actorId, capsule_id: capsuleId },
+          { onConflict: 'user_id,capsule_id', ignoreDuplicates: true },
+        );
+        if (likeError) throw new Error(`Like Capsule demo seed: ${likeError.message}`);
+      } else {
+        await ensureSeedComment(
+          'capsule_comments',
+          actorId,
+          'capsule_id',
+          capsuleId,
+          demoSeedCommentBody('capsule'),
+        );
+      }
     }
   }
-  console.log('   Likes/comentarios en Capsule pública del demo');
+  console.log(`   Likes/comentarios en ${rows.length} Capsule(s) públicas del demo`);
 }
 
 async function main() {

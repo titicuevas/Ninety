@@ -6,6 +6,7 @@ import {
   readAccessToken,
 } from '../helpers/auth';
 import {
+  DEMO_CAPSULE_SOCIAL_COUNT,
   DEMO_FEATURED_COLLECTION_SLUG,
   DEMO_SOCIAL_COMMENT_MARKER,
   requireDemoFeaturedCollection,
@@ -72,6 +73,9 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(note)).toBeVisible();
     await expect(page.getByRole('button', { name: /\d+ me gusta/i }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /\d+ me gusta/i })).toHaveCount(
+      DEMO_CAPSULE_SOCIAL_COUNT,
+    );
     await expect(page.getByText(/\d+ comentarios?/i).first()).toBeVisible();
   });
 

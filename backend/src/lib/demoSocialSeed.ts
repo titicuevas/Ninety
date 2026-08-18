@@ -100,10 +100,19 @@ export type DemoCapsuleSocialAction = {
   kind: 'capsule_like' | 'capsule_comment';
 };
 
-/** Likes/comentarios en una Capsule pública del demo (mismo círculo de follows). */
-export function demoCapsuleSocialActions(): DemoCapsuleSocialAction[] {
+/** Cuántas Capsules públicas del demo reciben likes/comentarios (diario vivo). */
+export const DEMO_CAPSULE_SOCIAL_COUNT = 3;
+
+/**
+ * Likes/comentarios en Capsules públicas del demo (mismo círculo de follows).
+ * `capsuleIndex` rota actores para que el diario no se vea con el mismo par en todas.
+ */
+export function demoCapsuleSocialActions(capsuleIndex = 0): DemoCapsuleSocialAction[] {
+  const likeActor = (2 + capsuleIndex) % 6;
+  let commentActor = (1 + capsuleIndex * 2) % 6;
+  if (commentActor === likeActor) commentActor = (commentActor + 1) % 6;
   return [
-    { actorIndex: 1, kind: 'capsule_comment' },
-    { actorIndex: 2, kind: 'capsule_like' },
+    { actorIndex: commentActor, kind: 'capsule_comment' },
+    { actorIndex: likeActor, kind: 'capsule_like' },
   ];
 }

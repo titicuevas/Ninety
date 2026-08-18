@@ -607,6 +607,9 @@ Ninety/
 ### ✅ v36 — También le gusta en el diario público
 - [x] En el perfil público, las Capsules con likes/comentarios muestran «también le gusta / comentó» sin abrir el detalle (Letterboxd-style)
 
+### ✅ v37 — Diario demo con varias Capsules vivas
+- [x] `npm run seed:fans` siembra likes/comentarios en 3 Capsules públicas del demo (no solo la más reciente)
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

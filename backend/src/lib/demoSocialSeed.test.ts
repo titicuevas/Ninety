@@ -4,6 +4,7 @@ import {
   DEMO_FEATURED_COLLECTION_NAME,
   DEMO_FEATURED_COLLECTION_SLUG,
   DEMO_SOCIAL_COMMENT_MARKER,
+  DEMO_CAPSULE_SOCIAL_COUNT,
   demoCapsuleSocialActions,
   demoFeaturedSocialActions,
   demoFollowedSocialActions,
@@ -75,6 +76,21 @@ describe('demoSocialSeed', () => {
     }
     assert.ok(actions.some((row) => row.kind === 'capsule_like'));
     assert.ok(actions.some((row) => row.kind === 'capsule_comment'));
+  });
+
+  it('rota actores entre varias Capsules del diario demo', () => {
+    assert.equal(DEMO_CAPSULE_SOCIAL_COUNT, 3);
+    const likeActors = new Set(
+      Array.from({ length: DEMO_CAPSULE_SOCIAL_COUNT }, (_, i) => {
+        const like = demoCapsuleSocialActions(i).find((row) => row.kind === 'capsule_like');
+        return like?.actorIndex;
+      }),
+    );
+    assert.equal(likeActors.size, DEMO_CAPSULE_SOCIAL_COUNT);
+    for (let i = 0; i < DEMO_CAPSULE_SOCIAL_COUNT; i++) {
+      const actions = demoCapsuleSocialActions(i);
+      assert.notEqual(actions[0]?.actorIndex, actions[1]?.actorIndex);
+    }
   });
 
   it('reseñas canónicas del demo y cuándo restaurarlas', () => {
