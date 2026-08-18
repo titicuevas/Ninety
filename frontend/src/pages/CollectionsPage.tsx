@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Heart, Library, Lock, Plus } from 'lucide-react';
 import { capsuleCardListClass } from '@/components/CapsuleListCard';
+import { CollectionCardSocialFooter } from '@/components/CollectionCardSocialFooter';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
 import { NinetyLoader } from '@/components/NinetyLoader';
@@ -15,12 +16,88 @@ import { useCreateCollection, useMyCollections } from '@/hooks/useCollections';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useProfile } from '@/hooks/useProfile';
+import { formatCollectionCardMeta } from '@/lib/collectionCardMeta';
 import { slugifyCollectionName } from '@/lib/collectionSlug';
 import {
   postImportCollectionsHint,
   readDiaryPostImportState,
 } from '@/lib/diaryPostImportMemory';
 import { toast } from '@/lib/toast';
+import type { Collection } from '@/types/collection';
+
+function MyCollectionCard({
+  collection,
+  currentUserId,
+  isFeatured,
+}: {
+  collection: Collection;
+  currentUserId?: string;
+  isFeatured: boolean;
+}) {
+  const href = `/collections/${collection.id}`;
+
+  return (
+    <li>
+      <article className="rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40">
+        <div className="flex items-start gap-3">
+          {collection.cover_url ? (
+            <Link to={href} tabIndex={-1} className="shrink-0">
+              <img
+                src={collection.cover_url}
+                alt=""
+                className="h-16 w-16 rounded-lg object-cover"
+              />
+            </Link>
+          ) : (
+            <div
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+              aria-hidden
+            >
+              <Library className="h-5 w-5" />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <Link
+              to={href}
+              className="font-medium text-foreground hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {collection.name}
+            </Link>
+            {collection.description ? (
+              <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                {collection.description}
+              </p>
+            ) : null}
+            <p className="mt-2 text-xs text-muted-foreground">
+              {formatCollectionCardMeta(
+                collection.items_count ?? 0,
+                collection.likes_count ?? 0,
+                collection.comments_count ?? 0,
+              )}
+              {!collection.is_public ? (
+                <span className="ml-2 inline-flex items-center gap-1">
+                  <Lock className="h-3 w-3" aria-hidden />
+                  Privada
+                </span>
+              ) : null}
+              {isFeatured ? <span className="ml-2 text-primary">· Destacada</span> : null}
+            </p>
+            {collection.is_public ? (
+              <CollectionCardSocialFooter
+                className="mt-2 space-y-1"
+                collectionId={collection.id}
+                ownerId={collection.user_id}
+                currentUserId={currentUserId}
+                likesCount={collection.likes_count}
+                commentsCount={collection.comments_count}
+              />
+            ) : null}
+          </div>
+        </div>
+      </article>
+    </li>
+  );
+}
 
 export function CollectionsPage() {
   useDocumentTitle('Mis listas');
@@ -215,50 +292,12 @@ export function CollectionsPage() {
             </h2>
             <ul className={capsuleCardListClass}>
               {collections.map((collection) => (
-                <li key={collection.id}>
-                  <Link
-                    to={`/collections/${collection.id}`}
-                    className="block rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <div className="flex items-start gap-3">
-                      {collection.cover_url ? (
-                        <img
-                          src={collection.cover_url}
-                          alt=""
-                          className="h-16 w-16 shrink-0 rounded-lg object-cover"
-                        />
-                      ) : (
-                        <div
-                          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
-                          aria-hidden
-                        >
-                          <Library className="h-5 w-5" />
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium">{collection.name}</p>
-                        {collection.description ? (
-                          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                            {collection.description}
-                          </p>
-                        ) : null}
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          {collection.items_count ?? 0}{' '}
-                          {(collection.items_count ?? 0) === 1 ? 'Capsule' : 'Capsules'}
-                          {!collection.is_public ? (
-                            <span className="ml-2 inline-flex items-center gap-1">
-                              <Lock className="h-3 w-3" aria-hidden />
-                              Privada
-                            </span>
-                          ) : null}
-                          {profile?.featured_collection_id === collection.id ? (
-                            <span className="ml-2 text-primary">· Destacada</span>
-                          ) : null}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                </li>
+                <MyCollectionCard
+                  key={collection.id}
+                  collection={collection}
+                  currentUserId={user?.id}
+                  isFeatured={profile?.featured_collection_id === collection.id}
+                />
               ))}
             </ul>
           </section>

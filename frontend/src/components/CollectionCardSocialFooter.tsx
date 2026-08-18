@@ -10,7 +10,7 @@ type CollectionCardSocialFooterProps = {
   className?: string;
 };
 
-/** «También le gusta / comentó» en tarjetas de listas (Explorar, feed, me gusta). */
+/** «También le gusta / comentó» en tarjetas de listas (Explorar, feed, me gusta, Mis listas). */
 export function CollectionCardSocialFooter({
   collectionId,
   ownerId,

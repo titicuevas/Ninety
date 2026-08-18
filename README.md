@@ -629,6 +629,9 @@ Ninety/
 ### ✅ v43 — Explorar colecciones con pie social
 - [x] `/collections/explore` (y sugerencias del feed) muestran likes/comentarios y «también le gusta / comentó»; `GET /api/collections/discover` incluye `comments_count`
 
+### ✅ v44 — Mis listas con pie social
+- [x] `/collections` muestra likes/comentarios y «también le gusta / comentó» en las listas públicas; `GET /api/collections/me` incluye `comments_count`
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

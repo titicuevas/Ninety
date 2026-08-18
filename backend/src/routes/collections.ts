@@ -380,6 +380,16 @@ collectionsRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   const counts = await loadItemCounts(supabase, ids);
   const coverUrls = await loadCoverUrls(supabase, rows);
   const withLikes = await attachCollectionLikeStats(supabase, req.userId!, rows);
+  let commentsById = new Map<string, number>();
+  try {
+    const withComments = await attachCollectionCommentCounts(
+      supabase,
+      rows.map((row) => ({ id: row.id })),
+    );
+    commentsById = new Map(withComments.map((row) => [row.id, row.comments_count]));
+  } catch (err) {
+    if (!isMissingCollectionCommentsTable(err)) throw err;
+  }
 
   res.json({
     collections: withLikes.map((row) =>
@@ -388,6 +398,7 @@ collectionsRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
         cover_url: coverUrls.get(row.id) ?? null,
         likes_count: row.likes_count,
         liked_by_me: row.liked_by_me,
+        comments_count: commentsById.get(row.id) ?? 0,
       }),
     ),
   });

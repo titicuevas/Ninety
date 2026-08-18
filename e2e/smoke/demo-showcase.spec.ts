@@ -258,4 +258,39 @@ test.describe('Smoke — demo showcase @smoke', () => {
       page.getByText(/también le gusta|también comentó/i).first(),
     ).toBeVisible({ timeout: 15_000 });
   });
+
+  test('Mis listas muestra también le gusta cuando hay engagement', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(`${API_BASE}/api/collections/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      collections?: Array<{ likes_count?: number; comments_count?: number; is_public?: boolean }>;
+    };
+    const social = (body.collections ?? []).find(
+      (row) =>
+        row.is_public !== false &&
+        ((row.likes_count ?? 0) > 0 || (row.comments_count ?? 0) > 0),
+    );
+    expect(
+      social,
+      'La cuenta QA no tiene listas públicas con likes/comentarios (usa @beta_ninety o seed:fans)',
+    ).toBeTruthy();
+
+    await page.goto('/collections');
+    await expect(page.getByRole('heading', { name: /^mis listas$/i })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(
+      page.getByText(/también le gusta|también comentó/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
+  });
 });
