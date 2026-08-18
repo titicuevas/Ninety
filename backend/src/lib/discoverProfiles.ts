@@ -9,6 +9,8 @@ export type DiscoverCandidate = ProfileRow & {
 
 export type DiscoverMatchReason = 'favorite_team' | 'city' | 'country' | 'active' | null;
 
+export type DiscoverReasonFilter = 'favorite_team' | 'nearby' | 'active';
+
 export type RankedDiscoverProfile = DiscoverCandidate & {
   match_reason: DiscoverMatchReason;
 };
@@ -67,6 +69,30 @@ function primaryMatchReason(
   if (scoreCountry) return 'country';
   if (hasActivity) return 'active';
   return null;
+}
+
+export function parseDiscoverReasonFilter(
+  value: string | null | undefined,
+): DiscoverReasonFilter | null {
+  if (value === 'favorite_team' || value === 'nearby' || value === 'active') return value;
+  return null;
+}
+
+export function profileMatchesDiscoverReason(
+  reason: DiscoverMatchReason,
+  filter: DiscoverReasonFilter | null,
+): boolean {
+  if (!filter) return true;
+  if (filter === 'nearby') return reason === 'city' || reason === 'country';
+  return reason === filter;
+}
+
+export function filterDiscoverByReason<T extends { match_reason: DiscoverMatchReason }>(
+  profiles: T[],
+  filter: DiscoverReasonFilter | null,
+): T[] {
+  if (!filter) return profiles;
+  return profiles.filter((profile) => profileMatchesDiscoverReason(profile.match_reason, filter));
 }
 
 /**

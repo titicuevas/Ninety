@@ -15,7 +15,10 @@ export function SearchMatchPage() {
   const setTab = (next: SearchTab) => {
     const nextParams = new URLSearchParams(params);
     if (next === 'people') nextParams.set('tab', 'people');
-    else nextParams.delete('tab');
+    else {
+      nextParams.delete('tab');
+      nextParams.delete('reason');
+    }
     setParams(nextParams, { replace: true });
   };
 

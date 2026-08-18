@@ -92,4 +92,25 @@ test.describe('A11y — app autenticada @a11y', () => {
     await expect(recent).toHaveAttribute('aria-pressed', 'true');
     await expect(page).toHaveURL(/sort=recent/);
   });
+
+  test('chips de aficionados se activan con teclado', async ({ page }) => {
+    await openAuthenticatedHome(page);
+    await page.goto('/search?tab=people');
+    await expect(page.getByRole('heading', { name: /^buscar$/i })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByLabel(/nombre o username/i)).toBeVisible({ timeout: 15_000 });
+
+    const filters = page.getByTestId('people-discover-filters');
+    test.skip(
+      (await filters.count()) === 0,
+      'front aún no tiene chips de discover — espera al deploy de v68',
+    );
+    const nearby = filters.getByRole('button', { name: /^cerca$/i });
+    await nearby.focus();
+    await expect(nearby).toBeFocused();
+    await nearby.press('Enter');
+    await expect(nearby).toHaveAttribute('aria-pressed', 'true');
+    await expect(page).toHaveURL(/reason=nearby/);
+  });
 });

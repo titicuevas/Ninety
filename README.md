@@ -389,7 +389,7 @@ Ninety/
 | POST/PATCH/DELETE | `/api/collections`… | ✅ | CRUD colecciones + ítems (`cover_capsule_id` en PATCH) |
 | PUT | `/api/collections/:id/items/reorder` | ✅ | Reordenar Capsules (`position`) |
 | GET | `/api/collections/discover` | ✅ | Descubrir listas públicas ajenas (`q`, `sort=relevant|recent|likes`; `match_reason`: `following` / `favorite_team` / `active`) |
-| GET | `/api/profile/discover` | ✅ | Sugerir aficionados (`match_reason`: equipo / ciudad / país / `active`; filtra bloqueos) |
+| GET | `/api/profile/discover` | ✅ | Sugerir aficionados (`limit` máx. 24; `reason=favorite_team` / `nearby` / `active`; `match_reason`: equipo / ciudad / país / `active`; filtra bloqueos) |
 | GET | `/api/profile/by-team` | ✅ | Fans del mismo club favorito (`?slug=` + paginación; filtra `user_blocks`) |
 | GET | `/api/collections/user/:username` | opcional | Colecciones públicas |
 | GET | `/api/collections/user/:username/:slug` | opcional | Detalle colección (`/u/:username/lists/:slug`) |
@@ -725,6 +725,12 @@ Ninety/
 - [x] `GET /api/capsules/user/:username/in-common` cruza tu diario con las Capsules públicas del otro (un query por página, sin N+1)
 - [x] `/u/:username/vs` lista los partidos que ambos habéis guardado, con las dos notas
 - [x] E2e chromium con skip si prod aún no despliega el endpoint
+
+### ✅ v68 — Explorar aficionados con filtros y búsqueda en URL
+- [x] `GET /api/profile/discover` acepta `reason=favorite_team|nearby|active` y `limit` hasta 24 (Home/Feed siguen pidiendo 6)
+- [x] Chips Todas / Mismo equipo / Cerca / Activos en `/search?tab=people` cuando la búsqueda está vacía
+- [x] `q` sticky en la URL (como partidos y Explorar colecciones)
+- [x] E2e chromium con skip si prod aún no tiene los chips
 
 ## 🎨 Identidad visual
 

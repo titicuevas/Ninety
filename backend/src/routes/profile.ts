@@ -21,6 +21,8 @@ import {
   rankDiscoverProfiles,
   favoriteTeamIlikePattern,
   tallyPublicCapsuleActivity,
+  parseDiscoverReasonFilter,
+  filterDiscoverByReason,
 } from '../lib/discoverProfiles.js';
 import {
   isValidTeamSlug,
@@ -641,7 +643,10 @@ profileRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  const limit = Math.min(Math.max(Number(req.query.limit) || 6, 1), 12);
+  const limit = Math.min(Math.max(Number(req.query.limit) || 6, 1), 24);
+  const reason = parseDiscoverReasonFilter(
+    typeof req.query.reason === 'string' ? req.query.reason : null,
+  );
   const supabase = createUserClient(token);
   const profileSelect =
     'id, username, full_name, avatar_url, favorite_team, country, city, created_at';
@@ -745,17 +750,20 @@ profileRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {
     }
   }
 
-  const ranked = rankDiscoverProfiles(
-    [...byId.values()]
-      .filter((row): row is DiscoverRow & { username: string } => !!row.username)
-      .map((row) => ({
-        ...row,
-        public_capsules_count: activityByUser.get(row.id) ?? 0,
-      })),
-    me ?? {},
-    followingIds,
-    limit,
-  );
+  const ranked = filterDiscoverByReason(
+    rankDiscoverProfiles(
+      [...byId.values()]
+        .filter((row): row is DiscoverRow & { username: string } => !!row.username)
+        .map((row) => ({
+          ...row,
+          public_capsules_count: activityByUser.get(row.id) ?? 0,
+        })),
+      me ?? {},
+      followingIds,
+      48,
+    ),
+    reason,
+  ).slice(0, limit);
 
   const rankedIds = ranked.map((row) => row.id);
   let followerSet = new Set<string>();

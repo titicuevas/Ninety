@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   favoriteTeamIlikePattern,
+  filterDiscoverByReason,
+  parseDiscoverReasonFilter,
   rankDiscoverProfiles,
   tallyPublicCapsuleActivity,
   teamsMatch,
@@ -158,5 +160,30 @@ describe('rankDiscoverProfiles', () => {
     assert.equal(ranked[0]?.username, 'activo');
     assert.equal(ranked[0]?.match_reason, 'active');
     assert.equal(ranked[1]?.match_reason, null);
+  });
+});
+
+describe('filterDiscoverByReason', () => {
+  it('parsea reason o ignora basura', () => {
+    assert.equal(parseDiscoverReasonFilter('nearby'), 'nearby');
+    assert.equal(parseDiscoverReasonFilter('favorite_team'), 'favorite_team');
+    assert.equal(parseDiscoverReasonFilter('active'), 'active');
+    assert.equal(parseDiscoverReasonFilter('spam'), null);
+  });
+
+  it('Cerca incluye ciudad y país', () => {
+    const rows = [
+      { id: '1', match_reason: 'city' as const },
+      { id: '2', match_reason: 'country' as const },
+      { id: '3', match_reason: 'active' as const },
+    ];
+    assert.deepEqual(
+      filterDiscoverByReason(rows, 'nearby').map((row) => row.id),
+      ['1', '2'],
+    );
+    assert.deepEqual(
+      filterDiscoverByReason(rows, 'active').map((row) => row.id),
+      ['3'],
+    );
   });
 });

@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Swords, Users } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
+import { FilterChip, filterChipRowClass } from '@/components/FilterChip';
 import { FollowButton } from '@/components/FollowButton';
 import { FollowsYouBadge } from '@/components/FollowsYouBadge';
 import { PeopleListSkeleton } from '@/components/ListSkeletons';
@@ -10,9 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useDiscoverProfiles } from '@/hooks/useDiscoverProfiles';
+import { usePeopleSearchFilterParams } from '@/hooks/usePeopleSearchFilterParams';
 import { MIN_PEOPLE_QUERY, useProfileSearch } from '@/hooks/useProfileSearch';
 import { useProfile } from '@/hooks/useProfile';
-import { discoverProfileMatchLabel } from '@/lib/discoverProfiles';
+import { DISCOVER_REASON_CHIPS, discoverProfileMatchLabel } from '@/lib/discoverProfiles';
 import { isAutoUsername } from '@/lib/profileHelpers';
 import { profilePath } from '@/lib/profilePath';
 import { teamPathFromFavorite } from '@/lib/teamPath';
@@ -104,24 +105,21 @@ export function PeopleResultRow({ profile }: { profile: Profile }) {
   );
 }
 
-export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string }) {
-  const [query, setQuery] = useState(initialQuery);
-  const [debounced, setDebounced] = useState(() => initialQuery.trim());
-  const showSuggestions = !query.trim();
+export function PeopleSearchPanel() {
+  const { q, qDraft, setQDraft, reason, setReason, clearFilters } = usePeopleSearchFilterParams();
+  const showSuggestions = !qDraft.trim();
   const { data: me } = useProfile();
   const myTeamHref = teamPathFromFavorite(me?.favorite_team);
 
-  useEffect(() => {
-    const t = window.setTimeout(() => setDebounced(query.trim()), 350);
-    return () => window.clearTimeout(t);
-  }, [query]);
-
   const { data, isLoading, isFetching, isError, error, refetch, isRefetching } =
-    useProfileSearch(debounced);
-  const { data: discoverData, isLoading: discoverLoading } = useDiscoverProfiles(showSuggestions);
+    useProfileSearch(q);
+  const { data: discoverData, isLoading: discoverLoading } = useDiscoverProfiles(showSuggestions, {
+    limit: 24,
+    reason,
+  });
   const profiles = data?.profiles ?? [];
   const suggestions = discoverData?.profiles ?? [];
-  const searching = debounced.length >= MIN_PEOPLE_QUERY && (isLoading || isFetching);
+  const searching = q.length >= MIN_PEOPLE_QUERY && (isLoading || isFetching);
 
   return (
     <div className="space-y-6">
@@ -135,14 +133,15 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
           <Input
             id="people-search"
             type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={qDraft}
+            onChange={(e) => setQDraft(e.target.value)}
             placeholder="Ej. beta_ninety, Beta…"
             className="pl-9"
             autoFocus
+            autoComplete="off"
           />
         </div>
-        {query.trim().length > 0 && query.trim().length < MIN_PEOPLE_QUERY ? (
+        {qDraft.trim().length > 0 && qDraft.trim().length < MIN_PEOPLE_QUERY ? (
           <p className="text-sm text-muted-foreground">Escribe al menos {MIN_PEOPLE_QUERY} caracteres.</p>
         ) : null}
         {myTeamHref && me?.favorite_team?.trim() ? (
@@ -155,6 +154,32 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
           </p>
         ) : null}
       </div>
+
+      {showSuggestions ? (
+        <div className="max-w-xl space-y-2">
+          <div
+            className={filterChipRowClass}
+            role="group"
+            aria-label="Filtrar sugerencias"
+            data-testid="people-discover-filters"
+          >
+            {DISCOVER_REASON_CHIPS.map((chip) => (
+              <FilterChip
+                key={chip.value ?? 'all'}
+                active={reason === chip.value}
+                onClick={() => setReason(chip.value)}
+              >
+                {chip.label}
+              </FilterChip>
+            ))}
+          </div>
+          {reason ? (
+            <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={clearFilters}>
+              Quitar filtro
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
 
       {searching ? (
         <PeopleListSkeleton count={3} className="max-w-xl" label="Buscando aficionados" />
@@ -169,7 +194,7 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
         />
       ) : null}
 
-      {!searching && debounced.length >= MIN_PEOPLE_QUERY && !isError ? (
+      {!searching && q.length >= MIN_PEOPLE_QUERY && !isError ? (
         profiles.length > 0 ? (
           <ul className="max-w-xl space-y-2">
             {profiles.map((profile) => (
@@ -184,7 +209,7 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
             icon={Users}
             className="max-w-xl"
             title="Sin resultados"
-            description={`No hay aficionados para «${debounced}». Prueba otro username o nombre.`}
+            description={`No hay aficionados para «${q}». Prueba otro username o nombre.`}
           />
         )
       ) : null}
@@ -207,9 +232,19 @@ export function PeopleSearchPanel({ initialQuery = '' }: { initialQuery?: string
           <EmptyState
             icon={Users}
             className="max-w-xl"
-            title="Encuentra aficionados"
-            description="Busca por username o nombre."
-          />
+            title={reason ? 'Sin sugerencias' : 'Encuentra aficionados'}
+            description={
+              reason
+                ? 'Prueba otro filtro o quítalo.'
+                : 'Busca por username o nombre.'
+            }
+          >
+            {reason ? (
+              <Button type="button" variant="secondary" onClick={clearFilters}>
+                Quitar filtro
+              </Button>
+            ) : null}
+          </EmptyState>
         )
       ) : null}
     </div>
