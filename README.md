@@ -641,6 +641,9 @@ Ninety/
 ### ✅ v47 — A11y de portadas en listas
 - [x] El enlace de la portada en el perfil público (y Mis listas) queda oculto a AT (`aria-hidden`) para no romper `link-name` en QA E2E
 
+### ✅ v48 — Comentarios en el detalle de lista
+- [x] `GET /api/collections/:id` y el detalle público incluyen `comments_count`; Favoritos y Mis listas muestran el recuento en la ficha
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

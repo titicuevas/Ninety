@@ -305,6 +305,19 @@ function serializeCollection(
   };
 }
 
+async function commentsCountFor(
+  client: Parameters<typeof attachCollectionCommentCounts>[0],
+  collectionId: string,
+): Promise<number> {
+  try {
+    const [row] = await attachCollectionCommentCounts(client, [{ id: collectionId }]);
+    return row?.comments_count ?? 0;
+  } catch (err) {
+    if (!isMissingCollectionCommentsTable(err)) throw err;
+    return 0;
+  }
+}
+
 async function loadCollectionItems(
   reader: ReturnType<typeof createUserClient>,
   collectionId: string,
@@ -1286,6 +1299,7 @@ collectionsRouter.get('/user/:username/:slug', optionalAuth, async (req: AuthReq
   });
   const row = collection as CollectionRow;
   const [withLikes] = await attachCollectionLikeStats(reader, req.userId ?? '', [row]);
+  const commentsCount = await commentsCountFor(reader, row.id);
 
   res.json({
     profile: collectionAuthor(profile),
@@ -1297,6 +1311,7 @@ collectionsRouter.get('/user/:username/:slug', optionalAuth, async (req: AuthReq
       }),
       likes_count: withLikes?.likes_count ?? 0,
       liked_by_me: withLikes?.liked_by_me ?? false,
+      comments_count: commentsCount,
     }),
     capsules,
   });
@@ -1355,6 +1370,7 @@ collectionsRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
 
   const row = collection as CollectionRow;
   const [withLikes] = await attachCollectionLikeStats(reader, req.userId ?? '', [row]);
+  const commentsCount = await commentsCountFor(reader, row.id);
   res.json({
     profile: profile ? collectionAuthor(profile) : null,
     collection: serializeCollection(withLikes ?? row, {
@@ -1365,6 +1381,7 @@ collectionsRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
       }),
       likes_count: withLikes?.likes_count ?? 0,
       liked_by_me: withLikes?.liked_by_me ?? false,
+      comments_count: commentsCount,
     }),
     capsules,
   });

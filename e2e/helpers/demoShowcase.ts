@@ -66,7 +66,7 @@ export async function requireDemoFeaturedCollection(request: APIRequestContext) 
     `No hay lista Favoritos (@${DEMO_USERNAME}/lists/${DEMO_FEATURED_COLLECTION_SLUG}). Ejecuta npm run seed:fans.`,
   ).toBeTruthy();
   const body = (await res.json()) as {
-    collection?: { id?: string; name?: string; likes_count?: number; slug?: string };
+    collection?: { id?: string; name?: string; likes_count?: number; comments_count?: number; slug?: string };
     capsules?: unknown[];
   };
   expect(body.collection?.slug, 'Favoritos seed:fans').toBe(DEMO_FEATURED_COLLECTION_SLUG);

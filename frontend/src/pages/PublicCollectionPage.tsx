@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { BookOpen, Library } from 'lucide-react';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
-import { CollectionAlsoCommented } from '@/components/CollectionAlsoCommented';
-import { CollectionAlsoLiked } from '@/components/CollectionAlsoLiked';
+import { CollectionCardSocialFooter } from '@/components/CollectionCardSocialFooter';
 import { CollectionComments } from '@/components/CollectionComments';
 import { CollectionLikeButton } from '@/components/CollectionLikeButton';
 import { CollectionLikersDialog } from '@/components/CollectionLikersDialog';
@@ -19,6 +18,7 @@ import { useAuth } from '@/hooks/useAuthInit';
 import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { usePublicCollection } from '@/hooks/useCollections';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { formatCollectionCardMeta } from '@/lib/collectionCardMeta';
 import { formatLikesPanelTitle } from '@/lib/collectionLikes';
 import { publicProfilePath } from '@/lib/profilePath';
 
@@ -79,6 +79,7 @@ export function PublicCollectionPage() {
 
   const capsules = data?.capsules ?? [];
   const likesCount = collection.likes_count ?? 0;
+  const commentsCount = collection.comments_count ?? 0;
   const isOwn = !!user && user.id === collection.user_id;
   const coverUrl =
     collection.cover_url ??
@@ -122,22 +123,16 @@ export function PublicCollectionPage() {
               displayName
             )}
             {' · '}
-            {capsules.length} {capsules.length === 1 ? 'partido' : 'partidos'}
+            {formatCollectionCardMeta(capsules.length, likesCount, commentsCount)}
           </p>
-          {user ? (
-            <CollectionAlsoLiked
-              className="justify-center sm:justify-start"
-              collectionId={collection.id}
-              exceptUserId={collection.user_id}
-            />
-          ) : null}
-          {user ? (
-            <CollectionAlsoCommented
-              className="justify-center sm:justify-start"
-              collectionId={collection.id}
-              exceptUserId={collection.user_id}
-            />
-          ) : null}
+          <CollectionCardSocialFooter
+            className="space-y-1"
+            collectionId={collection.id}
+            ownerId={collection.user_id}
+            currentUserId={user?.id}
+            likesCount={likesCount}
+            commentsCount={commentsCount}
+          />
           <div
             className="flex flex-wrap items-center justify-center gap-2 sm:justify-start"
             role="group"

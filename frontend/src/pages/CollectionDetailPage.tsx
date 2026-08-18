@@ -2,8 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowDown, ArrowLeft, ArrowUp, ImageIcon, Plus, Trash2 } from 'lucide-react';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
-import { CollectionAlsoCommented } from '@/components/CollectionAlsoCommented';
-import { CollectionAlsoLiked } from '@/components/CollectionAlsoLiked';
+import { CollectionCardSocialFooter } from '@/components/CollectionCardSocialFooter';
 import { CollectionLikeButton } from '@/components/CollectionLikeButton';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
@@ -27,6 +26,7 @@ import {
 } from '@/hooks/useCollections';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
+import { formatCollectionCardMeta } from '@/lib/collectionCardMeta';
 import { resolveCollectionCoverUrl } from '@/lib/collectionCover';
 import { moveCapsuleInOrder } from '@/lib/collectionReorder';
 import { slugifyCollectionName } from '@/lib/collectionSlug';
@@ -77,8 +77,12 @@ function CollectionEditForm({
           Editar colección
         </CardTitle>
         <CardDescription>
-          {collection.items_count ?? itemsCount} Capsules · slug{' '}
-          <code className="text-xs">{collection.slug}</code>
+          {formatCollectionCardMeta(
+            collection.items_count ?? itemsCount,
+            collection.likes_count ?? 0,
+            collection.comments_count ?? 0,
+          )}{' '}
+          · slug <code className="text-xs">{collection.slug}</code>
           {collection.cover_capsule_id ? ' · portada destacada' : ''}
         </CardDescription>
       </CardHeader>
@@ -435,16 +439,13 @@ export function CollectionDetailPage() {
         </nav>
 
         {collection.is_public ? (
-          <>
-            <CollectionAlsoLiked
-              collectionId={collection.id}
-              exceptUserId={collection.user_id}
-            />
-            <CollectionAlsoCommented
-              collectionId={collection.id}
-              exceptUserId={collection.user_id}
-            />
-          </>
+          <CollectionCardSocialFooter
+            collectionId={collection.id}
+            ownerId={collection.user_id}
+            currentUserId={profile?.id}
+            likesCount={collection.likes_count}
+            commentsCount={collection.comments_count}
+          />
         ) : null}
 
         {coverUrl ? (

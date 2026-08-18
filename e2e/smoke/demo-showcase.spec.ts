@@ -50,6 +50,50 @@ test.describe('Smoke — demo showcase @smoke', () => {
     });
   });
 
+  test('detalle de lista autenticado muestra comentarios en la ficha', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(`${API_BASE}/api/collections/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      collections?: Array<{ id?: string; comments_count?: number; is_public?: boolean }>;
+    };
+    const social = (body.collections ?? []).find(
+      (row) => row.id && row.is_public !== false && (row.comments_count ?? 0) > 0,
+    );
+    expect(
+      social?.id,
+      'La cuenta QA no tiene una lista pública con comentarios (usa @beta_ninety o seed:fans)',
+    ).toBeTruthy();
+
+    const detail = await request.get(`${API_BASE}/api/collections/${social!.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(detail.ok()).toBeTruthy();
+    const detailBody = (await detail.json()) as { collection?: { comments_count?: number } };
+    expect(
+      detailBody.collection?.comments_count ?? 0,
+      'GET /api/collections/:id debe incluir comments_count',
+    ).toBeGreaterThan(0);
+
+    await page.goto(`/collections/${social!.id}`);
+    await expect(page.getByRole('heading', { name: /editar colección/i })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByText(/\d+ comentarios?/i).first()).toBeVisible();
+    await expect(page.getByText(/también le gusta|también comentó/i).first()).toBeVisible({
+      timeout: 15_000,
+    });
+  });
+
   test('Capsule social invitado muestra reseña y engagement', async ({ page, request }, testInfo) => {
     test.skip(testInfo.project.name !== 'smoke-public', 'vista invitado');
     const { socialCapsule } = await requireDemoShowcaseProfile(request);
