@@ -32,9 +32,17 @@ import {
   isMissingParentIdColumn,
 } from '../lib/capsuleComments.js';
 import { notifyCommentMentions } from '../lib/commentMentions.js';
-import { attachLikeStats, fetchLikesWithProfiles, isMissingLikesTable, listCapsuleAlsoLiked, listLikedCapsules } from '../lib/capsuleLikes.js';
+import { attachListSocial } from '../lib/capsuleListSocial.js';
+import {
+  attachLikeStats,
+  fetchLikesWithProfiles,
+  isMissingLikesTable,
+  listCapsuleAlsoLiked,
+  listLikedCapsules,
+} from '../lib/capsuleLikes.js';
 import { applyFeedContentFilters, resolveFeedContentFilters } from '../lib/feedFilters.js';
-import { attachAlsoWatched, listAlsoWatched } from '../lib/capsuleAlsoWatched.js';
+import { listAlsoWatched } from '../lib/capsuleAlsoWatched.js';
+import { isUuid, onlyUuids, postgrestInList, sanitizePostgrestSearch } from '../lib/postgrestSafe.js';
 import { isValidCapsuleMatchId } from '../lib/manualMatch.js';
 import { attachFollowStats, getFollowingIds } from '../lib/userFollows.js';
 import { attachMutedByMe } from '../lib/notificationMutes.js';
@@ -122,17 +130,6 @@ function engagementScore(row: { likes_count?: number; comments_count?: number })
   return (row.likes_count ?? 0) + (row.comments_count ?? 0);
 }
 
-async function attachListSocial<T extends { id: string; user_id: string; match_id?: number | null }>(
-  supabase: Parameters<typeof attachLikeStats>[0],
-  viewerId: string,
-  items: T[],
-) {
-  return attachAlsoWatched(
-    viewerId,
-    await attachCommentCounts(supabase, await attachLikeStats(supabase, viewerId, items)),
-  );
-}
-
 const meQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).optional(),
   offset: z.coerce.number().int().min(0).default(0),
@@ -157,7 +154,7 @@ const publicProfileQuerySchema = z.object({
 });
 
 function sanitizeSearchQ(raw: string | undefined): string {
-  return (raw?.toLowerCase() ?? '').replace(/[%_,.()"]/g, '').trim();
+  return sanitizePostgrestSearch(raw);
 }
 
 function listYearsFromWatchedAt(rows: { watched_at: string }[]): number[] {
@@ -265,19 +262,22 @@ capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
     if (scope === 'explore') {
       let scoped = applyFeedContentFilters(query.eq('is_public', true), contentFilters);
       if (blockedIds.size > 0) {
-        scoped = scoped.not('user_id', 'in', `(${[...blockedIds].join(',')})`);
+        const blockedIn = postgrestInList(blockedIds);
+        if (blockedIn) scoped = scoped.not('user_id', 'in', blockedIn);
       }
       return scoped;
     }
-    let scoped = query.or(`is_public.eq.true,user_id.eq.${userId}`);
+    let scoped = isUuid(userId)
+      ? query.or(`is_public.eq.true,user_id.eq.${userId}`)
+      : query.eq('is_public', true);
     if (followingIds !== null) {
-      const feedUserIds = excludeBlockedIds(
-        [...new Set([userId, ...followingIds])],
-        blockedIds,
+      const feedUserIds = onlyUuids(
+        excludeBlockedIds([...new Set([userId, ...followingIds])], blockedIds),
       );
-      scoped = scoped.in('user_id', feedUserIds);
+      scoped = scoped.in('user_id', feedUserIds.length > 0 ? feedUserIds : [userId]);
     } else if (blockedIds.size > 0) {
-      scoped = scoped.not('user_id', 'in', `(${[...blockedIds].join(',')})`);
+      const blockedIn = postgrestInList(blockedIds);
+      if (blockedIn) scoped = scoped.not('user_id', 'in', blockedIn);
     }
     return applyFeedContentFilters(scoped, contentFilters);
   };
@@ -372,11 +372,7 @@ capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
     }
   }
 
-  const withLikes = await attachLikeStats(supabase, userId, rows);
-  const feedRows = await attachAlsoWatched(
-    userId,
-    await attachCommentCounts(supabase, withLikes),
-  );
+  const feedRows = await attachListSocial(supabase, userId, rows);
 
   res.json({
     capsules: feedRows.map((capsule) => ({
@@ -932,11 +928,7 @@ capsulesRouter.get('/user/:username/calendar', optionalAuth, async (req: AuthReq
     return;
   }
 
-  const withLikes = await attachLikeStats(reader, viewerId, capsules);
-  const capsulesWithLikes = await attachAlsoWatched(
-    viewerId,
-    await attachCommentCounts(reader, withLikes),
-  );
+  const capsulesWithLikes = await attachListSocial(reader, viewerId, capsules);
   const normalizedProfile = normalizeProfile(profile);
 
   res.json({
@@ -1130,11 +1122,7 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
     }
   }
 
-  const withLikes = await attachLikeStats(reader, viewerId, data ?? []);
-  const capsulesWithLikes = await attachAlsoWatched(
-    viewerId,
-    await attachCommentCounts(reader, withLikes),
-  );
+  const capsulesWithLikes = await attachListSocial(reader, viewerId, data ?? []);
   const normalizedProfile = normalizeProfile(profile);
   const profileWithFollows = await attachFollowStats(reader, viewerId, normalizedProfile);
   const profileWithMute = await attachMutedByMe(reader, viewerId, profileWithFollows);
@@ -1910,8 +1898,7 @@ capsulesRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
     }
   }
 
-  const [withLikes] = await attachLikeStats(reader, viewerId, [data]);
-  const [withComments] = await attachCommentCounts(reader, [withLikes]);
+  const [withAlso] = await attachListSocial(reader, viewerId, [data]);
 
   const { data: profile } = await supabaseAnon
     .from('profiles')
@@ -1921,7 +1908,7 @@ capsulesRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
 
   let followed_by_me = false;
   let follows_me = false;
-  if (viewerId && profile && viewerId !== profile.id) {
+  if (viewerId && profile && viewerId !== profile.id && isUuid(viewerId) && isUuid(profile.id)) {
     const { data: followRows, error: followError } = await reader
       .from('user_follows')
       .select('follower_id, following_id')
@@ -1942,7 +1929,7 @@ capsulesRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
   }
 
   res.json({
-    ...withComments,
+    ...withAlso,
     profiles: profile
       ? {
           username: profile.username,
@@ -2045,6 +2032,7 @@ capsulesRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
+  const capsuleId = routeParam(req.params.id);
   const supabase = createUserClient(token);
   const patch = {
     ...parsed.data,
@@ -2059,9 +2047,9 @@ capsulesRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
   const { data, error } = await supabase
     .from('capsules')
     .update(patch)
-    .eq('id', req.params.id)
+    .eq('id', capsuleId)
     .eq('user_id', req.userId!)
-    .select()
+    .select('*')
     .single();
 
   if (error) {
@@ -2086,7 +2074,14 @@ capsulesRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  res.json(data);
+  const [withSocial] = await attachListSocial(supabase, req.userId!, [
+    {
+      ...(data as { id: string; user_id: string; match_id?: number | null }),
+      id: capsuleId,
+      user_id: req.userId!,
+    },
+  ]);
+  res.json(withSocial);
 });
 
 capsulesRouter.delete('/:id', requireAuth, async (req: AuthRequest, res) => {

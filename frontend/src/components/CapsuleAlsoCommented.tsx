@@ -1,21 +1,25 @@
 import { AlsoLikedPeople } from '@/components/AlsoLikedPeople';
 import { useCapsuleAlsoCommented } from '@/hooks/useCapsuleAlsoCommented';
 import { alsoCommentedLabel } from '@/lib/capsuleAlsoCommented';
-import { filterAlsoLikedPeople } from '@/lib/collectionAlsoLiked';
+import { filterAlsoLikedPeople, type CollectionAlsoLikedPerson } from '@/lib/collectionAlsoLiked';
 
 export function CapsuleAlsoCommented({
   capsuleId,
+  people: peopleProp,
   exceptUserId,
   className,
 }: {
-  capsuleId: string;
+  capsuleId?: string;
+  people?: CollectionAlsoLikedPerson[];
   exceptUserId?: string | null;
   className?: string;
 }) {
-  const { data, isLoading, isError } = useCapsuleAlsoCommented(capsuleId);
-  const people = filterAlsoLikedPeople(data?.people ?? [], exceptUserId);
+  const shouldFetch = peopleProp === undefined;
+  const { data, isLoading, isError } = useCapsuleAlsoCommented(shouldFetch ? capsuleId : undefined);
+  const people = filterAlsoLikedPeople(peopleProp ?? data?.people ?? [], exceptUserId);
 
-  if (isLoading || isError || people.length === 0) return null;
+  if (shouldFetch && (isLoading || isError)) return null;
+  if (people.length === 0) return null;
 
   return (
     <AlsoLikedPeople

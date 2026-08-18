@@ -18,6 +18,10 @@ export function hasAlsoWatchedPeople(row: { also_watched?: unknown[] | null }): 
   return (row.also_watched?.length ?? 0) > 0;
 }
 
+export function hasAlsoLikedPeople(row: { also_liked?: unknown[] | null }): boolean {
+  return (row.also_liked?.length ?? 0) > 0;
+}
+
 export type DemoCapsuleRow = {
   id?: string;
   note?: string | null;

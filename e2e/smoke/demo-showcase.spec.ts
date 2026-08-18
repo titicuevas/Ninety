@@ -11,6 +11,7 @@ import {
   DEMO_FEATURED_COLLECTION_SLUG,
   DEMO_SOCIAL_COMMENT_MARKER,
   hasAlsoWatchedPeople,
+  hasAlsoLikedPeople,
   requireDemoFeaturedCollection,
   requireDemoShowcaseProfile,
 } from '../helpers/demoShowcase';
@@ -598,6 +599,116 @@ test.describe('Smoke — demo showcase @smoke', () => {
     };
     expect(patched.collection?.likes_count ?? 0).toBe(target!.likes_count ?? 0);
     expect(patched.collection?.comments_count ?? 0).toBe(target!.comments_count ?? 0);
+  });
+
+  test('PATCH de Capsule conserva likes y comentarios', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const me = await request.get(`${API_BASE}/api/capsules/me?limit=20`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(me.ok()).toBeTruthy();
+    const body = (await me.json()) as {
+      capsules?: Array<{
+        id?: string;
+        note?: string | null;
+        likes_count?: number;
+        comments_count?: number;
+        also_watched?: unknown[];
+      }>;
+    };
+    const target = (body.capsules ?? []).find(
+      (row) =>
+        row.id &&
+        ((row.likes_count ?? 0) > 0 ||
+          (row.comments_count ?? 0) > 0 ||
+          hasAlsoWatchedPeople(row)),
+    );
+    expect(
+      target?.id,
+      'La cuenta QA no tiene Capsules con likes/comentarios/also_watched (usa @beta_ninety o seed:fans)',
+    ).toBeTruthy();
+
+    const patch = await request.patch(`${API_BASE}/api/capsules/${target!.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { note: target!.note ?? null },
+    });
+    expect(patch.ok()).toBeTruthy();
+    const patched = (await patch.json()) as {
+      likes_count?: number;
+      comments_count?: number;
+      also_watched?: unknown[];
+    };
+    test.skip(
+      !('likes_count' in patched),
+      'API aún no devuelve likes_count en PATCH — espera al deploy de v60',
+    );
+    expect(patched.likes_count ?? 0).toBe(target!.likes_count ?? 0);
+    expect(patched.comments_count ?? 0).toBe(target!.comments_count ?? 0);
+    expect(patched.also_watched?.length ?? 0).toBe(target!.also_watched?.length ?? 0);
+  });
+
+  test('GET Capsule incluye also_watched', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const me = await request.get(`${API_BASE}/api/capsules/me?limit=20`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(me.ok()).toBeTruthy();
+    const body = (await me.json()) as {
+      capsules?: Array<{ id?: string; also_watched?: unknown[] }>;
+    };
+    const target = (body.capsules ?? []).find((row) => row.id && hasAlsoWatchedPeople(row));
+    expect(
+      target?.id,
+      'La cuenta QA no tiene Capsules con also_watched (usa @beta_ninety o seed:fans)',
+    ).toBeTruthy();
+
+    const detail = await request.get(`${API_BASE}/api/capsules/${target!.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(detail.ok()).toBeTruthy();
+    const capsule = (await detail.json()) as { also_watched?: unknown[] };
+    test.skip(
+      !('also_watched' in capsule),
+      'API aún no devuelve also_watched en GET — espera al deploy de v62',
+    );
+    expect(capsule.also_watched?.length ?? 0).toBeGreaterThan(0);
+  });
+
+  test('GET feed incluye also_liked de follows', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(
+      `${API_BASE}/api/capsules/feed?scope=following&sort=recent&limit=20`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      capsules?: Array<{ id?: string; also_liked?: unknown[]; likes_count?: number }>;
+    };
+    const withLikes = (body.capsules ?? []).find((row) => row.id && (row.likes_count ?? 0) > 0);
+    expect(
+      withLikes?.id,
+      'Ejecuta npm run seed:fans — el feed no tiene Capsules con me gusta',
+    ).toBeTruthy();
+    test.skip(
+      withLikes != null && !('also_liked' in withLikes),
+      'API aún no devuelve also_liked en el feed — espera al deploy de v63',
+    );
+    expect(
+      (body.capsules ?? []).some(hasAlsoLikedPeople),
+      'GET /api/capsules/feed debe incluir also_liked — ejecuta npm run seed:fans',
+    ).toBe(true);
   });
 
   test('Home Comunidad muestra también le gusta en el preview del feed', async ({

@@ -263,6 +263,7 @@ export function PublicCapsulePage() {
               <CapsuleAlsoWatched
                 className="mt-4"
                 matchId={capsule.match_id}
+                people={capsule.also_watched}
                 exceptUserId={capsule.user_id}
               />
             ) : null}
@@ -271,6 +272,7 @@ export function PublicCapsulePage() {
               <CapsuleAlsoLiked
                 className="mt-2"
                 capsuleId={capsule.id}
+                people={capsule.also_liked}
                 exceptUserId={capsule.user_id}
               />
             ) : null}
@@ -279,6 +281,7 @@ export function PublicCapsulePage() {
               <CapsuleAlsoCommented
                 className="mt-2"
                 capsuleId={capsule.id}
+                people={capsule.also_commented}
                 exceptUserId={capsule.user_id}
               />
             ) : null}

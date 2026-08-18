@@ -4,6 +4,7 @@ import { CapsuleAlsoWatched } from '@/components/CapsuleAlsoWatched';
 import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
 import type { AlsoWatchedPerson } from '@/lib/capsuleAlsoWatched';
 import type { CapsuleShareSummary } from '@/lib/capsuleShare';
+import type { CollectionAlsoLikedPerson } from '@/lib/collectionAlsoLiked';
 import { cn } from '@/lib/utils';
 
 type CapsuleCardSocialFooterProps = {
@@ -14,6 +15,8 @@ type CapsuleCardSocialFooterProps = {
   likedByMe?: boolean;
   commentsCount?: number;
   alsoWatched?: AlsoWatchedPerson[];
+  alsoLiked?: CollectionAlsoLikedPerson[];
+  alsoCommented?: CollectionAlsoLikedPerson[];
   shareTitle?: string;
   share?: CapsuleShareSummary;
   isPublic?: boolean;
@@ -31,6 +34,8 @@ export function CapsuleCardSocialFooter({
   likedByMe,
   commentsCount = 0,
   alsoWatched,
+  alsoLiked,
+  alsoCommented,
   shareTitle = '',
   share,
   isPublic = true,
@@ -42,13 +47,21 @@ export function CapsuleCardSocialFooter({
     currentUserId && (alsoWatched?.length ?? 0) > 0 ? (
       <CapsuleAlsoWatched people={alsoWatched} exceptUserId={capsuleOwnerId} />
     ) : null;
-  const alsoLiked =
-    currentUserId && likesCount > 0 ? (
-      <CapsuleAlsoLiked capsuleId={capsuleId} exceptUserId={capsuleOwnerId} />
+  const alsoLikedLine =
+    currentUserId && (likesCount > 0 || alsoLiked !== undefined) ? (
+      <CapsuleAlsoLiked
+        capsuleId={capsuleId}
+        people={alsoLiked}
+        exceptUserId={capsuleOwnerId}
+      />
     ) : null;
-  const alsoCommented =
-    currentUserId && commentsCount > 0 ? (
-      <CapsuleAlsoCommented capsuleId={capsuleId} exceptUserId={capsuleOwnerId} />
+  const alsoCommentedLine =
+    currentUserId && (commentsCount > 0 || alsoCommented !== undefined) ? (
+      <CapsuleAlsoCommented
+        capsuleId={capsuleId}
+        people={alsoCommented}
+        exceptUserId={capsuleOwnerId}
+      />
     ) : null;
 
   if (!showBar && !alsoWatchedLine && (!currentUserId || (likesCount < 1 && commentsCount < 1))) {
@@ -58,8 +71,8 @@ export function CapsuleCardSocialFooter({
   return (
     <div className={cn('w-full space-y-2', className)}>
       {alsoWatchedLine}
-      {alsoLiked}
-      {alsoCommented}
+      {alsoLikedLine}
+      {alsoCommentedLine}
       {showBar ? (
         <CapsuleEngagementBar
           bordered={false}

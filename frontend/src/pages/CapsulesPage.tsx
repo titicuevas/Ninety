@@ -56,6 +56,8 @@ function CapsuleCard({
             likedByMe={capsule.liked_by_me}
             commentsCount={capsule.comments_count}
             alsoWatched={capsule.also_watched}
+            alsoLiked={capsule.also_liked}
+            alsoCommented={capsule.also_commented}
             shareTitle={shareTitle}
             share={capsuleShareSummaryFrom(capsule)}
             isPublic={isPublic}

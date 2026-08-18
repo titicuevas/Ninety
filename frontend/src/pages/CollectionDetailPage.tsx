@@ -265,6 +265,8 @@ function CollectionItemsSection({
                         likedByMe={capsule.liked_by_me}
                         commentsCount={capsule.comments_count}
                         alsoWatched={capsule.also_watched}
+                        alsoLiked={capsule.also_liked}
+                        alsoCommented={capsule.also_commented}
                         shareTitle={`${capsule.home_team_name} vs ${capsule.away_team_name}`}
                         share={capsuleShareSummaryFrom(capsule)}
                         isPublic={capsule.is_public !== false}

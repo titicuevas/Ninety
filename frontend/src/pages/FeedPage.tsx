@@ -149,6 +149,8 @@ function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; cur
           likedByMe={capsule.liked_by_me}
           commentsCount={capsule.comments_count}
           alsoWatched={capsule.also_watched}
+          alsoLiked={capsule.also_liked}
+          alsoCommented={capsule.also_commented}
           shareTitle={shareTitle}
           share={capsuleShareSummaryFrom(capsule, capsule.profiles)}
           isPublic={capsule.is_public !== false}

@@ -66,6 +66,8 @@ function FeedPreviewRow({
         likesCount={capsule.likes_count}
         commentsCount={capsule.comments_count}
         alsoWatched={capsule.also_watched}
+        alsoLiked={capsule.also_liked}
+        alsoCommented={capsule.also_commented}
         isPublic={capsule.is_public !== false}
         showBar={false}
       />

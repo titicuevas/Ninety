@@ -1,9 +1,7 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
-import { attachCommentCounts } from '../lib/capsuleComments.js';
-import { attachAlsoWatched } from '../lib/capsuleAlsoWatched.js';
-import { attachLikeStats } from '../lib/capsuleLikes.js';
+import { attachListSocial } from '../lib/capsuleListSocial.js';
 import { resolveCollectionCoverUrl } from '../lib/collectionCover.js';
 import { listCollectionAlsoCommented } from '../lib/collectionAlsoCommented.js';
 import {
@@ -377,11 +375,7 @@ async function loadCollectionItems(
     .filter((c): c is CapsuleLite => !!c);
   if (ordered.length === 0) return [];
 
-  const withLikes = await attachLikeStats(reader, opts.viewerId ?? '', ordered);
-  return attachAlsoWatched(
-    opts.viewerId ?? '',
-    await attachCommentCounts(reader, withLikes),
-  );
+  return attachListSocial(reader, opts.viewerId ?? '', ordered);
 }
 
 async function resolveTakenSlugs(

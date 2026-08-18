@@ -681,6 +681,29 @@ Ninety/
 - [x] El preview de Home mezcla likes/comentarios y «también lo vieron»
 - [x] E2e chromium en Actividad y Home (sin asserts nuevos en QA público)
 
+### ✅ v59 — Tope global de peticiones
+- [x] `GET /api/*` (salvo health y cron interno) limita 180 req/min por IP en producción
+- [x] `trust proxy` en producción para no mezclar a todo el mundo en una sola IP detrás de Railway
+- [x] Auth, fútbol y comentarios siguen con techos más estrictos encima del global
+
+### ✅ v60 — PATCH de Capsule conserva engagement
+- [x] `PATCH /api/capsules/:id` devuelve likes, comentarios y `also_watched` (el detalle no parpadea a 0 al editar)
+
+### ✅ v61 — Filtros PostgREST sin inyección
+- [x] Búsquedas, competición y equipo favorito pasan por `sanitizePostgrestSearch` (sin comodines ni puntuación de filtros)
+- [x] Listas `.in()` / `.or()` de IDs solo aceptan UUID; notas de Capsule quitan etiquetas HTML
+- [x] Bloqueos no interpolan IDs que no sean UUID en el DSL de PostgREST
+
+### ✅ v62 — GET Capsule incluye También lo vieron
+- [x] `GET /api/capsules/:id` adjunta `also_watched` (mismo campo que el feed)
+- [x] El detalle usa esa lista cuando viene en la respuesta (sin fetch extra si la API ya la trae)
+- [x] E2e chromium con skip si prod aún no despliega el campo
+
+### ✅ v63 — También le gusta y comentó en un query
+- [x] Feed, diario, me gusta, listas y GET/PATCH Capsule adjuntan `also_liked` y `also_commented` (sin un fetch por tarjeta)
+- [x] El pie social usa esas listas cuando vienen en la API
+- [x] E2e chromium con skip si prod aún no despliega los campos
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium
