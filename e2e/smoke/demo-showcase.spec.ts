@@ -103,11 +103,20 @@ test.describe('Smoke — demo showcase @smoke', () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(detail.ok()).toBeTruthy();
-    const detailBody = (await detail.json()) as { collection?: { comments_count?: number } };
+    const detailBody = (await detail.json()) as {
+      collection?: { comments_count?: number };
+      capsules?: Array<{ likes_count?: number; comments_count?: number }>;
+    };
     expect(
       detailBody.collection?.comments_count ?? 0,
       'GET /api/collections/:id debe incluir comments_count',
     ).toBeGreaterThan(0);
+    expect(
+      (detailBody.capsules ?? []).some(
+        (row) => (row.likes_count ?? 0) > 0 || (row.comments_count ?? 0) > 0,
+      ),
+      'GET /api/collections/:id debe incluir likes/comentarios en los partidos',
+    ).toBeTruthy();
 
     await page.goto(`/collections/${social!.id}`);
     await expect(page.getByRole('heading', { name: /editar colección/i })).toBeVisible({
@@ -117,6 +126,12 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(page.getByText(/también le gusta|también comentó/i).first()).toBeVisible({
       timeout: 15_000,
     });
+    await expect(
+      page
+        .getByTestId('collection-items')
+        .getByText(/también le gusta|también comentó|\d+ me gusta|\d+ comentarios?/i)
+        .first(),
+    ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('button', { name: /ocultar comentarios/i })).toBeVisible();
     await expect(page.getByText(new RegExp(DEMO_SOCIAL_COMMENT_MARKER, 'i'))).toBeVisible({
       timeout: 15_000,

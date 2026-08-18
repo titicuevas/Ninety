@@ -650,6 +650,9 @@ Ninety/
 ### ✅ v50 — Pie social en los partidos de una lista pública
 - [x] El detalle público de una lista muestra likes/comentarios y «también le gusta / comentó» en cada Capsule (`GET` de detalle incluye contadores en `capsules`)
 
+### ✅ v51 — Pie social en los partidos del detalle propio
+- [x] En `/collections/:id` (lista pública) cada Capsule muestra likes/comentarios y «también le gusta / comentó», igual que la vista pública
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

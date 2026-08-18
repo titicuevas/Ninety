@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowDown, ArrowLeft, ArrowUp, ImageIcon, Plus, Trash2 } from 'lucide-react';
+import { CapsuleCardSocialFooter } from '@/components/CapsuleCardSocialFooter';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { CollectionCardSocialFooter } from '@/components/CollectionCardSocialFooter';
 import { CollectionComments } from '@/components/CollectionComments';
@@ -27,6 +28,7 @@ import {
 } from '@/hooks/useCollections';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
+import { capsuleShareSummaryFrom } from '@/lib/capsuleShare';
 import { formatCollectionCardMeta } from '@/lib/collectionCardMeta';
 import { resolveCollectionCoverUrl } from '@/lib/collectionCover';
 import { moveCapsuleInOrder } from '@/lib/collectionReorder';
@@ -149,10 +151,17 @@ function CollectionEditForm({
   );
 }
 
+type CollectionItemCapsule = Capsule & {
+  likes_count?: number;
+  liked_by_me?: boolean;
+  comments_count?: number;
+};
+
 type CollectionItemsSectionProps = {
   collection: Collection;
-  capsules: Capsule[];
+  capsules: CollectionItemCapsule[];
   candidates: Capsule[];
+  currentUserId?: string;
   pickId: string;
   onPickIdChange: (value: string) => void;
   onAddItem: (capsuleId: string) => void;
@@ -169,6 +178,7 @@ function CollectionItemsSection({
   collection,
   capsules,
   candidates,
+  currentUserId,
   pickId,
   onPickIdChange,
   onAddItem,
@@ -243,8 +253,24 @@ function CollectionItemsSection({
               <CapsuleListCard
                 capsule={capsule}
                 showWatchedDate
+                footerBordered
                 footer={
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex w-full flex-col gap-3">
+                    {collection.is_public ? (
+                      <CapsuleCardSocialFooter
+                        capsuleId={capsule.id}
+                        capsuleOwnerId={capsule.user_id}
+                        currentUserId={currentUserId}
+                        likesCount={capsule.likes_count}
+                        likedByMe={capsule.liked_by_me}
+                        commentsCount={capsule.comments_count}
+                        shareTitle={`${capsule.home_team_name} vs ${capsule.away_team_name}`}
+                        share={capsuleShareSummaryFrom(capsule)}
+                        isPublic={capsule.is_public !== false}
+                        showShare={false}
+                      />
+                    ) : null}
+                    <div className="flex flex-wrap items-center gap-2">
                     {capsules.length > 1 ? (
                       <div className="flex items-center gap-1" role="group" aria-label="Reordenar">
                         <Button
@@ -308,6 +334,7 @@ function CollectionItemsSection({
                       <Trash2 className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
                       <span className="sr-only sm:not-sr-only">Quitar</span>
                     </Button>
+                    </div>
                   </div>
                 }
               />
@@ -489,6 +516,7 @@ export function CollectionDetailPage() {
           collection={collection}
           capsules={data.capsules}
           candidates={candidates}
+          currentUserId={profile?.id}
           pickId={pickId}
           onPickIdChange={setPickId}
           onAddItem={(capsuleId) => addItem.mutate(capsuleId, { onSuccess: () => setPickId('') })}
