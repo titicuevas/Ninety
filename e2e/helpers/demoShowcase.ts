@@ -2,6 +2,9 @@ import { expect, type APIRequestContext } from '@playwright/test';
 import { API_BASE, DEMO_USERNAME, requirePublicDemoProfile } from './auth';
 import { isE2eLeftoverNote } from './e2eCapsuleNotes';
 
+/** Fan sembrado por `seed:fans` que comparte partidos con el demo (cara a cara). */
+export const DEMO_COMPARE_FAN_USERNAME = 'maria_betica';
+
 /** Lista destacada sembrada por `npm run seed:fans`. */
 export const DEMO_FEATURED_COLLECTION_SLUG = 'favoritos-seed';
 

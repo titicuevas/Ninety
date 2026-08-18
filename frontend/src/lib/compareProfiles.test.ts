@@ -133,5 +133,14 @@ describe('buildCompareShareText', () => {
     assert.match(text, /Marcador:/);
     assert.match(text, /\/u\/ana\/vs/);
     assert.match(text, /Equipos en común:/);
+    assert.equal(text.includes('Partidos en común:'), false);
+  });
+
+  it('incluye partidos en común cuando hay solape', () => {
+    const me = side('henry', 'Henry', stats({ totalMatches: 5 }));
+    const them = side('ana', 'Ana', stats({ totalMatches: 3 }));
+    const result = buildProfileCompare(me, them);
+    const text = buildCompareShareText(me, them, result, 2);
+    assert.match(text, /Partidos en común: 2/);
   });
 });

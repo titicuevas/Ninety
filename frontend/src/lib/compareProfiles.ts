@@ -229,6 +229,7 @@ export function buildCompareShareText(
   me: CompareSide,
   them: CompareSide,
   result: ProfileCompareResult,
+  inCommonCount = 0,
 ): string {
   const lines = [
     `⚽ Cara a cara Ninety`,
@@ -241,6 +242,12 @@ export function buildCompareShareText(
   for (const metric of result.metrics) {
     if (metric.winner === 'na') continue;
     lines.push(`${metric.label}: ${metric.meDisplay} · ${metric.themDisplay}`);
+  }
+
+  if (inCommonCount > 0) {
+    lines.push(
+      `Partidos en común: ${inCommonCount}`,
+    );
   }
 
   if (result.sharedTeams.length > 0) {

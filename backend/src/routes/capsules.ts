@@ -42,6 +42,7 @@ import {
 } from '../lib/capsuleLikes.js';
 import { applyFeedContentFilters, resolveFeedContentFilters } from '../lib/feedFilters.js';
 import { listAlsoWatched } from '../lib/capsuleAlsoWatched.js';
+import { loadCapsulesInCommon } from '../lib/capsuleInCommon.js';
 import { isUuid, onlyUuids, postgrestInList, sanitizePostgrestSearch } from '../lib/postgrestSafe.js';
 import { isValidCapsuleMatchId } from '../lib/manualMatch.js';
 import { attachFollowStats, getFollowingIds } from '../lib/userFollows.js';
@@ -851,6 +852,61 @@ capsulesRouter.post('/me/import', requireAuth, async (req: AuthRequest, res) => 
   });
 
   res.json({ ...summary, message: formatDiaryImportSummary(summary) });
+});
+
+/**
+ * GET /api/capsules/user/:username/in-common — partidos que ambos habéis guardado.
+ * Auth: tu diario (cualquier visibilidad) ∩ Capsules públicas del otro.
+ */
+capsulesRouter.get('/user/:username/in-common', requireAuth, async (req: AuthRequest, res) => {
+  const token = getAccessToken(req);
+  const reader = token ? createUserClient(token) : null;
+
+  if (!reader) {
+    res.status(503).json({ error: 'Cara a cara no disponible temporalmente' });
+    return;
+  }
+
+  const profileResult = await fetchProfileByUsername(supabaseAnon, routeParam(req.params.username));
+  if (profileResult.error === 'schema') {
+    res.status(503).json({ error: profileResult.message ?? profilesAlignMigrationHint() });
+    return;
+  }
+  if (profileResult.error === 'query') {
+    res.status(400).json({ error: profileResult.message ?? 'No se pudo cargar el perfil' });
+    return;
+  }
+  if (profileResult.error === 'not_found' || !profileResult.profile) {
+    res.status(404).json({ error: 'Usuario no encontrado' });
+    return;
+  }
+
+  const profile = profileResult.profile;
+  if (profile.id === req.userId) {
+    res.status(400).json({ error: 'No puedes comparar contigo' });
+    return;
+  }
+
+  const block = await getBlockRelation(req.userId!, profile.id);
+  if (isBlockActive(block)) {
+    res.status(404).json({ error: 'Usuario no encontrado' });
+    return;
+  }
+
+  try {
+    const result = await loadCapsulesInCommon(reader, req.userId!, profile.id);
+    res.json({
+      matches: result.matches,
+      total: result.total,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'No se pudo cruzar el diario';
+    if (isMissingPrivacyColumn({ message })) {
+      res.status(503).json({ error: privacyMigrationHint() });
+      return;
+    }
+    res.status(400).json({ error: message });
+  }
 });
 
 /**

@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeftRight, Check, Share2, Swords, Users } from 'lucide-react';
+import { ArrowLeftRight, Check, Share2, Swords, Ticket, Users } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
 import { ProfileLoadingSkeleton } from '@/components/ListSkeletons';
 import { PublicLayout } from '@/components/PublicLayout';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
+import { useCapsulesInCommon, type CapsuleInCommonMatch } from '@/hooks/useCapsulesInCommon';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useProfile } from '@/hooks/useProfile';
 import { usePublicProfile } from '@/hooks/usePublicProfile';
@@ -20,6 +22,7 @@ import {
   type CompareSide,
 } from '@/lib/compareProfiles';
 import { isAutoUsername } from '@/lib/profileHelpers';
+import { formatWatchedDate } from '@/lib/format';
 import { shareOrCopyLink } from '@/lib/shareLink';
 import { toast } from '@/lib/toast';
 import { markCompareVisited } from '@/lib/valueOnboardingMemory';
@@ -106,17 +109,19 @@ function MetricProportionBar({ metric }: { metric: CompareMetric }) {
 function CompareShareButton({
   me,
   them,
+  inCommonCount = 0,
   disabled,
 }: {
   me: CompareSide;
   them: CompareSide;
+  inCommonCount?: number;
   disabled?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   const result = buildProfileCompare(me, them);
 
   const share = async () => {
-    const text = buildCompareShareText(me, them, result);
+    const text = buildCompareShareText(me, them, result, inCommonCount);
     const shareResult = await shareOrCopyLink({
       title: `Cara a cara: ${me.displayName} vs ${them.displayName}`,
       text,
@@ -161,6 +166,7 @@ function CompareFaceOffSection({
   compare,
   meSide,
   themSide,
+  inCommonCount = 0,
 }: {
   meDisplay: string;
   themDisplay: string;
@@ -170,6 +176,7 @@ function CompareFaceOffSection({
   compare: ReturnType<typeof buildProfileCompare>;
   meSide: CompareSide;
   themSide: CompareSide;
+  inCommonCount?: number;
 }) {
   return (
     <section
@@ -226,7 +233,7 @@ function CompareFaceOffSection({
               </h1>
               <p className="mt-1 max-w-sm text-sm text-white/70">{compare.headline}</p>
             </div>
-            <CompareShareButton me={meSide} them={themSide} />
+            <CompareShareButton me={meSide} them={themSide} inCommonCount={inCommonCount} />
           </div>
         </div>
 
@@ -332,6 +339,77 @@ function CompareFaceOffSection({
   );
 }
 
+function inCommonRatingLabel(value: number | null): string {
+  return value == null ? '—' : `${value}★`;
+}
+
+function CompareInCommonSection({
+  themDisplay,
+  matches,
+  total,
+  isLoading,
+  isError,
+  onRetry,
+}: {
+  themDisplay: string;
+  matches: CapsuleInCommonMatch[];
+  total: number;
+  isLoading: boolean;
+  isError: boolean;
+  onRetry: () => void;
+}) {
+  return (
+    <section className="space-y-3" aria-labelledby="compare-in-common-heading" data-testid="compare-in-common">
+      <div>
+        <h2 id="compare-in-common-heading" className="flex items-center gap-2 text-lg font-semibold">
+          <Ticket className="h-5 w-5 text-primary" aria-hidden />
+          Partidos en común
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {isLoading
+            ? 'Cruzando diarios…'
+            : total > 0
+              ? `${total} partido${total === 1 ? '' : 's'} que ambos habéis guardado`
+              : `Aún no coincidís con ${themDisplay} en el mismo partido.`}
+        </p>
+      </div>
+
+      {isError ? (
+        <QueryErrorCard message="No se pudieron cargar los partidos en común." onRetry={onRetry} />
+      ) : isLoading ? (
+        <ul className="space-y-2" role="status" aria-label="Cargando partidos en común">
+          {Array.from({ length: 2 }, (_, i) => (
+            <li key={i} className="rounded-xl border border-border p-3">
+              <Skeleton className="h-5 w-48 max-w-full" />
+              <Skeleton className="mt-2 h-3 w-32" />
+            </li>
+          ))}
+        </ul>
+      ) : matches.length === 0 ? null : (
+        <ul className="space-y-2">
+          {matches.map((match) => (
+            <li key={match.match_id}>
+              <Link
+                to={`/c/${match.them_capsule_id}`}
+                className="block rounded-xl border border-border bg-card p-3 hover:border-primary/40 hover:text-primary"
+              >
+                <p className="truncate font-medium">
+                  {match.home_team_name} vs {match.away_team_name}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Tú {inCommonRatingLabel(match.me_rating)} · {themDisplay}{' '}
+                  {inCommonRatingLabel(match.them_rating)}
+                  {match.watched_at ? ` · ${formatWatchedDate(match.watched_at)}` : null}
+                </p>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 export function CompareProfilePage() {
   const { username } = useParams<{ username: string }>();
   const { user } = useAuth();
@@ -343,6 +421,7 @@ export function CompareProfilePage() {
   const canCompareAsMe =
     !!user && !!meUsername && !isAutoUsername(meUsername) && meUsername !== username;
   const meQuery = usePublicProfile(canCompareAsMe ? meUsername : undefined);
+  const inCommonQuery = useCapsulesInCommon(canCompareAsMe ? username : undefined);
 
   const themProfile = themQuery.data?.pages[0]?.profile;
   const themStats = themQuery.data?.pages[0]?.stats;
@@ -557,6 +636,16 @@ export function CompareProfilePage() {
           compare={compare}
           meSide={meSide}
           themSide={themSide}
+          inCommonCount={inCommonQuery.data?.total ?? 0}
+        />
+
+        <CompareInCommonSection
+          themDisplay={themDisplay}
+          matches={inCommonQuery.data?.matches ?? []}
+          total={inCommonQuery.data?.total ?? 0}
+          isLoading={inCommonQuery.isLoading}
+          isError={inCommonQuery.isError}
+          onRetry={() => void inCommonQuery.refetch()}
         />
 
         <div className="flex flex-wrap gap-2">

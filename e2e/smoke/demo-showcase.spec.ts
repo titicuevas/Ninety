@@ -8,6 +8,7 @@ import {
 import {
   ALSO_WATCHED_UI,
   DEMO_CAPSULE_SOCIAL_COUNT,
+  DEMO_COMPARE_FAN_USERNAME,
   DEMO_FEATURED_COLLECTION_SLUG,
   DEMO_SOCIAL_COMMENT_MARKER,
   hasAlsoWatchedPeople,
@@ -1030,5 +1031,36 @@ test.describe('Smoke — demo showcase @smoke', () => {
     const hub = page.getByRole('region', { name: /^comunidad$/i });
     await expect(hub).toBeVisible({ timeout: 20_000 });
     await expect(hub.getByText(ALSO_WATCHED_UI).first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('Cara a cara muestra partidos en común del seed', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(
+      `${API_BASE}/api/capsules/user/${encodeURIComponent(DEMO_COMPARE_FAN_USERNAME)}/in-common`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    test.skip(res.status() === 404, 'API aún no tiene in-common — espera al deploy de v67');
+    expect(
+      res.ok(),
+      `Ejecuta npm run seed:fans — no se pudo cruzar con @${DEMO_COMPARE_FAN_USERNAME}`,
+    ).toBeTruthy();
+    const body = (await res.json()) as { matches?: unknown[]; total?: number };
+    expect(
+      (body.total ?? body.matches?.length ?? 0) > 0,
+      `GET in-common debe cruzar con @${DEMO_COMPARE_FAN_USERNAME} — ejecuta npm run seed:fans`,
+    ).toBe(true);
+
+    await page.goto(`/u/${encodeURIComponent(DEMO_COMPARE_FAN_USERNAME)}/vs`);
+    const section = page.getByTestId('compare-in-common');
+    test.skip(
+      (await section.count()) === 0,
+      'front aún no pinta partidos en común — espera al deploy de v67',
+    );
+    await expect(section).toBeVisible({ timeout: 15_000 });
+    await expect(section.getByRole('link').first()).toBeVisible({ timeout: 10_000 });
   });
 });

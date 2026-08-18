@@ -374,6 +374,7 @@ Ninety/
 | GET | `/api/capsules/feed` | ✅ | Feed (seguidos + tuyo); `scope`, `sort`, `photos=1`, `competition` |
 | GET | `/api/activity` | ✅ | Timeline de actividad de follows (Capsules + colecciones públicas nuevas + me gusta + comentarios; `type=capsule\|collection\|like\|comment`; blocks; `limit`/`offset`) |
 | GET | `/api/capsules/user/:username` | opcional | Perfil + capsules + stats (base del cara a cara `/u/:username/vs`) |
+| GET | `/api/capsules/user/:username/in-common` | ✅ | Partidos en común (tu diario ∩ Capsules públicas del otro) |
 | GET | `/api/capsules/:id` | opcional | Capsule pública (compartir) |
 | POST/PATCH/DELETE | `/api/capsules`… | ✅ | CRUD capsules |
 | POST/DELETE | `/api/capsules/:id/like` | ✅ | Likes |
@@ -719,6 +720,11 @@ Ninety/
 - [x] `GET /api/activity?type=like|comment` (además de Capsules / listas)
 - [x] Chips en `/activity` para ver solo me gusta o solo comentarios
 - [x] E2e chromium con skip si prod aún no acepta `type=like`
+
+### ✅ v67 — Partidos en común en el cara a cara
+- [x] `GET /api/capsules/user/:username/in-common` cruza tu diario con las Capsules públicas del otro (un query por página, sin N+1)
+- [x] `/u/:username/vs` lista los partidos que ambos habéis guardado, con las dos notas
+- [x] E2e chromium con skip si prod aún no despliega el endpoint
 
 ## 🎨 Identidad visual
 
