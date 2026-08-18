@@ -13,6 +13,7 @@ type CapsuleCardSocialFooterProps = {
   shareTitle: string;
   share?: CapsuleShareSummary;
   isPublic?: boolean;
+  showShare?: boolean;
 };
 
 /** Likes/comentarios de follows + barra de engagement (diario público y feed). */
@@ -26,6 +27,7 @@ export function CapsuleCardSocialFooter({
   shareTitle,
   share,
   isPublic = true,
+  showShare = true,
 }: CapsuleCardSocialFooterProps) {
   return (
     <div className="w-full space-y-2">
@@ -51,6 +53,7 @@ export function CapsuleCardSocialFooter({
         currentUserId={currentUserId}
         capsuleOwnerId={capsuleOwnerId}
         isPublic={isPublic}
+        showShare={showShare}
       />
     </div>
   );

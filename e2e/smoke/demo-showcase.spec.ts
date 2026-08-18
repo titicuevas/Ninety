@@ -163,6 +163,39 @@ test.describe('Smoke — demo showcase @smoke', () => {
     }
   });
 
+  test('Mis Capsules muestra también le gusta cuando hay engagement', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const me = await request.get(`${API_BASE}/api/capsules/me?limit=20&offset=0`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(me.ok()).toBeTruthy();
+    const body = (await me.json()) as {
+      capsules?: Array<{ likes_count?: number; comments_count?: number }>;
+    };
+    const social = (body.capsules ?? []).find(
+      (row) => (row.likes_count ?? 0) > 0 || (row.comments_count ?? 0) > 0,
+    );
+    test.skip(
+      !social,
+      'La cuenta QA no tiene Capsules con likes/comentarios (usa la demo o seed:fans)',
+    );
+
+    await page.goto('/capsules');
+    await expect(page.getByRole('heading', { name: /mis capsules/i })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByText(/también le gusta|también comentó/i).first()).toBeVisible({
+      timeout: 15_000,
+    });
+  });
+
   test('Actividad QA incluye eventos sociales del seed demo', async ({ page, request }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
     await openAuthenticatedHome(page);

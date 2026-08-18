@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarDays, Heart, Pencil, Search, Trash2 } from 'lucide-react';
 import { AddToCollectionButton } from '@/components/AddToCollectionButton';
+import { CapsuleCardSocialFooter } from '@/components/CapsuleCardSocialFooter';
 import { CapsuleDiaryFilters } from '@/components/CapsuleDiaryFilters';
 import { CapsuleListCard, capsuleCardListClass } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
@@ -13,6 +14,7 @@ import { ShareCapsuleButton } from '@/components/ShareCapsuleButton';
 import { Button } from '@/components/ui/button';
 import { capsuleShareSummaryFrom } from '@/lib/capsuleShare';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useAuth } from '@/hooks/useAuthInit';
 import { useCapsules, useDeleteCapsule, useMyCapsulesInfinite } from '@/hooks/useCapsules';
 import { useDiaryFilterParams } from '@/hooks/useDiaryFilterParams';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -20,7 +22,15 @@ import { listCapsuleYears } from '@/lib/capsuleStats';
 import { listCapsuleTags } from '@/lib/capsuleTags';
 import type { Capsule } from '@/types/capsule';
 
-function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: string) => void }) {
+function CapsuleCard({
+  capsule,
+  currentUserId,
+  onDelete,
+}: {
+  capsule: Capsule & { likes_count?: number; liked_by_me?: boolean; comments_count?: number };
+  currentUserId?: string;
+  onDelete: (id: string) => void;
+}) {
   const shareTitle = `${capsule.home_team_name} vs ${capsule.away_team_name}`;
   const isPublic = capsule.is_public !== false;
 
@@ -28,6 +38,7 @@ function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: s
     <CapsuleListCard
       capsule={capsule}
       showWatchedDate
+      footerBordered
       badges={
         !isPublic ? (
           <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -36,34 +47,48 @@ function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: s
         ) : null
       }
       footer={
-        <>
-          <AddToCollectionButton capsuleId={capsule.id} compact />
-          <ShareCapsuleButton
+        <div className="flex w-full flex-col gap-3">
+          <CapsuleCardSocialFooter
             capsuleId={capsule.id}
-            title={shareTitle}
+            capsuleOwnerId={capsule.user_id}
+            currentUserId={currentUserId}
+            likesCount={capsule.likes_count}
+            likedByMe={capsule.liked_by_me}
+            commentsCount={capsule.comments_count}
+            shareTitle={shareTitle}
             share={capsuleShareSummaryFrom(capsule)}
-            variant="outline"
             isPublic={isPublic}
-            compact
+            showShare={false}
           />
-          <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
-            <Link to={`/capsules/${capsule.id}/edit`} aria-label="Editar">
-              <Pencil className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
-              <span className="sr-only sm:not-sr-only">Editar</span>
-            </Link>
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-9 w-9 px-0 text-destructive hover:bg-destructive/10 sm:w-auto sm:px-3"
-            aria-label="Eliminar"
-            onClick={() => onDelete(capsule.id)}
-          >
-            <Trash2 className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
-            <span className="sr-only sm:not-sr-only">Eliminar</span>
-          </Button>
-        </>
+          <div className="flex flex-wrap gap-2">
+            <AddToCollectionButton capsuleId={capsule.id} compact />
+            <ShareCapsuleButton
+              capsuleId={capsule.id}
+              title={shareTitle}
+              share={capsuleShareSummaryFrom(capsule)}
+              variant="outline"
+              isPublic={isPublic}
+              compact
+            />
+            <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
+              <Link to={`/capsules/${capsule.id}/edit`} aria-label="Editar">
+                <Pencil className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
+                <span className="sr-only sm:not-sr-only">Editar</span>
+              </Link>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 w-9 px-0 text-destructive hover:bg-destructive/10 sm:w-auto sm:px-3"
+              aria-label="Eliminar"
+              onClick={() => onDelete(capsule.id)}
+            >
+              <Trash2 className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
+              <span className="sr-only sm:not-sr-only">Eliminar</span>
+            </Button>
+          </div>
+        </div>
       }
     />
   );
@@ -71,6 +96,7 @@ function CapsuleCard({ capsule, onDelete }: { capsule: Capsule; onDelete: (id: s
 
 export function CapsulesPage() {
   useDocumentTitle('Mis Capsules');
+  const { user } = useAuth();
   const {
     q,
     qDraft,
@@ -221,7 +247,11 @@ export function CapsulesPage() {
             <ul className={capsuleCardListClass}>
               {capsules.map((capsule) => (
                 <li key={capsule.id}>
-                  <CapsuleCard capsule={capsule} onDelete={handleDelete} />
+                  <CapsuleCard
+                    capsule={capsule}
+                    currentUserId={user?.id}
+                    onDelete={handleDelete}
+                  />
                 </li>
               ))}
             </ul>

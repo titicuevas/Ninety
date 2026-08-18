@@ -619,6 +619,10 @@ Ninety/
 ### ✅ v40 — También le gusta en Mis me gusta
 - [x] `/likes` y listas que te gustaron muestran follows que también dieron me gusta (archivo Letterboxd)
 
+### ✅ v41 — Mis Capsules + e2e showcase seguro en QA
+- [x] `/capsules` muestra likes/comentarios y «también le gusta / comentó»; `GET /api/capsules/me` incluye contadores
+- [x] Los e2e de showcase **saltan** si el demo de prod no tiene `seed:fans` (QA E2E público ya no falla)
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

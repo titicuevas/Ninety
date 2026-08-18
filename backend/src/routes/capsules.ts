@@ -455,7 +455,13 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  res.json({ capsules: data ?? [], total: count ?? data?.length ?? 0 });
+  res.json({
+    capsules: await attachCommentCounts(
+      supabase,
+      await attachLikeStats(supabase, req.userId!, data ?? []),
+    ),
+    total: count ?? data?.length ?? 0,
+  });
 });
 
 const calendarQuerySchema = z.object({
