@@ -134,6 +134,8 @@ export function PublicCollectionPage() {
             currentUserId={user?.id}
             likesCount={likesCount}
             commentsCount={commentsCount}
+            alsoLiked={collection.also_liked}
+            alsoCommented={collection.also_commented}
           />
           <div
             className="flex flex-wrap items-center justify-center gap-2 sm:justify-start"

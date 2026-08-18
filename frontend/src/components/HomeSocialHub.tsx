@@ -115,6 +115,8 @@ function HomeDiscoverCollectionRow({
         currentUserId={currentUserId}
         likesCount={collection.likes_count}
         commentsCount={collection.comments_count}
+        alsoLiked={collection.also_liked}
+        alsoCommented={collection.also_commented}
       />
     </li>
   );

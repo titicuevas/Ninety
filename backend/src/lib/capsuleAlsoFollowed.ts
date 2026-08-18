@@ -77,32 +77,28 @@ async function peopleByTarget(
 
 type SocialItem = { id: string; user_id: string };
 
-async function attachFollowedField<T extends SocialItem>(
+export async function attachFollowedField<T extends SocialItem>(
   viewerId: string,
   items: T[],
   field: 'also_liked' | 'also_commented',
   loadRows: (
     candidateIds: string[],
-    capsuleIds: string[],
+    targetIds: string[],
   ) => Promise<FollowedRow[]>,
+  isMissingTable: (error: unknown) => boolean,
 ): Promise<Array<T & { also_liked?: CollectionAlsoLikedPerson[]; also_commented?: CollectionAlsoLikedPerson[] }>> {
   const empty = items.map((item) => ({ ...item, [field]: [] as CollectionAlsoLikedPerson[] }));
   if (!viewerId || items.length === 0) return empty;
 
   const candidateIds = onlyUuids(await loadFollowCandidates(viewerId));
-  const capsuleIds = onlyUuids(items.map((item) => item.id));
-  if (candidateIds.length === 0 || capsuleIds.length === 0) return empty;
+  const targetIds = onlyUuids(items.map((item) => item.id));
+  if (candidateIds.length === 0 || targetIds.length === 0) return empty;
 
   let rows: FollowedRow[];
   try {
-    rows = await loadRows(candidateIds, capsuleIds);
+    rows = await loadRows(candidateIds, targetIds);
   } catch (error) {
-    if (
-      (field === 'also_liked' && isMissingLikesTable(error)) ||
-      (field === 'also_commented' && isMissingCommentsTable(error))
-    ) {
-      return empty;
-    }
+    if (isMissingTable(error)) return empty;
     throw error;
   }
 
@@ -122,7 +118,11 @@ export async function attachAlsoLiked<T extends SocialItem>(
   items: T[],
 ): Promise<Array<T & { also_liked: CollectionAlsoLikedPerson[] }>> {
   const { supabaseAdmin } = await import('./supabase.js');
-  const attached = await attachFollowedField(viewerId, items, 'also_liked', async (candidateIds, capsuleIds) => {
+  const attached = await attachFollowedField(
+    viewerId,
+    items,
+    'also_liked',
+    async (candidateIds, capsuleIds) => {
     if (!supabaseAdmin) return [];
     const { data, error } = await supabaseAdmin
       .from('capsule_likes')
@@ -135,7 +135,9 @@ export async function attachAlsoLiked<T extends SocialItem>(
       target_id: row.capsule_id as string,
       user_id: row.user_id as string,
     }));
-  });
+  },
+    isMissingLikesTable,
+  );
   return attached as Array<T & { also_liked: CollectionAlsoLikedPerson[] }>;
 }
 
@@ -164,6 +166,7 @@ export async function attachAlsoCommented<T extends SocialItem>(
         user_id: row.user_id as string,
       }));
     },
+    isMissingCommentsTable,
   );
   return attached as Array<T & { also_commented: CollectionAlsoLikedPerson[] }>;
 }

@@ -376,6 +376,8 @@ function PublicCollectionsSections({
                           currentUserId={viewerUserId}
                           likesCount={col.likes_count}
                           commentsCount={col.comments_count}
+                          alsoLiked={col.also_liked}
+                          alsoCommented={col.also_commented}
                         />
                       </div>
                     </div>

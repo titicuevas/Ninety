@@ -13,6 +13,8 @@ export interface Collection {
   likes_count?: number;
   liked_by_me?: boolean;
   comments_count?: number;
+  also_liked?: import('@/lib/collectionAlsoLiked').CollectionAlsoLikedPerson[];
+  also_commented?: import('@/lib/collectionAlsoLiked').CollectionAlsoLikedPerson[];
 }
 
 export interface CollectionAuthor {

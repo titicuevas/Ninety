@@ -704,6 +704,11 @@ Ninety/
 - [x] El pie social usa esas listas cuando vienen en la API
 - [x] E2e chromium con skip si prod aún no despliega los campos
 
+### ✅ v64 — También le gusta en tarjetas de lista
+- [x] Mis listas, Explorar, me gusta de listas, perfil y GET/PATCH de colección adjuntan `also_liked` y `also_commented`
+- [x] El pie de la ficha usa esas listas (sin un fetch por tarjeta)
+- [x] E2e chromium con skip si prod aún no despliega los campos
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

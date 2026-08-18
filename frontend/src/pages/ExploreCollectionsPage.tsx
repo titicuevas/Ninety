@@ -89,6 +89,8 @@ function DiscoverCollectionCard({
               currentUserId={currentUserId}
               likesCount={collection.likes_count}
               commentsCount={collection.comments_count}
+              alsoLiked={collection.also_liked}
+              alsoCommented={collection.also_commented}
             />
             <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
               {author.avatar_url ? (

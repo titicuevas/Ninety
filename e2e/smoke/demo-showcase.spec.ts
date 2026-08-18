@@ -711,6 +711,34 @@ test.describe('Smoke — demo showcase @smoke', () => {
     ).toBe(true);
   });
 
+  test('GET Mis listas incluye also_liked de follows', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(`${API_BASE}/api/collections/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      collections?: Array<{ id?: string; also_liked?: unknown[]; likes_count?: number }>;
+    };
+    const withLikes = (body.collections ?? []).find((row) => row.id && (row.likes_count ?? 0) > 0);
+    expect(
+      withLikes?.id,
+      'La cuenta QA no tiene listas con me gusta (usa @beta_ninety o seed:fans)',
+    ).toBeTruthy();
+    test.skip(
+      withLikes != null && !('also_liked' in withLikes),
+      'API aún no devuelve also_liked en listas — espera al deploy de v64',
+    );
+    expect(
+      (body.collections ?? []).some(hasAlsoLikedPeople),
+      'GET /api/collections/me debe incluir also_liked — ejecuta npm run seed:fans',
+    ).toBe(true);
+  });
+
   test('Home Comunidad muestra también le gusta en el preview del feed', async ({
     page,
     request,

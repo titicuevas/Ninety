@@ -3,6 +3,7 @@ import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { attachListSocial } from '../lib/capsuleListSocial.js';
 import { resolveCollectionCoverUrl } from '../lib/collectionCover.js';
+import { attachCollectionAlsoFollowed } from '../lib/collectionAlsoFollowed.js';
 import { listCollectionAlsoCommented } from '../lib/collectionAlsoCommented.js';
 import {
   assertValidCollectionReplyParent,
@@ -22,6 +23,7 @@ import {
   isMissingCollectionLikesTable,
   listCollectionAlsoLiked,
   listLikedCollections,
+  type CollectionAlsoLikedPerson,
 } from '../lib/collectionLikes.js';
 import { buildCollectionReorder } from '../lib/collectionReorder.js';
 import { nextUniqueSlug, slugifyCollectionName } from '../lib/collectionSlug.js';
@@ -298,6 +300,8 @@ function serializeCollection(
     likes_count?: number;
     liked_by_me?: boolean;
     comments_count?: number;
+    also_liked?: CollectionAlsoLikedPerson[];
+    also_commented?: CollectionAlsoLikedPerson[];
   },
 ) {
   return {
@@ -308,6 +312,8 @@ function serializeCollection(
     likes_count: extras.likes_count ?? 0,
     liked_by_me: extras.liked_by_me ?? false,
     comments_count: extras.comments_count ?? 0,
+    also_liked: extras.also_liked ?? [],
+    also_commented: extras.also_commented ?? [],
   };
 }
 
@@ -334,12 +340,15 @@ async function serializeCollectionWithEngagement(
   },
 ) {
   const [withLikes] = await attachCollectionLikeStats(reader, extras.viewerId, [row]);
-  return serializeCollection(withLikes ?? row, {
+  const [withFollowed] = await attachCollectionAlsoFollowed(extras.viewerId, [withLikes ?? row]);
+  return serializeCollection(withFollowed ?? row, {
     items_count: extras.items_count,
     cover_url: extras.cover_url,
     likes_count: withLikes?.likes_count ?? 0,
     liked_by_me: withLikes?.liked_by_me ?? false,
     comments_count: await commentsCountFor(reader, row.id),
+    also_liked: withFollowed?.also_liked ?? [],
+    also_commented: withFollowed?.also_commented ?? [],
   });
 }
 
@@ -421,6 +430,7 @@ collectionsRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   const counts = await loadItemCounts(supabase, ids);
   const coverUrls = await loadCoverUrls(supabase, rows);
   const withLikes = await attachCollectionLikeStats(supabase, req.userId!, rows);
+  const withFollowed = await attachCollectionAlsoFollowed(req.userId!, withLikes);
   let commentsById = new Map<string, number>();
   try {
     const withComments = await attachCollectionCommentCounts(
@@ -433,13 +443,15 @@ collectionsRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   }
 
   res.json({
-    collections: withLikes.map((row) =>
+    collections: withFollowed.map((row) =>
       serializeCollection(row, {
         items_count: counts.get(row.id) ?? 0,
         cover_url: coverUrls.get(row.id) ?? null,
         likes_count: row.likes_count,
         liked_by_me: row.liked_by_me,
         comments_count: commentsById.get(row.id) ?? 0,
+        also_liked: row.also_liked,
+        also_commented: row.also_commented,
       }),
     ),
   });
@@ -504,14 +516,18 @@ collectionsRouter.get('/me/liked', requireAuth, async (req: AuthRequest, res, ne
       if (!isMissingCollectionCommentsTable(err)) throw err;
     }
 
+    const withFollowed = await attachCollectionAlsoFollowed(req.userId!, rows);
+
     res.json({
-      collections: rows.map((row) => ({
+      collections: withFollowed.map((row) => ({
         ...serializeCollection(row, {
           items_count: counts.get(row.id) ?? 0,
           cover_url: coverUrls.get(row.id) ?? null,
           likes_count: row.likes_count,
           liked_by_me: row.liked_by_me,
           comments_count: commentsById.get(row.id) ?? 0,
+          also_liked: row.also_liked,
+          also_commented: row.also_commented,
         }),
         liked_at: row.liked_at,
         author: row.author,
@@ -1152,9 +1168,13 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
     }
   }
 
+  const withFollowed = await attachCollectionAlsoFollowed(req.userId!, ranked);
+  const followedById = new Map(withFollowed.map((row) => [row.id, row]));
+
   res.json({
     collections: ranked.map(({ author, match_reason, ...collection }) => {
       const likes = likeById.get(collection.id);
+      const followed = followedById.get(collection.id);
       return {
         ...serializeCollection(collection, {
           items_count: collection.items_count,
@@ -1162,6 +1182,8 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
           likes_count: likes?.likes_count ?? 0,
           liked_by_me: likes?.liked_by_me ?? false,
           comments_count: commentsCountById.get(collection.id) ?? 0,
+          also_liked: followed?.also_liked ?? [],
+          also_commented: followed?.also_commented ?? [],
         }),
         author: {
           ...author,
@@ -1233,6 +1255,7 @@ collectionsRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, 
   const coverUrls = await loadCoverUrls(reader, rows, { onlyPublicCapsules: !isOwner });
   const author = collectionAuthor(profile);
   const withLikes = await attachCollectionLikeStats(reader, req.userId ?? '', rows);
+  const withFollowed = await attachCollectionAlsoFollowed(req.userId ?? '', withLikes);
   let commentsById = new Map<string, number>();
   try {
     const withComments = await attachCollectionCommentCounts(
@@ -1246,13 +1269,15 @@ collectionsRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, 
 
   res.json({
     profile: author,
-    collections: withLikes.map((row) =>
+    collections: withFollowed.map((row) =>
       serializeCollection(row, {
         items_count: counts.get(row.id) ?? 0,
         cover_url: coverUrls.get(row.id) ?? null,
         likes_count: row.likes_count,
         liked_by_me: row.liked_by_me,
         comments_count: commentsById.get(row.id) ?? 0,
+        also_liked: row.also_liked,
+        also_commented: row.also_commented,
       }),
     ),
   });
