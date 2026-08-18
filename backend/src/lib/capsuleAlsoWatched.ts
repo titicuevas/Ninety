@@ -4,6 +4,8 @@ import { excludeBlockedIds, listBlockedEitherWayIds } from './userBlocks.js';
 import { getFollowingIds } from './userFollows.js';
 
 export const ALSO_WATCHED_LIMIT = 50;
+/** Nombres que caben en una tarjeta de listado. */
+export const CARD_ALSO_WATCHED_LIMIT = 3;
 const FOLLOWING_SCAN_LIMIT = 500;
 
 export type AlsoWatchedPerson = {
@@ -60,6 +62,91 @@ export function assembleAlsoWatchedPeople(
   return people.sort((a, b) =>
     (a.display_name ?? a.username ?? '').localeCompare(b.display_name ?? b.username ?? '', 'es'),
   );
+}
+
+/** Follows del mismo partido, sin el autor de la Capsule de la tarjeta. */
+export function alsoWatchedPeopleForItem(
+  matchCapsules: Array<{ id: string; user_id: string }>,
+  profiles: Parameters<typeof assembleAlsoWatchedPeople>[1],
+  ownerId: string,
+  limit = CARD_ALSO_WATCHED_LIMIT,
+): AlsoWatchedPerson[] {
+  return assembleAlsoWatchedPeople(
+    matchCapsules.filter((row) => row.user_id !== ownerId),
+    profiles,
+  ).slice(0, limit);
+}
+
+type AlsoWatchedItem = { id: string; user_id: string; match_id?: number | null };
+
+/** Adjunta `also_watched` a un listado (un query para toda la página). */
+export async function attachAlsoWatched<T extends AlsoWatchedItem>(
+  viewerId: string,
+  items: T[],
+): Promise<Array<T & { also_watched: AlsoWatchedPerson[] }>> {
+  if (!viewerId || items.length === 0) {
+    return items.map((item) => ({ ...item, also_watched: [] }));
+  }
+
+  const { supabaseAdmin } = await import('./supabase.js');
+  if (!supabaseAdmin) {
+    return items.map((item) => ({ ...item, also_watched: [] }));
+  }
+
+  const [followingIds, blockedList] = await Promise.all([
+    getFollowingIds(supabaseAdmin, viewerId),
+    listBlockedEitherWayIds(viewerId),
+  ]);
+  const candidateIds = candidateAlsoWatchedIds(
+    followingIds,
+    new Set(blockedList),
+    viewerId,
+  );
+  const matchIds = [
+    ...new Set(
+      items
+        .map((item) => item.match_id)
+        .filter((id): id is number => typeof id === 'number' && isValidCapsuleMatchId(id)),
+    ),
+  ];
+  if (candidateIds.length === 0 || matchIds.length === 0) {
+    return items.map((item) => ({ ...item, also_watched: [] }));
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('capsules')
+    .select('id, user_id, match_id')
+    .in('match_id', matchIds)
+    .eq('is_public', true)
+    .in('user_id', candidateIds)
+    .limit(Math.min(1000, matchIds.length * CARD_ALSO_WATCHED_LIMIT * 8));
+
+  if (error) throw error;
+
+  const byMatch = new Map<number, Array<{ id: string; user_id: string }>>();
+  const userIds = new Set<string>();
+  for (const row of data ?? []) {
+    const matchId = row.match_id as number;
+    const list = byMatch.get(matchId) ?? [];
+    list.push({ id: row.id as string, user_id: row.user_id as string });
+    byMatch.set(matchId, list);
+    userIds.add(row.user_id as string);
+  }
+
+  const profiles =
+    userIds.size > 0
+      ? await fetchProfilesByIds(supabaseAdmin, [...userIds])
+      : { rows: [], error: null };
+  if (profiles.error) throw profiles.error;
+
+  return items.map((item) => ({
+    ...item,
+    also_watched: alsoWatchedPeopleForItem(
+      byMatch.get(item.match_id ?? -1) ?? [],
+      profiles.rows,
+      item.user_id,
+    ),
+  }));
 }
 
 /** Follows del usuario con Capsule pública del mismo partido. */

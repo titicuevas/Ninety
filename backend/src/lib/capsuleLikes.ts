@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { candidateAlsoWatchedIds } from './capsuleAlsoWatched.js';
+import { attachAlsoWatched, candidateAlsoWatchedIds } from './capsuleAlsoWatched.js';
 import { attachCommentCounts } from './capsuleComments.js';
 import { ALSO_LIKED_LIMIT, assembleAlsoLikedPeople } from './collectionLikes.js';
 import { fetchProfilesByIds } from './profileLookup.js';
@@ -285,7 +285,10 @@ export async function listLikedCapsules(
   }
 
   const withLikes = await attachLikeStats(supabase, viewerId, visible);
-  const withComments = await attachCommentCounts(supabase, withLikes);
+  const withComments = await attachAlsoWatched(
+    viewerId,
+    await attachCommentCounts(supabase, withLikes),
+  );
 
   return {
     capsules: withComments.map((capsule) => ({

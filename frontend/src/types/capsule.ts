@@ -28,6 +28,7 @@ export interface Capsule {
   likes_count?: number;
   liked_by_me?: boolean;
   comments_count?: number;
+  also_watched?: import('@/lib/capsuleAlsoWatched').AlsoWatchedPerson[];
 }
 
 export interface CreateCapsuleInput {

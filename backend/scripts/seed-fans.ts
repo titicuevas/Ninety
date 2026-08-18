@@ -895,6 +895,53 @@ async function seedDemoCapsuleSocial(demoUserId: string | null, fanIds: string[]
   console.log(`   Likes/comentarios en ${rows.length} Capsule(s) públicas del demo`);
 }
 
+async function seedDemoAlsoWatched(demoUserId: string | null, fanIds: string[]) {
+  if (!admin || !demoUserId || fanIds.length < 6) return;
+
+  const { data: capsules, error } = await admin
+    .from('capsules')
+    .select(
+      'match_id, match_played_at, home_team_name, away_team_name, home_team_crest, away_team_crest, competition_name, home_score, away_score, watched_at, rating',
+    )
+    .eq('user_id', demoUserId)
+    .eq('is_public', true)
+    .order('watched_at', { ascending: false })
+    .limit(DEMO_CAPSULE_SOCIAL_COUNT);
+  if (error) throw new Error(`Demo also-watched lookup: ${error.message}`);
+  const rows = capsules ?? [];
+  if (rows.length === 0) return;
+
+  let seeded = 0;
+  for (let i = 0; i < rows.length; i++) {
+    const template = rows[i]!;
+    const watcherId = fanIds[demoCapsuleSocialActions(i)[0]?.actorIndex ?? 0];
+    if (!watcherId) continue;
+    const { error: upsertError } = await admin.from('capsules').upsert(
+      {
+        user_id: watcherId,
+        match_id: template.match_id,
+        match_played_at: template.match_played_at,
+        home_team_name: template.home_team_name,
+        away_team_name: template.away_team_name,
+        home_team_crest: template.home_team_crest,
+        away_team_crest: template.away_team_crest,
+        competition_name: template.competition_name,
+        home_score: template.home_score,
+        away_score: template.away_score,
+        watched_at: template.watched_at,
+        rating: template.rating,
+        note: 'Vi el mismo partido.',
+        photo_urls: [],
+        is_public: true,
+      },
+      { onConflict: 'user_id,match_id' },
+    );
+    if (upsertError) throw new Error(`Also-watched Capsule seed: ${upsertError.message}`);
+    seeded += 1;
+  }
+  console.log(`   También lo vieron: ${seeded} Capsule(s) de follows con el mismo partido`);
+}
+
 async function main() {
   if (!admin) {
     throw new Error('Faltan SUPABASE_URL y SUPABASE_SECRET_KEY en backend/.env');
@@ -923,6 +970,7 @@ async function main() {
   await ensureDemoFeaturedCollection(demoUserId);
   await seedDemoFeaturedSocial(demoUserId, fanIds);
   await seedDemoCapsuleSocial(demoUserId, fanIds);
+  await seedDemoAlsoWatched(demoUserId, fanIds);
 
   console.log('\n📋 Resumen');
   console.log(`   Aficionados: ${FANS.length}`);

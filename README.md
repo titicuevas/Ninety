@@ -665,6 +665,11 @@ Ninety/
 ### ✅ v55 — PATCH de lista conserva engagement
 - [x] `PATCH /api/collections/:id` devuelve `likes_count` y `comments_count` (el detalle no parpadea a 0 al editar)
 
+### ✅ v56 — También lo vieron en listados
+- [x] Diario, feed, Mis Capsules, me gusta, listas y calendario muestran quién de tus follows vio el mismo partido (`also_watched` en un query por página)
+- [x] `npm run seed:fans` siembra Capsules de follows con el mismo `match_id` que el demo
+- [x] E2e del pie social en el calendario propio
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

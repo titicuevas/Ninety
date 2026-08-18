@@ -243,6 +243,7 @@ export function DiaryCalendarPage() {
                               likesCount={capsule.likes_count}
                               likedByMe={capsule.liked_by_me}
                               commentsCount={capsule.comments_count}
+                              alsoWatched={capsule.also_watched}
                               shareTitle={`${capsule.home_team_name} vs ${capsule.away_team_name}`}
                               share={capsuleShareSummaryFrom(capsule, profile)}
                               isPublic={capsule.is_public !== false}

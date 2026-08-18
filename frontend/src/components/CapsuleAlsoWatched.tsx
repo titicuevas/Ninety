@@ -1,22 +1,26 @@
 import { Link } from 'react-router-dom';
 import { Users } from 'lucide-react';
 import { useCapsuleAlsoWatched } from '@/hooks/useCapsuleAlsoWatched';
-import { alsoWatchedLabel, filterAlsoWatchedPeople } from '@/lib/capsuleAlsoWatched';
+import { alsoWatchedLabel, filterAlsoWatchedPeople, type AlsoWatchedPerson } from '@/lib/capsuleAlsoWatched';
 import { cn } from '@/lib/utils';
 
 export function CapsuleAlsoWatched({
   matchId,
+  people: peopleProp,
   exceptUserId,
   className,
 }: {
-  matchId: number;
+  matchId?: number;
+  people?: AlsoWatchedPerson[];
   exceptUserId?: string | null;
   className?: string;
 }) {
-  const { data, isLoading, isError } = useCapsuleAlsoWatched(matchId);
-  const people = filterAlsoWatchedPeople(data?.people ?? [], exceptUserId);
+  const shouldFetch = peopleProp === undefined;
+  const { data, isLoading, isError } = useCapsuleAlsoWatched(shouldFetch ? matchId : undefined);
+  const people = filterAlsoWatchedPeople(peopleProp ?? data?.people ?? [], exceptUserId);
 
-  if (isLoading || isError || people.length === 0) return null;
+  if (shouldFetch && (isLoading || isError)) return null;
+  if (people.length === 0) return null;
 
   return (
     <div

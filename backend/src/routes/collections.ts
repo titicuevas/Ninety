@@ -2,6 +2,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { attachCommentCounts } from '../lib/capsuleComments.js';
+import { attachAlsoWatched } from '../lib/capsuleAlsoWatched.js';
 import { attachLikeStats } from '../lib/capsuleLikes.js';
 import { resolveCollectionCoverUrl } from '../lib/collectionCover.js';
 import { listCollectionAlsoCommented } from '../lib/collectionAlsoCommented.js';
@@ -182,6 +183,7 @@ type CollectionRow = {
 type CapsuleLite = {
   id: string;
   user_id: string;
+  match_id?: number;
   home_team_name: string;
   away_team_name: string;
   home_team_crest: string | null;
@@ -359,7 +361,7 @@ async function loadCollectionItems(
 
   const capsuleIds = items.map((row) => row.capsule_id as string);
   let query = reader.from('capsules').select(
-    'id, user_id, home_team_name, away_team_name, home_team_crest, away_team_crest, competition_name, home_score, away_score, watched_at, rating, note, photo_urls, is_public, watch_context',
+    'id, user_id, match_id, home_team_name, away_team_name, home_team_crest, away_team_crest, competition_name, home_score, away_score, watched_at, rating, note, photo_urls, is_public, watch_context',
   ).in('id', capsuleIds);
 
   if (opts.onlyPublicCapsules) {
@@ -376,7 +378,10 @@ async function loadCollectionItems(
   if (ordered.length === 0) return [];
 
   const withLikes = await attachLikeStats(reader, opts.viewerId ?? '', ordered);
-  return attachCommentCounts(reader, withLikes);
+  return attachAlsoWatched(
+    opts.viewerId ?? '',
+    await attachCommentCounts(reader, withLikes),
+  );
 }
 
 async function resolveTakenSlugs(

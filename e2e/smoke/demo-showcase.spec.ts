@@ -192,6 +192,35 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(lists.getByText(/también comentó/i)).toBeVisible();
   });
 
+  test('diario público autenticado muestra también lo vieron', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(
+      `${API_BASE}/api/capsules/user/${encodeURIComponent(DEMO_USERNAME)}?limit=20&offset=0`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      capsules?: Array<{ also_watched?: unknown[] }>;
+    };
+    expect(
+      (body.capsules ?? []).some((row) => (row.also_watched?.length ?? 0) > 0),
+      'Ejecuta npm run seed:fans — el diario demo no tiene follows que vieran el mismo partido',
+    ).toBe(true);
+
+    await page.goto(`/u/${DEMO_USERNAME}`);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/también lo vieron|también lo vio/i).first()).toBeVisible({
+      timeout: 15_000,
+    });
+  });
+
   test('calendario público autenticado muestra pie social en el día', async ({
     page,
     request,
@@ -205,6 +234,23 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await openAuthenticatedHome(page);
     await page.goto(`/u/${DEMO_USERNAME}/calendar/${year}/${Number(month)}?day=${day}`);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
+    await expect(
+      page.getByText(/también le gusta|también comentó|\d+ me gusta|\d+ comentarios?/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('calendario propio muestra pie social en el día', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    const { socialCapsule } = await requireDemoShowcaseProfile(request);
+    const day = (socialCapsule.watched_at ?? '').slice(0, 10);
+    expect(day, 'La Capsule social del demo necesita watched_at').toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    const [year, month] = day.split('-');
+
+    await openAuthenticatedHome(page);
+    await page.goto(`/diary/calendar?year=${year}&month=${Number(month)}&day=${day}`);
+    await expect(page.getByRole('heading', { name: /calendario/i })).toBeVisible({
+      timeout: 20_000,
+    });
     await expect(
       page.getByText(/también le gusta|también comentó|\d+ me gusta|\d+ comentarios?/i).first(),
     ).toBeVisible({ timeout: 15_000 });

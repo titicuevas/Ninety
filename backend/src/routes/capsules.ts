@@ -34,7 +34,7 @@ import {
 import { notifyCommentMentions } from '../lib/commentMentions.js';
 import { attachLikeStats, fetchLikesWithProfiles, isMissingLikesTable, listCapsuleAlsoLiked, listLikedCapsules } from '../lib/capsuleLikes.js';
 import { applyFeedContentFilters, resolveFeedContentFilters } from '../lib/feedFilters.js';
-import { listAlsoWatched } from '../lib/capsuleAlsoWatched.js';
+import { attachAlsoWatched, listAlsoWatched } from '../lib/capsuleAlsoWatched.js';
 import { isValidCapsuleMatchId } from '../lib/manualMatch.js';
 import { attachFollowStats, getFollowingIds } from '../lib/userFollows.js';
 import { attachMutedByMe } from '../lib/notificationMutes.js';
@@ -120,6 +120,17 @@ const FEED_POPULAR_POOL = 300;
 
 function engagementScore(row: { likes_count?: number; comments_count?: number }): number {
   return (row.likes_count ?? 0) + (row.comments_count ?? 0);
+}
+
+async function attachListSocial<T extends { id: string; user_id: string; match_id?: number | null }>(
+  supabase: Parameters<typeof attachLikeStats>[0],
+  viewerId: string,
+  items: T[],
+) {
+  return attachAlsoWatched(
+    viewerId,
+    await attachCommentCounts(supabase, await attachLikeStats(supabase, viewerId, items)),
+  );
 }
 
 const meQuerySchema = z.object({
@@ -362,7 +373,10 @@ capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
   }
 
   const withLikes = await attachLikeStats(supabase, userId, rows);
-  const feedRows = await attachCommentCounts(supabase, withLikes);
+  const feedRows = await attachAlsoWatched(
+    userId,
+    await attachCommentCounts(supabase, withLikes),
+  );
 
   res.json({
     capsules: feedRows.map((capsule) => ({
@@ -456,10 +470,7 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   }
 
   res.json({
-    capsules: await attachCommentCounts(
-      supabase,
-      await attachLikeStats(supabase, req.userId!, data ?? []),
-    ),
+    capsules: await attachListSocial(supabase, req.userId!, data ?? []),
     total: count ?? data?.length ?? 0,
   });
 });
@@ -569,8 +580,7 @@ capsulesRouter.get('/me/calendar', requireAuth, async (req: AuthRequest, res) =>
   }
 
   const capsules = data ?? [];
-  const withLikes = await attachLikeStats(supabase, req.userId!, capsules);
-  const withEngagement = await attachCommentCounts(supabase, withLikes);
+  const withEngagement = await attachListSocial(supabase, req.userId!, capsules);
   const publicTotal = withEngagement.filter((c) => c.is_public !== false).length;
   res.json({
     year: range.year,
@@ -923,7 +933,10 @@ capsulesRouter.get('/user/:username/calendar', optionalAuth, async (req: AuthReq
   }
 
   const withLikes = await attachLikeStats(reader, viewerId, capsules);
-  const capsulesWithLikes = await attachCommentCounts(reader, withLikes);
+  const capsulesWithLikes = await attachAlsoWatched(
+    viewerId,
+    await attachCommentCounts(reader, withLikes),
+  );
   const normalizedProfile = normalizeProfile(profile);
 
   res.json({
@@ -1118,7 +1131,10 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
   }
 
   const withLikes = await attachLikeStats(reader, viewerId, data ?? []);
-  const capsulesWithLikes = await attachCommentCounts(reader, withLikes);
+  const capsulesWithLikes = await attachAlsoWatched(
+    viewerId,
+    await attachCommentCounts(reader, withLikes),
+  );
   const normalizedProfile = normalizeProfile(profile);
   const profileWithFollows = await attachFollowStats(reader, viewerId, normalizedProfile);
   const profileWithMute = await attachMutedByMe(reader, viewerId, profileWithFollows);
