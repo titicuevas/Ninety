@@ -317,12 +317,28 @@ test.describe('Smoke — demo showcase @smoke', () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(res.ok()).toBeTruthy();
-    const body = (await res.json()) as { events?: Array<{ type?: string }> };
+    const body = (await res.json()) as {
+      events?: Array<{
+        type?: string;
+        capsule?: { likes_count?: number; comments_count?: number };
+        collection?: { likes_count?: number; comments_count?: number };
+      }>;
+    };
     const types = new Set((body.events ?? []).map((event) => event.type));
     expect(types.has('capsule_like'), 'seed:fans — likes en Capsules de follows').toBe(true);
     expect(types.has('capsule_comment'), 'seed:fans — comentarios en Capsules').toBe(true);
     expect(types.has('collection_like'), 'seed:fans — likes en Favoritos').toBe(true);
     expect(types.has('collection_comment'), 'seed:fans — comentarios en Favoritos').toBe(true);
+    expect(
+      (body.events ?? []).some(
+        (event) =>
+          (event.capsule?.likes_count ?? 0) > 0 ||
+          (event.capsule?.comments_count ?? 0) > 0 ||
+          (event.collection?.likes_count ?? 0) > 0 ||
+          (event.collection?.comments_count ?? 0) > 0,
+      ),
+      'GET /api/activity debe incluir likes/comentarios en Capsules o listas',
+    ).toBe(true);
   });
 
   test('Actividad UI muestra filtros y eventos cuando hay follows', async ({ page }, testInfo) => {
@@ -338,6 +354,9 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(page.getByTestId('activity-type-filters')).toBeVisible({ timeout: 10_000 });
     const eventRow = page.locator('[data-testid="activity-event"], main ul li, main article').first();
     await expect(eventRow).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/\d+ me gusta|\d+ comentarios?/i).first()).toBeVisible({
+      timeout: 15_000,
+    });
   });
 
   test('Explorar colecciones muestra también le gusta de follows', async ({

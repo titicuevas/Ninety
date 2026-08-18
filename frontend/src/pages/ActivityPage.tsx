@@ -16,6 +16,7 @@ import {
   activityTypeEmptyCopy,
   hasActivityTypeFilter,
 } from '@/lib/activityTypeFilter';
+import { formatEngagementMeta } from '@/lib/collectionCardMeta';
 import { formatRelativeTime } from '@/lib/format';
 import { publicProfilePath } from '@/lib/profilePath';
 import type { FollowActivityEvent } from '@/types/activity';
@@ -47,6 +48,18 @@ function ActorLink({ event }: { event: FollowActivityEvent }) {
   }
 
   return <span className="font-medium text-foreground">{name}</span>;
+}
+
+function ActivityEngagementLine({
+  likesCount,
+  commentsCount,
+}: {
+  likesCount?: number;
+  commentsCount?: number;
+}) {
+  const label = formatEngagementMeta(likesCount ?? 0, commentsCount ?? 0);
+  if (!label) return null;
+  return <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>;
 }
 
 function CapsuleActivityRow({
@@ -89,6 +102,10 @@ function CapsuleActivityRow({
           >
             {match}
           </Link>
+          <ActivityEngagementLine
+            likesCount={event.capsule.likes_count}
+            commentsCount={event.capsule.comments_count}
+          />
           {commented ? (
             <p className="mt-1 line-clamp-2 text-sm text-foreground/90">{event.comment_body}</p>
           ) : null}
@@ -159,6 +176,10 @@ function CollectionActivityRow({
           ) : (
             <p className="mt-1 truncate font-medium">{event.collection.name}</p>
           )}
+          <ActivityEngagementLine
+            likesCount={event.collection.likes_count}
+            commentsCount={event.collection.comments_count}
+          />
           {commented ? (
             <p className="mt-1 line-clamp-2 text-sm text-foreground/90">{event.comment_body}</p>
           ) : null}

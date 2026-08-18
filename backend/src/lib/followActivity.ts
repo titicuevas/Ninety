@@ -1,4 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { attachCommentCounts } from './capsuleComments.js';
+import { attachLikeStats } from './capsuleLikes.js';
+import { attachCollectionCommentCounts } from './collectionComments.js';
+import { attachCollectionLikeStats } from './collectionLikes.js';
 import { excludeBlockedIds, listBlockedEitherWayIds } from './userBlocks.js';
 import { getFollowingIds } from './userFollows.js';
 
@@ -17,6 +21,8 @@ export type FollowActivityCapsulePayload = {
   rating: number | null;
   photo_urls: string[] | null;
   watched_at: string | null;
+  likes_count?: number;
+  comments_count?: number;
 };
 
 export type FollowActivityCollectionPayload = {
@@ -25,6 +31,8 @@ export type FollowActivityCollectionPayload = {
   slug: string;
   description: string | null;
   author_username: string | null;
+  likes_count?: number;
+  comments_count?: number;
 };
 
 export type FollowActivityEvent =
@@ -478,6 +486,69 @@ function toEvent(
   };
 }
 
+type ActivityEngagementStats = { likes_count: number; comments_count: number };
+
+/** Mezcla likes/comentarios en Capsules y listas de la página de actividad. */
+export function applyActivityEngagement(
+  events: FollowActivityEvent[],
+  capsuleStats: ReadonlyMap<string, ActivityEngagementStats>,
+  collectionStats: ReadonlyMap<string, ActivityEngagementStats>,
+): FollowActivityEvent[] {
+  return events.map((event) => {
+    if ('capsule' in event) {
+      const stats = capsuleStats.get(event.capsule.id);
+      return stats ? { ...event, capsule: { ...event.capsule, ...stats } } : event;
+    }
+    const stats = collectionStats.get(event.collection.id);
+    return stats ? { ...event, collection: { ...event.collection, ...stats } } : event;
+  });
+}
+
+async function loadActivityEngagement(
+  supabase: SupabaseClient,
+  viewerId: string,
+  events: FollowActivityEvent[],
+): Promise<FollowActivityEvent[]> {
+  const capsuleIds = [...new Set(events.flatMap((event) => ('capsule' in event ? [event.capsule.id] : [])))];
+  const collectionIds = [
+    ...new Set(events.flatMap((event) => ('collection' in event ? [event.collection.id] : []))),
+  ];
+
+  const capsuleStats = new Map<string, ActivityEngagementStats>();
+  if (capsuleIds.length > 0) {
+    const withLikes = await attachLikeStats(
+      supabase,
+      viewerId,
+      capsuleIds.map((id) => ({ id })),
+    );
+    const withComments = await attachCommentCounts(supabase, withLikes);
+    for (const row of withComments) {
+      capsuleStats.set(row.id, {
+        likes_count: row.likes_count,
+        comments_count: row.comments_count,
+      });
+    }
+  }
+
+  const collectionStats = new Map<string, ActivityEngagementStats>();
+  if (collectionIds.length > 0) {
+    const withLikes = await attachCollectionLikeStats(
+      supabase,
+      viewerId,
+      collectionIds.map((id) => ({ id })),
+    );
+    const withComments = await attachCollectionCommentCounts(supabase, withLikes);
+    for (const row of withComments) {
+      collectionStats.set(row.id, {
+        likes_count: row.likes_count,
+        comments_count: row.comments_count,
+      });
+    }
+  }
+
+  return applyActivityEngagement(events, capsuleStats, collectionStats);
+}
+
 async function loadCapsuleLikeCandidates(
   supabase: SupabaseClient,
   authorIds: string[],
@@ -870,8 +941,12 @@ export async function listFollowActivity(
     }
   }
 
-  const events = page.map((candidate) =>
-    toEvent(candidate, toActor(profileMap.get(candidate.user_id), candidate.user_id)),
+  const events = await loadActivityEngagement(
+    supabase,
+    viewerId,
+    page.map((candidate) =>
+      toEvent(candidate, toActor(profileMap.get(candidate.user_id), candidate.user_id)),
+    ),
   );
 
   return {

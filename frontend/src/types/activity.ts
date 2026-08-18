@@ -13,6 +13,8 @@ export type FollowActivityCapsule = {
   rating: number | null;
   photo_urls: string[] | null;
   watched_at: string | null;
+  likes_count?: number;
+  comments_count?: number;
 };
 
 export type FollowActivityCollection = {
@@ -21,6 +23,8 @@ export type FollowActivityCollection = {
   slug: string;
   description: string | null;
   author_username?: string | null;
+  likes_count?: number;
+  comments_count?: number;
 };
 
 export type FollowActivityEvent =

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   activityCommentSnippet,
+  applyActivityEngagement,
   mergeFollowActivityCandidates,
   paginateFollowActivity,
   visibleCapsuleCommentCandidates,
@@ -9,6 +10,7 @@ import {
   visibleCollectionCommentCandidates,
   visibleCollectionLikeCandidates,
   type FollowActivityCandidate,
+  type FollowActivityEvent,
 } from './followActivity.js';
 
 const capsule = (
@@ -327,5 +329,55 @@ describe('visibleCollectionCommentCandidates', () => {
     assert.equal(visible[0]?.author_username, 'owner_user');
     assert.equal(visible[0]?.collection_id, 'l1');
     assert.equal(visible[0]?.comment_body, 'brutal');
+  });
+});
+
+describe('applyActivityEngagement', () => {
+  it('copia likes y comentarios en Capsules y listas', () => {
+    const actor = {
+      id: 'u1',
+      username: 'fan',
+      display_name: 'Fan',
+      avatar_url: null,
+    };
+    const events: FollowActivityEvent[] = [
+      {
+        id: 'capsule:c1',
+        type: 'capsule',
+        occurred_at: '2026-01-01T00:00:00Z',
+        actor,
+        capsule: {
+          id: 'c1',
+          home_team_name: 'Betis',
+          away_team_name: 'Sevilla',
+          competition_name: 'LaLiga',
+          rating: 8,
+          photo_urls: null,
+          watched_at: '2026-01-01',
+        },
+      },
+      {
+        id: 'collection:l1',
+        type: 'collection',
+        occurred_at: '2026-01-02T00:00:00Z',
+        actor,
+        collection: {
+          id: 'l1',
+          name: 'Favoritos',
+          slug: 'favoritos',
+          description: null,
+          author_username: 'fan',
+        },
+      },
+    ];
+    const next = applyActivityEngagement(
+      events,
+      new Map([['c1', { likes_count: 2, comments_count: 1 }]]),
+      new Map([['l1', { likes_count: 4, comments_count: 3 }]]),
+    );
+    assert.equal(next[0] && 'capsule' in next[0] ? next[0].capsule.likes_count : 0, 2);
+    assert.equal(next[0] && 'capsule' in next[0] ? next[0].capsule.comments_count : 0, 1);
+    assert.equal(next[1] && 'collection' in next[1] ? next[1].collection.likes_count : 0, 4);
+    assert.equal(next[1] && 'collection' in next[1] ? next[1].collection.comments_count : 0, 3);
   });
 });

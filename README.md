@@ -656,6 +656,9 @@ Ninety/
 ### ✅ v52 — Pie social en el calendario del diario
 - [x] El día abierto en `/diary/calendar` y `/u/:username/calendar/:year/:month` muestra likes/comentarios; `GET /api/capsules/me/calendar` incluye contadores
 
+### ✅ v53 — Engagement en Actividad
+- [x] `/activity` muestra likes/comentarios de la Capsule o lista; `GET /api/activity` incluye `likes_count` y `comments_count`
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium
