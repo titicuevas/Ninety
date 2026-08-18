@@ -99,6 +99,32 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(featured.getByText(/también comentó/i)).toBeVisible();
   });
 
+  test('feed Siguiendo muestra también le gusta de follows', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
+    await openAuthenticatedHome(page);
+    const token = await readAccessToken(page);
+    expect(token).toBeTruthy();
+
+    const res = await request.get(
+      `${API_BASE}/api/capsules/feed?scope=following&sort=recent&limit=20`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      capsules?: Array<{ likes_count?: number; comments_count?: number }>;
+    };
+    const social = (body.capsules ?? []).find(
+      (row) => (row.likes_count ?? 0) > 0 || (row.comments_count ?? 0) > 0,
+    );
+    test.skip(!social, 'Ejecuta npm run seed:fans — el feed Siguiendo no tiene Capsules con likes/comentarios');
+
+    await page.goto('/feed');
+    await expect(page.getByRole('heading', { name: /^feed$/i })).toBeVisible({ timeout: 20_000 });
+    await expect(
+      page.getByText(/también le gusta|también comentó/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
+  });
+
   test('Actividad QA incluye eventos sociales del seed demo', async ({ page, request }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'requiere sesión QA');
     await openAuthenticatedHome(page);

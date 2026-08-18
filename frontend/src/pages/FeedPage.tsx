@@ -1,7 +1,7 @@
 import { Compass, Library, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ActivityShortcutLink } from '@/components/ActivityShortcutLink';
-import { CapsuleEngagementBar } from '@/components/CapsuleEngagementBar';
+import { CapsuleCardSocialFooter } from '@/components/CapsuleCardSocialFooter';
 import { CapsuleListCard, capsuleCardListClass } from '@/components/CapsuleListCard';
 import { EmptyState } from '@/components/EmptyState';
 import { FeedContentFiltersBar } from '@/components/FeedContentFiltersBar';
@@ -122,17 +122,15 @@ function FeedCapsuleCard({ capsule, currentUserId }: { capsule: FeedCapsule; cur
         </div>
       }
       footer={
-        <CapsuleEngagementBar
-          bordered={false}
-          className="mt-0"
+        <CapsuleCardSocialFooter
           capsuleId={capsule.id}
-          shareTitle={shareTitle}
-          share={capsuleShareSummaryFrom(capsule, capsule.profiles)}
+          capsuleOwnerId={capsule.user_id}
+          currentUserId={currentUserId}
           likesCount={capsule.likes_count}
           likedByMe={capsule.liked_by_me}
           commentsCount={capsule.comments_count}
-          currentUserId={currentUserId}
-          capsuleOwnerId={capsule.user_id}
+          shareTitle={shareTitle}
+          share={capsuleShareSummaryFrom(capsule, capsule.profiles)}
           isPublic={capsule.is_public !== false}
         />
       }

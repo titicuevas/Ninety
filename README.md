@@ -613,6 +613,9 @@ Ninety/
 ### ✅ v38 — Favoritos con engagement en el perfil
 - [x] La colección destacada del perfil público muestra me gusta/comentarios (y «también le gusta / comentó» si estás logueado)
 
+### ✅ v39 — También le gusta en el feed
+- [x] El feed Siguiendo muestra «también le gusta / comentó» en las Capsules con engagement, igual que el diario público
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium
