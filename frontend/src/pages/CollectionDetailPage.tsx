@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowDown, ArrowLeft, ArrowUp, ImageIcon, Plus, Trash2 } from 'lucide-react';
 import { CapsuleListCard } from '@/components/CapsuleListCard';
 import { CollectionCardSocialFooter } from '@/components/CollectionCardSocialFooter';
+import { CollectionComments } from '@/components/CollectionComments';
 import { CollectionLikeButton } from '@/components/CollectionLikeButton';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
@@ -499,6 +500,15 @@ export function CollectionDetailPage() {
           onRemoveItem={(capsuleId) => removeItem.mutate(capsuleId)}
           removeItemPending={removeItem.isPending}
         />
+
+        {collection.is_public ? (
+          <CollectionComments
+            collectionId={collection.id}
+            currentUserId={profile?.id}
+            collectionOwnerId={collection.user_id}
+            autoFocusComposer={false}
+          />
+        ) : null}
       </div>
 
       <ConfirmDialog

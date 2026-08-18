@@ -644,6 +644,9 @@ Ninety/
 ### ✅ v48 — Comentarios en el detalle de lista
 - [x] `GET /api/collections/:id` y el detalle público incluyen `comments_count`; Favoritos y Mis listas muestran el recuento en la ficha
 
+### ✅ v49 — Hilo de comentarios en el detalle propio
+- [x] En `/collections/:id` (lista pública) el dueño ve y responde el hilo sin ir a «Ver pública»
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

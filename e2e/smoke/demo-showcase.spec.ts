@@ -92,6 +92,10 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(page.getByText(/también le gusta|también comentó/i).first()).toBeVisible({
       timeout: 15_000,
     });
+    await expect(page.getByRole('button', { name: /ocultar comentarios/i })).toBeVisible();
+    await expect(page.getByText(new RegExp(DEMO_SOCIAL_COMMENT_MARKER, 'i'))).toBeVisible({
+      timeout: 15_000,
+    });
   });
 
   test('Capsule social invitado muestra reseña y engagement', async ({ page, request }, testInfo) => {

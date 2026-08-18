@@ -226,6 +226,8 @@ interface CollectionCommentsProps {
   currentUserId?: string;
   collectionOwnerId?: string;
   className?: string;
+  /** Si false, no enfoca el compositor al montar (p. ej. ficha de edición). */
+  autoFocusComposer?: boolean;
 }
 
 export function CollectionComments({
@@ -233,6 +235,7 @@ export function CollectionComments({
   currentUserId,
   collectionOwnerId,
   className,
+  autoFocusComposer = true,
 }: CollectionCommentsProps) {
   const [open, setOpen] = useState(true);
   const commentsLoadedRef = useRef(true);
@@ -258,12 +261,12 @@ export function CollectionComments({
   const label = formatCommentsCountLabel(comments.length);
 
   useEffect(() => {
-    if (!open || !currentUserId) return;
+    if (!open || !currentUserId || !autoFocusComposer) return;
     const id = window.requestAnimationFrame(() => {
       textareaRef.current?.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(id);
-  }, [open, currentUserId]);
+  }, [open, currentUserId, autoFocusComposer]);
 
   useEffect(() => {
     if (!replyToId) return;
