@@ -1192,6 +1192,16 @@ collectionsRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, 
   const coverUrls = await loadCoverUrls(reader, rows, { onlyPublicCapsules: !isOwner });
   const author = collectionAuthor(profile);
   const withLikes = await attachCollectionLikeStats(reader, req.userId ?? '', rows);
+  let commentsById = new Map<string, number>();
+  try {
+    const withComments = await attachCollectionCommentCounts(
+      reader,
+      rows.map((row) => ({ id: row.id })),
+    );
+    commentsById = new Map(withComments.map((row) => [row.id, row.comments_count]));
+  } catch (err) {
+    if (!isMissingCollectionCommentsTable(err)) throw err;
+  }
 
   res.json({
     profile: author,
@@ -1201,6 +1211,7 @@ collectionsRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, 
         cover_url: coverUrls.get(row.id) ?? null,
         likes_count: row.likes_count,
         liked_by_me: row.liked_by_me,
+        comments_count: commentsById.get(row.id) ?? 0,
       }),
     ),
   });

@@ -632,6 +632,9 @@ Ninety/
 ### ✅ v44 — Mis listas con pie social
 - [x] `/collections` muestra likes/comentarios y «también le gusta / comentó» en las listas públicas; `GET /api/collections/me` incluye `comments_count`
 
+### ✅ v45 — Colecciones del perfil público con pie social
+- [x] El grid de colecciones en `/u/:username` muestra comentarios y «también le gusta / comentó»; `GET /api/collections/user/:username` incluye `comments_count`
+
 ## 🎨 Identidad visual
 
 - **Tema:** Oscuro, minimalista, premium

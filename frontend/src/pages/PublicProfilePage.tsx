@@ -5,8 +5,7 @@ import { BlockUserButton } from '@/components/BlockUserButton';
 import { CapsuleCardSocialFooter } from '@/components/CapsuleCardSocialFooter';
 import { CapsuleDiaryFilters } from '@/components/CapsuleDiaryFilters';
 import { CapsuleListCard, capsuleCardListClass } from '@/components/CapsuleListCard';
-import { CollectionAlsoCommented } from '@/components/CollectionAlsoCommented';
-import { CollectionAlsoLiked } from '@/components/CollectionAlsoLiked';
+import { CollectionCardSocialFooter } from '@/components/CollectionCardSocialFooter';
 import { EmptyState } from '@/components/EmptyState';
 import { FollowButton } from '@/components/FollowButton';
 import { FollowsYouBadge } from '@/components/FollowsYouBadge';
@@ -305,22 +304,13 @@ function PublicCollectionsSections({
                 </p>
               </div>
             </Link>
-            {viewerUserId ? (
-              <>
-                {(featuredCollection.likes_count ?? 0) > 0 ? (
-                  <CollectionAlsoLiked
-                    collectionId={featuredCollection.id}
-                    exceptUserId={profile.id}
-                  />
-                ) : null}
-                {(featuredCollection.comments_count ?? 0) > 0 ? (
-                  <CollectionAlsoCommented
-                    collectionId={featuredCollection.id}
-                    exceptUserId={profile.id}
-                  />
-                ) : null}
-              </>
-            ) : null}
+            <CollectionCardSocialFooter
+              collectionId={featuredCollection.id}
+              ownerId={profile.id}
+              currentUserId={viewerUserId}
+              likesCount={featuredCollection.likes_count}
+              commentsCount={featuredCollection.comments_count}
+            />
           </div>
         </section>
       ) : null}
@@ -335,35 +325,56 @@ function PublicCollectionsSections({
             Colecciones
           </h2>
           <ul className="grid gap-2 sm:grid-cols-2">
-            {collections!.map((col) => (
-              <li key={col.id}>
-                <Link
-                  to={`/u/${encodeURIComponent(profile.username!)}/lists/${encodeURIComponent(col.slug)}`}
-                  className="flex items-center gap-3 rounded-xl border border-border bg-card/50 px-3 py-3 transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  {col.cover_url ? (
-                    <img
-                      src={col.cover_url}
-                      alt=""
-                      className="h-12 w-12 shrink-0 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
-                      aria-hidden
-                    >
-                      <Library className="h-4 w-4" />
+            {collections!.map((col) => {
+              const href = `/u/${encodeURIComponent(profile.username!)}/lists/${encodeURIComponent(col.slug)}`;
+              return (
+                <li key={col.id}>
+                  <article className="rounded-xl border border-border bg-card/50 p-3 transition-colors hover:border-primary/40">
+                    <div className="flex items-start gap-3">
+                      {col.cover_url ? (
+                        <Link to={href} tabIndex={-1} className="shrink-0">
+                          <img
+                            src={col.cover_url}
+                            alt=""
+                            className="h-12 w-12 rounded-lg object-cover"
+                          />
+                        </Link>
+                      ) : (
+                        <div
+                          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+                          aria-hidden
+                        >
+                          <Library className="h-4 w-4" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          to={href}
+                          className="font-medium text-foreground hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          {col.name}
+                        </Link>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {formatCollectionCardMeta(
+                            col.items_count ?? 0,
+                            col.likes_count ?? 0,
+                            col.comments_count ?? 0,
+                          )}
+                        </p>
+                        <CollectionCardSocialFooter
+                          className="mt-2 space-y-1"
+                          collectionId={col.id}
+                          ownerId={col.user_id || profile.id}
+                          currentUserId={viewerUserId}
+                          likesCount={col.likes_count}
+                          commentsCount={col.comments_count}
+                        />
+                      </div>
                     </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="font-medium">{col.name}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {formatCollectionCardMeta(col.items_count ?? 0, col.likes_count ?? 0)}
-                    </p>
-                  </div>
-                </Link>
-              </li>
-            ))}
+                  </article>
+                </li>
+              );
+            })}
           </ul>
         </section>
       ) : isOwnProfile ? (

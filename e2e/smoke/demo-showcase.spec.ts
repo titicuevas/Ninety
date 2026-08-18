@@ -81,6 +81,8 @@ test.describe('Smoke — demo showcase @smoke', () => {
     const featured = page.getByRole('region', { name: /colección destacada/i });
     await expect(featured.getByText(/\d+ me gusta/i)).toBeVisible();
     await expect(featured.getByText(/\d+ comentarios?/i)).toBeVisible();
+    const lists = page.getByRole('region', { name: /^colecciones$/i });
+    await expect(lists.getByText(/\d+ comentarios?/i).first()).toBeVisible();
   });
 
   test('diario público demo autenticado muestra también le gusta y comentó', async ({
@@ -97,6 +99,9 @@ test.describe('Smoke — demo showcase @smoke', () => {
     const featured = page.getByRole('region', { name: /colección destacada/i });
     await expect(featured.getByText(/también le gusta/i)).toBeVisible();
     await expect(featured.getByText(/también comentó/i)).toBeVisible();
+    const lists = page.getByRole('region', { name: /^colecciones$/i });
+    await expect(lists.getByText(/también le gusta/i)).toBeVisible();
+    await expect(lists.getByText(/también comentó/i)).toBeVisible();
   });
 
   test('feed Siguiendo muestra también le gusta de follows', async ({ page, request }, testInfo) => {
