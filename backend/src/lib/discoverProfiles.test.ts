@@ -38,8 +38,8 @@ describe('teamsMatch', () => {
 
 describe('favoriteTeamIlikePattern', () => {
   it('envuelve el equipo y limpia comodines', () => {
-    assert.equal(favoriteTeamIlikePattern('  Betis  '), '%Betis%');
-    assert.equal(favoriteTeamIlikePattern('100%_Betis'), '%100Betis%');
+    assert.equal(favoriteTeamIlikePattern('  Betis  '), '%betis%');
+    assert.equal(favoriteTeamIlikePattern('100%_Betis'), '%100betis%');
     assert.equal(favoriteTeamIlikePattern('a'), null);
   });
 });

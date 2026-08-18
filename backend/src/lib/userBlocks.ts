@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { isUuid } from './postgrestSafe.js';
 import { fetchProfilesByIds } from './profileLookup.js';
 import { normalizeProfile, type ProfileRow } from './profileNormalize.js';
 import { normalizeUsernameParam } from './usernameParam.js';
@@ -71,7 +72,7 @@ export async function getBlockRelation(
   viewerId: string,
   otherId: string,
 ): Promise<BlockRelation> {
-  if (!viewerId || !otherId || viewerId === otherId) {
+  if (!viewerId || !otherId || viewerId === otherId || !isUuid(viewerId) || !isUuid(otherId)) {
     return { blocked_by_me: false, blocked_me: false };
   }
 
@@ -106,7 +107,7 @@ export async function getBlockRelation(
 
 /** IDs con los que el viewer tiene bloqueo en cualquier dirección. Fail-open → []. */
 export async function listBlockedEitherWayIds(viewerId: string): Promise<string[]> {
-  if (!viewerId) return [];
+  if (!viewerId || !isUuid(viewerId)) return [];
 
   const { supabaseAdmin } = await import('./supabase.js');
   if (!supabaseAdmin) return [];

@@ -1,4 +1,5 @@
 import type { ProfileRow } from './profileNormalize.js';
+import { sanitizePostgrestSearch } from './postgrestSafe.js';
 
 export type DiscoverCandidate = ProfileRow & {
   username: string;
@@ -117,7 +118,7 @@ export function rankDiscoverProfiles(
 
 /** Patrón seguro para `ilike` a partir del equipo del viewer. */
 export function favoriteTeamIlikePattern(team: string): string | null {
-  const cleaned = team.replace(/[%_]/g, '').trim();
+  const cleaned = sanitizePostgrestSearch(team, 80);
   if (cleaned.length < 2) return null;
   return `%${cleaned}%`;
 }

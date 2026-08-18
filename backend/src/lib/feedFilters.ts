@@ -1,3 +1,5 @@
+import { sanitizePostgrestSearch } from './postgrestSafe.js';
+
 /** Filtros de contenido del feed (competición / solo fotos). */
 
 export type FeedContentFilters = {
@@ -8,7 +10,7 @@ export type FeedContentFilters = {
 
 /** Quita comodines y ruido de PostgREST `ilike`. */
 export function sanitizeFeedCompetition(raw: string | undefined): string {
-  return (raw ?? '').toLowerCase().replace(/[%_,.()"]/g, '').trim().slice(0, 100);
+  return sanitizePostgrestSearch(raw, 100);
 }
 
 export function parseFeedPhotosParam(raw: unknown): boolean {

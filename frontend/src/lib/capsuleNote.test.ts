@@ -10,6 +10,7 @@ describe('capsuleNote', () => {
   it('normaliza vacío a null y trunca', () => {
     assert.equal(normalizeCapsuleNote(''), null);
     assert.equal(normalizeCapsuleNote('  hola  '), 'hola');
+    assert.equal(normalizeCapsuleNote('gol <script>x</script>'), 'gol');
     assert.equal(normalizeCapsuleNote('y'.repeat(CAPSULE_NOTE_MAX + 5))?.length, CAPSULE_NOTE_MAX);
   });
 

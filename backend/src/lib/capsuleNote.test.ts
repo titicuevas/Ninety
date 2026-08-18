@@ -17,6 +17,7 @@ describe('capsuleNote', () => {
 
   it('recorta y trunca al máximo', () => {
     assert.equal(normalizeCapsuleNote('  noche épica  '), 'noche épica');
+    assert.equal(normalizeCapsuleNote('gol <b>fuera</b>'), 'gol fuera');
     const long = 'x'.repeat(CAPSULE_NOTE_MAX + 40);
     const normalized = normalizeCapsuleNote(long);
     assert.equal(normalized?.length, CAPSULE_NOTE_MAX);

@@ -54,6 +54,7 @@ import {
   profilesAlignMigrationHint,
   resolveProfileIdByUsername,
 } from '../lib/profileLookup.js';
+import { sanitizePostgrestSearch } from '../lib/postgrestSafe.js';
 import { normalizeUsernameParam } from '../lib/usernameParam.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
 
@@ -453,8 +454,7 @@ profileRouter.get('/search', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  const q = parsed.data.q.toLowerCase();
-  const safe = q.replace(/[%_,.()"]/g, '').trim();
+  const safe = sanitizePostgrestSearch(parsed.data.q);
   if (safe.length < 2) {
     res.status(400).json({ error: 'Escribe al menos 2 caracteres para buscar aficionados' });
     return;
