@@ -764,6 +764,20 @@ Ninety/
 - [x] Pestaña Listas junto a Partidos y Aficionados
 - [x] E2e chromium con skip si prod aún no trae la pestaña
 
+### ✅ v74 — Identidad visual renovada
+- [x] Logo SVG de campo de fútbol (gradiente de césped, líneas de campo, "90 MIN") que escala sin perder calidad
+- [x] Componente `NinetyLogo` reutilizable con tamaños xs/sm/md/lg/xl y animación pulse
+- [x] 4 loaders random: balón rebotando, silbato pulsante, tarjeta amarilla con flip 3D y red de portería sacudiéndose
+- [x] 10 frases de carga futboleras (rotación aleatoria)
+- [x] Landing con animaciones de entrada escalonadas (`landing-stagger`)
+- [x] Header y splash HTML actualizados con el nuevo logo
+
+### ✅ v75 — Landing con datos reales
+- [x] Diario real de `@beta_ninety`: stats auténticas (partidos, media, liga top, estadios, 5 estrellas)
+- [x] Últimas 3 Capsules con escudos, marcador, competición, fecha y valoración en estrellitas
+- [x] Skeleton de carga mientras llegan los datos; fallback silencioso si falla la API
+- [x] Hook `useLandingShowcase` con caché de 10 min y retry 1
+
 ### ✅ v73 — Capsule como ticket de partido
 - [x] Tarjeta de Capsule (feed, diario, listas, perfil) con escudos, marcador grande y foto a ancho de tarjeta
 - [x] Pie social en una línea («también lo vieron · le gusta · comentó») en Capsules, listas y Actividad
