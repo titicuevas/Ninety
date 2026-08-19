@@ -58,10 +58,18 @@ test.describe('Smoke — público @smoke', () => {
     await expect(page.getByRole('button', { name: /compartir perfil/i })).toBeVisible();
 
     if (data.featured_collection?.name) {
-      await expect(page.getByRole('heading', { name: /colección destacada/i })).toBeVisible();
-      await expect(
-        page.getByRole('link', { name: new RegExp(escapeRegExp(data.featured_collection.name), 'i') }).first(),
-      ).toBeVisible();
+      // La colección destacada está en el tab "Listas"
+      const listsTab = page.getByRole('tab', { name: /listas/i });
+      if (await listsTab.isVisible().catch(() => false)) {
+        await listsTab.click();
+        await expect(page.getByRole('heading', { name: /colección destacada/i })).toBeVisible();
+        await expect(
+          page.getByRole('link', { name: new RegExp(escapeRegExp(data.featured_collection.name), 'i') }).first(),
+        ).toBeVisible();
+        // Volver al tab Diario para el resto del test
+        const diaryTab = page.getByRole('tab', { name: /diario/i });
+        if (await diaryTab.isVisible().catch(() => false)) await diaryTab.click();
+      }
     }
 
     const wrapped = page.getByRole('heading', { name: /el fútbol de/i });

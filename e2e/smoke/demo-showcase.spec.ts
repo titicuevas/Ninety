@@ -171,6 +171,11 @@ test.describe('Smoke — demo showcase @smoke', () => {
     );
     await expect(page.getByText(/\d+ comentarios?/i).first()).toBeVisible();
 
+    // La colección destacada y el grid de listas están en el tab "Listas"
+    const listsTab = page.getByRole('tab', { name: /listas/i });
+    if (await listsTab.isVisible().catch(() => false)) {
+      await listsTab.click();
+    }
     const featured = page.getByRole('region', { name: /colección destacada/i });
     await expect(featured.getByText(/\d+ me gusta/i)).toBeVisible();
     await expect(featured.getByText(/\d+ comentarios?/i)).toBeVisible();
