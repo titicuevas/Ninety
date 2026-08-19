@@ -41,7 +41,7 @@ export function WrappedTeaser({ name, stats, scope, href, onDismiss }: WrappedTe
 
         <div className="flex flex-wrap items-end gap-4 sm:gap-6">
           <div>
-            <p className="text-4xl font-bold tabular-nums tracking-tight sm:text-5xl">
+            <p className="font-display text-4xl font-bold tabular-nums tracking-tight sm:text-5xl">
               {stats.totalMatches}
             </p>
             <p className="mt-0.5 text-sm text-emerald-100/90">

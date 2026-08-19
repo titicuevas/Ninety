@@ -250,7 +250,7 @@ function WrappedHeroSection({
 
         <div className="mt-8 space-y-4">
           <div>
-            <p className="text-5xl font-bold tabular-nums tracking-tight sm:text-6xl">
+            <p className="font-display text-5xl font-bold tabular-nums tracking-tight sm:text-6xl">
               {stats.totalMatches}
             </p>
             <p className="mt-1 text-sm font-medium text-emerald-100/90">

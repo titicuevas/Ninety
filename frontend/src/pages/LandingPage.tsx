@@ -60,11 +60,11 @@ function ShowcaseStats({
   return (
     <div className="grid grid-cols-3 gap-2 text-center sm:gap-3">
       <div className="rounded-xl bg-background/55 px-2 py-3.5 sm:p-4">
-        <p className="text-2xl font-bold tabular-nums text-primary">{total}</p>
+        <p className="font-display text-2xl font-bold tabular-nums text-primary">{total}</p>
         <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs">Partidos</p>
       </div>
       <div className="rounded-xl bg-background/55 px-2 py-3.5 sm:p-4">
-        <p className="text-2xl font-bold tabular-nums text-primary">
+        <p className="font-display text-2xl font-bold tabular-nums text-primary">
           {avg != null ? avg.toFixed(1) : '—'}
         </p>
         <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs">Media</p>
@@ -125,11 +125,11 @@ function CapsuleRow({
         <div className="min-w-0">
           <p className="truncate text-xs font-semibold leading-tight text-foreground">
             {home}
-            {score ? (
-              <span className="mx-1.5 font-bold tabular-nums text-primary">{score}</span>
-            ) : (
-              <span className="mx-1.5 text-muted-foreground">vs</span>
-            )}
+          {score ? (
+            <span className="mx-1.5 font-display font-bold tabular-nums text-primary">{score}</span>
+          ) : (
+            <span className="mx-1.5 text-muted-foreground">vs</span>
+          )}
             {away}
           </p>
           <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
