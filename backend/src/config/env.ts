@@ -15,7 +15,7 @@ export const envSchema = z
     VAPID_PUBLIC_KEY: z.string().optional(),
     VAPID_PRIVATE_KEY: z.string().optional(),
     VAPID_SUBJECT: z.string().default('mailto:hello@getninety.app'),
-    /** Secreto para cron interno (digest push / diary / email). Header X-Cron-Secret o Bearer. */
+    /** Secreto para cron interno (digest push / diary / email). Header X-Cron-Secret o Bearer. Obligatorio en producción. */
     CRON_SECRET: z.string().min(8).optional(),
     /** API key Resend (digest email semanal). Opcional en local. */
     RESEND_API_KEY: z.string().min(1).optional(),
@@ -26,6 +26,9 @@ export const envSchema = z
   })
   .refine((data) => data.SUPABASE_ANON_KEY || data.SUPABASE_PUBLISHABLE_KEY, {
     message: 'Se requiere SUPABASE_ANON_KEY o SUPABASE_PUBLISHABLE_KEY',
+  })
+  .refine((data) => data.NODE_ENV !== 'production' || (data.CRON_SECRET && data.CRON_SECRET.length >= 8), {
+    message: 'CRON_SECRET es obligatorio en producción (mín. 8 caracteres)',
   });
 
 export type ResolvedEnv = z.infer<typeof envSchema> & {
