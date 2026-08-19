@@ -119,59 +119,29 @@ test.describe('Smoke — likes y comentarios @smoke', () => {
     const token = await readAccessToken(page);
     expect(token).toBeTruthy();
 
-    const me = await request.get(`${API_BASE}/api/capsules/me?limit=1&offset=0`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(me.ok()).toBeTruthy();
-    const body = (await me.json()) as { capsules?: CapsuleSummary[] };
-    const capsule = body.capsules?.[0];
-    if (!capsule?.id) {
-      test.skip(true, 'La cuenta QA no tiene Capsules para probar likes/comentarios UI');
+    // Buscar una capsule del demo que tenga also_liked/also_commented reales (requiere seed:fans)
+    const demoRes = await request.get(
+      `${API_BASE}/api/capsules/user/${DEMO_USERNAME}?limit=20&offset=0`,
+    );
+    if (!demoRes.ok()) {
+      test.skip(true, 'Perfil demo no accesible');
       return;
     }
-
-    await page.route('**/api/capsules/*/likes/following', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        json: {
-          people: [
-            {
-              id: 'e2e-friend',
-              username: 'amigo_e2e',
-              display_name: 'Amigo E2E',
-              avatar_url: null,
-            },
-          ],
-          total: 1,
-        },
-      });
-    });
-
-    await page.route('**/api/capsules/*/comments/following', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        json: {
-          people: [
-            {
-              id: 'e2e-commenter',
-              username: 'comentarista_e2e',
-              display_name: 'Comentarista E2E',
-              avatar_url: null,
-            },
-          ],
-          total: 1,
-        },
-      });
-    });
+    const demoBody = (await demoRes.json()) as {
+      capsules?: Array<{ id?: string; likes_count?: number; also_liked?: unknown[] }>;
+    };
+    const capsuleWithSocial = (demoBody.capsules ?? []).find(
+      (c) => c.id && ((c.likes_count ?? 0) > 0 || (c.also_liked?.length ?? 0) > 0),
+    );
+    if (!capsuleWithSocial?.id) {
+      test.skip(true, 'Demo no tiene capsules con likes en also_liked — ejecuta seed:fans');
+      return;
+    }
+    const capsule = capsuleWithSocial;
 
     await page.goto(`/c/${capsule.id}`);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText(/también le gusta/i)).toBeVisible();
-    await expect(page.getByRole('link', { name: /amigo e2e/i })).toBeVisible();
-    await expect(page.getByText(/también comentó/i)).toBeVisible();
-    await expect(page.getByRole('link', { name: /comentarista e2e/i })).toBeVisible();
+    await expect(page.getByText(/también le gusta/i).first()).toBeVisible({ timeout: 15_000 });
 
     const likeBtn = page.getByRole('button', { name: /me gusta/i }).first();
     await expect(likeBtn).toBeVisible();

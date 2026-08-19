@@ -88,11 +88,12 @@ test.describe('Smoke — público @smoke', () => {
   });
 
   test('OG del perfil público incluye metas para bots', async ({ request }) => {
+    const site = process.env.E2E_SITE_URL?.replace(/\/$/, '');
+    if (!site) {
+      test.skip(true, 'E2E_SITE_URL no configurado — OG solo se verifica contra el servidor de producción');
+      return;
+    }
     await requirePublicDemoProfile(request);
-    const site = (process.env.E2E_SITE_URL ?? process.env.E2E_BASE_URL ?? 'https://ninety.up.railway.app').replace(
-      /\/$/,
-      '',
-    );
     const res = await request.get(`${site}/u/${DEMO_USERNAME}`, {
       headers: { 'User-Agent': 'facebookexternalhit/1.1' },
     });
@@ -127,14 +128,15 @@ test.describe('Smoke — público @smoke', () => {
   });
 
   test('OG de Capsule pública incluye metas para bots', async ({ request }) => {
+    const site = process.env.E2E_SITE_URL?.replace(/\/$/, '');
+    if (!site) {
+      test.skip(true, 'E2E_SITE_URL no configurado — OG solo se verifica contra el servidor de producción');
+      return;
+    }
     const body = await requirePublicDemoProfile(request, 'limit=1&offset=0');
     const capsuleId = body.capsules?.[0]?.id;
     test.skip(!capsuleId, 'El usuario demo no tiene Capsules públicas');
 
-    const site = (process.env.E2E_SITE_URL ?? process.env.E2E_BASE_URL ?? 'https://ninety.up.railway.app').replace(
-      /\/$/,
-      '',
-    );
     const res = await request.get(`${site}/c/${capsuleId}`, {
       headers: { 'User-Agent': 'facebookexternalhit/1.1' },
     });
