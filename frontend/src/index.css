@@ -251,20 +251,24 @@ button {
   animation: ninety-reveal 180ms ease-out;
 }
 
-/* Loading de marca — pulse del 90 + giro suave del balón */
+/* Loading de marca — pulse del logo + balón rebotando + fade de copy */
 @keyframes ninety-loader-pulse {
   0%,
   100% {
     transform: scale(1);
   }
   50% {
-    transform: scale(1.05);
+    transform: scale(1.06);
   }
 }
 
-@keyframes ninety-loader-spin {
-  to {
-    transform: rotate(360deg);
+@keyframes ninety-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
   }
 }
 
@@ -283,14 +287,77 @@ button {
   animation: ninety-loader-pulse 2.2s ease-in-out infinite;
 }
 
-.ninety-loader-ball {
-  animation: ninety-loader-spin 3.6s linear infinite;
-  transform-origin: center;
+.ninety-bounce-ball {
+  animation: ninety-bounce 1.2s ease-in-out infinite;
+}
+
+@keyframes ninety-pulse-scale {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+.ninety-pulse-whistle {
+  animation: ninety-pulse-scale 1.6s ease-in-out infinite;
+}
+
+@keyframes ninety-flip {
+  0% { transform: rotateY(0deg); }
+  50% { transform: rotateY(180deg); }
+  100% { transform: rotateY(360deg); }
+}
+
+.ninety-spin-card {
+  animation: ninety-flip 2s ease-in-out infinite;
+  perspective: 200px;
+}
+
+@keyframes ninety-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+.ninety-goal-net {
+  animation: ninety-shake 0.8s ease-in-out infinite;
+}
+
+@keyframes ninety-goal-enter {
+  0%, 100% { transform: scale(0.6); opacity: 0.4; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+.ninety-goal-ball {
+  animation: ninety-goal-enter 1.4s ease-in-out infinite;
 }
 
 .ninety-loader-copy {
   animation: ninety-loader-fade 320ms ease-out;
 }
+
+/* Landing — entrada escalonada */
+@keyframes ninety-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.landing-stagger > * {
+  animation: ninety-slide-up 600ms ease-out both;
+}
+
+.landing-stagger > :nth-child(1) { animation-delay: 0ms; }
+.landing-stagger > :nth-child(2) { animation-delay: 100ms; }
+.landing-stagger > :nth-child(3) { animation-delay: 200ms; }
+.landing-stagger > :nth-child(4) { animation-delay: 300ms; }
+.landing-stagger > :nth-child(5) { animation-delay: 400ms; }
+.landing-stagger > :nth-child(6) { animation-delay: 500ms; }
+.landing-stagger > :nth-child(7) { animation-delay: 600ms; }
+.landing-stagger > :nth-child(8) { animation-delay: 700ms; }
 
 .root-error-boundary {
   min-height: 100vh;

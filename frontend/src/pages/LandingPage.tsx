@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BarChart3, Camera, Search } from 'lucide-react';
+import { NinetyLogo } from '@/components/NinetyLogo';
 import { SkipLink } from '@/components/SkipLink';
 import { LegalFooter } from '@/components/LegalFooter';
 import { buttonVariants } from '@/components/ui/button-variants';
@@ -43,9 +44,7 @@ export function LandingPage() {
       <div className="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-12">
         <header className="mb-12 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-lg shadow-primary/25">
-              90
-            </span>
+            <NinetyLogo size="md" />
             <span className="text-xl font-semibold tracking-tight sm:text-2xl">Ninety</span>
           </div>
           <Link
@@ -56,7 +55,7 @@ export function LandingPage() {
           </Link>
         </header>
 
-        <main id="main-content" className="flex flex-1 flex-col items-center text-center">
+        <main id="main-content" className="landing-stagger flex flex-1 flex-col items-center text-center">
           <p className="mb-6 inline-flex items-center rounded-full border border-primary/35 bg-primary/10 px-4 py-1.5 text-sm font-medium text-emerald-300">
             Beta abierta — tu diario de aficionado
           </p>

@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import { Bell, Home, Library, LogOut, Newspaper, Search, Ticket, User } from 'lucide-react';
 import { ActivityNavLink } from '@/components/ActivityNavLink';
 import { CollectionsShellNav } from '@/components/CollectionsShellNav';
+import { NinetyLogo } from '@/components/NinetyLogo';
 import { SkipLink } from '@/components/SkipLink';
 import { useAuth } from '@/hooks/useAuthInit';
 import { useUnreadCount } from '@/hooks/useNotifications';
@@ -106,9 +107,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             to="/home"
             className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-sm shadow-primary/30">
-              90
-            </span>
+            <NinetyLogo size="sm" />
             <span className="truncate text-base font-semibold tracking-tight sm:text-lg">Ninety</span>
           </Link>
 

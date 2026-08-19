@@ -5,6 +5,11 @@ export const NINETY_LOADING_PHRASES = [
   'Revisando el VAR…',
   'Alineando el once…',
   'Preparando el diario…',
+  'Repasando la crónica…',
+  'Ajustando el banderín…',
+  'Inflando el balón…',
+  'Sacando de centro…',
+  'Colocando la barrera…',
 ] as const;
 
 export type NinetyLoadingPhrase = (typeof NINETY_LOADING_PHRASES)[number];
