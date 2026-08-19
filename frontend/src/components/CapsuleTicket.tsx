@@ -92,7 +92,7 @@ export function CapsuleTicket({
           <span
             className={cn(
               'shrink-0 px-1 text-center font-display font-bold tabular-nums tracking-tight',
-              size === 'detail' ? 'text-4xl sm:text-5xl' : 'text-3xl sm:text-[2rem]',
+              size === 'detail' ? 'text-3xl sm:text-5xl' : 'text-2xl sm:text-[2rem]',
               score ? 'text-foreground' : 'text-muted-foreground',
             )}
           >

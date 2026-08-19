@@ -70,7 +70,7 @@ function WantToGoSlot({ nudge }: { nudge: WantToGoNudge }) {
         >
           {nudge.title}
         </p>
-        <p className="mt-0.5 text-sm font-medium text-foreground">
+        <p className="mt-0.5 truncate text-sm font-medium text-foreground">
           {nudge.homeTeam} vs {nudge.awayTeam}
         </p>
         <p className="mt-0.5 text-xs text-muted-foreground">{nudge.body}</p>
@@ -191,7 +191,7 @@ export function TodaySlot({
         {/* Footer con total de partidos */}
         {total != null && total > 0 && (
           <p className="mt-4 border-t border-border/30 pt-3 text-center text-[11px] text-muted-foreground">
-            <Link to="/capsules" className="hover:text-primary">
+            <Link to="/capsules" className="inline-flex min-h-11 items-center hover:text-primary">
               {total} {total === 1 ? 'partido' : 'partidos'} en tu diario →
             </Link>
           </p>

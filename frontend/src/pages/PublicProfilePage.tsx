@@ -463,14 +463,14 @@ function ProfileTabs({
             role="tab"
             aria-selected={isActive}
             onClick={() => onChange(tab.id)}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
+            className={`flex flex-1 items-center justify-center gap-1 rounded-lg px-1.5 py-2.5 text-xs font-medium transition-colors sm:gap-1.5 sm:px-3 sm:text-sm ${
               isActive
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            <span>{tab.label}</span>
+            <Icon className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="hidden sm:inline">{tab.label}</span>
           </button>
         );
       })}

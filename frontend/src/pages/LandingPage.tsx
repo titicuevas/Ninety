@@ -33,7 +33,7 @@ const features = [
 function StarRating({ rating }: { rating: number | null }) {
   if (!rating) return null;
   return (
-    <span className="flex items-center gap-0.5">
+    <span className="flex shrink-0 items-center gap-0.5">
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
