@@ -1,59 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
   <defs>
-    <linearGradient id="pitch" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#064e3b"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#053b2d"/>
       <stop offset="100%" stop-color="#0a0a0b"/>
     </linearGradient>
-    <radialGradient id="glow" cx="50%" cy="35%" r="60%">
-      <stop offset="0%" stop-color="#10b981" stop-opacity="0.18"/>
-      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
-    </radialGradient>
+    <linearGradient id="stroke" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
   </defs>
-
-  <!-- Fondo redondeado con gradiente de césped -->
-  <rect width="512" height="512" rx="108" fill="url(#pitch)"/>
-
-  <!-- Brillo sutil de estadio -->
-  <rect width="512" height="512" rx="108" fill="url(#glow)"/>
-
-  <!-- Borde del campo (rounded) -->
-  <rect x="32" y="32" width="448" height="448" rx="76" fill="none" stroke="#10b981" stroke-width="5" opacity="0.3"/>
-
-  <!-- Línea de medio campo -->
-  <line x1="256" y1="72" x2="256" y2="440" stroke="#10b981" stroke-width="4" opacity="0.22"/>
-
-  <!-- Círculo central -->
-  <circle cx="256" cy="256" r="72" fill="none" stroke="#10b981" stroke-width="4" opacity="0.22"/>
-
-  <!-- Punto central -->
-  <circle cx="256" cy="256" r="8" fill="#10b981" opacity="0.25"/>
-
-  <!-- Áreas (sutil, da profundidad de campo) -->
-  <rect x="164" y="32" width="184" height="80" rx="4" fill="none" stroke="#10b981" stroke-width="3" opacity="0.12"/>
-  <rect x="164" y="400" width="184" height="80" rx="4" fill="none" stroke="#10b981" stroke-width="3" opacity="0.12"/>
-
-  <!-- 90 — grande, centrado, bold -->
-  <text
-    x="256"
-    y="290"
-    text-anchor="middle"
-    fill="#10b981"
-    font-family="Inter, ui-sans-serif, system-ui, sans-serif"
-    font-size="200"
-    font-weight="800"
-    letter-spacing="-12"
-  >90</text>
-
-  <!-- Acento inferior: minutos jugados -->
-  <text
-    x="256"
-    y="348"
-    text-anchor="middle"
-    fill="#10b981"
-    font-family="Inter, ui-sans-serif, system-ui, sans-serif"
-    font-size="28"
-    font-weight="600"
-    letter-spacing="6"
-    opacity="0.55"
-  >MIN</text>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect x="30" y="30" width="452" height="452" rx="82" fill="none" stroke="url(#stroke)" stroke-width="10" opacity="0.35"/>
+  <path d="M156 362V150h54l92 111V150h54v212h-50l-96-117v117z" fill="url(#stroke)"/>
+  <path d="M166 386h180" stroke="#10b981" stroke-width="12" stroke-linecap="round" opacity="0.45"/>
+  <circle cx="380" cy="142" r="26" fill="#10b981" opacity="0.16"/>
 </svg>
