@@ -8,6 +8,7 @@ import { DiaryDigestCard } from '@/components/DiaryDigestCard';
 import { DiaryMilestoneCard } from '@/components/DiaryMilestoneCard';
 import { EmptyState } from '@/components/EmptyState';
 import { HomeSocialHub } from '@/components/HomeSocialHub';
+import { TodaySlot } from '@/components/TodaySlot';
 import { IncompleteCapsuleCard } from '@/components/IncompleteCapsuleCard';
 import { InsightsSection } from '@/components/InsightsSection';
 import { Layout } from '@/components/Layout';
@@ -288,6 +289,17 @@ export function HomePage() {
             />
             <PushActivationBanner context="home" />
           </>
+        )}
+
+        {!isLoading && capsules.length > 0 && (
+          <TodaySlot
+            capsules={capsules}
+            anniversary={diaryAnniversary.anniversary}
+            anniversaryVisible={diaryAnniversary.visible}
+            wantToGoNudge={wantToGoNudge.nudge}
+            wantToGoVisible={wantToGoNudge.visible}
+            total={capsulesData?.capsules?.length}
+          />
         )}
 
         {isLoading ? (
