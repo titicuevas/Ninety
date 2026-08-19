@@ -1,5 +1,6 @@
+import type React from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { Library, MapPin, Swords, Trophy } from 'lucide-react';
+import { BarChart3, CalendarDays, Library, ListChecks, MapPin, Swords, Trophy } from 'lucide-react';
 import { AchievementsSection } from '@/components/AchievementsSection';
 import { BlockUserButton } from '@/components/BlockUserButton';
 import { CapsuleCardSocialFooter } from '@/components/CapsuleCardSocialFooter';
@@ -413,6 +414,70 @@ function PublicCollectionsSections({
   );
 }
 
+/* ── Tabs ──────────────────────────────────────────────────── */
+
+type ProfileTab = 'diary' | 'lists' | 'wantogo' | 'stats';
+
+const TAB_ITEMS: { id: ProfileTab; label: string; icon: React.ElementType }[] = [
+  { id: 'diary', label: 'Diario', icon: CalendarDays },
+  { id: 'lists', label: 'Listas', icon: Library },
+  { id: 'wantogo', label: 'Quiero ir', icon: ListChecks },
+  { id: 'stats', label: 'Stats', icon: BarChart3 },
+];
+
+function ProfileTabs({
+  active,
+  onChange,
+  hasCollections,
+  hasWantToGo,
+  hasStats,
+}: {
+  active: ProfileTab;
+  onChange: (tab: ProfileTab) => void;
+  hasCollections: boolean;
+  hasWantToGo: boolean;
+  hasStats: boolean;
+}) {
+  const visibleTabs = TAB_ITEMS.filter((t) => {
+    if (t.id === 'lists' && !hasCollections) return false;
+    if (t.id === 'wantogo' && !hasWantToGo) return false;
+    if (t.id === 'stats' && !hasStats) return false;
+    return true;
+  });
+
+  if (visibleTabs.length <= 1) return null;
+
+  return (
+    <nav
+      className="flex gap-1 rounded-xl bg-secondary/50 p-1"
+      role="tablist"
+      aria-label="Secciones del perfil"
+    >
+      {visibleTabs.map((tab) => {
+        const Icon = tab.icon;
+        const isActive = active === tab.id;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => onChange(tab.id)}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
+              isActive
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span>{tab.label}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
 function PublicDiaryEmptyState({ isOwnProfile }: { isOwnProfile: boolean }) {
   return (
     <EmptyState
@@ -667,6 +732,31 @@ export function PublicProfilePage() {
       : [];
   const unlockedAchievements = countUnlockedAchievements(achievements);
 
+  const hasCollections =
+    !isBlockedByMe &&
+    ((collectionsData?.collections?.length ?? 0) > 0 || !!featuredCollection);
+  const hasWantToGo = !isBlockedByMe && !!profile.username;
+  const hasStats = !isBlockedByMe && !!(wrappedStats && wrappedStats.totalMatches > 0);
+
+  const tabFromUrl = searchParams.get('tab') as ProfileTab | null;
+  const validTabs: ProfileTab[] = ['diary', 'lists', 'wantogo', 'stats'];
+  const activeTab: ProfileTab =
+    tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'diary';
+
+  const handleTabChange = (tab: ProfileTab) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', tab);
+    // Limpiar filtros de diario al cambiar de tab
+    if (tab !== 'diary') {
+      next.delete('q');
+      next.delete('year');
+      next.delete('rating_min');
+      next.delete('watch_context');
+      next.delete('tag');
+    }
+    setSearchParams(next, { replace: true });
+  };
+
   return (
     <Shell>
       <div className="space-y-5 sm:space-y-8">
@@ -688,76 +778,97 @@ export function PublicProfilePage() {
             title="Has bloqueado a este usuario"
             description="No verás su perfil ni Capsules. Puedes desbloquearlo cuando quieras."
           />
-        ) : null}
+        ) : (
+          <>
+            <ProfileTabs
+              active={activeTab}
+              onChange={handleTabChange}
+              hasCollections={hasCollections}
+              hasWantToGo={hasWantToGo}
+              hasStats={hasStats}
+            />
 
-        {!isBlockedByMe && wrappedStats && wrappedStats.totalMatches > 0 ? (
-          <PublicWrappedSummary
-            name={displayName}
-            stats={wrappedStats}
-            scope={wrappedScope}
-            years={canScopeWrapped ? years : []}
-            onScopeChange={canScopeWrapped ? onWrappedScopeChange : undefined}
-          />
-        ) : null}
+            {/* Tab: Diario */}
+            {activeTab === 'diary' && (
+              <div className="space-y-5 sm:space-y-8">
+                {diaryEmpty ? (
+                  <PublicDiaryEmptyState isOwnProfile={isOwnProfile} />
+                ) : (
+                  <PublicDiaryCapsulesSection
+                    total={total}
+                    years={years}
+                    availableTags={availableTags}
+                    qDraft={qDraft}
+                    year={year}
+                    ratingMin={ratingMin}
+                    watchContext={watchContext}
+                    tag={tag}
+                    query={{
+                      hasFilters,
+                      isLoading,
+                      isUpdating: isFetching && !isFetchingNextPage,
+                      isFetchingNextPage,
+                      filterEmpty,
+                      hasNextPage: Boolean(hasNextPage),
+                    }}
+                    capsules={capsules}
+                    userId={user?.id}
+                    author={profile}
+                    onQDraftChange={setQDraft}
+                    patchParams={patchParams}
+                    clearFilters={clearFilters}
+                    fetchNextPage={fetchNextPage}
+                  />
+                )}
+              </div>
+            )}
 
-        {!isBlockedByMe && achievements.length > 0 ? (
-          <AchievementsSection
-            achievements={achievements}
-            title="Logros"
-            subtitle={
-              unlockedAchievements === 0
-                ? undefined
-                : `${unlockedAchievements} de ${achievements.length} desbloqueados`
-            }
-          />
-        ) : null}
+            {/* Tab: Listas */}
+            {activeTab === 'lists' && (
+              <PublicCollectionsSections
+                profile={profile}
+                featuredCollection={featuredCollection}
+                collections={collectionsData?.collections}
+                isOwnProfile={isOwnProfile}
+                isBlockedByMe={false}
+                viewerUserId={user?.id}
+              />
+            )}
 
-        <PublicWantToGoSection
-          username={profile.username}
-          isOwnProfile={isOwnProfile}
-          isBlockedByMe={isBlockedByMe}
-        />
+            {/* Tab: Quiero ir */}
+            {activeTab === 'wantogo' && (
+              <PublicWantToGoSection
+                username={profile.username}
+                isOwnProfile={isOwnProfile}
+                isBlockedByMe={false}
+              />
+            )}
 
-        <PublicCollectionsSections
-          profile={profile}
-          featuredCollection={featuredCollection}
-          collections={collectionsData?.collections}
-          isOwnProfile={isOwnProfile}
-          isBlockedByMe={isBlockedByMe}
-          viewerUserId={user?.id}
-        />
-
-        {!isBlockedByMe && diaryEmpty ? (
-          <PublicDiaryEmptyState isOwnProfile={isOwnProfile} />
-        ) : null}
-
-        {!isBlockedByMe && !diaryEmpty ? (
-          <PublicDiaryCapsulesSection
-            total={total}
-            years={years}
-            availableTags={availableTags}
-            qDraft={qDraft}
-            year={year}
-            ratingMin={ratingMin}
-            watchContext={watchContext}
-            tag={tag}
-            query={{
-              hasFilters,
-              isLoading,
-              isUpdating: isFetching && !isFetchingNextPage,
-              isFetchingNextPage,
-              filterEmpty,
-              hasNextPage: Boolean(hasNextPage),
-            }}
-            capsules={capsules}
-            userId={user?.id}
-            author={profile}
-            onQDraftChange={setQDraft}
-            patchParams={patchParams}
-            clearFilters={clearFilters}
-            fetchNextPage={fetchNextPage}
-          />
-        ) : null}
+            {/* Tab: Stats */}
+            {activeTab === 'stats' && hasStats && (
+              <div className="space-y-5 sm:space-y-8">
+                <PublicWrappedSummary
+                  name={displayName}
+                  stats={wrappedStats!}
+                  scope={wrappedScope}
+                  years={canScopeWrapped ? years : []}
+                  onScopeChange={canScopeWrapped ? onWrappedScopeChange : undefined}
+                />
+                {achievements.length > 0 && (
+                  <AchievementsSection
+                    achievements={achievements}
+                    title="Logros"
+                    subtitle={
+                      unlockedAchievements === 0
+                        ? undefined
+                        : `${unlockedAchievements} de ${achievements.length} desbloqueados`
+                    }
+                  />
+                )}
+              </div>
+            )}
+          </>
+        )}
       </div>
     </Shell>
   );
