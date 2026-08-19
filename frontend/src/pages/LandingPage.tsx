@@ -179,11 +179,6 @@ export function LandingPage() {
 
         <main id="main-content" className="landing-stagger flex flex-1 flex-col items-center text-center">
 
-          {/* Badge */}
-          <p className="mb-6 inline-flex items-center rounded-full border border-primary/35 bg-primary/10 px-4 py-1.5 text-sm font-medium text-emerald-300">
-            Beta abierta — tu diario de aficionado
-          </p>
-
           {/* Hero */}
           <h1 className="mb-5 max-w-xl text-balance text-4xl font-bold tracking-tight sm:text-5xl md:text-[3.25rem] md:leading-[1.1]">
             Ninety
