@@ -12,7 +12,7 @@ import { useAuthStore } from '@/stores/authStore';
 
 import type { NotificationCapsuleContext } from '@/lib/notificationCapsule';
 
-export interface NotificationActor {
+interface NotificationActor {
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
@@ -20,7 +20,7 @@ export interface NotificationActor {
   followed_by_me?: boolean;
 }
 
-export type NotificationCapsule = NotificationCapsuleContext;
+type NotificationCapsule = NotificationCapsuleContext;
 
 export interface AppNotification {
   id: string;

@@ -27,7 +27,7 @@ export function wantToGoDocumentTitle(when: WantToGoWhenFilter): string {
 }
 
 /** Kickoff en el pasado. Sin fecha → se queda en próximos. */
-export function isWantToGoMatchPlayed(
+function isWantToGoMatchPlayed(
   matchPlayedAt: string | null | undefined,
   now: Date = new Date(),
 ): boolean {

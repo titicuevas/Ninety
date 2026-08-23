@@ -1,4 +1,4 @@
-export interface CapsuleLikerProfile {
+interface CapsuleLikerProfile {
   id: string;
   username: string | null;
   display_name: string | null;
@@ -18,6 +18,5 @@ export interface CapsuleLikesResponse {
   total: number;
 }
 
-export type CollectionLikerProfile = CapsuleLikerProfile;
 export type CollectionLikeRow = CapsuleLikeRow;
 export type CollectionLikesResponse = CapsuleLikesResponse;

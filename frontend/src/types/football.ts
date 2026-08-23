@@ -1,4 +1,4 @@
-export interface FootballTeam {
+interface FootballTeam {
   id?: number;
   name: string;
   shortName?: string;

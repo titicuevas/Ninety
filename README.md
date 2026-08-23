@@ -291,7 +291,7 @@ Nav: **tab bar inferior** en móvil y tablet (&lt;1024px); nav en header desde `
 Auditoría automática de calidad React (performance, accesibilidad, seguridad, mantenibilidad).
 
 ```bash
-# Requiere Node >= 20.19
+# Requiere Node >= 22.13
 nvm use
 npm run doctor              # escanear frontend
 npm run doctor:install      # instalar skill para Cursor + CI

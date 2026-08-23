@@ -19,7 +19,7 @@ export type NotificationAlertPreferences = Record<NotificationAlertType, boolean
   push_quiet: PushQuietHours;
 };
 
-export const DEFAULT_PUSH_QUIET_HOURS: PushQuietHours = {
+const DEFAULT_PUSH_QUIET_HOURS: PushQuietHours = {
   enabled: false,
   start: '22:00',
   end: '08:00',

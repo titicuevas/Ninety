@@ -3,7 +3,7 @@ import { API_BASE, openAuthenticatedHome, readAccessToken } from '../helpers/aut
 import { restoreCapsuleNote } from '../helpers/e2eCapsuleNotes';
 
 test.describe('Smoke — autenticado @smoke', () => {
-  test('home muestra Wrapped o empty state', async ({ page }) => {
+  test('home muestra Wrapped o empty state @cross-browser', async ({ page }) => {
     await openAuthenticatedHome(page);
     await expect(
       page.getByRole('heading', { name: /esto es tu fútbol|tu wrapped empieza/i }),
@@ -130,13 +130,14 @@ test.describe('Smoke — autenticado @smoke', () => {
     ).toBeVisible();
   });
 
-  test('feed accesible desde la app', async ({ page }) => {
+  test('feed accesible desde la app @cross-browser', async ({ page }) => {
     await openAuthenticatedHome(page);
-    await page
+    const feedLink = page
       .getByRole('navigation', { name: /navegación principal/i })
       .getByRole('link', { name: /feed/i })
-      .first()
-      .click();
+      .first();
+    await feedLink.focus();
+    await feedLink.press('Enter');
     await expect(page).toHaveURL(/\/feed/);
     await expect(page.getByRole('heading', { name: /^feed$/i })).toBeVisible();
   });
@@ -207,7 +208,7 @@ test.describe('Smoke — autenticado @smoke', () => {
     }
   });
 
-  test('Buscar aficionados muestra sugerencias o empty', async ({ page }) => {
+  test('Buscar aficionados muestra sugerencias o empty @cross-browser', async ({ page }) => {
     await openAuthenticatedHome(page);
     await page.goto('/search?tab=people');
     await expect(page).toHaveURL(/\/search/);

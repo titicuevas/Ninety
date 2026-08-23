@@ -10,7 +10,7 @@ export type IncompleteCapsulePrefs = {
 const STORAGE_PREFIX = 'ninety.incompleteCapsule:v1:';
 
 /** Soft dismiss: 3 días. */
-export const INCOMPLETE_CAPSULE_SOFT_DISMISS_MS = 3 * 24 * 60 * 60 * 1000;
+const INCOMPLETE_CAPSULE_SOFT_DISMISS_MS = 3 * 24 * 60 * 60 * 1000;
 
 function storageKey(userId: string) {
   return `${STORAGE_PREFIX}${userId}`;

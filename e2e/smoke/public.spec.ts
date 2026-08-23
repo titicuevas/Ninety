@@ -11,7 +11,9 @@ test.describe('Smoke — público @smoke', () => {
   test('landing carga con marca Ninety', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /ninety/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /crear cuenta/i }).first()).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: /crear (?:mi diario|cuenta)|empezar gratis/i }).first(),
+    ).toBeVisible();
   });
 
   test('login muestra formulario', async ({ page }) => {
@@ -174,14 +176,13 @@ test.describe('Smoke — público @smoke', () => {
   test('Capsule pública del demo muestra me gusta y comentario', async ({ page, request }) => {
     const body = await requirePublicDemoProfile(request, 'limit=20&offset=0');
     const capsule = (body.capsules ?? []).find(
-      (row) => (row.likes_count ?? 0) > 0 && (row.comments_count ?? 0) > 0,
+      (row) =>
+        (row.note ?? '').trim().length > 0 &&
+        (row.likes_count ?? 0) > 0 &&
+        (row.comments_count ?? 0) > 0,
     );
     if (!capsule?.id) {
-      test.skip(true, 'Ejecuta npm run seed:fans para sembrar likes/comentarios en el demo');
-      return;
-    }
-    if (!(capsule.note ?? '').trim()) {
-      test.skip(true, 'La Capsule social del demo no tiene reseña (seed incompleto)');
+      test.skip(true, 'Ejecuta npm run seed:fans para sembrar reseña, likes y comentarios en el demo');
       return;
     }
 

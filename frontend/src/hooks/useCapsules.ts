@@ -12,7 +12,7 @@ export type { FeedContentFilters, FeedScope, FeedSort } from '@/lib/feedParams';
 const FEED_PAGE_SIZE = 20;
 const MY_CAPSULES_PAGE_SIZE = 20;
 
-export type MyCapsulesVisibility = 'all' | 'public' | 'private';
+type MyCapsulesVisibility = 'all' | 'public' | 'private';
 
 export type MyCapsulesFilters = {
   q?: string;

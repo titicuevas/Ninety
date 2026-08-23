@@ -10,7 +10,7 @@ import { profilePath } from '@/lib/profilePath';
 import { wantToGoToFootballMatch } from '@/lib/wantToGo';
 import type { PublicWantToGoItem } from '@/types/wantToGo';
 
-export const PUBLIC_WANT_TO_GO_PREVIEW = 6;
+const PUBLIC_WANT_TO_GO_PREVIEW = 6;
 
 function PublicWantToGoRow({
   item,

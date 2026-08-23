@@ -17,7 +17,7 @@ export interface Collection {
   also_commented?: import('@/lib/collectionAlsoLiked').CollectionAlsoLikedPerson[];
 }
 
-export interface CollectionAuthor {
+interface CollectionAuthor {
   id?: string;
   username: string | null;
   display_name: string | null;
@@ -35,7 +35,7 @@ export interface PublicCollectionsResponse {
 
 export type DiscoverCollectionMatchReason = 'following' | 'favorite_team' | 'active' | null;
 
-export interface DiscoverCollectionAuthor extends CollectionAuthor {
+interface DiscoverCollectionAuthor extends CollectionAuthor {
   id: string;
   followed_by_me?: boolean;
   follows_me?: boolean;

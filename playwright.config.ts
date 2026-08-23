@@ -6,6 +6,7 @@ config({ path: resolve(process.cwd(), 'backend/.env') });
 
 const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:5173';
 const authFile = 'e2e/.auth/user.json';
+const forbidSkips = process.env.E2E_FORBID_SKIPS === 'true';
 
 /**
  * Proyectos QE:
@@ -23,6 +24,7 @@ export default defineConfig({
   reporter: [
     ['list'],
     ['html', { open: 'never', outputFolder: 'playwright-report' }],
+    ...(forbidSkips ? [['./e2e/reporters/forbid-skips.ts'] as const] : []),
   ],
   timeout: 60_000,
   expect: { timeout: 15_000 },
@@ -39,7 +41,28 @@ export default defineConfig({
     },
     {
       name: 'smoke-public',
-      testMatch: /smoke\/(public|demo-showcase|landing)\.spec\.ts/,
+      testMatch: /smoke\/(public|landing)\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'firefox-public',
+      testMatch: /smoke\/(public|landing)\.spec\.ts/,
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit-public',
+      testMatch: /smoke\/(public|landing)\.spec\.ts/,
+      use: { ...devices['Desktop Safari'] },
+    },
+    {
+      name: 'route-boundary',
+      testMatch: /smoke\/route-error\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'demo-public',
+      testMatch: /smoke\/demo-showcase\.spec\.ts/,
+      grep: /@demo-public/,
       use: { ...devices['Desktop Chrome'] },
     },
     {
@@ -59,9 +82,30 @@ export default defineConfig({
     {
       name: 'chromium',
       testMatch: /smoke\/(authenticated|collections|notifications|onboarding|value-onboarding|diary-anniversary|diary-milestone|want-to-go-nudge|feed-discover|push-activation|social-engagement|watch-context|demo-showcase)\.spec\.ts|critical\/(people-search|follow-lists|capsule-create-photos|capsule-privacy)\.spec\.ts/,
+      grepInvert: /@demo-public/,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
+        storageState: authFile,
+      },
+    },
+    {
+      name: 'firefox-auth',
+      testMatch: /smoke\/authenticated\.spec\.ts/,
+      grep: /@cross-browser/,
+      dependencies: ['setup'],
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: authFile,
+      },
+    },
+    {
+      name: 'webkit-auth',
+      testMatch: /smoke\/authenticated\.spec\.ts/,
+      grep: /@cross-browser/,
+      dependencies: ['setup'],
+      use: {
+        ...devices['Desktop Safari'],
         storageState: authFile,
       },
     },

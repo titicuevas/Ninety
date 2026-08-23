@@ -3,7 +3,7 @@ import { apiFetch } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { MIN_QUERY_LENGTH } from '@/hooks/useMatchSearch';
 
-export type TeamSearchItem = {
+type TeamSearchItem = {
   id?: number;
   name: string;
   shortName?: string;

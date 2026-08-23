@@ -14,7 +14,7 @@ export type DiaryPostImportState = {
 const STORAGE_PREFIX = 'ninety.diaryPostImport:v1:';
 
 /** Soft dismiss: no volver a mostrar durante 14 días. */
-export const POST_IMPORT_SOFT_DISMISS_MS = 14 * 24 * 60 * 60 * 1000;
+const POST_IMPORT_SOFT_DISMISS_MS = 14 * 24 * 60 * 60 * 1000;
 
 function storageKey(userId: string) {
   return `${STORAGE_PREFIX}${userId}`;

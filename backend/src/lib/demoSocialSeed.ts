@@ -119,5 +119,7 @@ export function demoCapsuleSocialActions(capsuleIndex = 0): DemoCapsuleSocialAct
 
 /** Fans que el demo sigue y que siembran Capsule del mismo partido (También lo vieron). */
 export function demoAlsoWatchedActorIndexes(capsuleIndex = 0): number[] {
-  return [...new Set(demoCapsuleSocialActions(capsuleIndex).map((row) => row.actorIndex))];
+  return [
+    ...new Set([0, ...demoCapsuleSocialActions(capsuleIndex).map((row) => row.actorIndex)]),
+  ];
 }

@@ -45,7 +45,7 @@ const memorySchema = z.object({
 
 export type CapsuleMemoryFormValues = z.infer<typeof memorySchema>;
 
-export type CapsuleMemorySubmitPayload = CapsuleMemoryFormValues & {
+type CapsuleMemorySubmitPayload = CapsuleMemoryFormValues & {
   rating: number | null;
   is_public: boolean;
   watch_context: WatchContext | null;

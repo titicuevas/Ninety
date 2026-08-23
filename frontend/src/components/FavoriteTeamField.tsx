@@ -117,22 +117,18 @@ export function FavoriteTeamField({
               id={`${listId}-opt-${index}`}
               role="option"
               aria-selected={index === activeIndex}
+              className={cn(
+                'flex w-full cursor-pointer rounded-md px-3 py-2 text-left text-sm',
+                index === activeIndex ? 'bg-secondary' : 'hover:bg-secondary',
+              )}
+              onMouseDown={(e) => e.preventDefault()}
+              onMouseEnter={() => setActiveIndex(index)}
+              onClick={() => pick(team.name)}
             >
-              <button
-                type="button"
-                className={cn(
-                  'flex w-full rounded-md px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                  index === activeIndex ? 'bg-secondary' : 'hover:bg-secondary',
-                )}
-                onMouseDown={(e) => e.preventDefault()}
-                onMouseEnter={() => setActiveIndex(index)}
-                onClick={() => pick(team.name)}
-              >
-                <span className="truncate font-medium">{team.name}</span>
-                {team.shortName ? (
-                  <span className="ml-2 shrink-0 text-xs text-muted-foreground">{team.shortName}</span>
-                ) : null}
-              </button>
+              <span className="truncate font-medium">{team.name}</span>
+              {team.shortName ? (
+                <span className="ml-2 shrink-0 text-xs text-muted-foreground">{team.shortName}</span>
+              ) : null}
             </li>
           ))}
         </ul>

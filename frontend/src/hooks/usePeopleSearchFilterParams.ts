@@ -5,7 +5,7 @@ import {
   type DiscoverReasonFilter,
 } from '@/lib/discoverProfiles';
 
-export const PEOPLE_QUERY_MAX = 80;
+const PEOPLE_QUERY_MAX = 80;
 
 export type PeopleSearchFilterParams = {
   q: string;

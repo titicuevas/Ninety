@@ -2,9 +2,15 @@ import type { NextFunction, Request, Response } from 'express';
 import multer from 'multer';
 import { FootballApiError } from '../lib/footballApi.js';
 import { env } from '../config/loadEnv.js';
+import { safeErrorLog } from '../lib/safeErrorLog.js';
 
-export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {
-  console.error(err);
+export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
+  console.error('[request-error]', {
+    requestId: res.locals.requestId,
+    method: req.method,
+    path: req.path,
+    ...safeErrorLog(err),
+  });
 
   if (err instanceof FootballApiError) {
     res.status(err.status).json({

@@ -12,7 +12,7 @@ export type AchievementIcon =
   | 'userPlus'
   | 'users';
 
-export type AchievementId =
+type AchievementId =
   | 'first_capsule'
   | 'matches_5'
   | 'matches_10'

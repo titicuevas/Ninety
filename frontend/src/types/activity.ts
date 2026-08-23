@@ -1,11 +1,11 @@
-export type FollowActivityActor = {
+type FollowActivityActor = {
   id: string;
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
 };
 
-export type FollowActivityCapsule = {
+type FollowActivityCapsule = {
   id: string;
   user_id?: string;
   home_team_name: string;
@@ -22,7 +22,7 @@ export type FollowActivityCapsule = {
   also_commented?: import('@/lib/collectionAlsoLiked').CollectionAlsoLikedPerson[];
 };
 
-export type FollowActivityCollection = {
+type FollowActivityCollection = {
   id: string;
   name: string;
   slug: string;

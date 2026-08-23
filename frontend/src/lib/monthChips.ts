@@ -1,4 +1,4 @@
-export const MONTH_CHIP_LABELS = [
+const MONTH_CHIP_LABELS = [
   'Ene',
   'Feb',
   'Mar',

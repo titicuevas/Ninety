@@ -14,7 +14,7 @@ interface PublicProfilePage {
 
 type PublicProfileInfinite = InfiniteData<PublicProfilePage>;
 
-export type BlockedProfile = Profile & { blocked_at: string };
+type BlockedProfile = Profile & { blocked_at: string };
 
 type BlockedListResponse = {
   profiles: BlockedProfile[];

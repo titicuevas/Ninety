@@ -4,7 +4,7 @@ import type { FootballMatch } from '@/types/football';
 export const WANT_TO_GO_NUDGE_WINDOW_MS = 48 * 60 * 60 * 1000;
 
 /** Ventana «ya jugó»: kickoff en el pasado hasta 14 días. */
-export const WANT_TO_GO_PLAYED_NUDGE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
+const WANT_TO_GO_PLAYED_NUDGE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 
 export type WantToGoNudgeMatch = {
   match_id: number;
@@ -18,7 +18,7 @@ export type WantToGoNudgeMatch = {
   away_score?: number | null;
 };
 
-export type WantToGoNudgeKind = 'upcoming' | 'played';
+type WantToGoNudgeKind = 'upcoming' | 'played';
 
 export type WantToGoNudge = {
   kind: WantToGoNudgeKind;

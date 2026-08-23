@@ -5,7 +5,7 @@ export type AuthEmailCallbackResult =
   | { kind: 'code'; code: string }
   | { kind: 'empty' };
 
-export type AuthEmailOtpType =
+type AuthEmailOtpType =
   | 'signup'
   | 'email'
   | 'invite'

@@ -122,7 +122,7 @@ function computePeakMonth(matchesByMonth: number[]): { month: number; count: num
 }
 
 /** Fotos del periodo priorizando mejor valoración y fecha reciente. */
-export function pickWrappedPhotoUrls(
+function pickWrappedPhotoUrls(
   capsules: Array<{
     watched_at: string;
     rating?: number | null;

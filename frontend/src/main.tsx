@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { RootErrorFallback } from '@/components/RootErrorFallback';
 import './index.css';
 
 class RootErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -16,15 +17,7 @@ class RootErrorBoundary extends Component<{ children: ReactNode }, { error: Erro
 
   render() {
     if (this.state.error) {
-      return (
-        <div className="root-error-boundary">
-          <h1 className="root-error-title">Algo falló al cargar Ninety</h1>
-          <pre className="root-error-pre">{this.state.error.message}</pre>
-          <button type="button" className="root-error-reload" onClick={() => window.location.reload()}>
-            Recargar
-          </button>
-        </div>
-      );
+      return <RootErrorFallback error={this.state.error} />;
     }
     return this.props.children;
   }

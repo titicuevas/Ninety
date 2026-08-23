@@ -5,7 +5,7 @@ import { formatCapsuleScore, formatWatchedDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { Capsule } from '@/types/capsule';
 
-export type CapsuleTicketMatch = Pick<
+type CapsuleTicketMatch = Pick<
   Capsule,
   | 'home_team_name'
   | 'away_team_name'

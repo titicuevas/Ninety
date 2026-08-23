@@ -6,7 +6,7 @@ import type { FollowActivityResponse } from '@/types/activity';
 const BADGE_QUERY_KEY = ['activity', 'follows', 'badge'] as const;
 
 /** Total de eventos de follows para badges en atajos Actividad (Home/Feed). */
-export function useFollowActivityBadge() {
+function useFollowActivityBadge() {
   const session = useAuthStore((s) => s.session);
 
   return useQuery({

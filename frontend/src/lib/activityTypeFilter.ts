@@ -22,7 +22,7 @@ export function parseActivityTypeParam(value: string | null): ActivityListFilter
   return null;
 }
 
-export function activityTypeSearchParams(type: ActivityListFilter): string {
+function activityTypeSearchParams(type: ActivityListFilter): string {
   if (!type) return '';
   return `?type=${type}`;
 }

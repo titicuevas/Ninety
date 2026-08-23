@@ -373,6 +373,7 @@ export function MatchSearchPanel() {
     const timer = window.setTimeout(() => {
       const trimmed = query.trim();
       setDebouncedQuery(trimmed);
+      if (window.location.pathname !== '/search') return;
       setParams(
         (prev) => {
           const next = new URLSearchParams(prev);
@@ -435,7 +436,7 @@ export function MatchSearchPanel() {
       return;
     }
     saveDraftMatch(match);
-    navigate('/capsules/new', { state: { match } });
+    window.location.assign('/capsules/new');
   };
 
   const searchFavoriteTeam = () => {

@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:security": "NODE_ENV=test node --import tsx --test src/lib/safeErrorLog.test.ts src/securityBoundary.test.ts",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
@@ -17,6 +18,8 @@
     "generate:test-photos": "tsx scripts/generate-test-photos.ts",
     "seed:demo": "tsx scripts/seed-demo.ts",
     "seed:fans": "tsx scripts/seed-fans.ts",
+    "seed:demo-notes": "tsx scripts/seed-fans.ts --demo-notes-only",
+    "seed:demo-showcase": "tsx scripts/seed-fans.ts --demo-showcase-only",
     "demo:flow": "tsx scripts/demo-flow.ts",
     "apply:capsules-schema": "tsx scripts/apply-capsules-schema.ts",
     "probe:search": "tsx scripts/probe-search.ts",

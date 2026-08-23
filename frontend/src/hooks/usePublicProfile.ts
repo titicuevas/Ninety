@@ -29,7 +29,7 @@ interface UserCapsulesResponse {
   blocked?: boolean;
 }
 
-export type FeaturedCollectionSummary = {
+type FeaturedCollectionSummary = {
   id: string;
   name: string;
   slug: string;

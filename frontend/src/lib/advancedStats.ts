@@ -1,9 +1,9 @@
 import type { Capsule } from '@/types/capsule';
 import { WATCH_CONTEXT_LABELS, WATCH_CONTEXTS, isWatchContext, type WatchContext } from '@/lib/watchContext';
 
-export type RatingBucket = { stars: 1 | 2 | 3 | 4 | 5; count: number };
+type RatingBucket = { stars: 1 | 2 | 3 | 4 | 5; count: number };
 
-export type WatchContextShare = {
+type WatchContextShare = {
   key: WatchContext;
   label: string;
   count: number;
@@ -11,7 +11,7 @@ export type WatchContextShare = {
   pct: number;
 };
 
-export type RivalryStat = {
+type RivalryStat = {
   pairKey: string;
   teamA: string;
   teamB: string;
@@ -19,7 +19,7 @@ export type RivalryStat = {
   averageRating: number | null;
 };
 
-export type FavoriteTeamRecord = {
+type FavoriteTeamRecord = {
   team: string;
   watched: number;
   wins: number;

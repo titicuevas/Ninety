@@ -10,7 +10,7 @@ export type WantToGoNudgePrefs = {
 const STORAGE_PREFIX = 'ninety.wantToGoNudge:v1:';
 
 /** Soft dismiss: 3 días. */
-export const WANT_TO_GO_NUDGE_SOFT_DISMISS_MS = 3 * 24 * 60 * 60 * 1000;
+const WANT_TO_GO_NUDGE_SOFT_DISMISS_MS = 3 * 24 * 60 * 60 * 1000;
 
 function storageKey(userId: string) {
   return `${STORAGE_PREFIX}${userId}`;

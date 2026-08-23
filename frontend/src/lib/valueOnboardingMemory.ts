@@ -7,7 +7,7 @@ export type ValueOnboardingState = {
 
 const STORAGE_PREFIX = 'ninety.valueOnboarding:v1:';
 /** Soft dismiss: no volver a mostrar durante 7 días. */
-export const VALUE_ONBOARDING_SOFT_DISMISS_MS = 7 * 24 * 60 * 60 * 1000;
+const VALUE_ONBOARDING_SOFT_DISMISS_MS = 7 * 24 * 60 * 60 * 1000;
 
 function storageKey(userId: string) {
   return `${STORAGE_PREFIX}${userId}`;

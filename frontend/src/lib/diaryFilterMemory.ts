@@ -19,7 +19,7 @@ export type DiaryFilterSnapshot = {
 
 const STORAGE_PREFIX = 'ninety.diaryFilters:v1:';
 
-export const DIARY_FILTER_PARAM_KEYS = [
+const DIARY_FILTER_PARAM_KEYS = [
   'q',
   'year',
   'rating',

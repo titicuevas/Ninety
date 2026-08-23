@@ -1,7 +1,7 @@
 import type { Capsule } from '@/types/capsule';
 
 /** Umbrales de celebración del diario (activación / retención). */
-export const DIARY_MILESTONE_THRESHOLDS = [5, 10, 25, 50, 100, 250] as const;
+const DIARY_MILESTONE_THRESHOLDS = [5, 10, 25, 50, 100, 250] as const;
 
 export type DiaryMilestoneThreshold = (typeof DIARY_MILESTONE_THRESHOLDS)[number];
 

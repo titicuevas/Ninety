@@ -49,11 +49,12 @@ export async function requireDemoShowcaseProfile(
   const socialCapsules = capsules.filter(
     (row) => (row.likes_count ?? 0) > 0 && (row.comments_count ?? 0) > 0,
   );
+  const capsulesWithoutNote = capsules.filter((row) => (row.note ?? '').trim().length === 0);
+  const capsulesWithE2eLeftover = capsules.filter((row) => isE2eLeftoverNote(row.note));
   const notesClean =
     capsules.length >= 5 &&
-    capsules.every(
-      (row) => (row.note ?? '').trim().length > 0 && !isE2eLeftoverNote(row.note),
-    );
+    capsulesWithoutNote.length === 0 &&
+    capsulesWithE2eLeftover.length === 0;
   const featuredReady =
     body.featured_collection?.slug === DEMO_FEATURED_COLLECTION_SLUG &&
     (body.featured_collection?.name?.trim().length ?? 0) > 0 &&
@@ -66,7 +67,7 @@ export async function requireDemoShowcaseProfile(
   ).toBe(true);
   expect(
     notesClean,
-    `El diario @${DEMO_USERNAME} no tiene reseñas limpias (≥5, sin leftovers E2E). Ejecuta npm run seed:fans.`,
+    `El diario @${DEMO_USERNAME} no tiene reseñas limpias: ${capsules.length}/5 Capsules, ${capsulesWithoutNote.length} sin reseña y ${capsulesWithE2eLeftover.length} con leftovers E2E. Ejecuta npm run seed:fans.`,
   ).toBe(true);
   expect(
     socialCapsules.length,

@@ -9,14 +9,14 @@ export type CompareSide = {
   avatarUrl?: string | null;
 };
 
-export type CompareMetricId =
+type CompareMetricId =
   | 'matches'
   | 'rating'
   | 'stadium'
   | 'fiveStar'
   | 'photos';
 
-export type CompareWinner = 'me' | 'them' | 'tie' | 'na';
+type CompareWinner = 'me' | 'them' | 'tie' | 'na';
 
 export type CompareMetric = {
   id: CompareMetricId;

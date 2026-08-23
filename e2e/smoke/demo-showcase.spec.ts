@@ -19,14 +19,14 @@ import {
 } from '../helpers/demoShowcase';
 
 test.describe('Smoke — demo showcase @smoke', () => {
-  test('API perfil demo: diario limpio, Favoritos y Capsule social', async ({ request }, testInfo) => {
-    test.skip(testInfo.project.name !== 'smoke-public', 'API pública sin auth');
+  test('API perfil demo: diario limpio, Favoritos y Capsule social @demo-public', async ({ request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'demo-public', 'API pública sin auth');
     await requireDemoShowcaseProfile(request);
     await requireDemoFeaturedCollection(request);
   });
 
-  test('API Favoritos incluye comentario sembrado', async ({ request }, testInfo) => {
-    test.skip(testInfo.project.name !== 'smoke-public', 'API pública sin auth');
+  test('API Favoritos incluye comentario sembrado @demo-public', async ({ request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'demo-public', 'API pública sin auth');
     const { collection } = await requireDemoFeaturedCollection(request);
     expect(collection?.id).toBeTruthy();
 
@@ -39,8 +39,8 @@ test.describe('Smoke — demo showcase @smoke', () => {
     ).toBe(true);
   });
 
-  test('Favoritos invitado muestra me gusta y comentarios públicos', async ({ page, request }, testInfo) => {
-    test.skip(testInfo.project.name !== 'smoke-public', 'vista invitado');
+  test('Favoritos invitado muestra me gusta y comentarios públicos @demo-public', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'demo-public', 'vista invitado');
     await requireDemoFeaturedCollection(request);
 
     await page.goto(`/u/${DEMO_USERNAME}/lists/${DEMO_FEATURED_COLLECTION_SLUG}`);
@@ -74,7 +74,7 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(page.getByRole('heading', { name: /^favoritos$/i })).toBeVisible({
       timeout: 20_000,
     });
-    const items = page.getByRole('list').filter({ has: page.getByText(/ vs /i) });
+    const items = page.getByRole('region', { name: /partidos de la colección/i });
     await expect(
       items.getByText(/también le gusta|también comentó|\d+ me gusta|\d+ comentarios?/i).first(),
     ).toBeVisible({ timeout: 15_000 });
@@ -143,8 +143,8 @@ test.describe('Smoke — demo showcase @smoke', () => {
     });
   });
 
-  test('Capsule social invitado muestra reseña y engagement', async ({ page, request }, testInfo) => {
-    test.skip(testInfo.project.name !== 'smoke-public', 'vista invitado');
+  test('Capsule social invitado muestra reseña y engagement @demo-public', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'demo-public', 'vista invitado');
     const { socialCapsule } = await requireDemoShowcaseProfile(request);
     const note = (socialCapsule.note ?? '').trim();
     expect(note.length).toBeGreaterThan(0);
@@ -156,8 +156,8 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(page.getByText(/\d+ comentarios?/i).first()).toBeVisible();
   });
 
-  test('perfil público invitado muestra engagement en el diario', async ({ page, request }, testInfo) => {
-    test.skip(testInfo.project.name !== 'smoke-public', 'vista invitado');
+  test('perfil público invitado muestra engagement en el diario @demo-public', async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'demo-public', 'vista invitado');
     const { socialCapsule } = await requireDemoShowcaseProfile(request);
     const note = (socialCapsule.note ?? '').trim();
     expect(note.length).toBeGreaterThan(0);
@@ -212,6 +212,7 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/también le gusta/i).first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/también comentó/i).first()).toBeVisible();
+    await page.getByRole('tab', { name: /^listas$/i }).click();
     const featured = page.getByRole('region', { name: /colección destacada/i });
     await expect(featured.getByText(/también le gusta/i)).toBeVisible();
     await expect(featured.getByText(/también comentó/i)).toBeVisible();
@@ -455,8 +456,8 @@ test.describe('Smoke — demo showcase @smoke', () => {
     ).toBe(true);
 
     await page.goto('/activity?type=like');
+    await expect(page.getByTestId('activity-type-filters')).toBeVisible({ timeout: 15_000 });
     const likeChip = page.getByRole('button', { name: /^me gusta$/i });
-    test.skip((await likeChip.count()) === 0, 'front aún no tiene chip Me gusta — espera al deploy de v66');
     await expect(likeChip).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText(/le dio me gusta/i).first()).toBeVisible({ timeout: 15_000 });
   });
@@ -1067,29 +1068,21 @@ test.describe('Smoke — demo showcase @smoke', () => {
       `${API_BASE}/api/capsules/user/${encodeURIComponent(DEMO_COMPARE_FAN_USERNAME)}/in-common`,
       { headers: { Authorization: `Bearer ${token}` } },
     );
-    test.skip(res.status() === 404, 'API aún no tiene in-common — espera al deploy de v67');
-    if (!res.ok()) {
-      test.skip(true, `Ejecuta npm run seed:fans — no se pudo cruzar con @${DEMO_COMPARE_FAN_USERNAME}`);
-      return;
-    }
+    expect(res.ok(), `GET in-common de @${DEMO_COMPARE_FAN_USERNAME} → ${res.status()}`).toBeTruthy();
     const body = (await res.json()) as { matches?: unknown[]; total?: number };
-    if ((body.total ?? body.matches?.length ?? 0) === 0) {
-      test.skip(true, `GET in-common no tiene partidos en común — ejecuta npm run seed:fans`);
-      return;
-    }
+    expect(
+      body.total ?? body.matches?.length ?? 0,
+      `GET in-common no tiene partidos en común — ejecuta npm run seed:demo-showcase`,
+    ).toBeGreaterThan(0);
 
     await page.goto(`/u/${encodeURIComponent(DEMO_COMPARE_FAN_USERNAME)}/vs`);
     const section = page.getByTestId('compare-in-common');
-    test.skip(
-      (await section.count()) === 0,
-      'front aún no pinta partidos en común — espera al deploy de v67',
-    );
     await expect(section).toBeVisible({ timeout: 15_000 });
     await expect(section.getByRole('link').first()).toBeVisible({ timeout: 10_000 });
   });
 
-  test('API Quiero ir público no requiere auth y omite notas', async ({ request }, testInfo) => {
-    test.skip(testInfo.project.name !== 'smoke-public', 'API pública sin auth');
+  test('API Quiero ir público no requiere auth y omite notas @demo-public', async ({ request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'demo-public', 'API pública sin auth');
     const res = await request.get(
       `${API_BASE}/api/want-to-go/user/${encodeURIComponent(DEMO_USERNAME)}?limit=6`,
     );
@@ -1112,21 +1105,17 @@ test.describe('Smoke — demo showcase @smoke', () => {
     const res = await request.get(
       `${API_BASE}/api/want-to-go/user/${encodeURIComponent(DEMO_USERNAME)}?limit=6`,
     );
-    test.skip(res.status() === 401, 'API aún no tiene Quiero ir público — espera al deploy de v69');
     expect(res.ok()).toBeTruthy();
     const body = (await res.json()) as { items?: unknown[]; total?: number };
-    test.skip(
-      (body.items?.length ?? 0) === 0,
-      `El perfil @${DEMO_USERNAME} no tiene próximos en Quiero ir`,
-    );
+    expect(
+      body.items?.length ?? 0,
+      `El perfil @${DEMO_USERNAME} necesita próximos en Quiero ir — ejecuta npm run seed:demo-showcase`,
+    ).toBeGreaterThan(0);
 
     await openAuthenticatedHome(page);
     await page.goto(`/u/${encodeURIComponent(DEMO_USERNAME)}`);
+    await page.getByRole('tab', { name: /^quiero ir$/i }).click();
     const section = page.getByTestId('public-want-to-go');
-    test.skip(
-      (await section.count()) === 0,
-      'front aún no pinta Quiero ir en el perfil — espera al deploy de v69',
-    );
     await expect(section).toBeVisible({ timeout: 15_000 });
     await expect(section.getByRole('heading', { name: /quiero ir/i })).toBeVisible();
     await page.getByRole('link', { name: /ver lista|ver todos/i }).click();
@@ -1177,26 +1166,19 @@ test.describe('Smoke — demo showcase @smoke', () => {
     const body = (await res.json()) as {
       items?: Array<{ also_want_to_go?: unknown[] }>;
     };
-    test.skip((body.items?.length ?? 0) === 0, 'La cuenta QA no tiene partidos en Quiero ir');
+    expect(body.items?.length ?? 0, 'La cuenta QA no tiene partidos en Quiero ir').toBeGreaterThan(0);
     const sample = body.items![0];
-    test.skip(
-      sample != null && !('also_want_to_go' in sample),
-      'API aún no adjunta also_want_to_go — espera al deploy de v70',
-    );
-    test.skip(
+    expect(sample).toHaveProperty('also_want_to_go');
+    expect(
       !(body.items ?? []).some(hasAlsoWantToGoPeople),
       'La cuenta QA no tiene follows en común en Quiero ir',
-    );
+    ).toBe(false);
 
     await page.goto('/want-to-go');
     await expect(page.getByRole('heading', { name: /^quiero ir$/i })).toBeVisible({
       timeout: 15_000,
     });
     const chip = page.getByTestId('want-to-go-in-common');
-    test.skip(
-      (await chip.count()) === 0,
-      'front aún no pinta also_want_to_go — espera al deploy de v70',
-    );
     await expect(chip.first()).toBeVisible();
     await expect(chip.first()).toContainText(/también en quiero ir/i);
   });
@@ -1208,10 +1190,7 @@ test.describe('Smoke — demo showcase @smoke', () => {
     const listsTab = page.getByRole('tablist', { name: /tipo de búsqueda/i }).getByRole('tab', {
       name: 'Listas',
     });
-    test.skip(
-      (await listsTab.count()) === 0,
-      'front aún no tiene pestaña Listas — espera al deploy de v71',
-    );
+    await expect(listsTab).toBeVisible({ timeout: 15_000 });
     await expect(listsTab).toHaveAttribute('aria-selected', 'true');
     const panel = page.getByTestId('search-lists-panel');
     await expect(panel).toBeVisible({ timeout: 15_000 });
@@ -1222,8 +1201,8 @@ test.describe('Smoke — demo showcase @smoke', () => {
     await expect(page).toHaveURL(/sort=recent/);
   });
 
-  test('API perfil incluye stats_by_year del Wrapped', async ({ request }, testInfo) => {
-    test.skip(testInfo.project.name !== 'smoke-public', 'API pública sin auth');
+  test('API perfil incluye stats_by_year del Wrapped @demo-public', async ({ request }, testInfo) => {
+    test.skip(testInfo.project.name !== 'demo-public', 'API pública sin auth');
     const res = await request.get(
       `${API_BASE}/api/capsules/user/${encodeURIComponent(DEMO_USERNAME)}?limit=1`,
     );
@@ -1265,11 +1244,8 @@ test.describe('Smoke — demo showcase @smoke', () => {
 
     await openAuthenticatedHome(page);
     await page.goto(`/u/${encodeURIComponent(DEMO_USERNAME)}`);
+    await page.getByRole('tab', { name: /^stats$/i }).click();
     const tabs = page.getByTestId('public-wrapped-scope');
-    test.skip(
-      (await tabs.count()) === 0,
-      'front aún no pinta chips de año — espera al deploy de v72',
-    );
     await expect(tabs).toBeVisible({ timeout: 15_000 });
     await tabs.getByRole('tab', { name: String(year) }).click();
     await expect(page).toHaveURL(new RegExp(`wrapped=${year}`));

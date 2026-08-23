@@ -35,7 +35,7 @@ export function MatchesByMonthChart({
       >
         {matchesByMonth.map((count, i) => {
           const height = count > 0 ? Math.max((count / max) * 100, 8) : 4;
-          const monthKey = `month-${i + 1}`;
+          const monthKey = MONTH_NAMES_ES[i];
           const isPeak = peakMonth?.month === i + 1;
           return (
             <div key={monthKey} className="flex flex-1 flex-col items-center gap-1">

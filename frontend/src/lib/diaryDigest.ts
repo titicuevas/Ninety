@@ -1,6 +1,6 @@
 import type { Capsule } from '@/types/capsule';
 
-export type DiaryDigestKind = 'weekly' | 'nudge' | 'gap';
+type DiaryDigestKind = 'weekly' | 'nudge' | 'gap';
 
 export type DiaryDigest = {
   kind: DiaryDigestKind;

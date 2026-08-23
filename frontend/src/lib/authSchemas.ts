@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const passwordFieldSchema = z.string().min(6, 'Mínimo 6 caracteres');
+const passwordFieldSchema = z.string().min(6, 'Mínimo 6 caracteres');
 
 /** Cambio / reset de contraseña (password + confirm). */
 export const passwordConfirmSchema = z

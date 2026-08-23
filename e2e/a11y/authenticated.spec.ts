@@ -140,13 +140,11 @@ test.describe('A11y — app autenticada @a11y', () => {
     await openAuthenticatedHome(page);
     await page.goto(`/u/${DEMO_USERNAME}`);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
+    await page.getByRole('tab', { name: /^stats$/i }).click();
     const tabs = page.getByTestId('public-wrapped-scope');
-    test.skip(
-      (await tabs.count()) === 0,
-      'front aún no pinta chips de año — espera al deploy de v72',
-    );
+    await expect(tabs).toBeVisible({ timeout: 15_000 });
     const yearTab = tabs.getByRole('tab').nth(1);
-    test.skip((await yearTab.count()) === 0, `El perfil @${DEMO_USERNAME} no tiene años en el Wrapped`);
+    await expect(yearTab, `El perfil @${DEMO_USERNAME} debe tener años en el Wrapped`).toBeVisible();
     await yearTab.focus();
     await expect(yearTab).toBeFocused();
     await yearTab.press('Enter');

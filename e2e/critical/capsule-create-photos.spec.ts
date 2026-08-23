@@ -2,14 +2,22 @@ import { expect, test, type APIRequestContext } from '@playwright/test';
 import { API_BASE, goAppNav, openAuthenticatedHome, readAccessToken } from '../helpers/auth';
 import { deleteOwnCapsule } from '../helpers/e2eCapsuleNotes';
 
-type CapsuleSummary = { match_id: number };
+type CapsuleSummary = {
+  id?: string;
+  match_id: number;
+  home_team_name?: string;
+  away_team_name?: string;
+};
 type CapsulesResponse = { capsules?: CapsuleSummary[] };
 
 type MatchSearchResponse = {
   matches?: Array<{
     id: number;
-    homeTeam: { name: string };
-    awayTeam: { name: string };
+    utcDate?: string;
+    homeTeam: { name: string; crest?: string | null };
+    awayTeam: { name: string; crest?: string | null };
+    competition?: { name?: string | null };
+    score?: { fullTime?: { home?: number | null; away?: number | null } };
   }>;
 };
 
@@ -18,7 +26,16 @@ const JPEG_BUFFER = Buffer.from(
   'base64',
 );
 
-const SEARCH_CANDIDATES = ['Liverpool', 'Argentina', 'Betis', 'Barcelona'];
+const SEARCH_CANDIDATES = [
+  'Liverpool',
+  'Argentina',
+  'Betis',
+  'Barcelona',
+  'Madrid',
+  'Arsenal',
+  'Bayern',
+  'Inter',
+];
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -37,11 +54,12 @@ async function pickUnsavedMatch(token: string, request: APIRequestContext) {
   const existingMatchIds = new Set((existing.capsules ?? []).map((capsule) => capsule.match_id));
 
   for (const query of SEARCH_CANDIDATES) {
-    const data = await getJson<MatchSearchResponse>(
+    const response = await request.get(
       `${API_BASE}/api/football/matches/search?q=${encodeURIComponent(query)}`,
-      token,
-      request,
+      { headers: { Authorization: `Bearer ${token}` } },
     );
+    if (!response.ok()) continue;
+    const data = (await response.json()) as MatchSearchResponse;
     const candidate = (data.matches ?? []).find((match) => !existingMatchIds.has(match.id));
     if (candidate) return { query, match: candidate };
   }
@@ -51,23 +69,19 @@ async function pickUnsavedMatch(token: string, request: APIRequestContext) {
 
 test.describe('Crítico — creación de capsule con fotos @critical', () => {
   test('crea una capsule con fotos desde la UI autenticada', async ({ page, request }) => {
-    // Este test requiere: búsqueda de partidos funcional, Supabase Storage configurado
-    // y redirección completa a /capsules/new. Solo se verifica en staging/Railway.
-    test.skip(
-      !process.env.E2E_SITE_URL,
-      'Requiere entorno staging con Storage configurado — define E2E_SITE_URL para ejecutar',
-    );
+    const pageErrors: string[] = [];
+    page.on('pageerror', (error) => pageErrors.push(error.message));
     await openAuthenticatedHome(page);
 
     const token = await readAccessToken(page);
     expect(token).toBeTruthy();
 
     const found = await pickUnsavedMatch(token!, request);
-    if (!found) {
-      test.skip(true, 'No hay partidos disponibles para la cuenta QA en las búsquedas candidatas');
-      return;
-    }
-    const { query, match } = found;
+    expect(
+      found,
+      'La cuenta QA necesita al menos un partido no guardado entre las búsquedas candidatas',
+    ).toBeTruthy();
+    const { query, match } = found!;
     const note = `E2E fotos ${Date.now()}`;
     let createdId: string | undefined;
 
@@ -75,6 +89,9 @@ test.describe('Crítico — creación de capsule con fotos @critical', () => {
       await goAppNav(page, /buscar/i);
       await expect(page).toHaveURL(/\/search/);
       await page.getByLabel('Equipo o rival').fill(query);
+      await expect(page).toHaveURL(
+        new RegExp(`[?&]q=${encodeURIComponent(query).replace(/%20/g, '(?:%20|\\+)')}(?:&|$)`, 'i'),
+      );
 
       const matchButton = page.getByRole('button', {
         name: new RegExp(
@@ -83,7 +100,19 @@ test.describe('Crítico — creación de capsule con fotos @critical', () => {
         ),
       });
       await expect(matchButton.first()).toBeVisible({ timeout: 20_000 });
-      await matchButton.first().click();
+      await matchButton.first().focus();
+      await expect(matchButton.first()).toBeFocused();
+      await matchButton.first().press('Enter');
+
+      await expect
+        .poll(() =>
+          page.evaluate(() => {
+            const raw = sessionStorage.getItem('ninety.draftMatch:v1');
+            return raw ? (JSON.parse(raw) as { id?: number }).id : null;
+          }),
+        )
+        .toBe(match.id);
+      expect(pageErrors, 'La selección del partido no debe lanzar errores en el navegador').toEqual([]);
 
       await expect(page).toHaveURL(/\/capsules\/new/);
       await expect(page.getByRole('heading', { name: /nueva capsule/i })).toBeVisible();
@@ -107,7 +136,7 @@ test.describe('Crítico — creación de capsule con fotos @critical', () => {
       await page.waitForFunction(
         (note) => {
           try {
-            const raw = sessionStorage.getItem('ninety.draftCapsuleMemory');
+            const raw = sessionStorage.getItem('ninety.draftCapsuleMemory:v1');
             if (!raw) return false;
             return (JSON.parse(raw) as { note?: string }).note === note;
           } catch {
@@ -154,32 +183,58 @@ test.describe('Crítico — creación de capsule con fotos @critical', () => {
     const token = await readAccessToken(page);
     expect(token).toBeTruthy();
 
-    const existing = await getJson<{
-      capsules?: Array<{
-        id: string;
-        match_id: number;
-        home_team_name: string;
-        away_team_name: string;
-      }>;
-    }>(`${API_BASE}/api/capsules/me?limit=5&offset=0`, token!, request);
-
-    const capsule = existing.capsules?.[0];
-    test.skip(!capsule, 'La cuenta QA no tiene Capsules para probar duplicados');
-
-    const teamQuery = capsule!.home_team_name.split(/\s+/)[0] || capsule!.home_team_name;
-    await goAppNav(page, /buscar/i);
-    await expect(page).toHaveURL(/\/search/);
-    await page.getByLabel('Equipo o rival').fill(teamQuery);
-
-    const savedButton = page.getByRole('button', {
-      name: new RegExp(
-        `Ver Capsule: ${escapeRegExp(capsule!.home_team_name)}.*${escapeRegExp(capsule!.away_team_name)}`,
-        'i',
-      ),
+    const found = await pickUnsavedMatch(token!, request);
+    expect(
+      found,
+      'La cuenta QA necesita un partido disponible para preparar el caso duplicado',
+    ).toBeTruthy();
+    const { query, match } = found!;
+    const create = await request.post(`${API_BASE}/api/capsules`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      data: {
+        match_id: match.id,
+        match_played_at: match.utcDate ?? null,
+        home_team_name: match.homeTeam.name,
+        away_team_name: match.awayTeam.name,
+        home_team_crest: match.homeTeam.crest ?? null,
+        away_team_crest: match.awayTeam.crest ?? null,
+        competition_name: match.competition?.name ?? null,
+        home_score: match.score?.fullTime?.home ?? null,
+        away_score: match.score?.fullTime?.away ?? null,
+        watched_at: (match.utcDate ?? new Date().toISOString()).slice(0, 10),
+        note: `Fixture duplicado E2E ${Date.now()}`,
+        is_public: false,
+      },
     });
-    await expect(savedButton.first()).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText(/en tu diario/i).first()).toBeVisible();
-    await savedButton.first().click();
-    await expect(page).toHaveURL(new RegExp(`/c/${capsule!.id}`), { timeout: 15_000 });
+    expect(create.status()).toBe(201);
+    const capsule = (await create.json()) as { id: string };
+
+    try {
+      await goAppNav(page, /buscar/i);
+      await expect(page).toHaveURL(/\/search/);
+      await page.getByLabel('Equipo o rival').fill(query);
+      await expect(page).toHaveURL(
+        new RegExp(`[?&]q=${encodeURIComponent(query).replace(/%20/g, '(?:%20|\\+)')}(?:&|$)`, 'i'),
+      );
+      await page.reload();
+
+      const savedButton = page.getByRole('button', {
+        name: new RegExp(
+          `Ver Capsule: ${escapeRegExp(match.homeTeam.name)}.*${escapeRegExp(match.awayTeam.name)}`,
+          'i',
+        ),
+      });
+      await expect(savedButton.first()).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByText(/en tu diario/i).first()).toBeVisible();
+      await savedButton.first().focus();
+      await expect(savedButton.first()).toBeFocused();
+      await savedButton.first().press('Enter');
+      await expect(page).toHaveURL(new RegExp(`/c/${capsule.id}`), { timeout: 15_000 });
+    } finally {
+      await deleteOwnCapsule(page, request, capsule.id);
+    }
   });
 });

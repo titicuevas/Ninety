@@ -40,11 +40,23 @@ jobs:
       - name: Secrets en el árbol
         run: npm run check:secrets
 
+      - name: Seguridad de migraciones Supabase
+        run: npm run check:supabase
+
+      - name: Vulnerabilidades de producción
+        run: npm run check:audit
+
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Código y dependencias sin uso
+        run: npm run check:dead-code
+
+      - name: Build + presupuesto de bundle
+        run: npm run build:budget
+
       - name: Unit backend
-        run: npm test
+        run: npm test && npm run test:security --prefix backend
 
       - name: Unit frontend
         run: npm run test --prefix frontend

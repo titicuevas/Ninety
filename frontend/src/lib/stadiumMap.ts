@@ -24,7 +24,7 @@ export type StadiumMapResult = {
 };
 
 /** Proyección equirectangular acotada a Europa occidental (SVG viewBox 0–100). */
-export const MAP_BOUNDS = {
+const MAP_BOUNDS = {
   latMin: 35,
   latMax: 60,
   lngMin: -12,
@@ -40,7 +40,7 @@ export function projectStadium(lat: number, lng: number): { x: number; y: number
 }
 
 /** Normalización suave: no elimina tokens de marca (Atlético ≠ Madrid). */
-export function normalizeStadiumTeam(value: string | null | undefined): string {
+function normalizeStadiumTeam(value: string | null | undefined): string {
   return (value ?? '')
     .trim()
     .toLowerCase()
@@ -87,7 +87,7 @@ export function resolveStadiumForCapsule(
 }
 
 /** Compara sedes para elegir favorita: visitas → media ★ → última visita. */
-export function compareStadiumVisits(a: StadiumVisit, b: StadiumVisit): number {
+function compareStadiumVisits(a: StadiumVisit, b: StadiumVisit): number {
   if (b.visits !== a.visits) return b.visits - a.visits;
   const ar = a.averageRating ?? -1;
   const br = b.averageRating ?? -1;

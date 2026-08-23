@@ -8,7 +8,7 @@ export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
     <nav aria-label="Migas de pan" className="mb-6 text-xs text-muted-foreground">
       <ol className="flex flex-wrap items-center gap-1.5">
         {items.map((item, index) => (
-          <li key={`${item.label}-${index}`} className="flex items-center gap-1.5">
+          <li key={`${item.to ?? 'current'}-${item.label}`} className="flex items-center gap-1.5">
             {index > 0 && <ChevronRight className="h-3 w-3" aria-hidden />}
             {item.to ? (
               <Link to={item.to} className="hover:text-primary hover:underline">

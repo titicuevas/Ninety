@@ -1,6 +1,8 @@
 /**
  * Crea ≥20 aficionados de prueba con perfil, capsules y algunos follows.
  * Uso: npm run seed:fans --prefix backend
+ * Reparar solo reseñas del showcase: npm run seed:demo-notes --prefix backend
+ * Reparar todos los fixtures del showcase: npm run seed:demo-showcase --prefix backend
  *
  * Requiere SUPABASE_SECRET_KEY y TEST_USER_PASSWORD (o DEMO_FANS_PASSWORD) en backend/.env.
  * No necesita la API en marcha.
@@ -516,6 +518,17 @@ async function lookupDemoUserId(): Promise<string | null> {
   return data?.id ?? null;
 }
 
+async function lookupExistingFanIds(): Promise<string[]> {
+  if (!admin) return [];
+  const usernames = FANS.map((fan) => fan.username);
+  const { data, error } = await admin.from('profiles').select('id, username').in('username', usernames);
+  if (error) throw new Error(`Fans lookup: ${error.message}`);
+  const idsByUsername = new Map(
+    (data ?? []).map((row) => [String(row.username), String(row.id)]),
+  );
+  return usernames.map((username) => idsByUsername.get(username)).filter((id): id is string => Boolean(id));
+}
+
 async function seedFollows(fanIds: string[], demoUserId: string | null) {
   if (!admin || fanIds.length === 0) return;
 
@@ -964,9 +977,64 @@ async function seedDemoAlsoWatched(demoUserId: string | null, fanIds: string[]) 
   console.log(`   También lo vieron: ${seeded} Capsule(s) de follows con el mismo partido`);
 }
 
+async function seedDemoWantToGo(demoUserId: string | null, fanIds: string[]) {
+  if (!admin || !demoUserId || fanIds.length < 2) return;
+  const matchPlayedAt = new Date();
+  matchPlayedAt.setUTCDate(matchPlayedAt.getUTCDate() + 90);
+  matchPlayedAt.setUTCHours(20, 0, 0, 0);
+  const fixture = {
+    match_id: 990_001,
+    match_played_at: matchPlayedAt.toISOString(),
+    home_team_name: 'Real Betis',
+    away_team_name: 'Liverpool FC',
+    home_team_crest: 'https://crests.football-data.org/90.svg',
+    away_team_crest: 'https://crests.football-data.org/64.svg',
+    competition_name: 'Ninety Showcase',
+    home_score: null,
+    away_score: null,
+    note: null,
+  };
+  const userIds = [demoUserId, fanIds[0]!, fanIds[1]!];
+  const { error } = await admin.from('want_to_go_matches').upsert(
+    userIds.map((userId) => ({ ...fixture, user_id: userId })),
+    { onConflict: 'user_id,match_id' },
+  );
+  if (error) throw new Error(`Demo Quiero ir seed: ${error.message}`);
+  console.log(`   Quiero ir compartido por ${userIds.length} perfiles`);
+}
+
 async function main() {
   if (!admin) {
     throw new Error('Faltan SUPABASE_URL y SUPABASE_SECRET_KEY en backend/.env');
+  }
+
+  if (process.argv.includes('--demo-notes-only')) {
+    const demoUserId = await lookupDemoUserId();
+    if (!demoUserId) {
+      throw new Error(`Usuario demo @${process.env.DEMO_USERNAME ?? 'beta_ninety'} no encontrado`);
+    }
+    console.log(`🌱 Restaurando reseñas canónicas de @${process.env.DEMO_USERNAME ?? 'beta_ninety'}`);
+    await restoreDemoShowcaseNotes(demoUserId);
+    return;
+  }
+
+  if (process.argv.includes('--demo-showcase-only')) {
+    const demoUserId = await lookupDemoUserId();
+    if (!demoUserId) {
+      throw new Error(`Usuario demo @${process.env.DEMO_USERNAME ?? 'beta_ninety'} no encontrado`);
+    }
+    const fanIds = await lookupExistingFanIds();
+    if (fanIds.length < FANS.length) {
+      throw new Error(`Faltan aficionados del seed: encontrados ${fanIds.length}/${FANS.length}. Ejecuta npm run seed:fans.`);
+    }
+    console.log(`🌱 Reparando showcase de @${process.env.DEMO_USERNAME ?? 'beta_ninety'}`);
+    await restoreDemoShowcaseNotes(demoUserId);
+    await ensureDemoFeaturedCollection(demoUserId);
+    await seedDemoFeaturedSocial(demoUserId, fanIds);
+    await seedDemoCapsuleSocial(demoUserId, fanIds);
+    await seedDemoAlsoWatched(demoUserId, fanIds);
+    await seedDemoWantToGo(demoUserId, fanIds);
+    return;
   }
 
   const password = fanPassword();
@@ -993,6 +1061,7 @@ async function main() {
   await seedDemoFeaturedSocial(demoUserId, fanIds);
   await seedDemoCapsuleSocial(demoUserId, fanIds);
   await seedDemoAlsoWatched(demoUserId, fanIds);
+  await seedDemoWantToGo(demoUserId, fanIds);
 
   console.log('\n📋 Resumen');
   console.log(`   Aficionados: ${FANS.length}`);

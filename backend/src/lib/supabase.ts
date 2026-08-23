@@ -2,9 +2,17 @@ import { createClient, type SupabaseClient, type SupabaseClientOptions } from '@
 import ws from 'ws';
 import { env } from '../config/loadEnv.js';
 
+const testFetch: typeof fetch = async () =>
+  new Response(JSON.stringify({ message: 'Supabase no disponible en test unitario' }), {
+    // 400 evita los reintentos automáticos de PostgREST ante errores 5xx.
+    status: 400,
+    headers: { 'content-type': 'application/json' },
+  });
+
 export const supabaseClientOptions = {
   auth: { autoRefreshToken: false, persistSession: false },
   realtime: { transport: ws },
+  global: env.NODE_ENV === 'test' ? { fetch: testFetch } : undefined,
 } as SupabaseClientOptions<'public'>;
 
 export function createServiceClient(

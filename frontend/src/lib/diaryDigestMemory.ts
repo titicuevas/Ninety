@@ -10,9 +10,9 @@ export type DiaryDigestPrefs = {
 const STORAGE_PREFIX = 'ninety.diaryDigest:v1:';
 
 /** Soft dismiss (nudge/gap): 3 días. */
-export const DIGEST_SOFT_DISMISS_MS = 3 * 24 * 60 * 60 * 1000;
+const DIGEST_SOFT_DISMISS_MS = 3 * 24 * 60 * 60 * 1000;
 /** No repetir el resumen semanal antes de 7 días. */
-export const DIGEST_WEEKLY_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+const DIGEST_WEEKLY_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
 function storageKey(userId: string) {
   return `${STORAGE_PREFIX}${userId}`;

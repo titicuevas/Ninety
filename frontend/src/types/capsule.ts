@@ -67,7 +67,7 @@ export interface CapsulesResponse {
   total?: number;
 }
 
-export interface CapsuleAuthor {
+interface CapsuleAuthor {
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;

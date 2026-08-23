@@ -13,7 +13,7 @@ interface PublicProfilePage {
 
 type PublicProfileInfinite = InfiniteData<PublicProfilePage>;
 
-export type MutedProfile = Profile & { muted_at: string };
+type MutedProfile = Profile & { muted_at: string };
 
 type MutedListResponse = {
   profiles: MutedProfile[];

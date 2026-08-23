@@ -28,7 +28,7 @@ test.describe('Smoke — landing y splash @smoke', () => {
   });
 
   test('manifest.json accesible con los iconos correctos', async ({ request }) => {
-    const res = await request.get('http://localhost:5173/manifest.json');
+    const res = await request.get('/manifest.json');
     expect(res.ok()).toBeTruthy();
     const manifest = (await res.json()) as { icons?: Array<{ src: string }> };
     const srcs = (manifest.icons ?? []).map((i) => i.src);

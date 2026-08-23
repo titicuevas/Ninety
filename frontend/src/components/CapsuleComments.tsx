@@ -251,8 +251,7 @@ export function CapsuleComments({
   className,
 }: CapsuleCommentsProps) {
   const [open, setOpen] = useState(defaultOpen);
-  const commentsLoadedRef = useRef(defaultOpen);
-  if (open) commentsLoadedRef.current = true;
+  const [commentsLoaded, setCommentsLoaded] = useState(defaultOpen);
   const [draft, setDraft] = useState('');
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [replyDraft, setReplyDraft] = useState('');
@@ -263,7 +262,7 @@ export function CapsuleComments({
   const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
   const { data, isLoading, isError, isFetching, refetch, isRefetching } = useCapsuleComments(
     capsuleId,
-    commentsLoadedRef.current,
+    commentsLoaded,
   );
   const addComment = useAddCapsuleComment(capsuleId);
   const deleteComment = useDeleteCapsuleComment(capsuleId);
@@ -303,14 +302,13 @@ export function CapsuleComments({
   }, [replyToId]);
 
   const handleToggle = () => {
-    setOpen((wasOpen) => {
-      const next = !wasOpen;
-      if (!next && (window.location.hash === '#comments' || window.location.hash === `#${rootId}`)) {
-        const path = `${window.location.pathname}${window.location.search}`;
-        window.history.replaceState(null, '', path);
-      }
-      return next;
-    });
+    const next = !open;
+    if (next) setCommentsLoaded(true);
+    if (!next && (window.location.hash === '#comments' || window.location.hash === `#${rootId}`)) {
+      const path = `${window.location.pathname}${window.location.search}`;
+      window.history.replaceState(null, '', path);
+    }
+    setOpen(next);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

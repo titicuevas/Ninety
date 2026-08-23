@@ -91,7 +91,10 @@ describe('demoSocialSeed', () => {
     for (let i = 0; i < DEMO_CAPSULE_SOCIAL_COUNT; i++) {
       const actions = demoCapsuleSocialActions(i);
       assert.notEqual(actions[0]?.actorIndex, actions[1]?.actorIndex);
-      assert.equal(demoAlsoWatchedActorIndexes(i).length, 2);
+      const alsoWatchedActors = demoAlsoWatchedActorIndexes(i);
+      assert.equal(alsoWatchedActors.length, 3);
+      assert.equal(new Set(alsoWatchedActors).size, alsoWatchedActors.length);
+      assert.ok(alsoWatchedActors.includes(0));
     }
   });
 
