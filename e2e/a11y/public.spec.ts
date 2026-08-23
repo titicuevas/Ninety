@@ -49,6 +49,16 @@ test.describe('A11y — páginas públicas @a11y', () => {
     await expect(page.locator('#main-content')).toBeFocused();
   });
 
+  test('404 y agradecimiento sin violaciones graves', async ({ page }) => {
+    await page.goto('/ruta-que-no-existe');
+    await expect(page.getByRole('heading', { name: /fuera de juego/i })).toBeVisible();
+    await expectNoA11yViolations(page, '404');
+
+    await page.goto('/gracias');
+    await expect(page.getByRole('heading', { level: 1, name: /gracias por registrarte/i })).toBeVisible();
+    await expectNoA11yViolations(page, 'agradecimiento');
+  });
+
   test('perfil público sin violaciones graves', async ({ page, request }) => {
     const data = await requirePublicDemoProfile(request);
     const name = demoDisplayName(data);

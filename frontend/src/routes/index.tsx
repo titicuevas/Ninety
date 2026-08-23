@@ -35,11 +35,14 @@ import { SettingsPage } from '@/pages/SettingsPage';
 import { TermsPage } from '@/pages/TermsPage';
 import { WantToGoPage } from '@/pages/WantToGoPage';
 import { TeamPage } from '@/pages/TeamPage';
+import { NotFoundPage } from '@/pages/NotFoundPage';
+import { ThankYouPage } from '@/pages/ThankYouPage';
 
 export const appRouter = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
   { path: '/privacidad', element: <PrivacyPage /> },
   { path: '/terminos', element: <TermsPage /> },
+  { path: '/gracias', element: <ThankYouPage /> },
   { path: '/privacy', element: <Navigate to="/privacidad" replace /> },
   { path: '/terms', element: <Navigate to="/terminos" replace /> },
   { path: '/welcome', element: <Navigate to="/" replace /> },
@@ -86,5 +89,5 @@ export const appRouter = createBrowserRouter([
       { path: '/settings', element: <SettingsPage /> },
     ],
   },
-  { path: '*', element: <Navigate to="/" replace /> },
+  { path: '*', element: <NotFoundPage /> },
 ]);

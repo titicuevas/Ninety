@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { LegalFooter } from '@/components/LegalFooter';
 import { SkipLink } from '@/components/SkipLink';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 
 export function LegalSection({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -48,6 +49,7 @@ export function LegalPageLayout({
         </header>
 
         <main id="main-content" className="flex-1">
+          <Breadcrumbs items={[{ label: 'Inicio', to: '/' }, { label: title }]} />
           <p className="mb-3 inline-flex items-center rounded-full border border-primary/35 bg-primary/10 px-3 py-1 text-xs font-medium text-emerald-300">
             Documento legal · beta
           </p>

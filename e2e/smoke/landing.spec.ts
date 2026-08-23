@@ -36,4 +36,29 @@ test.describe('Smoke — landing y splash @smoke', () => {
     expect(srcs).toContain('/icon-512.png');
     expect(srcs).toContain('/favicon.svg');
   });
+
+  for (const viewport of [
+    { name: 'móvil', width: 390, height: 844 },
+    { name: 'tablet vertical', width: 834, height: 1194 },
+    { name: 'tablet horizontal', width: 1194, height: 834 },
+  ]) {
+    test(`landing adaptada a ${viewport.name}`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto('/');
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+      const dimensions = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        clientWidth: document.documentElement.clientWidth,
+      }));
+      expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1);
+
+      const fixedCta = page.locator('.fixed').getByRole('link', { name: /crear mi diario gratis/i });
+      if (viewport.width < 640) {
+        await expect(fixedCta).toBeVisible();
+      } else {
+        await expect(fixedCta).toBeHidden();
+      }
+    });
+  }
 });

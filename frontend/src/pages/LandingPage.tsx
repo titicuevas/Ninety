@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BarChart3, Camera, Search, Star, Trophy, Users } from 'lucide-react';
+import { BarChart3, Camera, Clock3, Search, Star, Trophy, Users } from 'lucide-react';
 import { NinetyLogo } from '@/components/NinetyLogo';
 import { TeamCrest } from '@/components/TeamCrest';
 import { SkipLink } from '@/components/SkipLink';
@@ -9,7 +9,7 @@ import { buttonVariants } from '@/components/ui/button-variants';
 import { useLandingShowcase } from '@/hooks/useLandingShowcase';
 import { looksLikeAuthCallback } from '@/lib/authEmailCallback';
 import { formatCapsuleScore, formatWatchedDate } from '@/lib/format';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { usePageMetadata } from '@/hooks/usePageMetadata';
 import { cn } from '@/lib/utils';
 
 const features = [
@@ -27,6 +27,25 @@ const features = [
     icon: BarChart3,
     title: 'Tu Wrapped',
     desc: 'Resumen anual, feed social y aficionados a los que seguir.',
+  },
+] as const;
+
+const faqs = [
+  {
+    question: '¿Qué es una Capsule?',
+    answer: 'Es la entrada de un partido en tu diario: resultado, valoración, nota, fotos y cómo o dónde lo viste.',
+  },
+  {
+    question: '¿Ninety es gratis?',
+    answer: 'Sí. Crear una cuenta y usar las funciones disponibles durante la beta no tiene coste.',
+  },
+  {
+    question: '¿Puedo hacer privado mi diario?',
+    answer: 'Cada Capsule y cada colección puede ser pública o privada. Tú eliges su visibilidad al crearla o editarla.',
+  },
+  {
+    question: '¿Puedo llevarme mis datos?',
+    answer: 'Sí. Desde Ajustes puedes exportar tu diario y tus colecciones en formatos reutilizables, además de eliminar tu cuenta.',
   },
 ] as const;
 
@@ -144,7 +163,9 @@ function CapsuleRow({
 }
 
 export function LandingPage() {
-  useDocumentTitle();
+  usePageMetadata({
+    description: 'Guarda, valora y revive cada partido que ves. Crea gratis tu diario futbolero con fotos, estadísticas, colecciones y Wrapped.',
+  });
   const navigate = useNavigate();
   const { data, isLoading } = useLandingShowcase();
 
@@ -160,8 +181,35 @@ export function LandingPage() {
 
   return (
     <div className="landing-page min-h-dvh text-foreground">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@graph': [
+              {
+                '@type': 'WebApplication',
+                name: 'Ninety',
+                url: 'https://www.getninety.app/',
+                applicationCategory: 'LifestyleApplication',
+                operatingSystem: 'Web',
+                description: 'Diario social para guardar, valorar y revivir los partidos de fútbol que has visto.',
+                offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+              },
+              {
+                '@type': 'FAQPage',
+                mainEntity: faqs.map((faq) => ({
+                  '@type': 'Question',
+                  name: faq.question,
+                  acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+                })),
+              },
+            ],
+          }).replace(/</g, '\\u003c'),
+        }}
+      />
       <SkipLink />
-      <div className="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-12">
+      <div className="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(7rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-12">
 
         {/* Header */}
         <header className="mb-12 flex items-center justify-between gap-3">
@@ -194,14 +242,30 @@ export function LandingPage() {
             <span className="font-semibold text-foreground">Letterboxd, pero para el fútbol.</span>
           </p>
 
-          {/* Showcase: diario real de @beta_ninety */}
+          {/* Conversión principal visible antes del primer scroll */}
+          <div className="mb-10 flex w-full max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
+            <Link
+              to="/register"
+              className={cn(buttonVariants({ size: 'lg' }), 'min-h-12 w-full text-center sm:w-auto sm:min-w-44')}
+            >
+              Crear mi diario gratis
+            </Link>
+            <a
+              href="#como-funciona"
+              className={cn(buttonVariants({ variant: 'secondary', size: 'lg' }), 'min-h-12 w-full text-center sm:w-auto sm:min-w-44')}
+            >
+              Ver cómo funciona
+            </a>
+          </div>
+
+          {/* Caso de uso verificable: diario público de la cuenta beta */}
           <div
             className="mb-10 w-full max-w-lg overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-br from-zinc-900 via-zinc-900 to-emerald-950/45 p-5 shadow-lg shadow-black/25 sm:p-6"
             aria-hidden
           >
             <div className="mb-4 flex items-center justify-between">
               <p className="text-xs font-bold uppercase tracking-wider text-primary">
-                Diario real · @beta_ninety
+                Caso de uso · diario público de @beta_ninety
               </p>
               <Link
                 to="/u/beta_ninety"
@@ -272,7 +336,7 @@ export function LandingPage() {
           </div>
 
           {/* Features */}
-          <section className="mb-10 w-full max-w-lg" aria-labelledby="landing-features">
+          <section id="como-funciona" className="mb-10 w-full max-w-lg scroll-mt-6" aria-labelledby="landing-features">
             <h2
               id="landing-features"
               className="mb-4 text-xs font-bold uppercase tracking-wider text-primary"
@@ -293,27 +357,33 @@ export function LandingPage() {
             </ul>
           </section>
 
-          {/* CTAs */}
-          <div className="flex w-full max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
-            <Link
-              to="/register"
-              className={cn(
-                buttonVariants({ size: 'lg' }),
-                'min-h-12 w-full text-center sm:w-auto sm:min-w-44',
-              )}
-            >
-              Crear cuenta gratis
-            </Link>
-            <Link
-              to="/login"
-              className={cn(
-                buttonVariants({ variant: 'secondary', size: 'lg' }),
-                'min-h-12 w-full text-center sm:w-auto sm:min-w-44',
-              )}
-            >
-              Ya tengo cuenta
-            </Link>
-          </div>
+          <section className="mb-10 w-full max-w-lg text-left" aria-labelledby="faq-heading">
+            <h2 id="faq-heading" className="mb-4 text-center text-2xl font-bold tracking-tight">Preguntas frecuentes</h2>
+            <div className="space-y-2">
+              {faqs.map((faq) => (
+                <details key={faq.question} className="group rounded-xl border border-border/80 bg-card/70 p-4">
+                  <summary className="cursor-pointer list-none pr-6 text-sm font-semibold marker:content-none">
+                    {faq.question}
+                  </summary>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{faq.answer}</p>
+                </details>
+              ))}
+            </div>
+          </section>
+
+          <aside className="mb-10 flex w-full max-w-lg gap-3 rounded-2xl border border-primary/25 bg-primary/5 p-4 text-left">
+            <Clock3 className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
+            <div>
+              <h2 className="text-sm font-semibold">Soporte humano durante la beta</h2>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                Escríbenos a <a className="text-primary hover:underline" href="mailto:hello@getninety.app">hello@getninety.app</a>. Nuestro objetivo es responder antes de 2 días laborables.
+              </p>
+            </div>
+          </aside>
+
+          <Link to="/register" className={cn(buttonVariants({ size: 'lg' }), 'min-h-12 min-w-52')}>
+            Empezar gratis
+          </Link>
 
           <p className="mt-6 max-w-md text-xs leading-relaxed text-muted-foreground">
             Al registrarte aceptas los{' '}
@@ -329,6 +399,11 @@ export function LandingPage() {
         </main>
 
         <LegalFooter className="mt-12 border-t border-border/80 pt-8" />
+      </div>
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:hidden">
+        <Link to="/register" className={cn(buttonVariants({ size: 'lg' }), 'w-full')}>
+          Crear mi diario gratis
+        </Link>
       </div>
     </div>
   );

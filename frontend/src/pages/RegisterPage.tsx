@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AuthLayout } from '@/components/AuthLayout';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
-import { FormAlert, FormSuccess } from '@/components/FormAlert';
+import { FormAlert } from '@/components/FormAlert';
 import { PasswordField } from '@/components/PasswordField';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
@@ -40,7 +40,6 @@ export function RegisterPage() {
   const nextPath = parseNextParam(location.search);
   const postAuthPath = safeReturnPath(nextPath);
   const [error, setError] = useState<string | null>(null);
-  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
@@ -88,7 +87,7 @@ export function RegisterPage() {
           state: isHomePath(postAuthPath) ? { fromRegister: true } : undefined,
         });
       } else {
-        setPendingEmail(data.email);
+        navigate('/gracias', { replace: true, state: { email: data.email } });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo crear la cuenta');
@@ -96,41 +95,6 @@ export function RegisterPage() {
       setLoading(false);
     }
   };
-
-  if (pendingEmail) {
-    return (
-      <AuthLayout
-        title="Ya estás registrado"
-        subtitle="Solo falta confirmar tu email para activar la cuenta"
-      >
-        <FormSuccess>
-          Te hemos enviado un enlace a <strong className="font-semibold">{pendingEmail}</strong>.
-          Confirma el email y luego inicia sesión — no es un error.
-        </FormSuccess>
-        <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-relaxed text-muted-foreground">
-          <li>Revisa bandeja de entrada y spam (remitente noreply@getninety.app).</li>
-          <li>Tras confirmar el enlace, inicia sesión con tu contraseña.</li>
-          <li>Si no llega en unos minutos, vuelve a registrarte o escribe a hello@getninety.app.</li>
-        </ul>
-        <Button asChild className="mt-6 w-full">
-          <Link to={loginPath(nextPath)}>Ir a iniciar sesión</Link>
-        </Button>
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          ¿Email incorrecto?{' '}
-          <button
-            type="button"
-            className="font-medium text-primary hover:underline"
-            onClick={() => {
-              setPendingEmail(null);
-              setError(null);
-            }}
-          >
-            Volver al formulario
-          </button>
-        </p>
-      </AuthLayout>
-    );
-  }
 
   return (
     <AuthLayout title="Crea tu cuenta" subtitle="Empieza a construir tu historia futbolera">

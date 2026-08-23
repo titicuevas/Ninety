@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /home
+Disallow: /feed
+Disallow: /activity
+Disallow: /notifications
+Disallow: /settings
+Disallow: /auth/
+
+Sitemap: https://www.getninety.app/sitemap.xml

@@ -51,7 +51,7 @@ describe('PWA shell', () => {
 
   it('service worker precachea offline shell e iconos', () => {
     const sw = readFileSync(join(root, 'sw.js'), 'utf8');
-    assert.match(sw, /ninety-v4/);
+    assert.match(sw, /ninety-v5/);
     assert.match(sw, /offline\.html/);
     assert.match(sw, /icon-192\.png/);
   });
