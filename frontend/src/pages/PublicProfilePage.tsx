@@ -1,6 +1,5 @@
-import type React from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { BarChart3, CalendarDays, Library, ListChecks, MapPin, Swords, Trophy } from 'lucide-react';
+import { Library, MapPin, Swords, Trophy } from 'lucide-react';
 import { AchievementsSection } from '@/components/AchievementsSection';
 import { BlockUserButton } from '@/components/BlockUserButton';
 import { CapsuleCardSocialFooter } from '@/components/CapsuleCardSocialFooter';
@@ -18,6 +17,11 @@ import { ProfileLoadingSkeleton } from '@/components/ListSkeletons';
 import { PublicLayout } from '@/components/PublicLayout';
 import { PublicWantToGoSection } from '@/components/PublicWantToGoSection';
 import { PublicWrappedSummary } from '@/components/PublicWrappedSummary';
+import {
+  PublicDiaryEmptyState,
+  PublicProfileTabs,
+  type ProfileTab,
+} from '@/components/PublicProfileTabs';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { ShareProfileButton } from '@/components/ShareProfileButton';
 import { Button } from '@/components/ui/button';
@@ -414,89 +418,6 @@ function PublicCollectionsSections({
   );
 }
 
-/* ── Tabs ──────────────────────────────────────────────────── */
-
-type ProfileTab = 'diary' | 'lists' | 'wantogo' | 'stats';
-
-const TAB_ITEMS: { id: ProfileTab; label: string; icon: React.ElementType }[] = [
-  { id: 'diary', label: 'Diario', icon: CalendarDays },
-  { id: 'lists', label: 'Listas', icon: Library },
-  { id: 'wantogo', label: 'Quiero ir', icon: ListChecks },
-  { id: 'stats', label: 'Stats', icon: BarChart3 },
-];
-
-function ProfileTabs({
-  active,
-  onChange,
-  hasCollections,
-  hasWantToGo,
-  hasStats,
-}: {
-  active: ProfileTab;
-  onChange: (tab: ProfileTab) => void;
-  hasCollections: boolean;
-  hasWantToGo: boolean;
-  hasStats: boolean;
-}) {
-  const visibleTabs = TAB_ITEMS.filter((t) => {
-    if (t.id === 'lists' && !hasCollections) return false;
-    if (t.id === 'wantogo' && !hasWantToGo) return false;
-    if (t.id === 'stats' && !hasStats) return false;
-    return true;
-  });
-
-  if (visibleTabs.length <= 1) return null;
-
-  return (
-    <nav
-      className="flex gap-1 rounded-xl bg-secondary/50 p-1"
-      role="tablist"
-      aria-label="Secciones del perfil"
-    >
-      {visibleTabs.map((tab) => {
-        const Icon = tab.icon;
-        const isActive = active === tab.id;
-        return (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            aria-selected={isActive}
-            onClick={() => onChange(tab.id)}
-            className={`flex flex-1 items-center justify-center gap-1 rounded-lg px-1.5 py-2.5 text-xs font-medium transition-colors sm:gap-1.5 sm:px-3 sm:text-sm ${
-              isActive
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Icon className="h-4 w-4 shrink-0" aria-hidden />
-            <span className="hidden sm:inline">{tab.label}</span>
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
-function PublicDiaryEmptyState({ isOwnProfile }: { isOwnProfile: boolean }) {
-  return (
-    <EmptyState
-      title={isOwnProfile ? 'Aún no has guardado partidos' : 'Diario vacío'}
-      description={
-        isOwnProfile
-          ? 'Busca un partido que hayas visto y empieza tu diario.'
-          : 'Este aficionado aún no ha publicado partidos en su diario.'
-      }
-    >
-      {isOwnProfile ? (
-        <Button asChild>
-          <Link to="/search">Buscar partido</Link>
-        </Button>
-      ) : null}
-    </EmptyState>
-  );
-}
-
 function PublicDiaryCapsulesSection({
   total,
   years,
@@ -780,7 +701,7 @@ export function PublicProfilePage() {
           />
         ) : (
           <>
-            <ProfileTabs
+            <PublicProfileTabs
               active={activeTab}
               onChange={handleTabChange}
               hasCollections={hasCollections}

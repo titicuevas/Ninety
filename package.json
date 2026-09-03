@@ -15,6 +15,7 @@
     "check:audit": "npm audit --omit=dev --audit-level=high && npm audit --prefix backend --omit=dev --audit-level=high && npm audit --prefix frontend --omit=dev --audit-level=high",
     "typecheck": "npm run typecheck --prefix backend && npm run typecheck --prefix frontend",
     "test": "npm run test --prefix backend",
+    "test:coverage": "npm run test:coverage --prefix backend && npm run test:coverage --prefix frontend",
     "check:secrets": "node scripts/check-secrets.mjs",
     "check:secrets:history": "node scripts/check-secrets.mjs --history",
     "vapid:set-railway": "node scripts/set-railway-vapid.mjs",
@@ -53,12 +54,12 @@
     "@playwright/test": "^1.61.1",
     "concurrently": "^9.1.2",
     "dotenv": "^17.4.2",
-    "react-doctor": "^0.7.1"
+    "react-doctor": "0.7.8"
   },
   "overrides": {
-    "@oxc-parser/binding-linux-x64-gnu": "0.135.0"
+    "@oxc-parser/binding-linux-x64-gnu": "0.138.0"
   },
   "optionalDependencies": {
-    "@oxc-parser/binding-linux-x64-gnu": "0.135.0"
+    "@oxc-parser/binding-linux-x64-gnu": "0.138.0"
   }
 }

@@ -91,12 +91,14 @@ export function useToggleFollow(username: string) {
       await apiFetch<{ followed: boolean }>(path, { method: 'POST' }, session?.access_token);
     },
     onMutate: async ({ followed }) => {
-      await queryClient.cancelQueries({ queryKey: ['profile', 'public', username] });
-      await queryClient.cancelQueries({ queryKey: ['capsules', 'feed'] });
-      await queryClient.cancelQueries({ queryKey: ['profile', 'search'] });
-      await queryClient.cancelQueries({ queryKey: ['profile', 'discover'] });
-      await queryClient.cancelQueries({ queryKey: ['profile', 'by-team'] });
-      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: ['profile', 'public', username] }),
+        queryClient.cancelQueries({ queryKey: ['capsules', 'feed'] }),
+        queryClient.cancelQueries({ queryKey: ['profile', 'search'] }),
+        queryClient.cancelQueries({ queryKey: ['profile', 'discover'] }),
+        queryClient.cancelQueries({ queryKey: ['profile', 'by-team'] }),
+        queryClient.cancelQueries({ queryKey: ['notifications'] }),
+      ]);
 
       const previousProfiles = queryClient.getQueriesData<PublicProfileInfinite>({
         queryKey: ['profile', 'public', username],

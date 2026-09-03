@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { z } from 'zod';
 import { requireAuth, type AuthRequest } from '../middleware/auth.js';
 import {
   mapNotificationCapsule,
@@ -22,54 +21,14 @@ import { parseNotificationTypeFilter, notificationDbTypesForFilter } from '../li
 import { isValidIanaTimeZone } from '../lib/notificationQuietHours.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { getVapidPublicKey, isPushConfigured, sendPushToUser } from '../lib/webPush.js';
+import {
+  notificationPreferencesPatchSchema,
+  pushSubscribeSchema,
+} from './notifications.contracts.js';
 
 export const notificationsRouter = Router();
 
 notificationsRouter.use(requireAuth);
-
-const hhMmSchema = z
-  .string()
-  .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Usa HH:MM');
-
-const pushQuietPatchSchema = z
-  .object({
-    enabled: z.boolean().optional(),
-    start: hhMmSchema.optional(),
-    end: hhMmSchema.optional(),
-    timezone: z.string().trim().min(1).max(64).optional(),
-  })
-  .refine(
-    (q) =>
-      q.enabled !== undefined ||
-      q.start !== undefined ||
-      q.end !== undefined ||
-      q.timezone !== undefined,
-    { message: 'Indica al menos un campo de horario silencioso' },
-  );
-
-const preferencesPatchSchema = z
-  .object({
-    like: z.boolean().optional(),
-    comment: z.boolean().optional(),
-    follow: z.boolean().optional(),
-    push_anniversary: z.boolean().optional(),
-    push_milestone: z.boolean().optional(),
-    push_want_to_go: z.boolean().optional(),
-    email_digest: z.boolean().optional(),
-    push_quiet: pushQuietPatchSchema.optional(),
-  })
-  .refine(
-    (body) =>
-      body.like !== undefined ||
-      body.comment !== undefined ||
-      body.follow !== undefined ||
-      body.push_anniversary !== undefined ||
-      body.push_milestone !== undefined ||
-      body.push_want_to_go !== undefined ||
-      body.email_digest !== undefined ||
-      body.push_quiet !== undefined,
-    { message: 'Indica al menos un campo' },
-  );
 
 notificationsRouter.get('/preferences', async (req: AuthRequest, res, next) => {
   try {
@@ -82,7 +41,7 @@ notificationsRouter.get('/preferences', async (req: AuthRequest, res, next) => {
 
 notificationsRouter.patch('/preferences', async (req: AuthRequest, res, next) => {
   try {
-    const parsed = preferencesPatchSchema.safeParse(req.body);
+    const parsed = notificationPreferencesPatchSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: 'Preferencias inválidas' });
       return;
@@ -179,14 +138,6 @@ const pushTestLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiadas pruebas de push. Espera un minuto.' },
-});
-
-const pushSubscribeSchema = z.object({
-  endpoint: z.string().url(),
-  keys: z.object({
-    p256dh: z.string().min(1),
-    auth: z.string().min(1),
-  }),
 });
 
 notificationsRouter.get('/push/public-key', (_req, res) => {

@@ -1,63 +1,27 @@
 import { randomUUID } from 'node:crypto';
 import { Router } from 'express';
-import { z } from 'zod';
 import { env } from '../config/loadEnv.js';
+import { getBearerToken } from '../lib/httpRequest.js';
 import { deleteUserAccount, isAccountDeleteEmailConfirmed } from '../lib/deleteAccount.js';
 import { createPkceStorage, removePkceStorage } from '../lib/pkceStorage.js';
 import { syncUserProfile } from '../lib/syncUserProfile.js';
 import { claimInviteAttribution, normalizeInviteCode } from '../lib/invites.js';
 import { createServiceClient, createUserClient, supabaseAnon } from '../lib/supabase.js';
 import { requireAuth, type AuthRequest } from '../middleware/auth.js';
+import {
+  deleteAccountSchema,
+  emailSchema,
+  loginSchema,
+  oauthExchangeSchema,
+  passwordSchema,
+  refreshSchema,
+  registerSchema,
+  sessionFromTokensSchema,
+  verifyEmailSchema,
+} from './auth.contracts.js';
 
 export const authRouter = Router();
 
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
-
-const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  display_name: z.string().min(2).max(100),
-  /** Username del invitador (`/invite/:code`). Opcional. */
-  invite_code: z.string().trim().min(3).max(40).optional(),
-});
-
-const oauthExchangeSchema = z.object({
-  code: z.string().min(1),
-  pkceId: z.string().uuid(),
-});
-
-const refreshSchema = z.object({
-  refresh_token: z.string().min(1),
-});
-
-const emailSchema = z.object({
-  email: z.string().email(),
-});
-
-const passwordSchema = z.object({
-  password: z.string().min(6).max(72),
-});
-
-const deleteAccountSchema = z.object({
-  confirm_email: z.string().email(),
-});
-
-const sessionFromTokensSchema = z.object({
-  access_token: z.string().min(1),
-  refresh_token: z.string().min(1),
-});
-
-const verifyEmailSchema = z.object({
-  token_hash: z.string().min(1),
-  type: z.enum(['signup', 'email', 'invite', 'magiclink', 'recovery', 'email_change']),
-});
-
-function getBearerToken(req: { headers: { authorization?: string } }) {
-  return req.headers.authorization?.replace(/^Bearer\s+/i, '') || null;
-}
 function createPkceClient(sessionId: string) {
   return createServiceClient(env.SUPABASE_ANON_KEY, {
     auth: {
@@ -167,7 +131,7 @@ authRouter.post('/register', async (req, res) => {
 });
 
 authRouter.post('/logout', async (req, res) => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
+  const token = getBearerToken(req);
   if (token) {
     await createUserClient(token).auth.signOut().catch(() => undefined);
   }
@@ -175,7 +139,7 @@ authRouter.post('/logout', async (req, res) => {
 });
 
 authRouter.get('/session', async (req, res) => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Sin sesión' });
     return;

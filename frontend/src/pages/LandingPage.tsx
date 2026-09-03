@@ -49,6 +49,29 @@ const faqs = [
   },
 ] as const;
 
+const landingStructuredData = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebApplication',
+      name: 'Ninety',
+      url: 'https://www.getninety.app/',
+      applicationCategory: 'LifestyleApplication',
+      operatingSystem: 'Web',
+      description: 'Diario social para guardar, valorar y revivir los partidos de fútbol que has visto.',
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: faqs.map((faq) => ({
+        '@type': 'Question',
+        name: faq.question,
+        acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+      })),
+    },
+  ],
+});
+
 function StarRating({ rating }: { rating: number | null }) {
   if (!rating) return null;
   return (
@@ -183,31 +206,10 @@ export function LandingPage() {
     <div className="landing-page min-h-dvh text-foreground">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@graph': [
-              {
-                '@type': 'WebApplication',
-                name: 'Ninety',
-                url: 'https://www.getninety.app/',
-                applicationCategory: 'LifestyleApplication',
-                operatingSystem: 'Web',
-                description: 'Diario social para guardar, valorar y revivir los partidos de fútbol que has visto.',
-                offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
-              },
-              {
-                '@type': 'FAQPage',
-                mainEntity: faqs.map((faq) => ({
-                  '@type': 'Question',
-                  name: faq.question,
-                  acceptedAnswer: { '@type': 'Answer', text: faq.answer },
-                })),
-              },
-            ],
-          }).replace(/</g, '\\u003c'),
-        }}
-      />
+        nonce={document.querySelector('meta[name="csp-nonce"]')?.getAttribute('content') ?? undefined}
+      >
+        {landingStructuredData}
+      </script>
       <SkipLink />
       <div className="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(7rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-12">
 

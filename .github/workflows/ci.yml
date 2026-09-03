@@ -60,3 +60,6 @@ jobs:
 
       - name: Unit frontend
         run: npm run test --prefix frontend
+
+      - name: Umbrales de cobertura
+        run: npm run test:coverage

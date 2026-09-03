@@ -4,6 +4,10 @@ import { App } from './App';
 import { RootErrorFallback } from '@/components/RootErrorFallback';
 import './index.css';
 
+if ('serviceWorker' in navigator) {
+  void navigator.serviceWorker.register('/sw.js').catch(() => undefined);
+}
+
 class RootErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
 

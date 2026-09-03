@@ -60,7 +60,7 @@ El proyecto está separado en dos carpetas independientes que conviven en el mis
 - TanStack Query
 - Zustand
 - React Hook Form + Zod
-- Framer Motion + Lucide React
+- Lucide React
 
 ### Backend
 - Node.js + Express 5
@@ -76,7 +76,7 @@ El proyecto está separado en dos carpetas independientes que conviven en el mis
 
 ### Requisitos
 
-- Node.js 20+
+- Node.js 22.13 o superior (consulta `.nvmrc`)
 - Cuenta en [Supabase](https://supabase.com)
 - API key de [football-data.org](https://www.football-data.org/)
 
@@ -113,6 +113,9 @@ Rellena las variables con tus credenciales de Supabase y football-data.org.
 ### 4. Instalar y ejecutar
 
 ```bash
+# Si usas nvm, activa primero la versión soportada
+nvm use
+
 # Instalar dependencias
 npm install
 npm install --prefix backend
@@ -133,11 +136,12 @@ npm run dev
 | **Frontend (canónico cutover)** | [www.getninety.app](https://www.getninety.app) | CNAME → Railway (arreglar Target Port si 502) |
 | **Frontend (apex)** | [getninety.app](https://getninety.app) | Solo si hay ALIAS/A de Railway (Namecheap: quitar URL Redirect) |
 | **Frontend (legacy)** | [ninety.up.railway.app](https://ninety.up.railway.app) | Mantener durante transición |
-| **API** | [ninety-api.up.railway.app](https://ninety-api.up.railway.app) | Express |
+| **API** | [ninety-api.up.railway.app](https://ninety-api.up.railway.app) | Express; migrar a `api.getninety.app` |
 | **Health front** | [/health](https://ninety.up.railway.app/health) | `{"status":"ok"}` |
 | **Health API** | [/api/health](https://ninety-api.up.railway.app/api/health) | ✅ Online |
 
 > Checklist ops A→E (puerto, Namecheap, vars, Supabase, email): [docs/auth-setup.md](docs/auth-setup.md#ops-ahora-orden-fijo).
+> Dominio propio de API, staging aislado y comprobaciones de salida: [docs/production-readiness.md](docs/production-readiness.md).
 > Si Railway muestra **Application failed to respond**: Target Port del dominio = `PORT` del contenedor (logs: `listening on http://0.0.0.0:N`). No uses `4173` a ciegas.
 > Si preview Vite da 403: `frontend/vite.config.ts` → `preview.allowedHosts` (ya incluye www/apex).
 
@@ -321,13 +325,13 @@ Workflows en push/PR a `main`:
 
 | Workflow | Qué corre |
 |----------|-----------|
-| **CI** | `check:secrets`, typecheck, unit backend, unit frontend |
-| **QA E2E** | Playwright smoke público + a11y contra `https://www.getninety.app` |
-| **QA E2E** (auth) | Smoke autenticado (`chromium` `@smoke`) si el secret `TEST_USER_PASSWORD` está definido; si no, el job avisa y sigue en verde |
+| **CI** | Secretos, migraciones, auditoría npm, tipos, código muerto, build/bundle, tests y umbrales de cobertura |
+| **QA E2E** | Playwright público + a11y contra `QA_BASE_URL`; usa producción como fallback temporal |
+| **QA E2E** (auth) | Suite autenticada solo cuando staging (`QA_BASE_URL` y `QA_API_URL`) está configurado, con `TEST_USER_PASSWORD` obligatorio |
 | **TruffleHog** | Secretos verificados en el diff |
 | **React Doctor** | Score en el frontend (informativo) |
 
-Para el e2e con sesión: GitHub → Settings → Secrets and variables → Actions → `TEST_USER_PASSWORD` (la de `beta@ninety.app`). Sin ese secret, el job auth se omite y el resto sigue.
+Para staging: GitHub → Settings → Secrets and variables → Actions → variables `QA_BASE_URL` y `QA_API_URL`, más el secret `TEST_USER_PASSWORD` de la cuenta QA. Sin ese secret, el job autenticado falla explícitamente.
 
 - Workflow secretos: `.github/workflows/trufflehog.yml`
 - Escanea el rango del push/PR y **falla** si encuentra secretos **verificados** (`--results=verified`)

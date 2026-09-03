@@ -1,11 +1,8 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import multer from 'multer';
-import { z } from 'zod';
-import { CAPSULE_NOTE_MAX, normalizeCapsuleNote } from '../lib/capsuleNote.js';
+import { normalizeCapsuleNote } from '../lib/capsuleNote.js';
 import {
-  CAPSULE_TAGS_MAX,
-  CAPSULE_TAG_MAX_LEN,
   normalizeCapsuleTags,
   parseCapsuleTagFilter,
 } from '../lib/capsuleTags.js';
@@ -73,6 +70,19 @@ import {
 import { createUserClient, supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
 import { clearWantToGoAfterCapsule } from '../lib/wantToGo.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
+import { firstRouteParam, getBearerToken } from '../lib/httpRequest.js';
+import {
+  capsuleCalendarQuerySchema,
+  capsuleCommentBodySchema,
+  capsuleExportQuerySchema,
+  capsuleFeedQuerySchema,
+  capsulePageQuerySchema,
+  capsulePhotoDeleteSchema,
+  createCapsuleSchema,
+  ownCapsulesQuerySchema,
+  publicCapsulesQuerySchema,
+  updateCapsuleSchema,
+} from './capsules.contracts.js';
 
 export const capsulesRouter = Router();
 
@@ -96,67 +106,12 @@ const photoUpload = multer({
   },
 });
 
-const createCapsuleSchema = z.object({
-  /** Positivo = football-data; negativo = partido manual. */
-  match_id: z.number().int().refine((n) => n !== 0, 'match_id no puede ser 0'),
-  match_played_at: z.string().datetime().optional().nullable(),
-  home_team_name: z.string().min(1).max(200),
-  away_team_name: z.string().min(1).max(200),
-  home_team_crest: z.string().url().optional().nullable(),
-  away_team_crest: z.string().url().optional().nullable(),
-  competition_name: z.string().max(200).optional().nullable(),
-  home_score: z.number().int().min(0).max(99).optional().nullable(),
-  away_score: z.number().int().min(0).max(99).optional().nullable(),
-  watched_at: z.string().date(),
-  rating: z.number().int().min(1).max(5).optional().nullable(),
-  note: z.string().max(CAPSULE_NOTE_MAX).optional().nullable(),
-  tags: z.array(z.string().max(CAPSULE_TAG_MAX_LEN)).max(CAPSULE_TAGS_MAX).optional(),
-  photo_urls: z.array(z.string().url().max(2048)).max(9).optional(),
-  is_public: z.boolean().optional().default(true),
-  watch_context: z.enum(['stadium', 'tv', 'pub', 'other']).optional().nullable(),
-});
-
-const feedQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(50).default(20),
-  offset: z.coerce.number().int().min(0).default(0),
-  /** following = tú + seguidos; explore = cápsulas públicas de cualquiera */
-  scope: z.enum(['following', 'explore']).default('following'),
-  sort: z.enum(['recent', 'popular']).default('recent'),
-  /** Solo cápsulas con fotos (`photos=1`). */
-  photos: z.string().optional(),
-  /** Filtro ilike sobre competition_name. */
-  competition: z.string().max(100).optional(),
-});
-
 /** Populares: ordenamos en servidor sobre un pool reciente (sin columna denormalizada). */
 const FEED_POPULAR_POOL = 300;
 
 function engagementScore(row: { likes_count?: number; comments_count?: number }): number {
   return (row.likes_count ?? 0) + (row.comments_count ?? 0);
 }
-
-const meQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(50).optional(),
-  offset: z.coerce.number().int().min(0).default(0),
-  q: z.string().trim().max(100).optional(),
-  year: z.coerce.number().int().min(1990).max(2100).optional(),
-  rating_min: z.coerce.number().int().min(1).max(5).optional(),
-  visibility: z.enum(['all', 'public', 'private']).optional().default('all'),
-  watch_context: z.enum(['stadium', 'tv', 'pub', 'other']).optional(),
-  /** Una etiqueta exacta (normalizada) para filtrar Mis Capsules. */
-  tag: z.string().trim().max(CAPSULE_TAG_MAX_LEN).optional(),
-});
-
-const publicProfileQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(50).optional(),
-  offset: z.coerce.number().int().min(0).default(0),
-  q: z.string().trim().max(100).optional(),
-  year: z.coerce.number().int().min(1990).max(2100).optional(),
-  rating_min: z.coerce.number().int().min(1).max(5).optional(),
-  watch_context: z.enum(['stadium', 'tv', 'pub', 'other']).optional(),
-  /** Una etiqueta exacta (normalizada) para filtrar el diario público. */
-  tag: z.string().trim().max(CAPSULE_TAG_MAX_LEN).optional(),
-});
 
 function sanitizeSearchQ(raw: string | undefined): string {
   return sanitizePostgrestSearch(raw);
@@ -169,14 +124,6 @@ function listYearsFromWatchedAt(rows: { watched_at: string }[]): number[] {
     if (Number.isInteger(year) && year >= 1990 && year <= 2100) years.add(year);
   }
   return [...years].sort((a, b) => b - a);
-}
-
-function getAccessToken(req: AuthRequest): string | null {
-  return req.headers.authorization?.replace('Bearer ', '') ?? null;
-}
-
-function routeParam(value: string | string[]): string {
-  return Array.isArray(value) ? value[0] : value;
 }
 
 function getReaderClient(token: string | null) {
@@ -239,13 +186,13 @@ function canViewCapsule(
 }
 
 capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const parsed = feedQuerySchema.safeParse(req.query);
+  const parsed = capsuleFeedQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -394,13 +341,13 @@ capsulesRouter.get('/feed', requireAuth, async (req: AuthRequest, res) => {
 });
 
 capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const parsed = meQuerySchema.safeParse(req.query);
+  const parsed = ownCapsulesQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -476,16 +423,6 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   });
 });
 
-const calendarQuerySchema = z.object({
-  year: z.coerce.number().int().min(1990).max(2100),
-  month: z.coerce.number().int().min(1).max(12),
-});
-
-const likedQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(50).optional().default(20),
-  offset: z.coerce.number().int().min(0).optional().default(0),
-});
-
 function capsuleRouteErrorStatus(err: unknown): number | undefined {
   return typeof (err as { status?: unknown })?.status === 'number'
     ? (err as { status: number }).status
@@ -494,13 +431,13 @@ function capsuleRouteErrorStatus(err: unknown): number | undefined {
 
 /** GET /api/capsules/me/liked — archivo de Capsules a las que di me gusta. */
 capsulesRouter.get('/me/liked', requireAuth, async (req: AuthRequest, res, next) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const parsed = likedQuerySchema.safeParse(req.query);
+  const parsed = capsulePageQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: 'Parámetros inválidos' });
     return;
@@ -546,13 +483,13 @@ capsulesRouter.get('/me/:matchId/following', requireAuth, async (req: AuthReques
 
 /** GET /api/capsules/me/calendar — Capsules del mes por watched_at (vista diario). */
 capsulesRouter.get('/me/calendar', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const parsed = calendarQuerySchema.safeParse(req.query);
+  const parsed = capsuleCalendarQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: 'Parámetros year y month requeridos (mes 1–12).' });
     return;
@@ -595,19 +532,15 @@ capsulesRouter.get('/me/calendar', requireAuth, async (req: AuthRequest, res) =>
   });
 });
 
-const exportQuerySchema = z.object({
-  format: z.enum(['json', 'csv']).default('json'),
-});
-
 /** GET /api/capsules/me/export — backup GDPR (solo datos del usuario autenticado). */
 capsulesRouter.get('/me/export', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const parsed = exportQuerySchema.safeParse(req.query);
+  const parsed = capsuleExportQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: 'Formato inválido. Usa json o csv.' });
     return;
@@ -687,7 +620,7 @@ capsulesRouter.get('/me/export', requireAuth, async (req: AuthRequest, res) => {
 
 /** POST /api/capsules/me/import — restaura Capsules desde export JSON (GDPR). */
 capsulesRouter.post('/me/import', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
@@ -863,7 +796,7 @@ capsulesRouter.post('/me/import', requireAuth, async (req: AuthRequest, res) => 
  * Auth: tu diario (cualquier visibilidad) ∩ Capsules públicas del otro.
  */
 capsulesRouter.get('/user/:username/in-common', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   const reader = token ? createUserClient(token) : null;
 
   if (!reader) {
@@ -871,7 +804,7 @@ capsulesRouter.get('/user/:username/in-common', requireAuth, async (req: AuthReq
     return;
   }
 
-  const profileResult = await fetchProfileByUsername(supabaseAnon, routeParam(req.params.username));
+  const profileResult = await fetchProfileByUsername(supabaseAnon, firstRouteParam(req.params.username));
   if (profileResult.error === 'schema') {
     res.status(503).json({ error: profileResult.message ?? profilesAlignMigrationHint() });
     return;
@@ -918,7 +851,7 @@ capsulesRouter.get('/user/:username/in-common', requireAuth, async (req: AuthReq
  * Solo Capsules públicas; 404 si el mes no tiene ninguna (privacidad).
  */
 capsulesRouter.get('/user/:username/calendar', optionalAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   const reader = getReaderClient(token);
 
   if (!reader) {
@@ -926,7 +859,7 @@ capsulesRouter.get('/user/:username/calendar', optionalAuth, async (req: AuthReq
     return;
   }
 
-  const parsed = calendarQuerySchema.safeParse(req.query);
+  const parsed = capsuleCalendarQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: 'Parámetros year y month requeridos (mes 1–12).' });
     return;
@@ -1004,7 +937,7 @@ capsulesRouter.get('/user/:username/calendar', optionalAuth, async (req: AuthReq
 });
 
 capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   const reader = getReaderClient(token);
 
   if (!reader) {
@@ -1050,7 +983,7 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
     }
   }
 
-  const parsed = publicProfileQuerySchema.safeParse(req.query);
+  const parsed = publicCapsulesQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -1246,7 +1179,7 @@ capsulesRouter.post('/photos', requireAuth, photoUpload.array('photos', 9), asyn
 });
 
 capsulesRouter.delete('/photos', requireAuth, async (req: AuthRequest, res) => {
-  const parsed = z.object({ url: z.string().url() }).safeParse(req.body);
+  const parsed = capsulePhotoDeleteSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: 'URL inválida' });
     return;
@@ -1267,18 +1200,8 @@ capsulesRouter.delete('/photos', requireAuth, async (req: AuthRequest, res) => {
   }
 });
 
-const updateCapsuleSchema = z.object({
-  watched_at: z.string().date().optional(),
-  rating: z.number().int().min(1).max(5).optional().nullable(),
-  note: z.string().max(CAPSULE_NOTE_MAX).optional().nullable(),
-  tags: z.array(z.string().max(CAPSULE_TAG_MAX_LEN)).max(CAPSULE_TAGS_MAX).optional(),
-  photo_urls: z.array(z.string().url().max(2048)).max(9).optional(),
-  is_public: z.boolean().optional(),
-  watch_context: z.enum(['stadium', 'tv', 'pub', 'other']).optional().nullable(),
-});
-
 capsulesRouter.post('/:id/like', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
@@ -1326,7 +1249,7 @@ capsulesRouter.post('/:id/like', requireAuth, async (req: AuthRequest, res) => {
 });
 
 capsulesRouter.delete('/:id/like', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
@@ -1358,14 +1281,9 @@ capsulesRouter.delete('/:id/like', requireAuth, async (req: AuthRequest, res) =>
   res.status(204).end();
 });
 
-const likesQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(50).default(20),
-  offset: z.coerce.number().int().min(0).default(0),
-});
-
 capsulesRouter.get('/:id/likes/following', requireAuth, async (req: AuthRequest, res, next) => {
   try {
-    const people = await listCapsuleAlsoLiked(req.userId!, routeParam(req.params.id));
+    const people = await listCapsuleAlsoLiked(req.userId!, firstRouteParam(req.params.id));
     res.json({ people, total: people.length });
   } catch (err) {
     const status = capsuleRouteErrorStatus(err);
@@ -1386,7 +1304,7 @@ capsulesRouter.get('/:id/likes/following', requireAuth, async (req: AuthRequest,
 });
 
 capsulesRouter.get('/:id/likes', optionalAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   const reader = getReaderClient(token);
 
   if (!reader) {
@@ -1394,13 +1312,13 @@ capsulesRouter.get('/:id/likes', optionalAuth, async (req: AuthRequest, res) => 
     return;
   }
 
-  const parsed = likesQuerySchema.safeParse(req.query);
+  const parsed = capsulePageQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
 
-  const capsuleId = routeParam(req.params.id);
+  const capsuleId = firstRouteParam(req.params.id);
   const { data: capsule, error: capsuleError } = await reader
     .from('capsules')
     .select('id, user_id, is_public')
@@ -1435,15 +1353,10 @@ capsulesRouter.get('/:id/likes', optionalAuth, async (req: AuthRequest, res) => 
   }
 });
 
-const commentBodySchema = z.object({
-  body: z.string().trim().min(1, 'Escribe un comentario').max(500),
-  parent_id: z.string().uuid().optional().nullable(),
-});
-
 /** GET /api/capsules/:id/comments/following — follows que comentaron esta Capsule. */
 capsulesRouter.get('/:id/comments/following', requireAuth, async (req: AuthRequest, res, next) => {
   try {
-    const people = await listCapsuleAlsoCommented(req.userId!, routeParam(req.params.id));
+    const people = await listCapsuleAlsoCommented(req.userId!, firstRouteParam(req.params.id));
     res.json({ people, total: people.length });
   } catch (err) {
     const status = capsuleRouteErrorStatus(err);
@@ -1464,7 +1377,7 @@ capsulesRouter.get('/:id/comments/following', requireAuth, async (req: AuthReque
 });
 
 capsulesRouter.get('/:id/comments', optionalAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   const reader = getReaderClient(token);
 
   if (!reader) {
@@ -1472,7 +1385,7 @@ capsulesRouter.get('/:id/comments', optionalAuth, async (req: AuthRequest, res) 
     return;
   }
 
-  const capsuleId = routeParam(req.params.id);
+  const capsuleId = firstRouteParam(req.params.id);
   const { data: capsule, error: capsuleError } = await reader
     .from('capsules')
     .select('id, user_id, is_public')
@@ -1504,13 +1417,13 @@ capsulesRouter.get('/:id/comments', optionalAuth, async (req: AuthRequest, res) 
 });
 
 capsulesRouter.post('/:id/comments', requireAuth, commentLimiter, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const parsed = commentBodySchema.safeParse(req.body);
+  const parsed = capsuleCommentBodySchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -1675,13 +1588,13 @@ capsulesRouter.post('/:id/comments', requireAuth, commentLimiter, async (req: Au
 });
 
 capsulesRouter.patch('/:id/comments/:commentId', requireAuth, commentLimiter, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const parsed = commentBodySchema.safeParse(req.body);
+  const parsed = capsuleCommentBodySchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -1693,8 +1606,8 @@ capsulesRouter.patch('/:id/comments/:commentId', requireAuth, commentLimiter, as
     return;
   }
 
-  const capsuleId = routeParam(req.params.id);
-  const commentId = routeParam(req.params.commentId);
+  const capsuleId = firstRouteParam(req.params.id);
+  const commentId = firstRouteParam(req.params.commentId);
   const supabase = createUserClient(token);
 
   const { data: existing, error: existingError } = await supabase
@@ -1820,14 +1733,14 @@ capsulesRouter.patch('/:id/comments/:commentId', requireAuth, commentLimiter, as
 });
 
 capsulesRouter.delete('/:id/comments/:commentId', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const capsuleId = routeParam(req.params.id);
-  const commentId = routeParam(req.params.commentId);
+  const capsuleId = firstRouteParam(req.params.id);
+  const commentId = firstRouteParam(req.params.commentId);
   const supabase = createUserClient(token);
 
   type CommentRef = { id: string; user_id: string; capsule_id: string; parent_id: string | null };
@@ -1922,7 +1835,7 @@ capsulesRouter.delete('/:id/comments/:commentId', requireAuth, async (req: AuthR
 });
 
 capsulesRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   const reader = getReaderClient(token);
 
   if (!reader) {
@@ -1930,7 +1843,7 @@ capsulesRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  const capsuleId = routeParam(req.params.id);
+  const capsuleId = firstRouteParam(req.params.id);
   const { data, error } = await reader.from('capsules').select('*').eq('id', capsuleId).maybeSingle();
 
   if (error) {
@@ -2006,7 +1919,7 @@ capsulesRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
 });
 
 capsulesRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
@@ -2083,7 +1996,7 @@ capsulesRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
 });
 
 capsulesRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
@@ -2095,7 +2008,7 @@ capsulesRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  const capsuleId = routeParam(req.params.id);
+  const capsuleId = firstRouteParam(req.params.id);
   const supabase = createUserClient(token);
   const patch = {
     ...parsed.data,
@@ -2148,13 +2061,13 @@ capsulesRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
 });
 
 capsulesRouter.delete('/:id', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const capsuleId = routeParam(req.params.id);
+  const capsuleId = firstRouteParam(req.params.id);
   const supabase = createUserClient(token);
 
   const { data: capsule, error: fetchError } = await supabase

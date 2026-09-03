@@ -44,10 +44,12 @@ type CapsuleTagsFieldProps = {
   tryAdd: (raw: string) => { ok: true; tags: string[] } | { ok: false; error: string };
 };
 
+const NO_TAG_SUGGESTIONS: readonly string[] = [];
+
 export function CapsuleTagsField({
   tags,
   onChange,
-  suggestions = [],
+  suggestions = NO_TAG_SUGGESTIONS,
   maxTags,
   maxLen,
   disabled = false,

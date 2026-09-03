@@ -18,19 +18,14 @@ export function ResetPasswordPage() {
   useDocumentTitle('Nueva contraseña');
   const navigate = useNavigate();
   const setSession = useAuthStore((s) => s.setSession);
-  const [token, setToken] = useState<string | null>(null);
-  const [linkError, setLinkError] = useState<string | null>(null);
+  const [recovery] = useState(() => parseRecoveryParams(window.location.search, window.location.hash));
+  const token = recovery.ok ? recovery.accessToken : null;
+  const linkError = recovery.ok ? null : recovery.error;
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const parsed = parseRecoveryParams(window.location.search, window.location.hash);
     clearRecoveryUrl();
-    if (!parsed.ok) {
-      setLinkError(parsed.error);
-      return;
-    }
-    setToken(parsed.accessToken);
   }, []);
 
   const {

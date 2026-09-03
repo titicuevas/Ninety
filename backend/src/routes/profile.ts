@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { z } from 'zod';
 import { validateImageBuffer } from '../lib/contentModeration.js';
 import {
   deleteAvatarByUrl,
@@ -58,7 +57,15 @@ import {
 } from '../lib/profileLookup.js';
 import { sanitizePostgrestSearch } from '../lib/postgrestSafe.js';
 import { normalizeUsernameParam } from '../lib/usernameParam.js';
+import { getBearerToken } from '../lib/httpRequest.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
+import {
+  profileFollowListQuerySchema,
+  profileSearchQuerySchema,
+  profilesByTeamQuerySchema,
+  updateProfileSchema,
+  usernameAvailableQuerySchema,
+} from './profile.contracts.js';
 
 export const profileRouter = Router();
 
@@ -73,38 +80,6 @@ const avatarUpload = multer({
     cb(new Error('Solo JPG, PNG o WebP.'));
   },
 });
-
-const updateProfileSchema = z.object({
-  display_name: z.string().min(1).max(100).optional(),
-  username: z
-    .string()
-    .min(3)
-    .max(30)
-    .regex(/^[a-z0-9_]+$/, 'Solo letras minúsculas, números y guiones bajos')
-    .optional(),
-  avatar_url: z.string().url().optional().nullable(),
-  favorite_team: z.string().max(100).optional().nullable(),
-  country: z.string().max(100).optional().nullable(),
-  city: z.string().max(100).optional().nullable(),
-  bio: z.string().max(280).optional().nullable(),
-  /** uuid de colección pública propia, o null para quitar el pin. */
-  featured_collection_id: z.string().uuid().nullable().optional(),
-});
-
-const followListQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(50).default(30),
-  offset: z.coerce.number().int().min(0).default(0),
-});
-
-const byTeamQuerySchema = z.object({
-  slug: z.string().trim().min(2).max(80),
-  limit: z.coerce.number().int().min(1).max(50).default(30),
-  offset: z.coerce.number().int().min(0).default(0),
-});
-
-function getAccessToken(req: AuthRequest): string | null {
-  return req.headers.authorization?.replace('Bearer ', '') ?? null;
-}
 
 function routeUsername(req: AuthRequest): string {
   return normalizeUsernameParam(req.params.username);
@@ -121,14 +96,14 @@ async function resolveProfileByUsername(username: string) {
 }
 
 async function handleFollowList(req: AuthRequest, res: import('express').Response, kind: FollowListKind) {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   const reader = getReaderClient(token);
   if (!reader) {
     res.status(503).json({ error: 'Listas de seguimiento no disponibles temporalmente' });
     return;
   }
 
-  const parsed = followListQuerySchema.safeParse(req.query);
+  const parsed = profileFollowListQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -164,7 +139,7 @@ async function handleFollowList(req: AuthRequest, res: import('express').Respons
 }
 
 profileRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
@@ -203,7 +178,7 @@ profileRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
 });
 
 profileRouter.patch('/me', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
@@ -300,16 +275,6 @@ profileRouter.patch('/me', requireAuth, async (req: AuthRequest, res) => {
   });
 });
 
-const usernameAvailableQuerySchema = z.object({
-  u: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .min(3)
-    .max(30)
-    .regex(/^[a-z0-9_]+$/, 'Solo letras minúsculas, números y guiones bajos'),
-});
-
 profileRouter.get('/username-available', requireAuth, async (req: AuthRequest, res) => {
   const parsed = usernameAvailableQuerySchema.safeParse(req.query);
   if (!parsed.success) {
@@ -343,7 +308,7 @@ profileRouter.get('/username-available', requireAuth, async (req: AuthRequest, r
 });
 
 profileRouter.post('/avatar', requireAuth, avatarUpload.single('avatar'), async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
@@ -400,7 +365,7 @@ profileRouter.post('/avatar', requireAuth, avatarUpload.single('avatar'), async 
 });
 
 profileRouter.delete('/avatar', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
@@ -438,19 +403,14 @@ profileRouter.delete('/avatar', requireAuth, async (req: AuthRequest, res) => {
   res.json(normalizeProfile(data));
 });
 
-const searchQuerySchema = z.object({
-  q: z.string().trim().min(2).max(40),
-  limit: z.coerce.number().int().min(1).max(20).default(12),
-});
-
 profileRouter.get('/search', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const parsed = searchQuerySchema.safeParse(req.query);
+  const parsed = profileSearchQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: 'Escribe al menos 2 caracteres para buscar aficionados' });
     return;
@@ -511,13 +471,13 @@ profileRouter.get('/search', requireAuth, async (req: AuthRequest, res) => {
 });
 
 profileRouter.get('/by-team', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const parsed = byTeamQuerySchema.safeParse(req.query);
+  const parsed = profilesByTeamQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: 'Parámetros inválidos', details: parsed.error.flatten() });
     return;
@@ -637,7 +597,7 @@ profileRouter.get('/by-team', requireAuth, async (req: AuthRequest, res) => {
 });
 
 profileRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;

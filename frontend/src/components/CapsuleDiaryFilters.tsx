@@ -36,6 +36,8 @@ type CapsuleDiaryFiltersProps = {
   clearFilters: () => void;
 };
 
+const EMPTY_TAGS: string[] = [];
+
 function activeFilterSummaries(opts: {
   year: number | undefined;
   ratingMin: number | undefined;
@@ -60,7 +62,7 @@ function activeFilterSummaries(opts: {
 
 export function CapsuleDiaryFilters({
   years,
-  availableTags = [],
+  availableTags = EMPTY_TAGS,
   showVisibility = false,
   collapsible = false,
   searchAriaLabel,

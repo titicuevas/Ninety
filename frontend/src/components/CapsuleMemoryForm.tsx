@@ -43,6 +43,8 @@ const memorySchema = z.object({
     .optional(),
 });
 
+const NO_DEFAULT_TAGS: string[] = [];
+
 export type CapsuleMemoryFormValues = z.infer<typeof memorySchema>;
 
 type CapsuleMemorySubmitPayload = CapsuleMemoryFormValues & {
@@ -171,7 +173,7 @@ export function CapsuleMemoryForm({
   defaultRating = null,
   defaultIsPublic = true,
   defaultWatchContext = null,
-  defaultTags = [],
+  defaultTags = NO_DEFAULT_TAGS,
   existingPhotoUrls = NO_PHOTO_URLS,
   draftMatchId,
   submitLabel,

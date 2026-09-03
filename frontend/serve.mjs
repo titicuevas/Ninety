@@ -1,4 +1,5 @@
 import http from 'node:http';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -337,7 +338,27 @@ async function ogForDiaryMonth(username, year, month) {
   });
 }
 
+function contentSecurityPolicy(nonce) {
+  return [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "connect-src 'self' https: wss:",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "form-action 'self'",
+    "frame-ancestors 'self'",
+    "img-src 'self' https: data: blob:",
+    "object-src 'none'",
+    `script-src 'self'${nonce ? ` 'nonce-${nonce}'` : ''}`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "worker-src 'self' blob:",
+  ].join('; ');
+}
+
 const SECURITY_HEADERS = {
+  'Content-Security-Policy': contentSecurityPolicy(),
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Resource-Policy': 'same-origin',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
   'X-Frame-Options': 'SAMEORIGIN',
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
@@ -414,13 +435,15 @@ function serveSpa(req, res) {
     const origin = requestOrigin(req) || SITE_URL;
     // Preferir el Host actual; si aún entran por Railway pero SITE_URL ya es el dominio custom, usar SITE_URL.
     const canonical = origin !== LEGACY_SITE_URL ? origin : SITE_URL;
-    let html = data.toString('utf8');
+    const nonce = crypto.randomBytes(18).toString('base64');
+    let html = data.toString('utf8').replaceAll('__CSP_NONCE__', nonce);
     if (canonical !== LEGACY_SITE_URL) {
       html = html.replaceAll(LEGACY_SITE_URL, canonical);
     }
     sendCompressed(req, res, 200, Buffer.from(html), {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'no-cache',
+      'Content-Security-Policy': contentSecurityPolicy(nonce),
     });
   });
 }

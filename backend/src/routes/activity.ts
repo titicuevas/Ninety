@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAuth, type AuthRequest } from '../middleware/auth.js';
 import { listFollowActivity } from '../lib/followActivity.js';
 import { createUserClient } from '../lib/supabase.js';
+import { getBearerToken } from '../lib/httpRequest.js';
 
 export const activityRouter = Router();
 
@@ -14,14 +15,10 @@ const activityQuerySchema = z.object({
   type: z.enum(['capsule', 'collection', 'like', 'comment']).optional(),
 });
 
-function getAccessToken(req: AuthRequest): string | null {
-  return req.headers.authorization?.replace('Bearer ', '') ?? null;
-}
-
 /** GET /api/activity — timeline de Capsules, listas, me gusta y comentarios públicos de follows. */
 activityRouter.get('/', async (req: AuthRequest, res, next) => {
   try {
-    const token = getAccessToken(req);
+    const token = getBearerToken(req);
     if (!token) {
       res.status(401).json({ error: 'Token requerido' });
       return;

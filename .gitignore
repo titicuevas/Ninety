@@ -33,6 +33,10 @@ Thumbs.db
 *.swp
 *.swo
 
+# Internal audit and deployment runbooks — may contain infrastructure details
+INFORME_AUDITORIA.md
+docs/production-readiness.md
+
 # Vite
 *.local
 

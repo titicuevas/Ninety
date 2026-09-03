@@ -56,6 +56,18 @@ import {
 } from '../lib/userBlocks.js';
 import { normalizeUsernameParam } from '../lib/usernameParam.js';
 import { optionalAuth, requireAuth, type AuthRequest } from '../middleware/auth.js';
+import { firstRouteParam, getBearerToken } from '../lib/httpRequest.js';
+import {
+  MAX_COLLECTIONS_PER_USER,
+  MAX_ITEMS_PER_COLLECTION,
+  addCollectionItemSchema,
+  collectionCommentBodySchema,
+  createCollectionSchema,
+  reorderCollectionItemsSchema,
+  updateCollectionSchema,
+  type CapsuleLite,
+  type CollectionRow,
+} from './collections.contracts.js';
 
 function collectionAuthor(profile: {
   id: string;
@@ -73,49 +85,6 @@ function collectionAuthor(profile: {
 
 export const collectionsRouter = Router();
 
-const MAX_COLLECTIONS_PER_USER = 50;
-const MAX_ITEMS_PER_COLLECTION = 100;
-
-const createSchema = z.object({
-  name: z.string().trim().min(1).max(80),
-  description: z.string().trim().max(500).optional().nullable(),
-  is_public: z.boolean().optional().default(true),
-  slug: z
-    .string()
-    .trim()
-    .min(1)
-    .max(80)
-    .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
-    .optional(),
-});
-
-const updateSchema = z.object({
-  name: z.string().trim().min(1).max(80).optional(),
-  description: z.string().trim().max(500).optional().nullable(),
-  is_public: z.boolean().optional(),
-  slug: z
-    .string()
-    .trim()
-    .min(1)
-    .max(80)
-    .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
-    .optional(),
-  cover_capsule_id: z.string().uuid().nullable().optional(),
-});
-
-const addItemSchema = z.object({
-  capsule_id: z.string().uuid(),
-});
-
-const reorderItemsSchema = z.object({
-  capsule_ids: z.array(z.string().uuid()).min(1).max(MAX_ITEMS_PER_COLLECTION),
-});
-
-const commentBodySchema = z.object({
-  body: z.string().trim().min(1).max(500),
-  parent_id: z.string().uuid().optional().nullable(),
-});
-
 const commentLimiter = rateLimit({
   windowMs: 60_000,
   max: 30,
@@ -123,14 +92,6 @@ const commentLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Demasiados comentarios. Inténtalo en un minuto.' },
 });
-
-function routeParam(value: string | string[]): string {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-function getAccessToken(req: AuthRequest): string | null {
-  return req.headers.authorization?.replace('Bearer ', '') ?? null;
-}
 
 function getReaderClient(token: string | null) {
   if (token) return createUserClient(token);
@@ -167,40 +128,6 @@ function isMissingCoverColumn(error: { message?: string; code?: string } | null 
 function coverMigrationHint(): string {
   return 'Portada de colección no disponible: aplica supabase/migrations/20250810160000_collection_cover.sql en el SQL Editor de Supabase.';
 }
-
-type CollectionRow = {
-  id: string;
-  user_id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  is_public: boolean;
-  cover_capsule_id?: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-type CapsuleLite = {
-  id: string;
-  user_id: string;
-  match_id?: number;
-  home_team_name: string;
-  away_team_name: string;
-  home_team_crest: string | null;
-  away_team_crest: string | null;
-  competition_name: string | null;
-  home_score: number | null;
-  away_score: number | null;
-  watched_at: string;
-  rating: number | null;
-  note: string | null;
-  photo_urls: string[];
-  is_public?: boolean;
-  watch_context?: string | null;
-  likes_count?: number;
-  liked_by_me?: boolean;
-  comments_count?: number;
-};
 
 async function loadItemCounts(
   reader: ReturnType<typeof createUserClient>,
@@ -403,7 +330,7 @@ async function resolveTakenSlugs(
 
 /** GET /api/collections/me */
 collectionsRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
@@ -470,7 +397,7 @@ function collectionRouteErrorStatus(err: unknown): number | undefined {
 
 /** GET /api/collections/me/liked — archivo de listas a las que di me gusta. */
 collectionsRouter.get('/me/liked', requireAuth, async (req: AuthRequest, res, next) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
@@ -554,13 +481,13 @@ collectionsRouter.get('/me/liked', requireAuth, async (req: AuthRequest, res, ne
 
 /** GET /api/collections/me/containing/:capsuleId — ids de colecciones propias con esa Capsule */
 collectionsRouter.get('/me/containing/:capsuleId', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const capsuleId = routeParam(req.params.capsuleId);
+  const capsuleId = firstRouteParam(req.params.capsuleId);
   if (!capsuleId) {
     res.status(400).json({ error: 'capsuleId requerido' });
     return;
@@ -610,7 +537,7 @@ collectionsRouter.get('/me/containing/:capsuleId', requireAuth, async (req: Auth
 
 /** GET /api/collections/me/export — backup GDPR de colecciones (match_id, sin secretos). */
 collectionsRouter.get('/me/export', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
@@ -740,7 +667,7 @@ collectionsRouter.get('/me/export', requireAuth, async (req: AuthRequest, res) =
 
 /** POST /api/collections/me/import — restaura colecciones desde export JSON (GDPR). */
 collectionsRouter.post('/me/import', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
@@ -920,13 +847,13 @@ collectionsRouter.post('/me/import', requireAuth, async (req: AuthRequest, res) 
 
 /** POST /api/collections */
 collectionsRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const parsed = createSchema.safeParse(req.body);
+  const parsed = createCollectionSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -988,7 +915,7 @@ collectionsRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
 
 /** GET /api/collections/discover — listas públicas ajenas (descubrimiento V8). */
 collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
@@ -1200,7 +1127,7 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
 /** GET /api/collections/user/:username — listas públicas */
 collectionsRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res) => {
   const username = normalizeUsernameParam(req.params.username);
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   const reader = getReaderClient(token);
 
   if (!reader) {
@@ -1286,8 +1213,8 @@ collectionsRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, 
 /** GET /api/collections/user/:username/:slug — detalle público */
 collectionsRouter.get('/user/:username/:slug', optionalAuth, async (req: AuthRequest, res) => {
   const username = normalizeUsernameParam(req.params.username);
-  const slug = routeParam(req.params.slug);
-  const token = getAccessToken(req);
+  const slug = firstRouteParam(req.params.slug);
+  const token = getBearerToken(req);
   const reader = getReaderClient(token);
 
   if (!reader) {
@@ -1368,8 +1295,8 @@ collectionsRouter.get('/user/:username/:slug', optionalAuth, async (req: AuthReq
 
 /** GET /api/collections/:id — detalle propio (o público si is_public) */
 collectionsRouter.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
-  const id = routeParam(req.params.id);
-  const token = getAccessToken(req);
+  const id = firstRouteParam(req.params.id);
+  const token = getBearerToken(req);
   const reader = getReaderClient(token);
 
   if (!reader) {
@@ -1440,13 +1367,13 @@ const collectionLikesQuerySchema = z.object({
 
 /** POST /api/collections/:id/like — me gusta (solo listas públicas o propias) */
 collectionsRouter.post('/:id/like', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const id = routeParam(req.params.id);
+  const id = firstRouteParam(req.params.id);
   const supabase = createUserClient(token);
   const { data: collection, error: collectionError } = await supabase
     .from('collections')
@@ -1508,13 +1435,13 @@ collectionsRouter.post('/:id/like', requireAuth, async (req: AuthRequest, res) =
 
 /** DELETE /api/collections/:id/like */
 collectionsRouter.delete('/:id/like', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const id = routeParam(req.params.id);
+  const id = firstRouteParam(req.params.id);
   const supabase = createUserClient(token);
 
   const { data: collection, error: collectionError } = await supabase
@@ -1571,7 +1498,7 @@ collectionsRouter.delete('/:id/like', requireAuth, async (req: AuthRequest, res)
 /** GET /api/collections/:id/likes/following — follows que dieron me gusta. */
 collectionsRouter.get('/:id/likes/following', requireAuth, async (req: AuthRequest, res, next) => {
   try {
-    const id = routeParam(req.params.id);
+    const id = firstRouteParam(req.params.id);
     const people = await listCollectionAlsoLiked(req.userId!, id);
     res.json({ people, total: people.length });
   } catch (err) {
@@ -1596,7 +1523,7 @@ collectionsRouter.get('/:id/likes/following', requireAuth, async (req: AuthReque
 
 /** GET /api/collections/:id/likes — quién dio me gusta */
 collectionsRouter.get('/:id/likes', optionalAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   const reader = getReaderClient(token);
 
   if (!reader) {
@@ -1610,7 +1537,7 @@ collectionsRouter.get('/:id/likes', optionalAuth, async (req: AuthRequest, res) 
     return;
   }
 
-  const id = routeParam(req.params.id);
+  const id = firstRouteParam(req.params.id);
   const { data: collection, error: collectionError } = await reader
     .from('collections')
     .select('id, user_id, is_public')
@@ -1675,7 +1602,7 @@ async function loadCollectionForComments(
 /** GET /api/collections/:id/comments/following — follows que comentaron esta lista. */
 collectionsRouter.get('/:id/comments/following', requireAuth, async (req: AuthRequest, res, next) => {
   try {
-    const id = routeParam(req.params.id);
+    const id = firstRouteParam(req.params.id);
     const people = await listCollectionAlsoCommented(req.userId!, id);
     res.json({ people, total: people.length });
   } catch (err) {
@@ -1700,14 +1627,14 @@ collectionsRouter.get('/:id/comments/following', requireAuth, async (req: AuthRe
 
 /** GET /api/collections/:id/comments */
 collectionsRouter.get('/:id/comments', optionalAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   const reader = getReaderClient(token);
   if (!reader) {
     res.status(503).json({ error: 'Comentarios no disponibles temporalmente' });
     return;
   }
 
-  const id = routeParam(req.params.id);
+  const id = firstRouteParam(req.params.id);
   const collection = await loadCollectionForComments(reader, id);
   if (collection === 'missing') {
     res.status(503).json({ error: collectionsMigrationHint() });
@@ -1744,13 +1671,13 @@ collectionsRouter.get('/:id/comments', optionalAuth, async (req: AuthRequest, re
 
 /** POST /api/collections/:id/comments */
 collectionsRouter.post('/:id/comments', requireAuth, commentLimiter, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const parsed = commentBodySchema.safeParse(req.body);
+  const parsed = collectionCommentBodySchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -1762,7 +1689,7 @@ collectionsRouter.post('/:id/comments', requireAuth, commentLimiter, async (req:
     return;
   }
 
-  const id = routeParam(req.params.id);
+  const id = firstRouteParam(req.params.id);
   const supabase = createUserClient(token);
   const collection = await loadCollectionForComments(supabase, id);
   if (collection === 'missing') {
@@ -1920,13 +1847,13 @@ collectionsRouter.patch(
   requireAuth,
   commentLimiter,
   async (req: AuthRequest, res) => {
-    const token = getAccessToken(req);
+    const token = getBearerToken(req);
     if (!token) {
       res.status(401).json({ error: 'Token requerido' });
       return;
     }
 
-    const parsed = commentBodySchema.safeParse(req.body);
+    const parsed = collectionCommentBodySchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: parsed.error.flatten() });
       return;
@@ -1938,8 +1865,8 @@ collectionsRouter.patch(
       return;
     }
 
-    const collectionId = routeParam(req.params.id);
-    const commentId = routeParam(req.params.commentId);
+    const collectionId = firstRouteParam(req.params.id);
+    const commentId = firstRouteParam(req.params.commentId);
     const supabase = createUserClient(token);
 
     const { data: existing, error: existingError } = await supabase
@@ -2014,14 +1941,14 @@ collectionsRouter.patch(
 
 /** DELETE /api/collections/:id/comments/:commentId */
 collectionsRouter.delete('/:id/comments/:commentId', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const collectionId = routeParam(req.params.id);
-  const commentId = routeParam(req.params.commentId);
+  const collectionId = firstRouteParam(req.params.id);
+  const commentId = firstRouteParam(req.params.commentId);
   const supabase = createUserClient(token);
 
   const { data: comment, error: commentError } = await supabase
@@ -2087,13 +2014,13 @@ collectionsRouter.delete('/:id/comments/:commentId', requireAuth, async (req: Au
 
 /** PATCH /api/collections/:id */
 collectionsRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const parsed = updateSchema.safeParse(req.body);
+  const parsed = updateCollectionSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -2104,7 +2031,7 @@ collectionsRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  const id = routeParam(req.params.id);
+  const id = firstRouteParam(req.params.id);
   const supabase = createUserClient(token);
 
   const { data: existing, error: existingError } = await supabase
@@ -2217,13 +2144,13 @@ collectionsRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
 
 /** DELETE /api/collections/:id */
 collectionsRouter.delete('/:id', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const id = routeParam(req.params.id);
+  const id = firstRouteParam(req.params.id);
   const supabase = createUserClient(token);
 
   const { error, count } = await supabase
@@ -2251,19 +2178,19 @@ collectionsRouter.delete('/:id', requireAuth, async (req: AuthRequest, res) => {
 
 /** PUT /api/collections/:id/items/reorder — orden curado (columna `position`) */
 collectionsRouter.put('/:id/items/reorder', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const parsed = reorderItemsSchema.safeParse(req.body);
+  const parsed = reorderCollectionItemsSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
 
-  const id = routeParam(req.params.id);
+  const id = firstRouteParam(req.params.id);
   const supabase = createUserClient(token);
 
   const { data: collection, error: collectionError } = await supabase
@@ -2338,19 +2265,19 @@ collectionsRouter.put('/:id/items/reorder', requireAuth, async (req: AuthRequest
 
 /** POST /api/collections/:id/items */
 collectionsRouter.post('/:id/items', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const parsed = addItemSchema.safeParse(req.body);
+  const parsed = addCollectionItemSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
 
-  const id = routeParam(req.params.id);
+  const id = firstRouteParam(req.params.id);
   const supabase = createUserClient(token);
 
   const { data: collection, error: collectionError } = await supabase
@@ -2431,14 +2358,14 @@ collectionsRouter.post('/:id/items', requireAuth, async (req: AuthRequest, res) 
 
 /** DELETE /api/collections/:id/items/:capsuleId */
 collectionsRouter.delete('/:id/items/:capsuleId', requireAuth, async (req: AuthRequest, res) => {
-  const token = getAccessToken(req);
+  const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Token requerido' });
     return;
   }
 
-  const id = routeParam(req.params.id);
-  const capsuleId = routeParam(req.params.capsuleId);
+  const id = firstRouteParam(req.params.id);
+  const capsuleId = firstRouteParam(req.params.capsuleId);
   const supabase = createUserClient(token);
 
   const { data: collection } = await supabase

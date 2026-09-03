@@ -10,13 +10,6 @@ import {
 } from '@/lib/capsulePhoto';
 import { cn } from '@/lib/utils';
 
-type PreviewItem = {
-  id: string;
-  url: string;
-  kind: 'existing' | 'new';
-  source?: File;
-};
-
 interface CapsulePhotosFieldProps {
   existingUrls?: string[];
   newFiles: File[];
@@ -28,6 +21,39 @@ interface CapsulePhotosFieldProps {
 }
 
 const NO_EXISTING_URLS: string[] = [];
+
+function NewPhotoPreview({
+  file,
+  index,
+  displayIndex,
+  preparing,
+  onRemove,
+}: {
+  file: File;
+  index: number;
+  displayIndex: number;
+  preparing: boolean;
+  onRemove: (index: number) => void;
+}) {
+  const [url] = useState(() => URL.createObjectURL(file));
+
+  useEffect(() => () => URL.revokeObjectURL(url), [url]);
+
+  return (
+    <li className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border bg-secondary shadow-[inset_0_0_0_1px_rgba(16,185,129,0.08)]">
+      <img src={url} alt={`Foto ${displayIndex} del partido`} className="h-full w-full object-cover" />
+      <button
+        type="button"
+        disabled={preparing}
+        onClick={() => onRemove(index)}
+        className="absolute right-1.5 top-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-black/80 text-white ring-1 ring-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:opacity-50 sm:h-8 sm:w-8"
+        aria-label={`Quitar foto ${displayIndex}`}
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </li>
+  );
+}
 
 export function CapsulePhotosField({
   existingUrls = NO_EXISTING_URLS,
@@ -47,7 +73,6 @@ export function CapsulePhotosField({
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [preparing, setPreparing] = useState(false);
-  const [newPreviewUrls, setNewPreviewUrls] = useState<string[]>([]);
 
   const removedExisting = new Set(removedExistingUrls);
   const visibleExisting = existingUrls.filter((url) => !removedExisting.has(url));
@@ -55,23 +80,7 @@ export function CapsulePhotosField({
   const remaining = Math.max(0, MAX_CAPSULE_PHOTOS - totalCount);
   const canAddMore = remaining > 0;
 
-  useEffect(() => {
-    const urls = newFiles.map((file) => URL.createObjectURL(file));
-    setNewPreviewUrls(urls);
-    return () => {
-      for (const url of urls) URL.revokeObjectURL(url);
-    };
-  }, [newFiles]);
-
-  const previews: PreviewItem[] = [
-    ...visibleExisting.map((url) => ({ id: url, url, kind: 'existing' as const })),
-    ...newFiles.map((file, index) => ({
-      id: `new-${index}-${file.name}-${file.size}`,
-      url: newPreviewUrls[index] ?? '',
-      kind: 'new' as const,
-      source: file,
-    })),
-  ];
+  const previewCount = visibleExisting.length + newFiles.length;
 
   const handlePick = async (fileList: FileList | null) => {
     if (!fileList?.length || preparing) return;
@@ -172,7 +181,7 @@ export function CapsulePhotosField({
         problemas con HEIC.
       </p>
 
-      {previews.length === 0 ? (
+      {previewCount === 0 ? (
         <div
           className={cn(
             'flex flex-col items-center gap-5 rounded-2xl border border-dashed px-4 py-9 text-center',
@@ -219,36 +228,37 @@ export function CapsulePhotosField({
               </li>
             ) : null}
 
-            {previews.map((item, index) =>
-              item.url ? (
+            {visibleExisting.map((url, index) => (
                 <li
-                  key={item.id}
+                  key={url}
                   className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border bg-secondary shadow-[inset_0_0_0_1px_rgba(16,185,129,0.08)]"
                 >
                   <img
-                    src={item.url}
+                    src={url}
                     alt={`Foto ${index + 1} del partido`}
                     className="h-full w-full object-cover"
                   />
                   <button
                     type="button"
                     disabled={preparing}
-                    onClick={() => {
-                      if (item.kind === 'existing') {
-                        onRemoveExisting(item.url);
-                        return;
-                      }
-                      const newIndex = newFiles.findIndex((file) => file === item.source);
-                      if (newIndex >= 0) onRemoveNew(newIndex);
-                    }}
+                    onClick={() => onRemoveExisting(url)}
                     className="absolute right-1.5 top-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-black/80 text-white ring-1 ring-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:opacity-50 sm:h-8 sm:w-8"
                     aria-label={`Quitar foto ${index + 1}`}
                   >
                     <X className="h-4 w-4" />
                   </button>
                 </li>
-              ) : null,
-            )}
+            ))}
+            {newFiles.map((file, index) => (
+              <NewPhotoPreview
+                key={`${file.name}-${file.size}-${file.lastModified}-${file.type}`}
+                file={file}
+                index={index}
+                displayIndex={visibleExisting.length + index + 1}
+                preparing={preparing}
+                onRemove={onRemoveNew}
+              />
+            ))}
           </ul>
 
           {canAddMore ? (
@@ -267,7 +277,7 @@ export function CapsulePhotosField({
         </div>
       )}
 
-      {!canAddMore && previews.length > 0 ? (
+      {!canAddMore && previewCount > 0 ? (
         <p className="text-center text-xs font-medium text-amber-200/90">
           Límite alcanzado. Quita una foto si quieres cambiar alguna.
         </p>

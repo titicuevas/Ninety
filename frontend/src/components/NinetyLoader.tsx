@@ -39,7 +39,7 @@ function PulsingWhistle({ className }: { className?: string }) {
     <div className={cn('ninety-pulse-whistle', className)} aria-hidden>
       <svg viewBox="0 0 32 32" className="h-full w-full">
         <circle cx="16" cy="16" r="12" fill="currentColor" className="text-primary/10" />
-        <ellipse cx="16" cy="16" rx="7" ry="5" fill="currentColor" className="text-primary/50" rx-="6" />
+        <ellipse cx="16" cy="16" rx="7" ry="5" fill="currentColor" className="text-primary/50" />
         <rect x="22" y="13" width="6" height="3" rx="1.5" fill="currentColor" className="text-primary/60" />
         <circle cx="12" cy="16" r="2.5" fill="currentColor" className="text-primary/80" />
         <line x1="6" y1="8" x2="9" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-primary/40" />

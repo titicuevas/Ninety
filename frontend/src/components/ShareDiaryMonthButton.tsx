@@ -27,12 +27,14 @@ type Props = {
   compact?: boolean;
 };
 
+const NO_CAPSULES: Capsule[] = [];
+
 export function ShareDiaryMonthButton({
   username,
   year,
   month,
   publicTotal,
-  capsules = [],
+  capsules = NO_CAPSULES,
   displayName,
   className,
   size = 'sm',

@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+body {
+  margin: 0;
+  background: #0a0a0b;
+  color: #fafafa;
+  font-family: Inter, system-ui, sans-serif;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

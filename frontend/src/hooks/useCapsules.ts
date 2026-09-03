@@ -163,10 +163,12 @@ export function useToggleCapsuleLike() {
       await apiFetch<{ liked: boolean }>(path, { method: 'POST' }, session?.access_token);
     },
     onMutate: async ({ capsuleId, liked }) => {
-      await queryClient.cancelQueries({ queryKey: ['capsules', 'feed'] });
-      await queryClient.cancelQueries({ queryKey: ['capsules', 'public', capsuleId] });
-      await queryClient.cancelQueries({ queryKey: ['capsules', capsuleId] });
-      await queryClient.cancelQueries({ queryKey: ['profile', 'public'] });
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: ['capsules', 'feed'] }),
+        queryClient.cancelQueries({ queryKey: ['capsules', 'public', capsuleId] }),
+        queryClient.cancelQueries({ queryKey: ['capsules', capsuleId] }),
+        queryClient.cancelQueries({ queryKey: ['profile', 'public'] }),
+      ]);
 
       const previousFeeds = queryClient.getQueriesData<InfiniteData<FeedResponse>>({
         queryKey: ['capsules', 'feed'],
