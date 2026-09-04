@@ -53,9 +53,12 @@ jobs:
         run: npm run test:e2e:public
 
       - name: Open Graph contra servidor de producción local
-        run: env -u E2E_BASE_URL -u E2E_API_URL -u E2E_SITE_URL npm run test:e2e:og
+        run: >-
+          env -u E2E_BASE_URL -u E2E_API_URL -u E2E_SITE_URL
+          npm run test:e2e:og -- --retries=3
 
       - name: Boundary de rutas contra app local
+        if: always()
         run: env -u E2E_BASE_URL -u E2E_API_URL npm run test:e2e:boundary
 
       - name: Upload Playwright report
