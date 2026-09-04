@@ -91,12 +91,7 @@ export function PushQuietHoursPanel({ className }: Props) {
       ) : null}
 
       {quiet ? (
-        <div
-          className={cn(
-            'grid gap-3 sm:grid-cols-2',
-            !enabled && 'opacity-60',
-          )}
-        >
+        <div className="grid gap-3 sm:grid-cols-2">
           <FormField label="Desde" hint="Inicio inclusive (HH:MM)">
             <Input
               type="time"

@@ -29,15 +29,17 @@ import type { FollowActivityEvent } from '@/types/activity';
 
 function ActivityListSkeleton() {
   return (
-    <ul className={capsuleCardListClass} role="status" aria-label="Cargando actividad">
-      {Array.from({ length: 4 }, (_, i) => (
-        <li key={i} className="rounded-xl border border-border p-4">
-          <Skeleton className="h-3 w-28" />
-          <Skeleton className="mt-2 h-5 w-52 max-w-full" />
-          <Skeleton className="mt-2 h-3 w-20" />
-        </li>
-      ))}
-    </ul>
+    <div role="status" aria-label="Cargando actividad">
+      <ul className={capsuleCardListClass} aria-hidden>
+        {Array.from({ length: 4 }, (_, i) => (
+          <li key={i} className="rounded-xl border border-border p-4">
+            <Skeleton className="h-3 w-28" />
+            <Skeleton className="mt-2 h-5 w-52 max-w-full" />
+            <Skeleton className="mt-2 h-3 w-20" />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

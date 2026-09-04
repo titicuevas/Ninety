@@ -10,6 +10,17 @@ import { flushWantToGoPushes } from './lib/wantToGoPush.js';
 import { isPushConfigured } from './lib/webPush.js';
 import { setRuntimeReady } from './lib/runtimeHealth.js';
 import { safeErrorLog } from './lib/safeErrorLog.js';
+import {
+  HTTP_HEADERS_TIMEOUT_MS,
+  HTTP_KEEP_ALIVE_TIMEOUT_MS,
+  HTTP_REQUEST_TIMEOUT_MS,
+} from './httpServerConfig.js';
+
+export {
+  HTTP_HEADERS_TIMEOUT_MS,
+  HTTP_KEEP_ALIVE_TIMEOUT_MS,
+  HTTP_REQUEST_TIMEOUT_MS,
+} from './httpServerConfig.js';
 
 const PUSH_DIGEST_INTERVAL_MS = 15 * 60 * 1000;
 const PUSH_DIARY_INTERVAL_MS = 60 * 60 * 1000;
@@ -29,6 +40,9 @@ async function main() {
     setRuntimeReady(true);
     console.log(`Ninety API running on http://localhost:${env.PORT}`);
   });
+  server.headersTimeout = HTTP_HEADERS_TIMEOUT_MS;
+  server.requestTimeout = HTTP_REQUEST_TIMEOUT_MS;
+  server.keepAliveTimeout = HTTP_KEEP_ALIVE_TIMEOUT_MS;
 
   let shuttingDown = false;
   const shutdown = (signal: string) => {

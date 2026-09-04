@@ -45,6 +45,7 @@ export function PublicProfileTabs({
             key={tab.id}
             type="button"
             role="tab"
+            aria-label={tab.label}
             aria-selected={isActive}
             onClick={() => onChange(tab.id)}
             className={`flex flex-1 items-center justify-center gap-1 rounded-lg px-1.5 py-2.5 text-xs font-medium transition-colors sm:gap-1.5 sm:px-3 sm:text-sm ${

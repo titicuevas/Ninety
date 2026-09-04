@@ -55,6 +55,16 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
     {
+      name: 'iphone-public',
+      testMatch: /smoke\/(public|landing)\.spec\.ts/,
+      use: { ...devices['iPhone 13'] },
+    },
+    {
+      name: 'ipad-public',
+      testMatch: /smoke\/(public|landing)\.spec\.ts/,
+      use: { ...devices['iPad Mini'] },
+    },
+    {
       name: 'route-boundary',
       testMatch: /smoke\/route-error\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
@@ -76,6 +86,24 @@ export default defineConfig({
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
+        storageState: authFile,
+      },
+    },
+    {
+      name: 'a11y-iphone',
+      testMatch: /a11y\/authenticated\.spec\.ts/,
+      dependencies: ['setup'],
+      use: {
+        ...devices['iPhone 13'],
+        storageState: authFile,
+      },
+    },
+    {
+      name: 'a11y-ipad',
+      testMatch: /a11y\/authenticated\.spec\.ts/,
+      dependencies: ['setup'],
+      use: {
+        ...devices['iPad Mini'],
         storageState: authFile,
       },
     },

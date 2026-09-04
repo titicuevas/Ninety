@@ -13,10 +13,10 @@ type Props = {
 /** Shell compartido para login / registro — atmósfera + panel centrado. */
 export function AuthLayout({ title, subtitle, children, className }: Props) {
   return (
-    <div className="relative flex min-h-screen flex-col bg-background text-foreground">
+    <div className="relative flex min-h-screen min-h-dvh flex-col bg-background text-foreground">
       {/* Skip link fuera de overflow:hidden — si no, Chrome lo saca del tab order */}
       <SkipLink />
-      <div className="relative flex min-h-screen flex-1 flex-col overflow-hidden">
+      <div className="relative flex min-h-screen min-h-dvh flex-1 flex-col overflow-hidden">
         <div
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(16,185,129,0.14),_transparent_55%),radial-gradient(ellipse_at_bottom,_rgba(16,185,129,0.06),_transparent_50%)]"
           aria-hidden
@@ -32,7 +32,7 @@ export function AuthLayout({ title, subtitle, children, className }: Props) {
           aria-hidden
         />
 
-        <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-10 sm:px-6">
+        <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pt-[max(2.5rem,env(safe-area-inset-top,0px))] pb-[max(2.5rem,env(safe-area-inset-bottom,0px))] sm:px-6">
           <div className={cn('w-full max-w-md', className)}>
             <div className="mb-8 text-center">
               <Link

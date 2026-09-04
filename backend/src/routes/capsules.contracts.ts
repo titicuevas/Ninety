@@ -58,6 +58,7 @@ const diaryFilterFields = {
 export const ownCapsulesQuerySchema = z.object({
   ...diaryFilterFields,
   visibility: z.enum(['all', 'public', 'private']).optional().default('all'),
+  sort: z.enum(['recent', 'oldest', 'top-rated']).optional().default('recent'),
 });
 
 export const publicCapsulesQuerySchema = z.object(diaryFilterFields);

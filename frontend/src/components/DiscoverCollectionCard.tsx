@@ -26,7 +26,7 @@ export function DiscoverCollectionCard({
 
   return (
     <li>
-      <article className="rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40">
+      <article className="motion-card rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40">
         <div className="flex items-start gap-3">
           {collection.cover_url ? (
             <img

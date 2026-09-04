@@ -1,3 +1,5 @@
+import { lookup } from 'node:dns/promises';
+import { isIP } from 'node:net';
 import { detectImageMime } from './contentModeration.js';
 import { capsulePhotoPathFromUrl } from './capsulePhotoPaths.js';
 
@@ -7,6 +9,7 @@ export const DIARY_IMPORT_MAX_PHOTOS_RESTORE = 200;
 export const DIARY_PHOTO_FETCH_TIMEOUT_MS = 12_000;
 export const DIARY_PHOTO_MAX_BYTES = 5 * 1024 * 1024;
 export const MAX_SOURCE_PHOTOS_PER_CAPSULE = 9;
+const MAX_REMOTE_REDIRECTS = 3;
 
 export type PhotoRestoreSummary = {
   photos_restored: number;
@@ -30,6 +33,7 @@ export type RestorePhotoDeps = {
   fetchRemote?: typeof fetchRemotePhotoBuffer;
   upload?: UploadCapsulePhoto;
   maxPhotos?: number;
+  lookup?: typeof lookupPublicAddresses;
 };
 
 const ALLOWED_IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -38,21 +42,89 @@ export function isOwnedCapsulePhotoUrl(url: string, userId: string): boolean {
   return !!path && path.startsWith(`${userId}/`);
 }
 
+function isPrivateAddress(address: string): boolean {
+  if (isIP(address) === 4) {
+    const octets = address.split('.').map(Number);
+    return (
+      octets[0] === 0 ||
+      octets[0] === 10 ||
+      octets[0] === 127 ||
+      (octets[0] === 169 && octets[1] === 254) ||
+      (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) ||
+      (octets[0] === 192 && octets[1] === 168) ||
+      (octets[0] === 100 && octets[1] >= 64 && octets[1] <= 127)
+    );
+  }
+
+  const normalized = address.toLowerCase();
+  return (
+    normalized === '::' ||
+    normalized === '::1' ||
+    normalized.startsWith('fe80:') ||
+    normalized.startsWith('fc') ||
+    normalized.startsWith('fd')
+  );
+}
+
+async function lookupPublicAddresses(hostname: string): Promise<string[]> {
+  if (isIP(hostname)) return [hostname];
+  const addresses = await lookup(hostname, { all: true, verbatim: true });
+  return addresses.map(({ address }) => address);
+}
+
+async function validateRemotePhotoUrl(
+  rawUrl: string,
+  resolveAddresses: typeof lookupPublicAddresses,
+): Promise<URL | null> {
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    return null;
+  }
+
+  if (parsed.protocol !== 'https:' || parsed.username || parsed.password || !parsed.hostname) {
+    return null;
+  }
+
+  try {
+    const addresses = await resolveAddresses(parsed.hostname);
+    if (addresses.length === 0 || addresses.some(isPrivateAddress)) return null;
+  } catch {
+    return null;
+  }
+
+  return parsed;
+}
+
 export async function fetchRemotePhotoBuffer(
   url: string,
   fetchImpl: typeof fetch = fetch,
+  resolveAddresses: typeof lookupPublicAddresses = lookupPublicAddresses,
 ): Promise<{ buffer: Buffer; mime: string } | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), DIARY_PHOTO_FETCH_TIMEOUT_MS);
 
   try {
-    const res = await fetchImpl(url, {
-      signal: controller.signal,
-      redirect: 'follow',
-      headers: { Accept: 'image/*' },
-    });
+    let currentUrl = url;
+    let res: Response | undefined;
+    for (let redirectCount = 0; redirectCount <= MAX_REMOTE_REDIRECTS; redirectCount += 1) {
+      const safeUrl = await validateRemotePhotoUrl(currentUrl, resolveAddresses);
+      if (!safeUrl) return null;
 
-    if (!res.ok) return null;
+      res = await fetchImpl(safeUrl, {
+        signal: controller.signal,
+        redirect: 'manual',
+        headers: { Accept: 'image/*' },
+      });
+
+      if (res.status < 300 || res.status >= 400) break;
+      const location = res.headers.get('location');
+      if (!location || redirectCount === MAX_REMOTE_REDIRECTS) return null;
+      currentUrl = new URL(location, safeUrl).toString();
+    }
+
+    if (!res || !res.ok) return null;
 
     const contentLength = Number(res.headers.get('content-length') ?? 0);
     if (contentLength > DIARY_PHOTO_MAX_BYTES) return null;

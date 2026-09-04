@@ -11,7 +11,7 @@ import { Layout } from '@/components/Layout';
 import { ShareInviteButton } from '@/components/ShareInviteButton';
 import { ShareProfileButton } from '@/components/ShareProfileButton';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -499,7 +499,7 @@ export function ProfilePage() {
       <Card className="mx-auto max-w-lg border-border">
         <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
           <div className="space-y-1.5">
-            <CardTitle>Tu perfil</CardTitle>
+            <h1 className="text-lg font-semibold leading-none tracking-tight">Tu perfil</h1>
             <CardDescription>Configura tu identidad como aficionado</CardDescription>
           </div>
           <Button asChild variant="outline" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">

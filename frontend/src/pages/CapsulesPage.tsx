@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { CalendarDays, Heart, Pencil, Search, Trash2 } from 'lucide-react';
 import { AddToCollectionButton } from '@/components/AddToCollectionButton';
 import { CapsuleCardSocialFooter } from '@/components/CapsuleCardSocialFooter';
@@ -21,6 +21,8 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { listCapsuleYears } from '@/lib/capsuleStats';
 import { listCapsuleTags } from '@/lib/capsuleTags';
 import type { Capsule } from '@/types/capsule';
+
+type DiarySort = 'recent' | 'oldest' | 'top-rated';
 
 function CapsuleCard({
   capsule,
@@ -100,6 +102,7 @@ function CapsuleCard({
 export function CapsulesPage() {
   useDocumentTitle('Mis Capsules');
   const { user } = useAuth();
+  const [pageParams, setPageParams] = useSearchParams();
   const {
     q,
     qDraft,
@@ -113,6 +116,8 @@ export function CapsulesPage() {
     patchParams,
     clearFilters,
   } = useDiaryFilterParams({ withVisibility: true, persist: true });
+  const rawSort = pageParams.get('sort');
+  const sort: DiarySort = rawSort === 'oldest' || rawSort === 'top-rated' ? rawSort : 'recent';
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const { data: allCapsulesData } = useCapsules();
@@ -136,7 +141,7 @@ export function CapsulesPage() {
     isFetching,
     refetch,
     isRefetching,
-  } = useMyCapsulesInfinite({ q, year, ratingMin, visibility, watchContext, tag });
+  } = useMyCapsulesInfinite({ q, year, ratingMin, visibility, watchContext, tag, sort });
   const deleteCapsule = useDeleteCapsule();
   const capsules = useMemo(
     () => data?.pages.flatMap((page) => page.capsules ?? []) ?? [],
@@ -212,6 +217,25 @@ export function CapsulesPage() {
           patchParams={patchParams}
           clearFilters={clearFilters}
         />
+
+        <label className="flex max-w-xs items-center gap-3 text-sm text-muted-foreground">
+          <span className="shrink-0">Ordenar</span>
+          <select
+            value={sort}
+            onChange={(event) => {
+              const next = new URLSearchParams(pageParams);
+              if (event.target.value === 'recent') next.delete('sort');
+              else next.set('sort', event.target.value);
+              setPageParams(next, { replace: true });
+            }}
+            className="h-10 min-w-0 flex-1 rounded-lg border border-input bg-secondary px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Ordenar Capsules"
+          >
+            <option value="recent">Más recientes</option>
+            <option value="top-rated">Mejor valoradas</option>
+            <option value="oldest">Más antiguas</option>
+          </select>
+        </label>
 
         {isLoading ? <CapsuleListSkeleton count={3} /> : null}
 

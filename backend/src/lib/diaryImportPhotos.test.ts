@@ -72,6 +72,39 @@ describe('diaryImportPhotos', () => {
     assert.equal(result, null);
   });
 
+  it('fetchRemotePhotoBuffer no accede a HTTP ni a direcciones privadas', async () => {
+    let requests = 0;
+    const fetchImpl = async () => {
+      requests += 1;
+      return { ok: true } as Response;
+    };
+    const lookupAddresses = async (hostname: string) =>
+      hostname === '127.0.0.1' ? ['127.0.0.1'] : ['203.0.113.10'];
+
+    assert.equal(await fetchRemotePhotoBuffer('http://public.example/photo.jpg', fetchImpl, lookupAddresses), null);
+    assert.equal(await fetchRemotePhotoBuffer('https://127.0.0.1/photo.jpg', fetchImpl, lookupAddresses), null);
+    assert.equal(requests, 0);
+  });
+
+  it('fetchRemotePhotoBuffer valida las redirecciones y limita sus saltos', async () => {
+    let requests = 0;
+    const fetchImpl = async (requestUrl: Parameters<typeof fetch>[0]) => {
+      requests += 1;
+      return {
+        ok: false,
+        status: 302,
+        headers: { get: (name: string) => (name === 'location' ? `${String(requestUrl)}/next` : null) },
+      } as unknown as Response;
+    };
+    const lookupAddresses = async () => ['203.0.113.10'];
+
+    assert.equal(
+      await fetchRemotePhotoBuffer('https://cdn.example/photo.jpg', fetchImpl, lookupAddresses),
+      null,
+    );
+    assert.equal(requests, 4);
+  });
+
   it('DIARY_IMPORT_MAX_PHOTOS_RESTORE es razonable', () => {
     assert.ok(DIARY_IMPORT_MAX_PHOTOS_RESTORE >= 50);
   });

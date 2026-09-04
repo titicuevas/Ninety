@@ -178,7 +178,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <main
         id="main-content"
         className={cn(
-          'mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 sm:py-8 lg:max-w-6xl',
+          'motion-page mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 sm:py-8 lg:max-w-6xl',
           // Tab bar hasta lg (móvil + tablet); desktop sin padding extra
           'pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))] lg:pb-8',
         )}

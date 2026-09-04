@@ -8,7 +8,7 @@ import {
 } from '../helpers/auth';
 
 test.describe('A11y — páginas públicas @a11y', () => {
-  test('landing sin violaciones graves', async ({ page }) => {
+  test('landing cumple WCAG A/AA', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /ninety/i })).toBeVisible();
     await expectNoA11yViolations(page, 'landing');
@@ -28,11 +28,25 @@ test.describe('A11y — páginas públicas @a11y', () => {
     await expect(page.locator('#main-content')).toBeVisible();
   });
 
-  test('login sin violaciones graves', async ({ page }) => {
+  test('login cumple WCAG A/AA', async ({ page }) => {
     await page.goto('/login');
     await expect(page.getByRole('heading', { name: /bienvenido de vuelta/i })).toBeVisible();
     await expectNoA11yViolations(page, 'login');
   });
+
+  for (const view of [
+    { path: '/register', heading: /crea tu cuenta/i, label: 'register' },
+    { path: '/forgot-password', heading: /recuperar contraseña/i, label: 'forgot-password' },
+    { path: '/auth/reset-password', heading: /nueva contraseña/i, label: 'reset-password' },
+    { path: '/privacidad', heading: /política de privacidad/i, label: 'privacy' },
+    { path: '/terminos', heading: /términos de uso/i, label: 'terms' },
+  ]) {
+    test(`${view.label} cumple WCAG A/AA`, async ({ page }) => {
+      await page.goto(view.path);
+      await expect(page.getByRole('heading', { level: 1, name: view.heading })).toBeVisible();
+      await expectNoA11yViolations(page, view.label);
+    });
+  }
 
   test('login: skip link alcanza el formulario', async ({ page }) => {
     await page.goto('/login');
@@ -49,7 +63,7 @@ test.describe('A11y — páginas públicas @a11y', () => {
     await expect(page.locator('#main-content')).toBeFocused();
   });
 
-  test('404 y agradecimiento sin violaciones graves', async ({ page }) => {
+  test('404 y agradecimiento cumplen WCAG A/AA', async ({ page }) => {
     await page.goto('/ruta-que-no-existe');
     await expect(page.getByRole('heading', { name: /fuera de juego/i })).toBeVisible();
     await expectNoA11yViolations(page, '404');
@@ -59,7 +73,7 @@ test.describe('A11y — páginas públicas @a11y', () => {
     await expectNoA11yViolations(page, 'agradecimiento');
   });
 
-  test('perfil público sin violaciones graves', async ({ page, request }) => {
+  test('perfil público cumple WCAG A/AA', async ({ page, request }) => {
     const data = await requirePublicDemoProfile(request);
     const name = demoDisplayName(data);
 

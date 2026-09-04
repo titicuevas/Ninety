@@ -21,6 +21,7 @@ export type MyCapsulesFilters = {
   visibility?: MyCapsulesVisibility;
   watchContext?: 'stadium' | 'tv' | 'pub' | 'other';
   tag?: string;
+  sort?: 'recent' | 'oldest' | 'top-rated';
 };
 
 function buildMyCapsulesQuery(filters: MyCapsulesFilters, offset: number): string {
@@ -36,6 +37,7 @@ function buildMyCapsulesQuery(filters: MyCapsulesFilters, offset: number): strin
   }
   if (filters.watchContext) params.set('watch_context', filters.watchContext);
   if (filters.tag) params.set('tag', filters.tag);
+  if (filters.sort && filters.sort !== 'recent') params.set('sort', filters.sort);
   return `/api/capsules/me?${params.toString()}`;
 }
 
@@ -58,12 +60,13 @@ export function useMyCapsulesInfinite(filters: MyCapsulesFilters = {}) {
   const visibility = filters.visibility ?? 'all';
   const watchContext = filters.watchContext;
   const tag = filters.tag;
+  const sort = filters.sort ?? 'recent';
 
   return useInfiniteQuery({
-    queryKey: ['capsules', 'me', 'page', { q, year, ratingMin, visibility, watchContext, tag }],
+    queryKey: ['capsules', 'me', 'page', { q, year, ratingMin, visibility, watchContext, tag, sort }],
     queryFn: ({ pageParam }) =>
       apiFetch<CapsulesResponse>(
-        buildMyCapsulesQuery({ q, year, ratingMin, visibility, watchContext, tag }, pageParam),
+        buildMyCapsulesQuery({ q, year, ratingMin, visibility, watchContext, tag, sort }, pageParam),
         {},
         session?.access_token,
       ),

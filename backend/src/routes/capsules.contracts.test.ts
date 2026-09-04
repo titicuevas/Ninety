@@ -5,6 +5,7 @@ import {
   capsuleFeedQuerySchema,
   capsulePhotoDeleteSchema,
   createCapsuleSchema,
+  ownCapsulesQuerySchema,
   updateCapsuleSchema,
 } from './capsules.contracts.js';
 
@@ -39,5 +40,11 @@ describe('capsules contracts', () => {
     });
     assert.equal(capsuleCalendarQuerySchema.safeParse({ year: 2026, month: 13 }).success, false);
     assert.equal(capsulePhotoDeleteSchema.safeParse({ url: 'no-es-url' }).success, false);
+  });
+
+  it('limita las opciones de orden del diario', () => {
+    assert.equal(ownCapsulesQuerySchema.parse({}).sort, 'recent');
+    assert.equal(ownCapsulesQuerySchema.parse({ sort: 'top-rated' }).sort, 'top-rated');
+    assert.equal(ownCapsulesQuerySchema.safeParse({ sort: 'random' }).success, false);
   });
 });

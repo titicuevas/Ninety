@@ -20,6 +20,7 @@ import { internalRouter } from './routes/internal.js';
 import { emailDigestRouter } from './routes/emailDigest.js';
 import { activityRouter } from './routes/activity.js';
 import { requestId } from './middleware/requestId.js';
+import { requestMetrics } from './middleware/requestMetrics.js';
 
 const footballLimiter = rateLimit({
   windowMs: 60_000,
@@ -42,6 +43,7 @@ export function createApp() {
   const app = express();
 
   app.use(requestId);
+  app.use(requestMetrics);
 
   // Railway (y cualquier reverse proxy) manda X-Forwarded-For; sin esto el límite
   // ve una sola IP y un flood colapsa el bucket de todo el mundo.

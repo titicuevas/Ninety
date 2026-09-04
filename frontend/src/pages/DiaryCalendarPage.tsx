@@ -142,14 +142,12 @@ export function DiaryCalendarPage() {
           <>
             <div
               className="rounded-xl border border-border/60 bg-card/40 p-3 sm:p-4"
-              role="grid"
+              role="group"
               aria-label={`Calendario ${title}`}
             >
               <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                 {weekdayLabels().map((label) => (
-                  <div key={label} role="columnheader">
-                    {label}
-                  </div>
+                  <div key={label}>{label}</div>
                 ))}
               </div>
               <div className="grid grid-cols-7 gap-1">
@@ -164,14 +162,13 @@ export function DiaryCalendarPage() {
                     <button
                       key={cell.date}
                       type="button"
-                      role="gridcell"
                       disabled={!has}
                       aria-label={
                         has
                           ? `${cell.day}: ${cell.count} ${cell.count === 1 ? 'Capsule' : 'Capsules'}`
                           : `${cell.day}: sin Capsules`
                       }
-                      aria-selected={selected || undefined}
+                      aria-pressed={has ? selected : undefined}
                       onClick={() => selectDay(cell.date, cell.count)}
                       className={cn(
                         'relative flex aspect-square flex-col items-center justify-center rounded-lg text-sm transition-colors',

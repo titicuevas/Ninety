@@ -73,7 +73,7 @@ function PhotoLightbox({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 z-[100] m-0 flex h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-black/90 p-4 open:flex"
+      className="fixed inset-0 z-[100] m-0 flex h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-black/90 px-[max(1rem,env(safe-area-inset-left,0px))] pt-[max(1rem,env(safe-area-inset-top,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] open:flex"
       aria-labelledby={titleId}
     >
       <p id={titleId} className="sr-only">
@@ -83,7 +83,7 @@ function PhotoLightbox({
       <button
         type="button"
         onClick={closeDialog}
-        className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        className="absolute top-[max(1rem,env(safe-area-inset-top,0px))] right-[max(1rem,env(safe-area-inset-right,0px))] z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         aria-label="Cerrar"
       >
         <X className="h-5 w-5" />
@@ -119,11 +119,11 @@ function PhotoLightbox({
       <img
         src={urls[index]}
         alt={`${alt} (${index + 1} de ${urls.length})`}
-        className="max-h-[85vh] max-w-full rounded-lg object-contain"
+        className="max-h-[85vh] max-h-[85dvh] max-w-full rounded-lg object-contain"
       />
 
       {urls.length > 1 ? (
-        <p className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs text-white">
+        <p className="absolute bottom-[max(1.25rem,env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs text-white">
           {index + 1} / {urls.length}
         </p>
       ) : null}

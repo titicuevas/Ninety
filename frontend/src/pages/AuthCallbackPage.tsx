@@ -120,7 +120,7 @@ export function AuthCallbackPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
+      <div className="flex min-h-screen min-h-dvh flex-col items-center justify-center gap-4 px-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] text-center">
         <p className="text-sm text-destructive">{error}</p>
         <Link to={loginPath(peekAuthReturnPath())} className="text-sm text-primary hover:underline">
           Ir al login

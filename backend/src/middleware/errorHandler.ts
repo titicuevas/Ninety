@@ -46,9 +46,11 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     }
 
     const isProduction = env.NODE_ENV === 'production';
-    const message = err.message.includes('WebSocket')
-      ? 'Error de conexión con el servidor. Reinicia el backend e inténtalo de nuevo.'
-      : err.message;
+    const message = isProduction
+      ? 'Error interno del servidor'
+      : err.message.includes('WebSocket')
+        ? 'Error de conexión con el servidor. Reinicia el backend e inténtalo de nuevo.'
+        : err.message;
 
     res.status(500).json({
       error: isProduction ? 'Error interno del servidor' : message,

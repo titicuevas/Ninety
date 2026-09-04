@@ -353,7 +353,7 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  const { limit, offset, year, rating_min, visibility, watch_context } = parsed.data;
+  const { limit, offset, year, rating_min, visibility, watch_context, sort } = parsed.data;
   const safeQ = sanitizeSearchQ(parsed.data.q);
   const tagFilter = parseCapsuleTagFilter(parsed.data.tag);
 
@@ -362,8 +362,11 @@ capsulesRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
     .from('capsules')
     .select('*', { count: 'exact' })
     .eq('user_id', req.userId!)
-    .order('watched_at', { ascending: false })
-    .order('created_at', { ascending: false });
+    .order(sort === 'top-rated' ? 'rating' : 'watched_at', {
+      ascending: sort === 'oldest',
+      nullsFirst: sort === 'top-rated' ? false : undefined,
+    })
+    .order('created_at', { ascending: sort === 'oldest' });
 
   if (year != null) {
     query = query.gte('watched_at', `${year}-01-01`).lte('watched_at', `${year}-12-31`);

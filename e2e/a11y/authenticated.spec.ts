@@ -8,12 +8,12 @@ import {
 } from '../helpers/auth';
 
 test.describe('A11y — app autenticada @a11y', () => {
-  test('home sin violaciones graves', async ({ page }) => {
+  test('home cumple WCAG A/AA', async ({ page }) => {
     await openAuthenticatedHome(page);
     await expectNoA11yViolations(page, 'home');
   });
 
-  test('feed sin violaciones graves', async ({ page }) => {
+  test('feed cumple WCAG A/AA', async ({ page }) => {
     await openAuthenticatedHome(page);
     await goAppNav(page, /feed/i);
     await expect(page).toHaveURL(/\/feed/);
@@ -21,7 +21,7 @@ test.describe('A11y — app autenticada @a11y', () => {
     await expectNoA11yViolations(page, 'feed');
   });
 
-  test('Capsule pública sin violaciones graves', async ({ page, request }) => {
+  test('Capsule pública cumple WCAG A/AA', async ({ page, request }) => {
     const data = await requirePublicDemoProfile(request);
     const capsuleId = data.capsules?.[0]?.id;
     if (!capsuleId) {
@@ -35,7 +35,7 @@ test.describe('A11y — app autenticada @a11y', () => {
     await expectNoA11yViolations(page, 'capsule');
   });
 
-  test('Mis listas sin violaciones graves', async ({ page }) => {
+  test('Mis listas cumple WCAG A/AA', async ({ page }) => {
     await openAuthenticatedHome(page);
     await goAppNav(page, /listas/i);
     await expect(page).toHaveURL(/\/collections$/);
@@ -45,7 +45,7 @@ test.describe('A11y — app autenticada @a11y', () => {
     await expectNoA11yViolations(page, 'collections');
   });
 
-  test('Quiero ir sin violaciones graves', async ({ page }) => {
+  test('Quiero ir cumple WCAG A/AA', async ({ page }) => {
     await openAuthenticatedHome(page);
     await page.goto('/want-to-go');
     await expect(page.getByRole('heading', { name: /^quiero ir$/i })).toBeVisible({
@@ -53,6 +53,31 @@ test.describe('A11y — app autenticada @a11y', () => {
     });
     await expectNoA11yViolations(page, 'want-to-go');
   });
+
+  for (const view of [
+    { path: '/activity', heading: /^actividad$/i, label: 'activity' },
+    { path: '/search', heading: /^buscar$/i, label: 'search' },
+    { path: '/search/manual', heading: /^partido manual$/i, label: 'manual-match' },
+    { path: '/capsules', heading: /^mis capsules$/i, label: 'capsules' },
+    { path: '/likes', heading: /^me gusta$/i, label: 'likes' },
+    { path: '/diary/calendar', heading: /^calendario$/i, label: 'calendar' },
+    { path: '/collections/explore', heading: /explorar colecciones/i, label: 'explore-collections' },
+    { path: '/collections/likes', heading: /listas que te gustan/i, label: 'liked-collections' },
+    { path: '/notifications', heading: /^notificaciones$/i, label: 'notifications' },
+    { path: '/profile', heading: /perfil/i, label: 'profile' },
+    { path: '/settings', heading: /ajustes/i, label: 'settings' },
+  ]) {
+    test(`${view.label} cumple WCAG A/AA`, async ({ page }) => {
+      await openAuthenticatedHome(page);
+      await page.goto(view.path);
+      const ready =
+        view.label === 'liked-collections'
+          ? page.locator('#liked-collections-heading')
+          : page.getByRole('heading', { level: 1, name: view.heading }).first();
+      await expect(ready).toBeVisible({ timeout: 30_000 });
+      await expectNoA11yViolations(page, view.label);
+    });
+  }
 
   test('confirmar eliminar: foco al abrir, Esc y restauración', async ({ page }) => {
     await openAuthenticatedHome(page);
@@ -140,6 +165,7 @@ test.describe('A11y — app autenticada @a11y', () => {
     await openAuthenticatedHome(page);
     await page.goto(`/u/${DEMO_USERNAME}`);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
+    await expectNoA11yViolations(page, 'public-profile-authenticated');
     await page.getByRole('tab', { name: /^stats$/i }).click();
     const tabs = page.getByTestId('public-wrapped-scope');
     await expect(tabs).toBeVisible({ timeout: 15_000 });

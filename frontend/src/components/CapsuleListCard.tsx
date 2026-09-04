@@ -41,7 +41,7 @@ export function CapsuleListCard({
   const hasPhotos = getCapsulePhotoUrls(capsule).length > 0;
 
   return (
-    <Card className="overflow-hidden transition-colors has-[[data-capsule-detail]:hover]:border-primary/30 has-[[data-capsule-detail]:focus-visible]:border-primary/30">
+    <Card className="motion-card overflow-hidden transition-colors has-[[data-capsule-detail]:hover]:border-primary/30 has-[[data-capsule-detail]:focus-visible]:border-primary/30">
       <CardContent className="p-0">
         {header ? <div className="px-4 pt-4 sm:px-5 sm:pt-5">{header}</div> : null}
 

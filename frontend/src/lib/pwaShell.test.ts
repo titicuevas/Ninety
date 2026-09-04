@@ -13,11 +13,13 @@ describe('PWA shell', () => {
       name: string;
       start_url: string;
       display: string;
+      orientation?: string;
       icons: Array<{ src: string; sizes?: string; type?: string; purpose?: string }>;
     };
     assert.match(manifest.name, /Ninety/);
     assert.equal(manifest.start_url, '/home');
     assert.equal(manifest.display, 'standalone');
+    assert.equal(manifest.orientation, undefined, 'la PWA debe poder rotar en móviles y tablets');
 
     const pngAny = manifest.icons.filter(
       (i) => i.type === 'image/png' && (i.purpose === 'any' || !i.purpose),

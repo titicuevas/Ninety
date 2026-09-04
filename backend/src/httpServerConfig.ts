@@ -1,0 +1,3 @@
+export const HTTP_HEADERS_TIMEOUT_MS = 15_000;
+export const HTTP_REQUEST_TIMEOUT_MS = 30_000;
+export const HTTP_KEEP_ALIVE_TIMEOUT_MS = 5_000;

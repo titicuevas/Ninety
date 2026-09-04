@@ -7,7 +7,6 @@
   "display": "standalone",
   "background_color": "#0a0a0b",
   "theme_color": "#10b981",
-  "orientation": "portrait-primary",
   "lang": "es",
   "categories": ["sports", "lifestyle"],
   "icons": [

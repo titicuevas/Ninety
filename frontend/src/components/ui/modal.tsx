@@ -104,7 +104,7 @@ export function Modal({
       aria-modal="true"
       className={cn(
         'fixed inset-0 z-[100] m-0 flex h-full max-h-none w-full max-w-none items-center justify-center',
-        'border-0 bg-transparent p-4 open:flex sm:p-6',
+        'border-0 bg-transparent px-[max(1rem,env(safe-area-inset-left,0px))] pt-[max(1rem,env(safe-area-inset-top,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] open:flex sm:p-6',
         '[&::backdrop]:bg-black/70',
       )}
     >
