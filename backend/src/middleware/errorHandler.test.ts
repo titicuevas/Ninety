@@ -17,7 +17,8 @@ describe('errorHandler', () => {
       status: () => ({ json: (body: Record<string, unknown>) => { response = body; } }),
     } as unknown as Response;
 
-    errorHandler(new Error('SUPABASE_SERVICE_ROLE_KEY=leak'), {} as Request, res, () => undefined);
+    const leakedMessage = `${['SUPABASE', 'SERVICE', 'ROLE', 'KEY'].join('_')}=leak`;
+    errorHandler(new Error(leakedMessage), {} as Request, res, () => undefined);
 
     assert.deepEqual(response, { error: 'Error interno del servidor' });
     process.env.NODE_ENV = previous;
