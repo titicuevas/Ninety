@@ -6,6 +6,8 @@ config({ path: resolve(process.cwd(), 'backend/.env') });
 
 const siteURL = 'http://localhost:4173';
 process.env.E2E_SITE_URL = siteURL;
+const apiURL = process.env.E2E_API_URL ?? 'https://ninety-api.up.railway.app';
+process.env.E2E_API_URL = apiURL;
 
 export default defineConfig({
   testDir: './e2e',
@@ -32,15 +34,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'npm run dev --prefix backend',
-      url: 'http://localhost:3001/api/health',
-      reuseExistingServer: !process.env.CI,
-      timeout: 180_000,
-      stdout: 'pipe',
-      stderr: 'pipe',
-    },
-    {
-      command: 'env PORT=4173 API_URL=http://localhost:3001 SITE_URL=http://localhost:4173 npm start --prefix frontend',
+      command: `env PORT=4173 API_URL=${apiURL} SITE_URL=${siteURL} npm start --prefix frontend`,
       url: `${siteURL}/health`,
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
