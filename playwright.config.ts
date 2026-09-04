@@ -7,6 +7,7 @@ config({ path: resolve(process.cwd(), 'backend/.env') });
 const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:5173';
 const authFile = 'e2e/.auth/user.json';
 const forbidSkips = process.env.E2E_FORBID_SKIPS === 'true';
+const boundaryOnly = process.env.E2E_BOUNDARY_ONLY === 'true';
 
 /**
  * Proyectos QE:
@@ -171,23 +172,32 @@ export default defineConfig({
   ],
   webServer: process.env.E2E_BASE_URL
     ? undefined
-    : [
-        {
-          command: 'npm run dev --prefix backend',
-          url: 'http://localhost:3001/api/health',
-          // Local: reutilizar evita matar Vite mid-suite; CI siempre arranca limpio
-          reuseExistingServer: !process.env.CI,
-          timeout: 180_000,
-          stdout: 'pipe',
-          stderr: 'pipe',
-        },
-        {
+    : boundaryOnly
+      ? {
           command: 'npm run dev --prefix frontend',
           url: 'http://localhost:5173',
           reuseExistingServer: !process.env.CI,
           timeout: 180_000,
           stdout: 'pipe',
           stderr: 'pipe',
-        },
-      ],
+        }
+      : [
+          {
+            command: 'npm run dev --prefix backend',
+            url: 'http://localhost:3001/api/health',
+            // Local: reutilizar evita matar Vite mid-suite; CI siempre arranca limpio
+            reuseExistingServer: !process.env.CI,
+            timeout: 180_000,
+            stdout: 'pipe',
+            stderr: 'pipe',
+          },
+          {
+            command: 'npm run dev --prefix frontend',
+            url: 'http://localhost:5173',
+            reuseExistingServer: !process.env.CI,
+            timeout: 180_000,
+            stdout: 'pipe',
+            stderr: 'pipe',
+          },
+        ],
 });

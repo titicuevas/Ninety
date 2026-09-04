@@ -61,6 +61,7 @@ jobs:
         if: always()
         run: >-
           env -u E2E_BASE_URL -u E2E_API_URL -u E2E_SITE_URL
+          E2E_BOUNDARY_ONLY=true
           npm run test:e2e:boundary -- --retries=2
 
       - name: Diagnóstico de disponibilidad pública
