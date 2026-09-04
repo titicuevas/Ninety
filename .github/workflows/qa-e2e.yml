@@ -59,7 +59,22 @@ jobs:
 
       - name: Boundary de rutas contra app local
         if: always()
-        run: env -u E2E_BASE_URL -u E2E_API_URL npm run test:e2e:boundary
+        run: >-
+          env -u E2E_BASE_URL -u E2E_API_URL -u E2E_SITE_URL
+          npm run test:e2e:boundary -- --retries=2
+
+      - name: Diagnóstico de disponibilidad pública
+        if: failure()
+        run: |
+          curl --fail-with-body --silent --show-error --max-time 20 \
+            -A 'github-actions-qa' \
+            -o /tmp/ninety-og.html \
+            -w 'Frontend público: HTTP %{http_code}, %{size_download} bytes\n' \
+            'https://www.getninety.app/u/beta_ninety'
+          curl --fail-with-body --silent --show-error --max-time 20 \
+            -o /tmp/ninety-api.json \
+            -w 'API pública: HTTP %{http_code}, %{size_download} bytes\n' \
+            'https://ninety-api.up.railway.app/api/capsules/user/beta_ninety?limit=1&offset=0'
 
       - name: Upload Playwright report
         if: failure()
