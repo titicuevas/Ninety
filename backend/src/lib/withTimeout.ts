@@ -24,7 +24,7 @@ export async function withTimeout<T>(
 
 /** Fetch con AbortSignal.timeout para clientes HTTP (Supabase / apiFetch). */
 export function fetchWithTimeout(
-  input: RequestInfo | URL,
+  input: Parameters<typeof fetch>[0],
   init: RequestInit | undefined,
   ms: number,
 ): Promise<Response> {
