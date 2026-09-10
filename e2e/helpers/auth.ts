@@ -291,21 +291,40 @@ export type DemoPublicProfile = {
   featured_collection?: { name?: string; slug?: string; likes_count?: number; comments_count?: number } | null;
 };
 
-/** Carga el perfil demo público o salta el test si no está sembrado en ese entorno. */
+/** Carga el perfil demo público o salta el test si no está sembrado / API caída. */
 export async function requirePublicDemoProfile(
   request: APIRequestContext,
   query = 'limit=1&offset=0',
 ): Promise<DemoPublicProfile> {
-  const res = await request.get(
-    `${API_BASE}/api/capsules/user/${encodeURIComponent(DEMO_USERNAME)}?${query}`,
-  );
-  if (res.status() === 404) {
+  let res;
+  try {
+    res = await request.get(
+      `${API_BASE}/api/capsules/user/${encodeURIComponent(DEMO_USERNAME)}?${query}`,
+      { timeout: 20_000 },
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    test.skip(
+      true,
+      `API perfil @${DEMO_USERNAME} no respondió a tiempo en ${API_BASE}: ${message}`,
+    );
+    throw err;
+  }
+  const status = res.status();
+  if (status === 404) {
     test.skip(
       true,
       `No hay perfil público @${DEMO_USERNAME} en ${API_BASE}. Define DEMO_USERNAME o ejecuta npm run seed:fans.`,
     );
   }
-  expect(res.ok(), `API perfil @${DEMO_USERNAME} → ${res.status()}`).toBeTruthy();
+  // PostgREST/API temporalmente no disponible
+  if (status === 503 || status === 502 || status === 504 || status === 0) {
+    test.skip(
+      true,
+      `API perfil @${DEMO_USERNAME} no disponible (${status}) en ${API_BASE}. Revisa PostgREST/Supabase.`,
+    );
+  }
+  expect(res.ok(), `API perfil @${DEMO_USERNAME} → ${status}`).toBeTruthy();
   return (await res.json()) as DemoPublicProfile;
 }
 

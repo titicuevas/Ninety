@@ -90,6 +90,38 @@ function StarRating({ rating }: { rating: number | null }) {
   );
 }
 
+function ShowcaseUnavailable() {
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-b from-primary/[0.08] to-transparent px-4 py-7 text-center">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.06]"
+        aria-hidden
+        style={{
+          backgroundImage:
+            'linear-gradient(90deg, transparent 49%, currentColor 49%, currentColor 51%, transparent 51%), radial-gradient(circle at center, transparent 28%, currentColor 28.5%, currentColor 29%, transparent 29.5%)',
+          backgroundSize: '100% 100%, min(55vw, 220px) min(55vw, 220px)',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          color: 'var(--primary)',
+        }}
+      />
+      <p className="relative text-sm font-semibold text-foreground">Diario en el vestuario</p>
+      <p className="relative mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-muted-foreground">
+        El showcase público no está disponible ahora mismo. Entra en el perfil o vuelve en unos
+        minutos.
+      </p>
+      <Link
+        to="/u/beta_ninety"
+        className="relative mt-4 inline-flex min-h-11 items-center rounded-lg bg-primary/15 px-4 text-xs font-semibold text-primary transition-colors hover:bg-primary/25"
+        tabIndex={-1}
+        aria-hidden
+      >
+        Ir a @beta_ninety →
+      </Link>
+    </div>
+  );
+}
+
 function ShowcaseStats({
   total,
   avg,
@@ -101,17 +133,17 @@ function ShowcaseStats({
 }) {
   return (
     <div className="grid grid-cols-3 gap-2 text-center sm:gap-3">
-      <div className="rounded-xl bg-background/55 px-2 py-3.5 sm:p-4">
+      <div className="rounded-xl border border-border/40 bg-background/55 px-2 py-3.5 transition-colors sm:p-4">
         <p className="font-display text-2xl font-bold tabular-nums text-primary">{total}</p>
         <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs">Partidos</p>
       </div>
-      <div className="rounded-xl bg-background/55 px-2 py-3.5 sm:p-4">
+      <div className="rounded-xl border border-border/40 bg-background/55 px-2 py-3.5 transition-colors sm:p-4">
         <p className="font-display text-2xl font-bold tabular-nums text-primary">
           {avg != null ? avg.toFixed(1) : '—'}
         </p>
         <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs">Media</p>
       </div>
-      <div className="rounded-xl bg-background/55 px-2 py-3.5 sm:p-4">
+      <div className="rounded-xl border border-border/40 bg-background/55 px-2 py-3.5 transition-colors sm:p-4">
         <p className="truncate text-sm font-bold text-primary">
           {topComp ?? '—'}
         </p>
@@ -201,7 +233,7 @@ export function LandingPage() {
   const stats = data?.stats;
   const capsules = data?.capsules.slice(0, 3) ?? [];
   const hasData = !isLoading && data != null;
-  const showcaseUnavailable = isFetched && (isError || !hasData);
+  const showUnavailable = isFetched && (isError || !hasData);
 
   return (
     <div className="landing-page min-h-dvh text-foreground">
@@ -249,7 +281,10 @@ export function LandingPage() {
           <div className="mb-10 flex w-full max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
             <Link
               to="/register"
-              className={cn(buttonVariants({ size: 'lg' }), 'min-h-12 w-full text-center sm:w-auto sm:min-w-44')}
+              className={cn(
+                buttonVariants({ size: 'lg' }),
+                'min-h-12 w-full text-center shadow-[0_12px_40px_-16px_rgba(16,185,129,0.75)] transition-transform hover:scale-[1.02] active:scale-[0.99] sm:w-auto sm:min-w-44',
+              )}
             >
               Crear mi diario gratis
             </Link>
@@ -263,16 +298,16 @@ export function LandingPage() {
 
           {/* Caso de uso verificable: diario público de la cuenta beta */}
           <div
-            className="mb-10 w-full max-w-lg overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-br from-zinc-900 via-zinc-900 to-emerald-950/45 p-5 shadow-lg shadow-black/25 sm:p-6"
+            className="mb-10 w-full max-w-lg overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-br from-zinc-900 via-zinc-900/95 to-emerald-950/50 p-5 shadow-[0_20px_50px_-28px_rgba(16,185,129,0.45)] sm:p-6"
             aria-hidden
           >
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-xs font-bold uppercase tracking-wider text-primary">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <p className="text-left text-[11px] font-bold uppercase tracking-[0.14em] text-primary sm:text-xs">
                 Caso de uso · diario público de @beta_ninety
               </p>
               <Link
                 to="/u/beta_ninety"
-                className="text-[11px] text-muted-foreground underline-offset-2 hover:text-primary hover:underline"
+                className="shrink-0 text-[11px] font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-primary hover:underline"
                 tabIndex={-1}
                 aria-hidden
               >
@@ -280,79 +315,66 @@ export function LandingPage() {
               </Link>
             </div>
 
-            {isLoading && <ShowcaseSkeleton />}
-
-            {showcaseUnavailable && (
-              <div className="rounded-xl border border-border/50 bg-background/40 px-4 py-6 text-center">
-                <p className="text-sm font-medium text-foreground">Diario en el vestuario</p>
-                <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                  El showcase público no está disponible ahora mismo. Entra en el perfil o vuelve en
-                  unos minutos.
-                </p>
-                <Link
-                  to="/u/beta_ninety"
-                  className="mt-3 inline-flex min-h-11 items-center text-xs font-semibold text-primary underline-offset-2 hover:underline"
-                  tabIndex={-1}
-                  aria-hidden
-                >
-                  Ir a @beta_ninety →
-                </Link>
-              </div>
-            )}
-
-            {hasData && stats && (
-              <ShowcaseStats
-                total={stats.totalMatches}
-                avg={stats.averageRating}
-                topComp={stats.topCompetition?.name ?? null}
-              />
-            )}
-
-            {hasData && !stats && (
-              <ShowcaseStats total={data.total} avg={null} topComp={null} />
-            )}
-
-            {hasData && capsules.length > 0 && (
-              <div className="mt-3 space-y-1.5">
-                {capsules.map((c) => (
-                  <CapsuleRow
-                    key={c.id}
-                    home={c.home_team_name}
-                    away={c.away_team_name}
-                    homeCrest={c.home_team_crest}
-                    awayCrest={c.away_team_crest}
-                    homeScore={c.home_score}
-                    awayScore={c.away_score}
-                    competition={c.competition_name}
-                    watchedAt={c.watched_at}
-                    rating={c.rating}
+            {isLoading ? (
+              <ShowcaseSkeleton />
+            ) : showUnavailable ? (
+              <ShowcaseUnavailable />
+            ) : (
+              <>
+                {hasData && stats && (
+                  <ShowcaseStats
+                    total={stats.totalMatches}
+                    avg={stats.averageRating}
+                    topComp={stats.topCompetition?.name ?? null}
                   />
-                ))}
-              </div>
-            )}
+                )}
 
-            {/* Stats secundarias si las hay */}
-            {hasData && stats && (
-              <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 border-t border-border/30 pt-3">
-                {stats.stadiumVisits > 0 && (
-                  <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                    <Trophy className="h-3 w-3 text-primary" />
-                    {stats.stadiumVisits} estadios
-                  </span>
+                {hasData && !stats && (
+                  <ShowcaseStats total={data.total} avg={null} topComp={null} />
                 )}
-                {stats.fiveStarCount > 0 && (
-                  <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                    <Star className="h-3 w-3 fill-primary text-primary" />
-                    {stats.fiveStarCount} valoración perfecta
-                  </span>
+
+                {hasData && capsules.length > 0 && (
+                  <div className="mt-3 space-y-1.5">
+                    {capsules.map((c) => (
+                      <CapsuleRow
+                        key={c.id}
+                        home={c.home_team_name}
+                        away={c.away_team_name}
+                        homeCrest={c.home_team_crest}
+                        awayCrest={c.away_team_crest}
+                        homeScore={c.home_score}
+                        awayScore={c.away_score}
+                        competition={c.competition_name}
+                        watchedAt={c.watched_at}
+                        rating={c.rating}
+                      />
+                    ))}
+                  </div>
                 )}
-                {stats.topTeam && (
-                  <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                    <Users className="h-3 w-3 text-primary" />
-                    {stats.topTeam.name} ({stats.topTeam.count})
-                  </span>
+
+                {hasData && stats && (
+                  <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 border-t border-border/30 pt-3">
+                    {stats.stadiumVisits > 0 && (
+                      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <Trophy className="h-3 w-3 text-primary" />
+                        {stats.stadiumVisits} estadios
+                      </span>
+                    )}
+                    {stats.fiveStarCount > 0 && (
+                      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <Star className="h-3 w-3 fill-primary text-primary" />
+                        {stats.fiveStarCount} valoración perfecta
+                      </span>
+                    )}
+                    {stats.topTeam && (
+                      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <Users className="h-3 w-3 text-primary" />
+                        {stats.topTeam.name} ({stats.topTeam.count})
+                      </span>
+                    )}
+                  </div>
                 )}
-              </div>
+              </>
             )}
           </div>
 
@@ -368,7 +390,7 @@ export function LandingPage() {
               {features.map((item) => (
                 <li
                   key={item.title}
-                  className="rounded-2xl border border-border/80 bg-card/70 p-4 text-left sm:px-3.5 sm:text-center"
+                  className="motion-card rounded-2xl border border-border/80 bg-card/70 p-4 text-left sm:px-3.5 sm:text-center"
                 >
                   <item.icon className="mb-2.5 h-5 w-5 text-primary sm:mx-auto" aria-hidden />
                   <p className="text-sm font-semibold text-foreground">{item.title}</p>
