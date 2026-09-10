@@ -282,6 +282,24 @@ export function LandingPage() {
 
             {isLoading && <ShowcaseSkeleton />}
 
+            {showcaseUnavailable && (
+              <div className="rounded-xl border border-border/50 bg-background/40 px-4 py-6 text-center">
+                <p className="text-sm font-medium text-foreground">Diario en el vestuario</p>
+                <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                  El showcase público no está disponible ahora mismo. Entra en el perfil o vuelve en
+                  unos minutos.
+                </p>
+                <Link
+                  to="/u/beta_ninety"
+                  className="mt-3 inline-flex min-h-11 items-center text-xs font-semibold text-primary underline-offset-2 hover:underline"
+                  tabIndex={-1}
+                  aria-hidden
+                >
+                  Ir a @beta_ninety →
+                </Link>
+              </div>
+            )}
+
             {hasData && stats && (
               <ShowcaseStats
                 total={stats.totalMatches}
