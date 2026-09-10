@@ -87,6 +87,7 @@ export function WrappedTeaserCompact({ href, stats }: { href: string; stats: Cap
       to={href}
       className="group flex items-center gap-4 rounded-2xl border border-border/70 bg-gradient-to-r from-card via-card to-primary/[0.06] px-4 py-3.5 transition-colors hover:border-primary/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-5"
       data-testid="wrapped-teaser-compact"
+      aria-label={`Ver tu Wrapped: ${stats.totalMatches} ${stats.totalMatches === 1 ? 'partido' : 'partidos'}`}
     >
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold uppercase tracking-wider text-primary">Tu Wrapped</p>

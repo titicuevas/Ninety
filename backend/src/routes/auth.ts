@@ -67,7 +67,8 @@ authRouter.post('/login', async (req, res) => {
   const { data, error } = await supabaseAnon.auth.signInWithPassword(parsed.data);
 
   if (error || !data.session) {
-    res.status(401).json({ error: error?.message ?? 'Credenciales inválidas' });
+    // Mensaje genérico: no filtrar "User not found" vs "Invalid login credentials".
+    res.status(401).json({ error: 'Credenciales inválidas' });
     return;
   }
 

@@ -954,7 +954,12 @@ capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res
     return;
   }
   if (profileResult.error === 'query') {
-    res.status(400).json({ error: profileResult.message ?? 'No se pudo cargar el perfil' });
+    const timedOut = /agotó el tiempo|timeout|no responde/i.test(profileResult.message ?? '');
+    res.status(timedOut ? 503 : 400).json({
+      error: timedOut
+        ? 'El servicio de datos no responde a tiempo. Inténtalo de nuevo en unos minutos.'
+        : (profileResult.message ?? 'No se pudo cargar el perfil'),
+    });
     return;
   }
   if (profileResult.error === 'not_found' || !profileResult.profile) {

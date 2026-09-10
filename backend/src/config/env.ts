@@ -21,7 +21,10 @@ export const envSchema = z
     RESEND_API_KEY: z.string().min(1).optional(),
     /** Remitente digest email; default Ninety <noreply@getninety.app>. */
     EMAIL_DIGEST_FROM: z.string().min(3).optional(),
-    /** Secreto HMAC para baja one-click del digest email (fallback: CRON_SECRET). */
+    /**
+     * Secreto HMAC para baja one-click del digest email.
+     * Recomendado en prod (si falta, se usa CRON_SECRET; nunca la service role).
+     */
     EMAIL_UNSUBSCRIBE_SECRET: z.string().min(8).optional(),
   })
   .refine((data) => data.SUPABASE_ANON_KEY || data.SUPABASE_PUBLISHABLE_KEY, {
@@ -29,7 +32,16 @@ export const envSchema = z
   })
   .refine((data) => data.NODE_ENV !== 'production' || (data.CRON_SECRET && data.CRON_SECRET.length >= 8), {
     message: 'CRON_SECRET es obligatorio en producción (mín. 8 caracteres)',
-  });
+  })
+  .refine(
+    (data) =>
+      data.NODE_ENV !== 'production' ||
+      Boolean(data.EMAIL_UNSUBSCRIBE_SECRET?.trim() || data.CRON_SECRET?.trim()),
+    {
+      message:
+        'En producción define EMAIL_UNSUBSCRIBE_SECRET (recomendado) o CRON_SECRET para firmar bajas del digest',
+    },
+  );
 
 export type ResolvedEnv = z.infer<typeof envSchema> & {
   SUPABASE_ANON_KEY: string;

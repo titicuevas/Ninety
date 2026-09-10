@@ -51,7 +51,13 @@ export function createApp() {
     app.set('trust proxy', 1);
   }
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      // API JSON: CSP estricta no aporta y puede romper previews; HSTS/referrer sí ayudan.
+      contentSecurityPolicy: false,
+      referrerPolicy: { policy: 'no-referrer' },
+    }),
+  );
   app.use(
     cors({
       origin: (origin, callback) => {

@@ -45,6 +45,17 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
       return;
     }
 
+    const timedOut =
+      err.name === 'TimeoutError' ||
+      err.name === 'AbortError' ||
+      /timeout|aborted|agotó el tiempo|UND_ERR_CONNECT/i.test(err.message);
+    if (timedOut) {
+      res.status(503).json({
+        error: 'El servicio de datos no responde a tiempo. Inténtalo de nuevo en unos minutos.',
+      });
+      return;
+    }
+
     const isProduction = env.NODE_ENV === 'production';
     const message = isProduction
       ? 'Error interno del servidor'

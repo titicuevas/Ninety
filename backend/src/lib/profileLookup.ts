@@ -1,5 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { normalizeUsernameParam } from './usernameParam.js';
+import { withTimeout } from './withTimeout.js';
+
+/** Tope para no colgar perfiles públicos si PostgREST no responde. */
+const PROFILE_LOOKUP_TIMEOUT_MS = 12_000;
 
 /** Columnas públicas compatibles con esquemas sin `bio` / `display_name`. */
 export const PROFILE_PUBLIC_SELECT_CORE =
@@ -72,7 +76,20 @@ export async function fetchProfileByUsername(
   }
 
   const preferred = options.columns ?? PROFILE_PUBLIC_SELECT_WITH_BIO;
-  const first = await client.from('profiles').select(preferred).eq('username', normalized).maybeSingle();
+  let first: { data: unknown; error: PostgrestLikeError };
+  try {
+    first = (await withTimeout(
+      client.from('profiles').select(preferred).eq('username', normalized).maybeSingle(),
+      PROFILE_LOOKUP_TIMEOUT_MS,
+      'Lookup de perfil',
+    )) as { data: unknown; error: PostgrestLikeError };
+  } catch (err) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : 'El servicio de datos no responde. Inténtalo de nuevo.';
+    return { profile: null, error: 'query', message };
+  }
 
   if (!first.error && first.data) {
     return { profile: first.data as unknown as PublicProfileRow, error: null };

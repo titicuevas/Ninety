@@ -87,6 +87,15 @@ export async function verifyEmailTokenHash(
   return session;
 }
 
+/** Intercambia token_hash de recovery por access_token sin guardar sesión en el dispositivo. */
+export async function exchangeRecoveryTokenHash(tokenHash: string): Promise<string> {
+  const { session } = await apiFetch<AuthResponse>('/api/auth/verify-email', {
+    method: 'POST',
+    body: JSON.stringify({ token_hash: tokenHash, type: 'recovery' }),
+  });
+  return session.access_token;
+}
+
 export async function validateSession(accessToken: string) {
   return apiFetch<{ user: AuthSession['user'] }>(
     '/api/auth/session',

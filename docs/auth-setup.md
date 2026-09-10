@@ -172,6 +172,7 @@ El producto **no** envía correos desde el backend propio: signup, confirmación
 | Crear usuario (`POST /api/auth/register` → `signUp`) | Listo | Confirmación email según Auth → Providers → Email; SMTP o built-in |
 | Recovery (`/forgot-password` → `resetPasswordForEmail` → `/auth/reset-password`) | Listo | Redirect URL `{CLIENT_URL}/auth/reset-password`; plantilla Recovery |
 | Magic link / OTP | **No implementado** | N/A hasta producto |
+| Contraseña mínima (registro/reset) | **10 caracteres** | Dashboard → **Authentication → Sign In / Providers → Email** → Minimum password length = **10** (no está en Emails → Templates) |
 | Google OAuth | Listo | Provider Google + Redirect URLs |
 
 ### Built-in vs SMTP custom
@@ -209,15 +210,24 @@ Hasta completar 1–5 en el proyecto Supabase / Railway, los flujos de email que
 
 Dashboard → **Authentication → Email Templates**.
 
-Sustituye **Subject** + **Body** de **Confirm signup** y **Reset password (Recovery)**. Usa exactamente las variables `{{ .ConfirmationURL }}`, `{{ .SiteURL }}`, `{{ .Email }}`.
+Pega **Subject** + **Body** de cada plantilla. No renombres variables: `{{ .ConfirmationURL }}`, `{{ .SiteURL }}`, `{{ .Email }}`, `{{ .NewEmail }}`, `{{ .Token }}`.
+
+| Plantilla en Dashboard | ¿La app la usa hoy? | Prioridad |
+|------------------------|---------------------|-----------|
+| Confirm signup | Sí | Obligatoria |
+| Reset password (Recovery) | Sí | Obligatoria |
+| Magic link | No | Traducir por si acaso |
+| Invite user | No (invites propios de Ninety) | Traducir por si acaso |
+| Change email address | Posible vía Auth | Recomendada |
+| Reauthentication | No | Traducir por si acaso |
 
 El código ya envía `emailRedirectTo` / `redirectTo` a `{CLIENT_URL}/auth/callback` (signup) y `{CLIENT_URL}/auth/reset-password` (recovery). `{{ .ConfirmationURL }}` incluye ese redirect.
 
-> **Importante:** estas plantillas **no salen del repo**. Hay que pegarlas a mano en el Dashboard. Tras cambiarlas, manda un email de prueba (registro o forgot-password).
+> **Importante:** estas plantillas **no se despliegan solas**. Hay que pegarlas a mano en el Dashboard. Tras cambiarlas, prueba registro + forgot-password.
 
-**Recordatorio Site URL:** Authentication → URL Configuration → Site URL = `https://www.getninety.app` (y Redirect URLs con `/auth/callback` + `/auth/reset-password`). Si Site URL apunta a otro origen, el enlace del mail puede dejar el hash en `/` o fallar.
+**Recordatorio Site URL:** Authentication → URL Configuration → Site URL = `https://www.getninety.app` (y Redirect URLs con `/auth/callback` + `/auth/reset-password`).
 
-### Confirm signup
+### 1. Confirm signup
 
 **Subject:**
 
@@ -225,7 +235,7 @@ El código ya envía `emailRedirectTo` / `redirectTo` a `{CLIENT_URL}/auth/callb
 Confirma tu cuenta en Ninety
 ```
 
-**Body:** (copiar todo el bloque HTML)
+**Body:**
 
 ```html
 <!DOCTYPE html>
@@ -278,7 +288,187 @@ Confirma tu cuenta en Ninety
 </html>
 ```
 
-### Recovery (Reset password)
+### 2. Magic link
+
+**Subject:**
+
+```
+Tu enlace para entrar en Ninety
+```
+
+**Body:**
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#050506;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#050506;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#0a0a0b;border:1px solid #1f2937;border-radius:16px;overflow:hidden;">
+        <tr>
+          <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;">
+            <table role="presentation" cellspacing="0" cellpadding="0">
+              <tr>
+                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">90</td>
+                <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;">Ninety</td>
+              </tr>
+            </table>
+            <p style="margin:20px 0 0;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#34d399;">Acceso</p>
+            <h1 style="margin:8px 0 16px;font-size:24px;line-height:1.25;color:#fafafa;font-weight:700;">Enlace de acceso</h1>
+            <p style="margin:0 0 12px;font-size:15px;line-height:1.55;color:#a1a1aa;">
+              Usa el botón para entrar en Ninety con <strong style="color:#fafafa;">{{ .Email }}</strong>.
+            </p>
+            <p style="margin:0 0 24px;font-size:15px;line-height:1.55;color:#a1a1aa;">
+              El enlace caduca pronto y solo se puede usar una vez.
+            </p>
+            <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 28px;">
+              <tr>
+                <td style="border-radius:10px;background:#10b981;">
+                  <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 22px;font-size:15px;font-weight:700;color:#042f1e;text-decoration:none;border-radius:10px;">
+                    Entrar en Ninety
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#71717a;">Si el botón no funciona, copia y pega este enlace:</p>
+            <p style="margin:0 0 24px;font-size:12px;line-height:1.5;word-break:break-all;color:#34d399;">{{ .ConfirmationURL }}</p>
+            <p style="margin:0;font-size:12px;line-height:1.5;color:#52525b;">Si no pediste este enlace, ignora el correo.</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:16px 28px 24px;border-top:1px solid #1f2937;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;color:#52525b;">
+            <a href="https://www.getninety.app" style="color:#10b981;text-decoration:none;font-weight:600;">www.getninety.app</a>
+            · Site: {{ .SiteURL }}
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+```
+
+### 3. Invite user
+
+**Subject:**
+
+```
+Te han invitado a Ninety
+```
+
+**Body:**
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#050506;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#050506;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#0a0a0b;border:1px solid #1f2937;border-radius:16px;overflow:hidden;">
+        <tr>
+          <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;">
+            <table role="presentation" cellspacing="0" cellpadding="0">
+              <tr>
+                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">90</td>
+                <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;">Ninety</td>
+              </tr>
+            </table>
+            <p style="margin:20px 0 0;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#34d399;">Invitación</p>
+            <h1 style="margin:8px 0 16px;font-size:24px;line-height:1.25;color:#fafafa;font-weight:700;">Únete a Ninety</h1>
+            <p style="margin:0 0 12px;font-size:15px;line-height:1.55;color:#a1a1aa;">
+              Te han invitado a crear una cuenta en Ninety, el diario de partidos vistos.
+            </p>
+            <p style="margin:0 0 24px;font-size:15px;line-height:1.55;color:#a1a1aa;">
+              Pulsa el botón para aceptar la invitación{{ if .Email }} de <strong style="color:#fafafa;">{{ .Email }}</strong>{{ end }}.
+            </p>
+            <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 28px;">
+              <tr>
+                <td style="border-radius:10px;background:#10b981;">
+                  <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 22px;font-size:15px;font-weight:700;color:#042f1e;text-decoration:none;border-radius:10px;">
+                    Aceptar invitación
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#71717a;">Si el botón no funciona, copia y pega este enlace:</p>
+            <p style="margin:0 0 24px;font-size:12px;line-height:1.5;word-break:break-all;color:#34d399;">{{ .ConfirmationURL }}</p>
+            <p style="margin:0;font-size:12px;line-height:1.5;color:#52525b;">Si no esperabas esta invitación, puedes ignorar el correo.</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:16px 28px 24px;border-top:1px solid #1f2937;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;color:#52525b;">
+            <a href="https://www.getninety.app" style="color:#10b981;text-decoration:none;font-weight:600;">www.getninety.app</a>
+            · Site: {{ .SiteURL }}
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+```
+
+### 4. Change email address
+
+**Subject:**
+
+```
+Confirma tu nuevo email en Ninety
+```
+
+**Body:**
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#050506;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#050506;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#0a0a0b;border:1px solid #1f2937;border-radius:16px;overflow:hidden;">
+        <tr>
+          <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;">
+            <table role="presentation" cellspacing="0" cellpadding="0">
+              <tr>
+                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">90</td>
+                <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;">Ninety</td>
+              </tr>
+            </table>
+            <p style="margin:20px 0 0;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#34d399;">Cuenta</p>
+            <h1 style="margin:8px 0 16px;font-size:24px;line-height:1.25;color:#fafafa;font-weight:700;">Confirma tu nuevo email</h1>
+            <p style="margin:0 0 24px;font-size:15px;line-height:1.55;color:#a1a1aa;">
+              Pulsa el botón para confirmar <strong style="color:#fafafa;">{{ .NewEmail }}</strong> como tu nuevo email en Ninety.
+            </p>
+            <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 28px;">
+              <tr>
+                <td style="border-radius:10px;background:#10b981;">
+                  <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 22px;font-size:15px;font-weight:700;color:#042f1e;text-decoration:none;border-radius:10px;">
+                    Confirmar nuevo email
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#71717a;">Si el botón no funciona, copia y pega este enlace:</p>
+            <p style="margin:0 0 24px;font-size:12px;line-height:1.5;word-break:break-all;color:#34d399;">{{ .ConfirmationURL }}</p>
+            <p style="margin:0;font-size:12px;line-height:1.5;color:#52525b;">Si no pediste este cambio, ignora el correo — tu email no se modifica.</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:16px 28px 24px;border-top:1px solid #1f2937;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;color:#52525b;">
+            <a href="https://www.getninety.app" style="color:#10b981;text-decoration:none;font-weight:600;">www.getninety.app</a>
+            · Site: {{ .SiteURL }}
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+```
+
+### 5. Reset password (Recovery)
 
 **Subject:**
 
@@ -339,6 +529,54 @@ Restablece tu contraseña de Ninety
 </html>
 ```
 
+### 6. Reauthentication
+
+**Subject:**
+
+```
+{{ .Token }} es tu código de Ninety
+```
+
+**Body:**
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#050506;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#050506;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#0a0a0b;border:1px solid #1f2937;border-radius:16px;overflow:hidden;">
+        <tr>
+          <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;">
+            <table role="presentation" cellspacing="0" cellpadding="0">
+              <tr>
+                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">90</td>
+                <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;">Ninety</td>
+              </tr>
+            </table>
+            <p style="margin:20px 0 0;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#34d399;">Verificación</p>
+            <h1 style="margin:8px 0 16px;font-size:24px;line-height:1.25;color:#fafafa;font-weight:700;">Tu código de verificación</h1>
+            <p style="margin:0 0 24px;font-size:15px;line-height:1.55;color:#a1a1aa;">
+              Usa este código para confirmar tu identidad en Ninety. Caduca en pocos minutos.
+            </p>
+            <p style="margin:0 0 28px;font-size:32px;letter-spacing:0.2em;font-weight:700;color:#fafafa;text-align:center;">{{ .Token }}</p>
+            <p style="margin:0;font-size:12px;line-height:1.5;color:#52525b;">Si no pediste este código, ignora el correo.</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:16px 28px 24px;border-top:1px solid #1f2937;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;color:#52525b;">
+            <a href="https://www.getninety.app" style="color:#10b981;text-decoration:none;font-weight:600;">www.getninety.app</a>
+            · Site: {{ .SiteURL }}
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+```
+
 ### Instrucciones exactas en Supabase
 
 1. Abre [Supabase Dashboard](https://supabase.com/dashboard) → tu proyecto Ninety
@@ -348,9 +586,7 @@ Restablece tu contraseña de Ninety
      `https://www.getninety.app/auth/callback`  
      `https://www.getninety.app/auth/reset-password`  
      (y los de Railway/apex de la sección Ops si aplica)
-3. **Authentication → Email Templates**
-   - Plantilla **Confirm signup**: pega Subject + Body de arriba
-   - Plantilla **Reset password** (Recovery): pega Subject + Body de Recovery
+3. **Authentication → Email Templates** — pega Subject + Body de las 6 plantillas de arriba (prioridad: Confirm signup + Reset password)
 4. Guarda cada plantilla → prueba registro + forgot-password en `https://www.getninety.app`
 5. **SMTP** (recomendado prod): Remitente `noreply@getninety.app` vía Resend; dominio verificado
 6. Railway API: `CLIENT_URL=https://www.getninety.app` (debe coincidir con el origen canónico)
@@ -360,9 +596,14 @@ Logo en email: badge tipográfico «90» + wordmark Ninety (inline). Favicon pú
 ### Qué debe configurar Henry en Supabase (checklist)
 
 1. Site URL + Redirect URLs (paso 2)
-2. Pegar Confirm signup + Recovery (paso 3)
+2. Pegar las 6 plantillas (mínimo Confirm signup + Recovery)
 3. SMTP Resend si aún no
 4. `CLIENT_URL` en Railway alineado con www
+5. `EMAIL_UNSUBSCRIBE_SECRET` dedicado en Railway (recomendado; si no, se usa `CRON_SECRET`)
+6. **Authentication → Sign In / Providers → Email** → **Minimum password length = 10** (alineado con la app)
+7. Si escalas a **varias réplicas** del API: sticky sessions o store PKCE compartido (el verifier OAuth vive en memoria 15 min)
+
+**SMTP (emails de Auth):** no está en Railway. En la pantalla de Emails, pestaña **SMTP Settings** (junto a Templates). Ahí activas Resend (`smtp.resend.com`). Las variables `RESEND_API_KEY` / `EMAIL_DIGEST_FROM` de Railway son solo para el **digest semanal** de la app, no para los mails de login/registro de Supabase.
 
 ---
 

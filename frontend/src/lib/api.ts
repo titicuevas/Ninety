@@ -57,12 +57,27 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}, token
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
 
+  const timeoutMs = 25_000;
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+  const signal =
+    options.signal && typeof AbortSignal.any === 'function'
+      ? AbortSignal.any([options.signal, timeoutSignal])
+      : timeoutSignal;
+
   let response: Response;
   try {
-    response = await fetch(`${API_URL}${path}`, { ...options, headers });
+    response = await fetch(`${API_URL}${path}`, { ...options, headers, signal });
   } catch (err) {
     const raw = err instanceof Error ? err.message : 'Failed to fetch';
-    throw new ApiError(friendlyApiError(raw), 0);
+    const timedOut =
+      (err instanceof Error && err.name === 'TimeoutError') ||
+      /abort|timeout|timed out/i.test(raw);
+    throw new ApiError(
+      timedOut
+        ? 'La carga tardó demasiado. Puede haber un problema temporal con el servidor.'
+        : friendlyApiError(raw),
+      0,
+    );
   }
 
   if (!response.ok) {

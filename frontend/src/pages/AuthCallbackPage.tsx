@@ -40,15 +40,17 @@ export function AuthCallbackPage() {
 
       try {
         if (parsed.kind === 'tokens') {
-          clearAuthCallbackUrl();
           if (parsed.type === 'recovery') {
-            if (active) {
-              setError(
-                'Este enlace es de recuperación de contraseña. Usa el enlace del email de restablecer contraseña.',
-              );
-            }
+            // Solo access_token: el refresh no hace falta para el reset y no debe ir en la URL.
+            const params = new URLSearchParams({
+              access_token: parsed.accessToken,
+              type: 'recovery',
+            });
+            clearAuthCallbackUrl();
+            navigate(`/auth/reset-password#${params.toString()}`, { replace: true });
             return;
           }
+          clearAuthCallbackUrl();
           const session = await establishSessionFromTokens(parsed.accessToken, parsed.refreshToken);
           if (!active) return;
           setSession(session);

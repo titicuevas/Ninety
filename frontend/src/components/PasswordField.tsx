@@ -21,8 +21,7 @@ export function PasswordField({ className, ref, ...props }: Props) {
       />
       <button
         type="button"
-        tabIndex={-1}
-        className="absolute top-1/2 right-2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="absolute top-1/2 right-1 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={visible ? 'Ocultar caracteres' : 'Mostrar caracteres'}
         title={visible ? 'Ocultar caracteres' : 'Mostrar caracteres'}
         onClick={() => setVisible((v) => !v)}

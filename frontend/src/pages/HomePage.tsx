@@ -16,6 +16,7 @@ import { Layout } from '@/components/Layout';
 import { WrappedLoadingSkeleton } from '@/components/ListSkeletons';
 import { OnboardingSteps } from '@/components/OnboardingSteps';
 import { PushActivationBanner } from '@/components/PushActivationBanner';
+import { EmailDigestNudgeCard } from '@/components/EmailDigestNudgeCard';
 import { StadiumMapSection } from '@/components/StadiumMapSection';
 import { PostImportGuideCard } from '@/components/PostImportGuideCard';
 import { ValueOnboardingCard } from '@/components/ValueOnboardingCard';
@@ -297,6 +298,11 @@ export function HomePage() {
               wantToGoNudgeVisible={wantToGoNudge.visible}
             />
             <PushActivationBanner context="home" />
+            <EmailDigestNudgeCard
+              userId={user?.id}
+              totalMatches={capsules.length}
+              coreComplete
+            />
           </>
         )}
 

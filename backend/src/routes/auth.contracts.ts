@@ -1,16 +1,22 @@
 import { z } from 'zod';
 
-export const loginSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
+/** Login: no exigir longitud fuerte (cuentas antiguas con 6 chars deben poder entrar). */
+export const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1).max(72),
+});
+
+/** Alta / cambio / reset: mínimo 10 caracteres. */
 export const registerSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(10).max(72),
   display_name: z.string().min(2).max(100),
   invite_code: z.string().trim().min(3).max(40).optional(),
 });
 export const oauthExchangeSchema = z.object({ code: z.string().min(1), pkceId: z.string().uuid() });
 export const refreshSchema = z.object({ refresh_token: z.string().min(1) });
 export const emailSchema = z.object({ email: z.string().email() });
-export const passwordSchema = z.object({ password: z.string().min(6).max(72) });
+export const passwordSchema = z.object({ password: z.string().min(10).max(72) });
 export const deleteAccountSchema = z.object({ confirm_email: z.string().email() });
 export const sessionFromTokensSchema = z.object({
   access_token: z.string().min(1),

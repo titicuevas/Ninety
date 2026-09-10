@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-const passwordFieldSchema = z.string().min(6, 'Mínimo 6 caracteres');
+/** Registro / reset / cambio en Ajustes. */
+const passwordFieldSchema = z.string().min(10, 'Mínimo 10 caracteres').max(72, 'Máximo 72 caracteres');
+
+/** Login: no bloquear cuentas antiguas con contraseñas cortas. */
+const loginPasswordSchema = z.string().min(1, 'Introduce tu contraseña').max(72);
 
 /** Cambio / reset de contraseña (password + confirm). */
 export const passwordConfirmSchema = z
@@ -17,7 +21,7 @@ export type PasswordConfirmForm = z.infer<typeof passwordConfirmSchema>;
 
 export const loginSchema = z.object({
   email: z.string().email('Email inválido'),
-  password: passwordFieldSchema,
+  password: loginPasswordSchema,
 });
 
 export type LoginForm = z.infer<typeof loginSchema>;

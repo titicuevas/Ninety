@@ -78,6 +78,7 @@ export function HomeHero({ name, totalMatches, isLoading = false, className }: P
               buttonVariants({ size: 'default' }),
               'inline-flex min-h-11 items-center gap-2',
             )}
+            aria-label={hasMatches ? 'Guardar un partido nuevo' : 'Buscar un partido'}
           >
             {hasMatches ? (
               <>
@@ -99,6 +100,7 @@ export function HomeHero({ name, totalMatches, isLoading = false, className }: P
                 buttonVariants({ variant: 'ghost', size: 'default' }),
                 'inline-flex min-h-11 items-center gap-1.5 text-muted-foreground',
               )}
+              aria-label={`${totalMatches} ${totalMatches === 1 ? 'partido' : 'partidos'} en tu diario`}
             >
               <span className="font-display text-lg font-bold tabular-nums text-foreground">
                 {totalMatches}

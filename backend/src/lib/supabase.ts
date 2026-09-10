@@ -1,6 +1,10 @@
 import { createClient, type SupabaseClient, type SupabaseClientOptions } from '@supabase/supabase-js';
 import ws from 'ws';
 import { env } from '../config/loadEnv.js';
+import { fetchWithTimeout } from './withTimeout.js';
+
+/** Evita colgar Express si PostgREST/Auth no responden (proyecto pausado, pool saturado…). */
+const SUPABASE_FETCH_TIMEOUT_MS = 20_000;
 
 const testFetch: typeof fetch = async () =>
   new Response(JSON.stringify({ message: 'Supabase no disponible en test unitario' }), {
@@ -9,10 +13,15 @@ const testFetch: typeof fetch = async () =>
     headers: { 'content-type': 'application/json' },
   });
 
+const timedFetch: typeof fetch = (input, init) =>
+  fetchWithTimeout(input, init, SUPABASE_FETCH_TIMEOUT_MS);
+
 export const supabaseClientOptions = {
   auth: { autoRefreshToken: false, persistSession: false },
   realtime: { transport: ws },
-  global: env.NODE_ENV === 'test' ? { fetch: testFetch } : undefined,
+  global: {
+    fetch: env.NODE_ENV === 'test' ? testFetch : timedFetch,
+  },
 } as SupabaseClientOptions<'public'>;
 
 export function createServiceClient(

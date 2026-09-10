@@ -116,7 +116,7 @@ export function RegisterPage() {
         <FormField label="Contraseña" error={errors.password?.message}>
           <PasswordField
             autoComplete="new-password"
-            placeholder="Mínimo 6 caracteres"
+            placeholder="Mínimo 10 caracteres"
             {...register('password')}
           />
         </FormField>

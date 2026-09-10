@@ -42,14 +42,14 @@ export function EmailDigestPrefsPanel({ className }: Props) {
             Resumen semanal por email
           </p>
           <p className="mt-1 text-sm text-muted-foreground" id="email-digest-hint">
-            Un correo los lunes con el resumen de tu diario (Capsules de la semana). Opt-in; no es el
-            digest social de likes. Puedes darte de baja desde el propio email.
+            Cada lunes, un correo corto con tus partidos de la semana. Por defecto está
+            desactivado; puedes darte de baja desde el propio email o aquí.
           </p>
         </div>
         <Button
           type="button"
           variant={enabled ? 'secondary' : 'outline'}
-          className="shrink-0"
+          className="min-h-11 shrink-0"
           aria-pressed={enabled}
           aria-describedby="email-digest-hint"
           disabled={isLoading || isError}
@@ -58,7 +58,7 @@ export function EmailDigestPrefsPanel({ className }: Props) {
           }
           onClick={onToggle}
         >
-          {enabled ? 'Activado' : 'Desactivado'}
+          {enabled ? 'Activado' : 'Activar'}
         </Button>
       </div>
     </div>

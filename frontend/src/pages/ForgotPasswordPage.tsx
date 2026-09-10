@@ -51,7 +51,8 @@ export function ForgotPasswordPage() {
         <div className="space-y-4 text-sm text-muted-foreground">
           <p>
             Si existe una cuenta con ese email, te hemos enviado un enlace para restablecer la
-            contraseña. Revisa también spam.
+            contraseña. Revisa también spam. Si sueles entrar con Google, usa “Continuar con Google”
+            en el login.
           </p>
           <p className="text-center">
             <Link to="/login" className="font-medium text-primary hover:underline">

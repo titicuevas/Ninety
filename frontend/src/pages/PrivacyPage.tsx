@@ -47,7 +47,8 @@ export function PrivacyPage() {
             y datos de sesión para autenticarte. La sesión vive en{' '}
             <code className="rounded bg-secondary px-1 py-0.5 text-foreground">localStorage</code> del
             navegador, no en cookies de marketing. No usamos analítica de terceros ni cookies de
-            publicidad.
+            publicidad. Al entrar verás un aviso (“Jugada limpia…”) que puedes cerrar; solo
+            recuerda que ya lo viste.
           </li>
         </ul>
       </LegalSection>

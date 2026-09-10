@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto';
 import { Router } from 'express';
 import { env } from '../config/loadEnv.js';
 import { flushDiaryPushes } from '../lib/diaryPush.js';
@@ -20,7 +21,13 @@ function readCronSecret(req: { headers: Record<string, unknown> }): string | nul
 function cronAuthorized(req: { headers: Record<string, unknown> }): boolean {
   const secret = env.CRON_SECRET?.trim();
   if (!secret) return false;
-  return readCronSecret(req) === secret;
+  const provided = readCronSecret(req);
+  if (!provided || provided.length !== secret.length) return false;
+  try {
+    return timingSafeEqual(Buffer.from(provided), Buffer.from(secret));
+  } catch {
+    return false;
+  }
 }
 
 /** Cron: digest push periódico (agrupa likes/comentarios/follows). */
@@ -54,7 +61,7 @@ internalRouter.post('/cron/push-diary', async (req, res, next) => {
   }
 });
 
-/** Cron: digest email semanal del diario (opt-in; lunes en TZ usuario). */
+/** Cron: digest email semanal del diario (Resend). */
 internalRouter.post('/cron/email-digest', async (req, res, next) => {
   try {
     if (!cronAuthorized(req)) {

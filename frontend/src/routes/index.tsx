@@ -1,5 +1,6 @@
-import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute, GuestRoute } from '@/components/ProtectedRoute';
+import { RootLayout } from '@/components/RootLayout';
 import { RouteErrorFallback } from '@/components/RootErrorFallback';
 
 function RouteErrorProbe(): never {
@@ -12,7 +13,7 @@ const developmentOnlyRoutes = import.meta.env.DEV
 
 export const appRouter = createBrowserRouter([
   {
-    element: <Outlet />,
+    element: <RootLayout />,
     errorElement: <RouteErrorFallback />,
     children: [
   ...developmentOnlyRoutes,

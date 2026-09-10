@@ -1,13 +1,15 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
+/**
+ * Secreto HMAC para baja one-click.
+ * Preferir EMAIL_UNSUBSCRIBE_SECRET; en local puede reutilizar CRON_SECRET.
+ * Nunca usar la service role (demasiado privilegiada para URLs públicas).
+ */
 function unsubscribeSigningSecret(): string | null {
   const dedicated = process.env.EMAIL_UNSUBSCRIBE_SECRET?.trim();
   if (dedicated) return dedicated;
   const cron = process.env.CRON_SECRET?.trim();
   if (cron) return cron;
-  const service =
-    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || process.env.SUPABASE_SECRET_KEY?.trim();
-  if (service) return service;
   return null;
 }
 
