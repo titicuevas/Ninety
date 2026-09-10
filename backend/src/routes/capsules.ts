@@ -59,6 +59,10 @@ import {
   profilesAlignMigrationHint,
 } from '../lib/profileLookup.js';
 import {
+  buildDemoPublicShowcasePayload,
+  isDemoPublicUsername,
+} from '../lib/demoPublicShowcaseFallback.js';
+import {
   computePublicProfileStats,
   groupPublicProfileStatsByYear,
   type PublicProfileStatsRow,
@@ -942,18 +946,43 @@ capsulesRouter.get('/user/:username/calendar', optionalAuth, async (req: AuthReq
 capsulesRouter.get('/user/:username', optionalAuth, async (req: AuthRequest, res) => {
   const token = getBearerToken(req);
   const reader = getReaderClient(token);
+  const usernameParam = firstRouteParam(req.params.username);
+  const demoUsername = isDemoPublicUsername(usernameParam);
+
+  const sendDemoFallback = () => {
+    const parsed = publicCapsulesQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() });
+      return;
+    }
+    const { limit, offset } = parsed.data;
+    res.setHeader('X-Ninety-Data', 'demo-fallback');
+    res.json(buildDemoPublicShowcasePayload(limit ?? 20, offset ?? 0));
+  };
 
   if (!reader) {
+    if (demoUsername) {
+      sendDemoFallback();
+      return;
+    }
     res.status(503).json({ error: 'Perfil público no disponible temporalmente' });
     return;
   }
 
-  const profileResult = await fetchProfileByUsername(supabaseAnon, req.params.username);
+  const profileResult = await fetchProfileByUsername(supabaseAnon, usernameParam);
   if (profileResult.error === 'schema') {
+    if (demoUsername) {
+      sendDemoFallback();
+      return;
+    }
     res.status(503).json({ error: profileResult.message ?? profilesAlignMigrationHint() });
     return;
   }
   if (profileResult.error === 'query') {
+    if (demoUsername) {
+      sendDemoFallback();
+      return;
+    }
     const timedOut = /agotó el tiempo|timeout|no responde/i.test(profileResult.message ?? '');
     res.status(timedOut ? 503 : 400).json({
       error: timedOut

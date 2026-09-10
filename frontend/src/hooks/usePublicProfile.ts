@@ -27,6 +27,8 @@ interface UserCapsulesResponse {
   featured_collection?: FeaturedCollectionSummary | null;
   /** true cuando el viewer bloqueó a este perfil (sin Capsules). */
   blocked?: boolean;
+  /** true si la API sirvió datos demo por PostgREST caído. */
+  from_fallback?: boolean;
 }
 
 type FeaturedCollectionSummary = {

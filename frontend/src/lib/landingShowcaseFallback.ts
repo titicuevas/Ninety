@@ -1,0 +1,98 @@
+import type { Capsule } from '@/types/capsule';
+import type { PublicProfileStats } from '@/types/publicProfile';
+
+/** Vitrina fija de la portada — siempre visible aunque la API falle. */
+export const LANDING_SHOWCASE_FALLBACK: {
+  profile: { display_name: string; username: string };
+  capsules: Capsule[];
+  total: number;
+  stats: PublicProfileStats;
+  fromFallback: true;
+} = {
+  fromFallback: true,
+  profile: { display_name: 'Beta Ninety', username: 'beta_ninety' },
+  total: 12,
+  stats: {
+    totalMatches: 12,
+    averageRating: 4.3,
+    fiveStarCount: 4,
+    stadiumVisits: 3,
+    photosCount: 2,
+    photoCollageUrls: [],
+    matchesByMonth: [0, 1, 1, 2, 1, 0, 2, 1, 1, 1, 1, 1],
+    topCompetition: { name: 'La Liga', count: 4 },
+    topTeam: { name: 'Spain', count: 3 },
+    peakMonth: { month: 7, label: 'julio', count: 2 },
+    topWatchContext: { name: 'Bar', count: 5 },
+    bestRated: {
+      home_team_name: 'Spain',
+      away_team_name: 'England',
+      rating: 5,
+    },
+  },
+  capsules: [
+    {
+      id: 'showcase-euro-final',
+      user_id: 'showcase',
+      match_id: 433_123,
+      match_played_at: '2024-07-14T20:00:00.000Z',
+      home_team_name: 'Spain',
+      away_team_name: 'England',
+      home_team_crest: 'https://crests.football-data.org/760.svg',
+      away_team_crest: 'https://crests.football-data.org/770.svg',
+      competition_name: 'European Championship',
+      home_score: 2,
+      away_score: 1,
+      watched_at: '2024-07-14',
+      rating: 5,
+      note: null,
+      photo_urls: [],
+      is_public: true,
+      watch_context: 'pub',
+      created_at: '2024-07-14T22:00:00.000Z',
+      updated_at: '2024-07-14T22:00:00.000Z',
+    },
+    {
+      id: 'showcase-clasico',
+      user_id: 'showcase',
+      match_id: 498_765,
+      match_played_at: '2024-04-21T20:00:00.000Z',
+      home_team_name: 'Real Madrid CF',
+      away_team_name: 'FC Barcelona',
+      home_team_crest: 'https://crests.football-data.org/86.svg',
+      away_team_crest: 'https://crests.football-data.org/81.svg',
+      competition_name: 'La Liga',
+      home_score: 3,
+      away_score: 2,
+      watched_at: '2024-04-21',
+      rating: 4,
+      note: null,
+      photo_urls: [],
+      is_public: true,
+      watch_context: 'tv',
+      created_at: '2024-04-21T22:00:00.000Z',
+      updated_at: '2024-04-21T22:00:00.000Z',
+    },
+    {
+      id: 'showcase-anfield',
+      user_id: 'showcase',
+      match_id: 445_890,
+      match_played_at: '2024-11-10T17:30:00.000Z',
+      home_team_name: 'Liverpool FC',
+      away_team_name: 'Manchester City FC',
+      home_team_crest: 'https://crests.football-data.org/64.svg',
+      away_team_crest: 'https://crests.football-data.org/65.svg',
+      competition_name: 'Premier League',
+      home_score: 1,
+      away_score: 1,
+      watched_at: '2024-11-10',
+      rating: 5,
+      note: null,
+      photo_urls: [],
+      is_public: true,
+      watch_context: 'stadium',
+      created_at: '2024-11-10T19:00:00.000Z',
+      updated_at: '2024-11-10T19:00:00.000Z',
+    },
+  ],
+};

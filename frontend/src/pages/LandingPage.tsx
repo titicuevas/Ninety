@@ -9,6 +9,7 @@ import { buttonVariants } from '@/components/ui/button-variants';
 import { useLandingShowcase } from '@/hooks/useLandingShowcase';
 import { looksLikeAuthCallback } from '@/lib/authEmailCallback';
 import { formatCapsuleScore, formatWatchedDate } from '@/lib/format';
+import { LANDING_SHOWCASE_FALLBACK } from '@/lib/landingShowcaseFallback';
 import { usePageMetadata } from '@/hooks/usePageMetadata';
 import { cn } from '@/lib/utils';
 
@@ -90,38 +91,6 @@ function StarRating({ rating }: { rating: number | null }) {
   );
 }
 
-function ShowcaseUnavailable() {
-  return (
-    <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-b from-primary/[0.08] to-transparent px-4 py-7 text-center">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.06]"
-        aria-hidden
-        style={{
-          backgroundImage:
-            'linear-gradient(90deg, transparent 49%, currentColor 49%, currentColor 51%, transparent 51%), radial-gradient(circle at center, transparent 28%, currentColor 28.5%, currentColor 29%, transparent 29.5%)',
-          backgroundSize: '100% 100%, min(55vw, 220px) min(55vw, 220px)',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          color: 'var(--primary)',
-        }}
-      />
-      <p className="relative text-sm font-semibold text-foreground">Diario en el vestuario</p>
-      <p className="relative mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-muted-foreground">
-        El showcase público no está disponible ahora mismo. Entra en el perfil o vuelve en unos
-        minutos.
-      </p>
-      <Link
-        to="/u/beta_ninety"
-        className="relative mt-4 inline-flex min-h-11 items-center rounded-lg bg-primary/15 px-4 text-xs font-semibold text-primary transition-colors hover:bg-primary/25"
-        tabIndex={-1}
-        aria-hidden
-      >
-        Ir a @beta_ninety →
-      </Link>
-    </div>
-  );
-}
-
 function ShowcaseStats({
   total,
   avg,
@@ -148,23 +117,6 @@ function ShowcaseStats({
           {topComp ?? '—'}
         </p>
         <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs">Liga top</p>
-      </div>
-    </div>
-  );
-}
-
-function ShowcaseSkeleton() {
-  return (
-    <div className="animate-pulse space-y-3" aria-hidden>
-      <div className="grid grid-cols-3 gap-2">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="h-16 rounded-xl bg-muted/30" />
-        ))}
-      </div>
-      <div className="space-y-2">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="h-14 rounded-xl bg-muted/20" />
-        ))}
       </div>
     </div>
   );
@@ -222,7 +174,7 @@ export function LandingPage() {
     description: 'Guarda, valora y revive cada partido que ves. Crea gratis tu diario futbolero con fotos, estadísticas, colecciones y Wrapped.',
   });
   const navigate = useNavigate();
-  const { data, isLoading, isError, isFetched } = useLandingShowcase();
+  const { data } = useLandingShowcase();
 
   useEffect(() => {
     const { search, hash } = window.location;
@@ -230,10 +182,10 @@ export function LandingPage() {
     navigate(`/auth/callback${search}${hash}`, { replace: true });
   }, [navigate]);
 
-  const stats = data?.stats;
-  const capsules = data?.capsules.slice(0, 3) ?? [];
-  const hasData = !isLoading && data != null;
-  const showUnavailable = isFetched && (isError || !hasData);
+  // Portada: siempre hay vitrina (initialData + fallback en el hook)
+  const showcase = data ?? LANDING_SHOWCASE_FALLBACK;
+  const stats = showcase.stats;
+  const capsules = showcase.capsules.slice(0, 3);
 
   return (
     <div className="landing-page min-h-dvh text-foreground">
@@ -315,67 +267,59 @@ export function LandingPage() {
               </Link>
             </div>
 
-            {isLoading ? (
-              <ShowcaseSkeleton />
-            ) : showUnavailable ? (
-              <ShowcaseUnavailable />
-            ) : (
-              <>
-                {hasData && stats && (
-                  <ShowcaseStats
-                    total={stats.totalMatches}
-                    avg={stats.averageRating}
-                    topComp={stats.topCompetition?.name ?? null}
-                  />
-                )}
+            <>
+              {stats ? (
+                <ShowcaseStats
+                  total={stats.totalMatches}
+                  avg={stats.averageRating}
+                  topComp={stats.topCompetition?.name ?? null}
+                />
+              ) : (
+                <ShowcaseStats total={showcase.total} avg={null} topComp={null} />
+              )}
 
-                {hasData && !stats && (
-                  <ShowcaseStats total={data.total} avg={null} topComp={null} />
-                )}
+              {capsules.length > 0 && (
+                <div className="mt-3 space-y-1.5">
+                  {capsules.map((c) => (
+                    <CapsuleRow
+                      key={c.id}
+                      home={c.home_team_name}
+                      away={c.away_team_name}
+                      homeCrest={c.home_team_crest}
+                      awayCrest={c.away_team_crest}
+                      homeScore={c.home_score}
+                      awayScore={c.away_score}
+                      competition={c.competition_name}
+                      watchedAt={c.watched_at}
+                      rating={c.rating}
+                    />
+                  ))}
+                </div>
+              )}
 
-                {hasData && capsules.length > 0 && (
-                  <div className="mt-3 space-y-1.5">
-                    {capsules.map((c) => (
-                      <CapsuleRow
-                        key={c.id}
-                        home={c.home_team_name}
-                        away={c.away_team_name}
-                        homeCrest={c.home_team_crest}
-                        awayCrest={c.away_team_crest}
-                        homeScore={c.home_score}
-                        awayScore={c.away_score}
-                        competition={c.competition_name}
-                        watchedAt={c.watched_at}
-                        rating={c.rating}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {hasData && stats && (
-                  <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 border-t border-border/30 pt-3">
-                    {stats.stadiumVisits > 0 && (
-                      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                        <Trophy className="h-3 w-3 text-primary" />
-                        {stats.stadiumVisits} estadios
-                      </span>
-                    )}
-                    {stats.fiveStarCount > 0 && (
-                      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                        <Star className="h-3 w-3 fill-primary text-primary" />
-                        {stats.fiveStarCount} valoración perfecta
-                      </span>
-                    )}
-                    {stats.topTeam && (
-                      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                        <Users className="h-3 w-3 text-primary" />
-                        {stats.topTeam.name} ({stats.topTeam.count})
-                      </span>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
+              {stats && (
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 border-t border-border/30 pt-3">
+                  {stats.stadiumVisits > 0 && (
+                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                      <Trophy className="h-3 w-3 text-primary" />
+                      {stats.stadiumVisits} estadios
+                    </span>
+                  )}
+                  {stats.fiveStarCount > 0 && (
+                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                      <Star className="h-3 w-3 fill-primary text-primary" />
+                      {stats.fiveStarCount} valoración perfecta
+                    </span>
+                  )}
+                  {stats.topTeam && (
+                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                      <Users className="h-3 w-3 text-primary" />
+                      {stats.topTeam.name} ({stats.topTeam.count})
+                    </span>
+                  )}
+                </div>
+              )}
+            </>
           </div>
 
           {/* Features */}

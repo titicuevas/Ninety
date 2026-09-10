@@ -609,11 +609,18 @@ export function PublicProfilePage() {
   }
 
   if (isError && !isPublicProfileNotFound(error)) {
+    const raw = error instanceof Error ? error.message : 'No se pudo cargar el perfil';
+    const looksLikeOutage =
+      /no responde|tardó demasiado|temporal|503|servicio de datos/i.test(raw);
     return (
       <Shell>
         <div className="space-y-4 py-8">
           <QueryErrorCard
-            message={error instanceof Error ? error.message : 'No se pudo cargar el perfil'}
+            message={
+              looksLikeOutage
+                ? 'El diario público no responde ahora (problema temporal del servidor de datos). Reintenta en unos minutos.'
+                : raw
+            }
             loading={isRefetching}
             onRetry={() => void refetch()}
           />
@@ -621,6 +628,8 @@ export function PublicProfilePage() {
       </Shell>
     );
   }
+
+  const fromFallback = Boolean(data?.pages[0]?.from_fallback);
 
   if (notFound || !profile) {
     return (
@@ -694,6 +703,12 @@ export function PublicProfilePage() {
           loginTo={loginTo}
         />
 
+        {fromFallback ? (
+          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100/90">
+            Vista de ejemplo: el servidor de datos no responde ahora. El diario real volverá cuando
+            Supabase recupere PostgREST.
+          </p>
+        ) : null}
         {isBlockedByMe ? (
           <EmptyState
             title="Has bloqueado a este usuario"
