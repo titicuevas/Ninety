@@ -49,7 +49,7 @@ test.describe('Smoke — activación push @smoke', () => {
 
     await seedPushEligible(page, userId!);
     await page.reload();
-    await expect(page.getByRole('heading', { name: /esto es tu fútbol|tu wrapped empieza|comunidad/i }).first()).toBeVisible({
+    await expect(page.getByRole('heading', { name: /esto es tu fútbol|tu wrapped empieza|comunidad|buenos días|buenas tardes|buenas noches/i }).first()).toBeVisible({
       timeout: 20_000,
     });
 

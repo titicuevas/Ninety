@@ -83,15 +83,26 @@ export function WrappedTeaser({ name, stats, scope, href, onDismiss }: WrappedTe
 /** CTA compacto cuando el teaser está descartado — no bloquea el resto de Home. */
 export function WrappedTeaserCompact({ href, stats }: { href: string; stats: CapsuleStats }) {
   return (
-    <p
-      className="rounded-xl border border-border/80 bg-card/60 px-4 py-3 text-sm text-muted-foreground"
+    <Link
+      to={href}
+      className="group flex items-center gap-4 rounded-2xl border border-border/70 bg-gradient-to-r from-card via-card to-primary/[0.06] px-4 py-3.5 transition-colors hover:border-primary/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-5"
       data-testid="wrapped-teaser-compact"
     >
-      Tu Wrapped ({stats.totalMatches}{' '}
-      {stats.totalMatches === 1 ? 'partido' : 'partidos'}) ·{' '}
-      <Link to={href} className="font-medium text-primary hover:underline">
-        Ver resumen
-      </Link>
-    </p>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Tu Wrapped</p>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          Resumen de tu temporada ·{' '}
+          <span className="font-medium text-foreground group-hover:text-primary">Ver →</span>
+        </p>
+      </div>
+      <div className="shrink-0 text-right">
+        <p className="font-display text-3xl font-bold tabular-nums tracking-tight text-foreground">
+          {stats.totalMatches}
+        </p>
+        <p className="text-[11px] text-muted-foreground">
+          {stats.totalMatches === 1 ? 'partido' : 'partidos'}
+        </p>
+      </div>
+    </Link>
   );
 }

@@ -6,7 +6,9 @@ test.describe('Smoke — autenticado @smoke', () => {
   test('home muestra Wrapped o empty state @cross-browser', async ({ page }) => {
     await openAuthenticatedHome(page);
     await expect(
-      page.getByRole('heading', { name: /esto es tu fútbol|tu wrapped empieza/i }),
+      page.getByRole('heading', {
+        name: /esto es tu fútbol|tu wrapped empieza|buenos días|buenas tardes|buenas noches/i,
+      }),
     ).toBeVisible({ timeout: 20_000 });
   });
 

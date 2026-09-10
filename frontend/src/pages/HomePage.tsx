@@ -7,6 +7,7 @@ import { DiaryAnniversaryCard } from '@/components/DiaryAnniversaryCard';
 import { DiaryDigestCard } from '@/components/DiaryDigestCard';
 import { DiaryMilestoneCard } from '@/components/DiaryMilestoneCard';
 import { EmptyState } from '@/components/EmptyState';
+import { HomeHero } from '@/components/HomeHero';
 import { HomeSocialHub } from '@/components/HomeSocialHub';
 import { TodaySlot } from '@/components/TodaySlot';
 import { IncompleteCapsuleCard } from '@/components/IncompleteCapsuleCard';
@@ -195,7 +196,15 @@ export function HomePage() {
 
   return (
     <Layout>
-      <div className="space-y-5 sm:space-y-8">
+      <div className="space-y-5 sm:space-y-7">
+        {!showWrappedDetail ? (
+          <HomeHero
+            name={name}
+            totalMatches={capsules.length}
+            isLoading={isLoading}
+          />
+        ) : null}
+
         {profileIncomplete ? (
           <ClaimProfileCard
             key={profile?.id ?? 'claim-pending'}
@@ -291,7 +300,7 @@ export function HomePage() {
           </>
         )}
 
-        {!isLoading && capsules.length > 0 && (
+        {!isLoading && capsules.length > 0 && !showWrappedDetail ? (
           <TodaySlot
             capsules={capsules}
             anniversary={diaryAnniversary.anniversary}
@@ -300,7 +309,7 @@ export function HomePage() {
             wantToGoVisible={wantToGoNudge.visible}
             total={capsulesData?.capsules?.length}
           />
-        )}
+        ) : null}
 
         {isLoading ? (
           <WrappedLoadingSkeleton />

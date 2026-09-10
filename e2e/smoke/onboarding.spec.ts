@@ -11,8 +11,9 @@ test.describe('Smoke — onboarding @smoke', () => {
     const wrapped = page.getByRole('heading', { name: /esto es tu fútbol/i });
     const empty = page.getByRole('heading', { name: /tu wrapped empieza/i });
     const comunidad = page.getByRole('heading', { name: /^comunidad$/i });
+    const hero = page.getByRole('heading', { name: /buenos días|buenas tardes|buenas noches/i });
 
-    await expect(onboarding.or(wrapped).or(empty).or(comunidad).first()).toBeVisible({
+    await expect(onboarding.or(wrapped).or(empty).or(comunidad).or(hero).first()).toBeVisible({
       timeout: 15_000,
     });
 

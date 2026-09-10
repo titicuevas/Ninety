@@ -8,7 +8,13 @@ const authFile = path.join('e2e', '.auth', 'user.json');
 setup('autenticar usuario QA', async ({ page }) => {
   mkdirSync(path.dirname(authFile), { recursive: true });
   await establishAuthenticatedSession(page);
-  await expect(page.getByRole('heading', { name: /esto es tu fútbol|tu wrapped empieza/i })).toBeVisible({
+  await expect(
+    page.getByTestId('home-hero').or(
+      page.getByRole('heading', {
+        name: /esto es tu fútbol|tu wrapped empieza|buenos días|buenas tardes|buenas noches/i,
+      }),
+    ),
+  ).toBeVisible({
     timeout: 20_000,
   });
   await page.context().storageState({ path: authFile });

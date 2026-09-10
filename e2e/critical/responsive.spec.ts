@@ -33,7 +33,9 @@ test.describe('Responsive shell @critical @mobile @tablet', () => {
   test('home Wrapped no desborda en horizontal', async ({ page }) => {
     await openAuthenticatedHome(page);
     await expect(
-      page.getByRole('heading', { name: /esto es tu fútbol|tu wrapped empieza/i }),
+      page.getByRole('heading', {
+        name: /esto es tu fútbol|tu wrapped empieza|buenos días|buenas tardes|buenas noches/i,
+      }),
     ).toBeVisible({ timeout: 20_000 });
 
     const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);

@@ -137,7 +137,13 @@ export async function obtainApiSession(request: APIRequestContext): Promise<Auth
 }
 
 const homeHeading = (page: Page) =>
-  page.getByRole('heading', { name: /esto es tu fútbol|tu wrapped empieza/i });
+  page
+    .getByTestId('home-hero')
+    .or(
+      page.getByRole('heading', {
+        name: /esto es tu fútbol|tu wrapped empieza|buenos días|buenas tardes|buenas noches/i,
+      }),
+    );
 const loginHeading = (page: Page) =>
   page.getByRole('heading', { name: /bienvenido de vuelta/i });
 

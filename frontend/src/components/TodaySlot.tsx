@@ -1,15 +1,12 @@
 import { Link } from 'react-router-dom';
-import { CalendarDays, History, Star, Trophy } from 'lucide-react';
+import { CalendarDays, History, Star } from 'lucide-react';
 import { TeamCrest } from '@/components/TeamCrest';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { formatCapsuleScore, formatWatchedDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { DiaryAnniversary } from '@/lib/diaryAnniversary';
 import type { WantToGoNudge } from '@/lib/wantToGoNudge';
 import type { Capsule } from '@/types/capsule';
-
-/* ── Helpers ───────────────────────────────────────────────── */
 
 function todayLabel(): string {
   return new Date().toLocaleDateString('es-ES', {
@@ -19,16 +16,16 @@ function todayLabel(): string {
   });
 }
 
-/* ── Sub-tarjetas ──────────────────────────────────────────── */
-
 function AnniversarySlot({ anniversary }: { anniversary: DiaryAnniversary }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-500">
+      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-500">
         <History className="h-4 w-4" aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold uppercase tracking-wider text-amber-500">Tal día como hoy</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-amber-500">
+          Tal día como hoy
+        </p>
         <p className="mt-0.5 text-sm font-medium text-foreground">{anniversary.matchLabel}</p>
         <p className="mt-0.5 text-xs text-muted-foreground">
           Hace {anniversary.yearsAgo === 1 ? '1 año' : `${anniversary.yearsAgo} años`}
@@ -40,7 +37,7 @@ function AnniversarySlot({ anniversary }: { anniversary: DiaryAnniversary }) {
           )}
         </p>
       </div>
-      <Button asChild variant="ghost" size="sm" className="shrink-0 text-xs">
+      <Button asChild variant="ghost" size="sm" className="min-h-11 shrink-0 text-xs">
         <Link to={anniversary.href}>Revivir →</Link>
       </Button>
     </div>
@@ -53,10 +50,8 @@ function WantToGoSlot({ nudge }: { nudge: WantToGoNudge }) {
     <div className="flex items-start gap-3">
       <span
         className={cn(
-          'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
-          isUpcoming
-            ? 'bg-primary/15 text-primary'
-            : 'bg-orange-500/15 text-orange-500',
+          'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
+          isUpcoming ? 'bg-primary/15 text-primary' : 'bg-orange-500/15 text-orange-500',
         )}
       >
         <CalendarDays className="h-4 w-4" aria-hidden />
@@ -79,7 +74,10 @@ function WantToGoSlot({ nudge }: { nudge: WantToGoNudge }) {
         asChild
         variant="ghost"
         size="sm"
-        className={cn('shrink-0 text-xs', isUpcoming ? 'text-primary' : 'text-orange-500')}
+        className={cn(
+          'min-h-11 shrink-0 text-xs',
+          isUpcoming ? 'text-primary' : 'text-orange-500',
+        )}
       >
         <Link to={nudge.href}>{isUpcoming ? 'Ver lista →' : 'Guardar →'}</Link>
       </Button>
@@ -87,54 +85,67 @@ function WantToGoSlot({ nudge }: { nudge: WantToGoNudge }) {
   );
 }
 
-function LastCapsuleSlot({ capsule }: { capsule: Capsule }) {
+function LastCapsuleHero({ capsule }: { capsule: Capsule }) {
   const score = formatCapsuleScore(capsule.home_score, capsule.away_score);
+
   return (
-    <div className="flex items-center gap-3">
-      <TeamCrest name={capsule.home_team_name} crest={capsule.home_team_crest} size="sm" />
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Último partido
-        </p>
-        <p className="mt-0.5 truncate text-sm font-medium text-foreground">
-          {capsule.home_team_name}
-          {score ? (
-            <span className="mx-1.5 font-bold tabular-nums text-primary">{score}</span>
-          ) : (
-            <span className="mx-1.5 text-muted-foreground">vs</span>
-          )}
-          {capsule.away_team_name}
-        </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {formatWatchedDate(capsule.watched_at)}
-          {capsule.rating != null && (
-            <span className="ml-1.5 inline-flex items-center gap-0.5">
-              · <Star className="h-2.5 w-2.5 fill-primary text-primary" aria-hidden />
+    <Link
+      to={`/c/${capsule.id}`}
+      className="group block rounded-xl bg-background/40 p-3 transition-colors hover:bg-background/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:p-4"
+    >
+      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Último partido
+      </p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center">
+          <TeamCrest name={capsule.home_team_name} crest={capsule.home_team_crest} size="md" />
+          <p className="line-clamp-2 w-full text-xs font-medium leading-tight text-foreground sm:text-sm">
+            {capsule.home_team_name}
+          </p>
+        </div>
+
+        <div className="shrink-0 px-1 text-center">
+          <p
+            className={cn(
+              'font-display text-3xl font-bold tabular-nums tracking-tight sm:text-4xl',
+              score ? 'text-foreground' : 'text-muted-foreground',
+            )}
+          >
+            {score ?? 'vs'}
+          </p>
+          {capsule.rating != null ? (
+            <p className="mt-1 inline-flex items-center gap-0.5 text-xs text-muted-foreground">
+              <Star className="h-3 w-3 fill-primary text-primary" aria-hidden />
               {capsule.rating}
-            </span>
+            </p>
+          ) : (
+            <p className="mt-1 text-[11px] text-muted-foreground group-hover:text-primary">
+              Ver →
+            </p>
           )}
-        </p>
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center">
+          <TeamCrest name={capsule.away_team_name} crest={capsule.away_team_crest} size="md" />
+          <p className="line-clamp-2 w-full text-xs font-medium leading-tight text-foreground sm:text-sm">
+            {capsule.away_team_name}
+          </p>
+        </div>
       </div>
-      <TeamCrest name={capsule.away_team_name} crest={capsule.away_team_crest} size="sm" />
-      <Button asChild variant="ghost" size="sm" className="shrink-0 text-xs">
-        <Link to={`/c/${capsule.id}`}>Ver →</Link>
-      </Button>
-    </div>
+      <p className="mt-3 text-center text-xs text-muted-foreground">
+        {formatWatchedDate(capsule.watched_at)}
+        {capsule.competition_name ? ` · ${capsule.competition_name}` : ''}
+      </p>
+    </Link>
   );
 }
 
-/* ── Componente principal ──────────────────────────────────── */
-
 type Props = {
-  /** Capsules del diario (para mostrar el último partido). */
   capsules: Capsule[];
-  /** Aniversario de hoy (si existe). */
   anniversary: DiaryAnniversary | null;
   anniversaryVisible: boolean;
-  /** Nudge de Quiero ir (upcoming o played). */
   wantToGoNudge: WantToGoNudge | null;
   wantToGoVisible: boolean;
-  /** Total de Capsules — para mostrar el hito de forma compacta. */
   total?: number;
   className?: string;
 };
@@ -157,46 +168,50 @@ export function TodaySlot({
 
   if (!hasContent) return null;
 
+  const showSignals =
+    (anniversaryVisible && anniversary != null) || (wantToGoVisible && wantToGoNudge != null);
+
   return (
-    <Card
+    <section
       className={cn(
-        'border-border/60 bg-gradient-to-br from-card via-card to-primary/5 motion-reveal',
+        'overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/[0.06] motion-reveal',
         className,
       )}
+      aria-labelledby="today-slot-heading"
       data-testid="today-slot"
     >
-      <CardContent className="p-4 sm:p-5">
-        {/* Cabecera */}
-        <div className="mb-4 flex items-center gap-2">
-          <Trophy className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-          <p className="text-xs font-bold uppercase tracking-wider text-primary">Hoy</p>
-          <p className="ml-auto text-xs capitalize text-muted-foreground">{todayLabel()}</p>
-        </div>
+      <div className="flex items-center gap-2 border-b border-border/40 px-4 py-3 sm:px-5">
+        <p
+          id="today-slot-heading"
+          className="text-xs font-bold uppercase tracking-wider text-primary"
+        >
+          Hoy
+        </p>
+        <p className="ml-auto text-xs capitalize text-muted-foreground">{todayLabel()}</p>
+      </div>
 
-        {/* Contenido — hasta 3 secciones */}
-        <div className="space-y-4 divide-y divide-border/40 [&>*:not(:first-child)]:pt-4">
-          {anniversaryVisible && anniversary && (
-            <AnniversarySlot anniversary={anniversary} />
-          )}
+      <div className="space-y-3 p-3 sm:space-y-4 sm:p-4">
+        {lastCapsule ? <LastCapsuleHero capsule={lastCapsule} /> : null}
 
-          {wantToGoVisible && wantToGoNudge && (
-            <WantToGoSlot nudge={wantToGoNudge} />
-          )}
+        {showSignals ? (
+          <div className="space-y-3 rounded-xl border border-border/40 bg-background/25 p-3 sm:p-3.5">
+            {anniversaryVisible && anniversary ? (
+              <AnniversarySlot anniversary={anniversary} />
+            ) : null}
+            {wantToGoVisible && wantToGoNudge ? (
+              <WantToGoSlot nudge={wantToGoNudge} />
+            ) : null}
+          </div>
+        ) : null}
+      </div>
 
-          {lastCapsule && (
-            <LastCapsuleSlot capsule={lastCapsule} />
-          )}
-        </div>
-
-        {/* Footer con total de partidos */}
-        {total != null && total > 0 && (
-          <p className="mt-4 border-t border-border/30 pt-3 text-center text-[11px] text-muted-foreground">
-            <Link to="/capsules" className="inline-flex min-h-11 items-center hover:text-primary">
-              {total} {total === 1 ? 'partido' : 'partidos'} en tu diario →
-            </Link>
-          </p>
-        )}
-      </CardContent>
-    </Card>
+      {total != null && total > 0 ? (
+        <p className="border-t border-border/30 px-4 py-2.5 text-center text-[11px] text-muted-foreground sm:px-5">
+          <Link to="/capsules" className="inline-flex min-h-11 items-center hover:text-primary">
+            {total} {total === 1 ? 'partido' : 'partidos'} en tu diario →
+          </Link>
+        </p>
+      ) : null}
+    </section>
   );
 }
