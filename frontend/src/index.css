@@ -239,8 +239,11 @@ button,
   0% {
     transform: scale(1);
   }
-  40% {
-    transform: scale(1.28);
+  35% {
+    transform: scale(1.18);
+  }
+  70% {
+    transform: scale(0.97);
   }
   100% {
     transform: scale(1);
@@ -249,9 +252,11 @@ button,
 
 @keyframes ninety-reveal {
   from {
-    transform: translateY(-0.35rem);
+    opacity: 0;
+    transform: translateY(0.55rem);
   }
   to {
+    opacity: 1;
     transform: translateY(0);
   }
 }
@@ -259,7 +264,41 @@ button,
 @keyframes ninety-page-enter {
   from {
     opacity: 0;
-    transform: translateY(0.35rem);
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ninety-auth-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ninety-glow-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes ninety-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(1.15rem);
   }
   to {
     opacity: 1;
@@ -268,27 +307,29 @@ button,
 }
 
 .motion-page {
-  animation: ninety-page-enter 260ms ease-out both;
+  animation: ninety-page-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .motion-card {
   transition:
-    transform 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease;
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 220ms ease,
+    box-shadow 220ms ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .motion-card:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
-    box-shadow: 0 12px 28px -20px rgba(16, 185, 129, 0.55);
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+    box-shadow: 0 16px 32px -22px rgba(16, 185, 129, 0.6);
   }
 }
 
 button:not(:disabled),
 [role='button']:not([aria-disabled='true']) {
   transition-property: color, background-color, border-color, opacity, transform;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 button:not(:disabled):active,
@@ -297,11 +338,33 @@ button:not(:disabled):active,
 }
 
 .motion-pop {
-  animation: ninety-pop 180ms ease-out;
+  animation: ninety-pop 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .motion-reveal {
-  animation: ninety-reveal 180ms ease-out;
+  animation: ninety-reveal 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.motion-reveal-delay-1 {
+  animation-delay: 60ms;
+}
+.motion-reveal-delay-2 {
+  animation-delay: 120ms;
+}
+.motion-reveal-delay-3 {
+  animation-delay: 180ms;
+}
+.motion-reveal-delay-4 {
+  animation-delay: 240ms;
+}
+
+.motion-auth {
+  animation: ninety-auth-enter 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.motion-glow {
+  animation: ninety-glow-breathe 5.5s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 /* Loading de marca — pulse del logo + balón rebotando + fade de copy */
@@ -384,31 +447,26 @@ button:not(:disabled):active,
 }
 
 .ninety-loader-copy {
-  animation: ninety-loader-fade 320ms ease-out;
+  animation: ninety-loader-fade 320ms ease-out both;
 }
 
 /* Landing — entrada escalonada */
-@keyframes ninety-slide-up {
-  from {
-    transform: translateY(1.5rem);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
 .landing-stagger > * {
-  animation: ninety-slide-up 600ms ease-out both;
+  animation: ninety-slide-up 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.landing-stagger > :nth-child(1) { animation-delay: 0ms; }
-.landing-stagger > :nth-child(2) { animation-delay: 100ms; }
-.landing-stagger > :nth-child(3) { animation-delay: 200ms; }
-.landing-stagger > :nth-child(4) { animation-delay: 300ms; }
-.landing-stagger > :nth-child(5) { animation-delay: 400ms; }
-.landing-stagger > :nth-child(6) { animation-delay: 500ms; }
-.landing-stagger > :nth-child(7) { animation-delay: 600ms; }
-.landing-stagger > :nth-child(8) { animation-delay: 700ms; }
+.landing-stagger > :nth-child(1) { animation-delay: 40ms; }
+.landing-stagger > :nth-child(2) { animation-delay: 110ms; }
+.landing-stagger > :nth-child(3) { animation-delay: 180ms; }
+.landing-stagger > :nth-child(4) { animation-delay: 250ms; }
+.landing-stagger > :nth-child(5) { animation-delay: 320ms; }
+.landing-stagger > :nth-child(6) { animation-delay: 390ms; }
+.landing-stagger > :nth-child(7) { animation-delay: 460ms; }
+.landing-stagger > :nth-child(8) { animation-delay: 530ms; }
+
+.landing-header-enter {
+  animation: ninety-reveal 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
 
 .root-error-boundary {
   min-height: 100vh;
@@ -460,5 +518,11 @@ button:not(:disabled):active,
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .motion-glow {
+    animation: none !important;
+    opacity: 0.7;
+    transform: none;
   }
 }

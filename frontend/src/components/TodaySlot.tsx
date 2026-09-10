@@ -174,7 +174,7 @@ export function TodaySlot({
   return (
     <section
       className={cn(
-        'overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/[0.06] motion-reveal',
+        'overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/[0.06] motion-reveal motion-reveal-delay-2',
         className,
       )}
       aria-labelledby="today-slot-heading"

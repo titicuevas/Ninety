@@ -33,13 +33,13 @@ export function AuthLayout({ title, subtitle, children, className }: Props) {
         />
 
         <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pt-[max(2.5rem,env(safe-area-inset-top,0px))] pb-[max(2.5rem,env(safe-area-inset-bottom,0px))] sm:px-6">
-          <div className={cn('w-full max-w-md', className)}>
+          <div className={cn('motion-auth w-full max-w-md', className)}>
             <div className="mb-8 text-center">
               <Link
                 to="/"
                 className="inline-flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-lg shadow-primary/25">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-lg shadow-primary/25 transition-transform duration-300 hover:scale-[1.03]">
                   90
                 </span>
                 <span className="text-2xl font-semibold tracking-tight">Ninety</span>

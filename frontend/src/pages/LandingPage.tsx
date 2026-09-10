@@ -215,7 +215,7 @@ export function LandingPage() {
       <div className="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(7rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-12">
 
         {/* Header */}
-        <header className="mb-12 flex items-center justify-between gap-3">
+        <header className="landing-header-enter mb-12 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <NinetyLogo size="md" variant="mark" />
             <span className="text-xl font-semibold tracking-tight sm:text-2xl">Ninety</span>

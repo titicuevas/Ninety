@@ -26,7 +26,7 @@ export function CookieNoticeBanner({ className }: { className?: string }) {
       aria-describedby="cookie-notice-desc"
       data-testid="cookie-notice"
       className={cn(
-        'fixed inset-x-0 bottom-0 z-[60] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4',
+        'fixed inset-x-0 bottom-0 z-[60] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4 motion-reveal',
         className,
       )}
     >

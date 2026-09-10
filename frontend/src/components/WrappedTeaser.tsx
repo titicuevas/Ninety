@@ -85,7 +85,7 @@ export function WrappedTeaserCompact({ href, stats }: { href: string; stats: Cap
   return (
     <Link
       to={href}
-      className="group flex items-center gap-4 rounded-2xl border border-border/70 bg-gradient-to-r from-card via-card to-primary/[0.06] px-4 py-3.5 transition-colors hover:border-primary/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-5"
+      className="group flex items-center gap-4 rounded-2xl border border-border/70 bg-gradient-to-r from-card via-card to-primary/[0.06] px-4 py-3.5 transition-colors hover:border-primary/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reveal motion-reveal-delay-1 sm:px-5"
       data-testid="wrapped-teaser-compact"
       aria-label={`Ver tu Wrapped: ${stats.totalMatches} ${stats.totalMatches === 1 ? 'partido' : 'partidos'}`}
     >

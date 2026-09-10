@@ -18,7 +18,7 @@ export function NotFoundPage() {
       <SkipLink />
       {/* Líneas de área / césped sutiles */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        className="pointer-events-none absolute inset-0 opacity-[0.07] motion-glow"
         aria-hidden
         style={{
           backgroundImage: `
@@ -34,7 +34,7 @@ export function NotFoundPage() {
       />
       <main
         id="main-content"
-        className="relative mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center px-4 py-12 text-center"
+        className="motion-auth relative mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center px-4 py-12 text-center"
       >
         <NinetyLogo size="lg" variant="mark" />
         <p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-primary">Tarjeta roja</p>
