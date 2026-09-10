@@ -190,7 +190,7 @@ export function LandingPage() {
     description: 'Guarda, valora y revive cada partido que ves. Crea gratis tu diario futbolero con fotos, estadísticas, colecciones y Wrapped.',
   });
   const navigate = useNavigate();
-  const { data, isLoading } = useLandingShowcase();
+  const { data, isLoading, isError, isFetched } = useLandingShowcase();
 
   useEffect(() => {
     const { search, hash } = window.location;
@@ -201,6 +201,7 @@ export function LandingPage() {
   const stats = data?.stats;
   const capsules = data?.capsules.slice(0, 3) ?? [];
   const hasData = !isLoading && data != null;
+  const showcaseUnavailable = isFetched && (isError || !hasData);
 
   return (
     <div className="landing-page min-h-dvh text-foreground">

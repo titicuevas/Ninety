@@ -21,6 +21,8 @@ export function useLandingShowcase() {
     queryKey: ['landing', 'showcase'],
     queryFn: fetchShowcase,
     staleTime: 1000 * 60 * 10, // 10 min — es datos de vitrina, no necesita refetch constante
-    retry: 1,
+    retry: 0,
+    // No spamear PostgREST si está caído
+    refetchOnWindowFocus: false,
   });
 }
