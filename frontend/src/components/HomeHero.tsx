@@ -41,11 +41,11 @@ export function HomeHero({ name, totalMatches, isLoading = false, className }: P
       data-testid="home-hero"
     >
       <div
-        className="motion-glow pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-primary/15 blur-3xl"
+        className="pointer-events-none absolute -right-16 -top-20 h-40 w-40 rounded-full bg-primary/12 blur-2xl motion-glow max-sm:opacity-50"
         aria-hidden
       />
       <div
-        className="motion-glow pointer-events-none absolute -bottom-16 -left-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-3xl [animation-delay:1.2s]"
+        className="pointer-events-none absolute -bottom-14 -left-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-2xl motion-glow max-sm:hidden [animation-delay:1.2s]"
         aria-hidden
       />
 

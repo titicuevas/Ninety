@@ -18,7 +18,7 @@ export function NotFoundPage() {
       <SkipLink />
       {/* Líneas de área / césped sutiles */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.07] motion-glow"
+        className="pointer-events-none absolute inset-0 opacity-[0.07]"
         aria-hidden
         style={{
           backgroundImage: `

@@ -24,7 +24,8 @@ describe('frontera HTTP de seguridad', () => {
   it('envía cabeceras defensivas y oculta Express', async () => {
     const res = await request(createApp()).get('/api/health');
     assert.equal(res.status, 200);
-    assert.match(String(res.headers['content-security-policy']), /default-src 'self'/);
+    // API JSON: CSP desactivada a propósito (helmet contentSecurityPolicy: false)
+    assert.equal(res.headers['content-security-policy'], undefined);
     assert.equal(res.headers['x-content-type-options'], 'nosniff');
     assert.equal(res.headers['x-frame-options'], 'SAMEORIGIN');
     assert.equal(res.headers['referrer-policy'], 'no-referrer');

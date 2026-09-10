@@ -101,7 +101,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="app-shell min-h-dvh">
       <SkipLink />
 
-      <header className="sticky top-0 z-50 border-b border-border/80 bg-background/85 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
+      <header className="chrome-blur sticky top-0 z-50 border-b border-border/80 bg-background/85 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-4 sm:h-16 sm:px-6 lg:max-w-6xl">
           <Link
             to="/home"
@@ -187,7 +187,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </main>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-50 border-t border-border/80 bg-background/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md lg:hidden"
+        className="chrome-blur fixed inset-x-0 bottom-0 z-50 border-t border-border/80 bg-background/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md lg:hidden"
         aria-label="Navegación principal"
       >
         <ul className="mx-auto flex h-[4.25rem] max-w-2xl list-none items-stretch gap-0.5 px-0.5 py-0.5 sm:h-16 sm:max-w-3xl sm:px-2">

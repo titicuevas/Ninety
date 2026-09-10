@@ -237,165 +237,193 @@ button,
 /* Feedback social breve — el bloque prefers-reduced-motion de abajo las anula */
 @keyframes ninety-pop {
   0% {
-    transform: scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
   }
   35% {
-    transform: scale(1.18);
+    transform: translate3d(0, 0, 0) scale(1.14);
   }
   70% {
-    transform: scale(0.97);
+    transform: translate3d(0, 0, 0) scale(0.98);
   }
   100% {
-    transform: scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
+/* Solo opacity + translate3d: capas compositables, sin layout thrash */
 @keyframes ninety-reveal {
   from {
     opacity: 0;
-    transform: translateY(0.55rem);
+    transform: translate3d(0, 0.4rem, 0);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
 @keyframes ninety-page-enter {
   from {
     opacity: 0;
-    transform: translateY(0.5rem);
+    transform: translate3d(0, 0.35rem, 0);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
 @keyframes ninety-auth-enter {
   from {
     opacity: 0;
-    transform: translateY(0.75rem) scale(0.985);
+    transform: translate3d(0, 0.5rem, 0) scale(0.99);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
+/* Solo opacity: blur+scale infinito en móvil es muy caro */
 @keyframes ninety-glow-breathe {
   0%,
   100% {
-    opacity: 0.55;
-    transform: scale(1);
+    opacity: 0.4;
   }
   50% {
-    opacity: 0.9;
-    transform: scale(1.08);
+    opacity: 0.75;
   }
 }
 
 @keyframes ninety-slide-up {
   from {
     opacity: 0;
-    transform: translateY(1.15rem);
+    transform: translate3d(0, 0.75rem, 0);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes ninety-cookie-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 1rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes ninety-cookie-exit {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(0, 0.85rem, 0);
   }
 }
 
 .motion-page {
-  animation: ninety-page-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: ninety-page-enter 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .motion-card {
   transition:
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 220ms ease,
-    box-shadow 220ms ease;
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .motion-card:hover {
-    transform: translateY(-3px);
+    transform: translate3d(0, -2px, 0);
     border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
-    box-shadow: 0 16px 32px -22px rgba(16, 185, 129, 0.6);
   }
 }
 
 button:not(:disabled),
 [role='button']:not([aria-disabled='true']) {
   transition-property: color, background-color, border-color, opacity, transform;
-  transition-duration: 160ms;
+  transition-duration: 140ms;
   transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 button:not(:disabled):active,
 [role='button']:not([aria-disabled='true']):active {
-  transform: scale(0.98);
+  transform: translate3d(0, 0, 0) scale(0.98);
 }
 
 .motion-pop {
-  animation: ninety-pop 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: ninety-pop 240ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .motion-reveal {
-  animation: ninety-reveal 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: ninety-reveal 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .motion-reveal-delay-1 {
-  animation-delay: 60ms;
+  animation-delay: 40ms;
 }
 .motion-reveal-delay-2 {
-  animation-delay: 120ms;
+  animation-delay: 80ms;
 }
 .motion-reveal-delay-3 {
-  animation-delay: 180ms;
+  animation-delay: 120ms;
 }
 .motion-reveal-delay-4 {
-  animation-delay: 240ms;
+  animation-delay: 160ms;
 }
 
 .motion-auth {
-  animation: ninety-auth-enter 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: ninety-auth-enter 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .motion-glow {
-  animation: ninety-glow-breathe 5.5s ease-in-out infinite;
-  will-change: transform, opacity;
+  animation: ninety-glow-breathe 6s ease-in-out infinite;
+}
+
+.motion-cookie-enter {
+  animation: ninety-cookie-enter 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.motion-cookie-exit {
+  animation: ninety-cookie-exit 220ms cubic-bezier(0.4, 0, 1, 1) both;
+  pointer-events: none;
 }
 
 /* Loading de marca — pulse del logo + balón rebotando + fade de copy */
 @keyframes ninety-loader-pulse {
   0%,
   100% {
-    transform: scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
   }
   50% {
-    transform: scale(1.06);
+    transform: translate3d(0, 0, 0) scale(1.05);
   }
 }
 
 @keyframes ninety-bounce {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
   50% {
-    transform: translateY(-6px);
+    transform: translate3d(0, -5px, 0);
   }
 }
 
 @keyframes ninety-loader-fade {
   from {
     opacity: 0;
-    transform: translateY(0.25rem);
+    transform: translate3d(0, 0.2rem, 0);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
@@ -408,8 +436,15 @@ button:not(:disabled):active,
 }
 
 @keyframes ninety-pulse-scale {
-  0%, 100% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.15); opacity: 1; }
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate3d(0, 0, 0) scale(1.12);
+    opacity: 1;
+  }
 }
 
 .ninety-pulse-whistle {
@@ -417,9 +452,15 @@ button:not(:disabled):active,
 }
 
 @keyframes ninety-flip {
-  0% { transform: rotateY(0deg); }
-  50% { transform: rotateY(180deg); }
-  100% { transform: rotateY(360deg); }
+  0% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(180deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
 }
 
 .ninety-spin-card {
@@ -428,9 +469,16 @@ button:not(:disabled):active,
 }
 
 @keyframes ninety-shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-2px); }
-  75% { transform: translateX(2px); }
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  25% {
+    transform: translate3d(-2px, 0, 0);
+  }
+  75% {
+    transform: translate3d(2px, 0, 0);
+  }
 }
 
 .ninety-goal-net {
@@ -438,8 +486,15 @@ button:not(:disabled):active,
 }
 
 @keyframes ninety-goal-enter {
-  0%, 100% { transform: scale(0.6); opacity: 0.4; }
-  50% { transform: scale(1.1); opacity: 1; }
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(0.6);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translate3d(0, 0, 0) scale(1.08);
+    opacity: 1;
+  }
 }
 
 .ninety-goal-ball {
@@ -447,25 +502,41 @@ button:not(:disabled):active,
 }
 
 .ninety-loader-copy {
-  animation: ninety-loader-fade 320ms ease-out both;
+  animation: ninety-loader-fade 280ms ease-out both;
 }
 
-/* Landing — entrada escalonada */
+/* Landing — entrada escalonada (más corta = menos jank en LCP) */
 .landing-stagger > * {
-  animation: ninety-slide-up 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: ninety-slide-up 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.landing-stagger > :nth-child(1) { animation-delay: 40ms; }
-.landing-stagger > :nth-child(2) { animation-delay: 110ms; }
-.landing-stagger > :nth-child(3) { animation-delay: 180ms; }
-.landing-stagger > :nth-child(4) { animation-delay: 250ms; }
-.landing-stagger > :nth-child(5) { animation-delay: 320ms; }
-.landing-stagger > :nth-child(6) { animation-delay: 390ms; }
-.landing-stagger > :nth-child(7) { animation-delay: 460ms; }
-.landing-stagger > :nth-child(8) { animation-delay: 530ms; }
+.landing-stagger > :nth-child(1) {
+  animation-delay: 20ms;
+}
+.landing-stagger > :nth-child(2) {
+  animation-delay: 60ms;
+}
+.landing-stagger > :nth-child(3) {
+  animation-delay: 100ms;
+}
+.landing-stagger > :nth-child(4) {
+  animation-delay: 140ms;
+}
+.landing-stagger > :nth-child(5) {
+  animation-delay: 180ms;
+}
+.landing-stagger > :nth-child(6) {
+  animation-delay: 220ms;
+}
+.landing-stagger > :nth-child(7) {
+  animation-delay: 260ms;
+}
+.landing-stagger > :nth-child(8) {
+  animation-delay: 300ms;
+}
 
 .landing-header-enter {
-  animation: ninety-reveal 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: ninety-reveal 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .root-error-boundary {
@@ -477,11 +548,23 @@ button:not(:disabled):active,
   font-family: Inter, system-ui, sans-serif;
 }
 
-/* Safari iOS y GPUs móviles repintan fondos fijos durante cada gesto de scroll. */
+/* Safari iOS y GPUs móviles/tablets: sin fondos fijos, glows infinitos ni blur de chrome */
 @media (pointer: coarse), (max-width: 1023px) {
   body,
   .app-shell {
     background-attachment: scroll;
+  }
+
+  .motion-glow {
+    animation: none !important;
+    opacity: 0.55;
+  }
+
+  /* backdrop-filter en sticky/fixed es caro en scroll táctil */
+  .chrome-blur {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background-color: color-mix(in srgb, var(--background) 97%, transparent) !important;
   }
 }
 
@@ -520,9 +603,11 @@ button:not(:disabled):active,
     scroll-behavior: auto !important;
   }
 
-  .motion-glow {
+  .motion-glow,
+  .motion-cookie-enter,
+  .motion-cookie-exit {
     animation: none !important;
-    opacity: 0.7;
+    opacity: 1;
     transform: none;
   }
 }

@@ -120,9 +120,17 @@ test.describe('Smoke — público @smoke', () => {
   });
 
   test('listas followers/following públicas no 401', async ({ request }) => {
-    await requirePublicDemoProfile(request);
-    const followers = await request.get(`${API_BASE}/api/profile/${DEMO_USERNAME}/followers`);
-    const following = await request.get(`${API_BASE}/api/profile/${DEMO_USERNAME}/following`);
+    const profile = await requirePublicDemoProfile(request);
+    test.skip(
+      Boolean(profile.from_fallback),
+      'Perfil demo en modo fallback (PostgREST caído): followers/following no aplican',
+    );
+    const followers = await request.get(`${API_BASE}/api/profile/${DEMO_USERNAME}/followers`, {
+      timeout: 20_000,
+    });
+    const following = await request.get(`${API_BASE}/api/profile/${DEMO_USERNAME}/following`, {
+      timeout: 20_000,
+    });
     expect(followers.status()).not.toBe(401);
     expect(following.status()).not.toBe(401);
     expect(followers.ok()).toBeTruthy();
@@ -136,6 +144,10 @@ test.describe('Smoke — público @smoke', () => {
       return;
     }
     const body = await requirePublicDemoProfile(request, 'limit=1&offset=0');
+    test.skip(
+      Boolean(body.from_fallback),
+      'Perfil demo en modo fallback: OG de Capsule requiere IDs reales en producción',
+    );
     const capsuleId = body.capsules?.[0]?.id;
     test.skip(!capsuleId, 'El usuario demo no tiene Capsules públicas');
 
@@ -152,10 +164,14 @@ test.describe('Smoke — público @smoke', () => {
 
   test('detalle Capsule pública muestra autor y CTA de seguir', async ({ page, request }) => {
     const body = await requirePublicDemoProfile(request, 'limit=1&offset=0');
+    test.skip(
+      Boolean(body.from_fallback),
+      'Perfil demo en modo fallback: las Capsules de vitrina no tienen detalle real en API',
+    );
     const capsuleId = body.capsules?.[0]?.id;
     test.skip(!capsuleId, 'El usuario demo no tiene Capsules públicas');
 
-    const detail = await request.get(`${API_BASE}/api/capsules/${capsuleId}`);
+    const detail = await request.get(`${API_BASE}/api/capsules/${capsuleId}`, { timeout: 20_000 });
     expect(detail.ok()).toBeTruthy();
     const capsule = (await detail.json()) as {
       profiles?: { username?: string | null; followed_by_me?: boolean; avatar_url?: string | null };

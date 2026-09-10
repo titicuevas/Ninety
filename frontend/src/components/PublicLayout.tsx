@@ -15,7 +15,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="app-shell min-h-dvh">
       <SkipLink />
-      <header className="sticky top-0 z-50 border-b border-border/80 bg-background/85 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
+      <header className="chrome-blur sticky top-0 z-50 border-b border-border/80 bg-background/85 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6 lg:max-w-6xl">
           <Link
             to={homeHref}

@@ -6,7 +6,7 @@ import type { PublicProfileStats } from '@/types/publicProfile';
 
 const SHOWCASE_USERNAME = 'beta_ninety';
 
-export interface LandingShowcaseData {
+interface LandingShowcaseData {
   profile: { display_name: string | null; username: string };
   capsules: Capsule[];
   total: number;

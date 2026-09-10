@@ -235,7 +235,7 @@ export function LandingPage() {
               to="/register"
               className={cn(
                 buttonVariants({ size: 'lg' }),
-                'min-h-12 w-full text-center shadow-[0_12px_40px_-16px_rgba(16,185,129,0.75)] transition-transform hover:scale-[1.02] active:scale-[0.99] sm:w-auto sm:min-w-44',
+                'min-h-12 w-full text-center shadow-[0_10px_28px_-18px_rgba(16,185,129,0.65)] transition-transform duration-150 hover:scale-[1.015] active:scale-[0.99] sm:w-auto sm:min-w-44',
               )}
             >
               Crear mi diario gratis
@@ -387,8 +387,8 @@ export function LandingPage() {
 
         <LegalFooter className="mt-12 border-t border-border/80 pt-8" />
       </div>
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:hidden">
-        <Link to="/register" className={cn(buttonVariants({ size: 'lg' }), 'w-full')}>
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] sm:hidden">
+        <Link to="/register" className={cn(buttonVariants({ size: 'lg' }), 'min-h-12 w-full')}>
           Crear mi diario gratis
         </Link>
       </div>

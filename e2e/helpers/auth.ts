@@ -284,11 +284,13 @@ export type DemoPublicProfile = {
     username?: string | null;
     display_name?: string | null;
   };
-  capsules?: Array<{ id?: string; likes_count?: number; comments_count?: number }>;
+  capsules?: Array<{ id?: string; note?: string | null; likes_count?: number; comments_count?: number }>;
   total?: number;
   stats?: { totalMatches?: number };
   years?: number[];
   featured_collection?: { name?: string; slug?: string; likes_count?: number; comments_count?: number } | null;
+  /** true si la API sirvió la vitrina estática (PostgREST caído). */
+  from_fallback?: boolean;
 };
 
 /** Carga el perfil demo público o salta el test si no está sembrado / API caída. */
