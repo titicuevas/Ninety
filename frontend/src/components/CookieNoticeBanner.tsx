@@ -59,10 +59,9 @@ export function CookieNoticeBanner({ className }: { className?: string }) {
       <div
         className={cn(
           'pointer-events-auto relative mx-auto flex max-w-xl flex-col gap-3 overflow-hidden',
+          /* Opaco: /90+blur hace fallar color-contrast de axe en el CTA */
           'rounded-2xl border border-primary/25 bg-zinc-950 p-4 shadow-[0_20px_50px_-28px_rgba(0,0,0,0.85)]',
           'ring-1 ring-white/[0.06] sm:flex-row sm:items-center sm:gap-4 sm:px-5 sm:py-4',
-          /* Blur solo con ratón fino: tablets táctiles ≥sm no pagan backdrop-filter */
-          '[@media(hover:hover)_and_(pointer:fine)]:bg-zinc-950/90 [@media(hover:hover)_and_(pointer:fine)]:backdrop-blur-md',
         )}
       >
         <div

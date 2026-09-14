@@ -144,7 +144,7 @@ export function CapsulePhotosField({
         type="button"
         disabled={!canAddMore || preparing}
         onClick={openCamera}
-        className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-[0_0_24px_-8px_rgba(16,185,129,0.55)] transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+        className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-[0_0_24px_-8px_rgba(16,185,129,0.55)] transition-colors hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
       >
         <Camera className="h-5 w-5 shrink-0" aria-hidden />
         Cámara

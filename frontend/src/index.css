@@ -40,8 +40,6 @@ body {
   --color-surface: var(--background);
   --color-surface-raised: var(--card);
   --color-surface-overlay: var(--secondary);
-  /* Hover de botones primary: sigue AA con primary-foreground oscuro */
-  --color-accent-hover: #10b981;
 }
 
 :root {

@@ -53,7 +53,7 @@ export function AuthLayout({ title, subtitle, children, className }: Props) {
             <main
               id="main-content"
               tabIndex={-1}
-              className="rounded-2xl border border-border/80 bg-card/80 p-5 shadow-xl shadow-black/20 backdrop-blur-sm outline-none sm:p-7"
+              className="rounded-2xl border border-border/80 bg-card p-5 shadow-xl shadow-black/20 outline-none sm:p-7"
             >
               {children}
             </main>
