@@ -3,7 +3,7 @@ import { getCapsulePhotoUrls } from '@/lib/capsulePhotos';
 import { WATCH_CONTEXT_LABELS, isWatchContext } from '@/lib/watchContext';
 import { siteUrl } from '@/lib/siteUrl';
 
-export type TeamStatEntry = { name: string; count: number; crest: string | null };
+type TeamStatEntry = { name: string; count: number; crest: string | null };
 
 export interface CapsuleStats {
   totalMatches: number;
