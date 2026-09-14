@@ -8,50 +8,16 @@ const SIZE_CLASS = {
   xl: 'h-20 w-20',
 } as const;
 
+/** Mark de Ninety (N estilizada). */
 export function NinetyLogo({
   size = 'sm',
   className,
   animate = false,
-  variant = 'full',
 }: {
   size?: keyof typeof SIZE_CLASS;
   className?: string;
   animate?: boolean;
-  variant?: 'full' | 'mark';
 }) {
-  if (variant === 'mark') {
-    return (
-      <svg
-        viewBox="0 0 512 512"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className={cn(SIZE_CLASS[size], animate && 'ninety-loader-mark', className)}
-        aria-hidden
-      >
-        <defs>
-          <linearGradient id="n-mark-bg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#053b2d" />
-            <stop offset="100%" stopColor="#0a0a0b" />
-          </linearGradient>
-          <linearGradient id="n-mark-stroke" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#34d399" />
-            <stop offset="100%" stopColor="#10b981" />
-          </linearGradient>
-        </defs>
-
-        <rect width="512" height="512" rx="112" fill="url(#n-mark-bg)" />
-        <rect x="30" y="30" width="452" height="452" rx="82" fill="none" stroke="url(#n-mark-stroke)" strokeWidth="10" opacity="0.35" />
-
-        <path
-          d="M156 362V150h54l92 111V150h54v212h-50l-96-117v117z"
-          fill="url(#n-mark-stroke)"
-        />
-        <path d="M166 386h180" stroke="#10b981" strokeWidth="12" strokeLinecap="round" opacity="0.45" />
-        <circle cx="380" cy="142" r="26" fill="#10b981" opacity="0.16" />
-      </svg>
-    );
-  }
-
   return (
     <svg
       viewBox="0 0 512 512"
@@ -61,61 +27,32 @@ export function NinetyLogo({
       aria-hidden
     >
       <defs>
-        <linearGradient id="n-pitch" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#064e3b" />
+        <linearGradient id="n-mark-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#053b2d" />
           <stop offset="100%" stopColor="#0a0a0b" />
         </linearGradient>
-        <radialGradient id="n-glow" cx="50%" cy="35%" r="60%">
-          <stop offset="0%" stopColor="#10b981" stopOpacity="0.18" />
-          <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-        </radialGradient>
+        <linearGradient id="n-mark-stroke" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#34d399" />
+          <stop offset="100%" stopColor="#10b981" />
+        </linearGradient>
       </defs>
 
-      <rect width="512" height="512" rx="108" fill="url(#n-pitch)" />
-      <rect width="512" height="512" rx="108" fill="url(#n-glow)" />
+      <rect width="512" height="512" rx="112" fill="url(#n-mark-bg)" />
+      <rect
+        x="30"
+        y="30"
+        width="452"
+        height="452"
+        rx="82"
+        fill="none"
+        stroke="url(#n-mark-stroke)"
+        strokeWidth="10"
+        opacity="0.35"
+      />
 
-      {/* Borde del campo */}
-      <rect x="32" y="32" width="448" height="448" rx="76" fill="none" stroke="#10b981" strokeWidth="5" opacity="0.3" />
-
-      {/* Línea de medio campo */}
-      <line x1="256" y1="72" x2="256" y2="440" stroke="#10b981" strokeWidth="4" opacity="0.22" />
-
-      {/* Círculo central */}
-      <circle cx="256" cy="256" r="72" fill="none" stroke="#10b981" strokeWidth="4" opacity="0.22" />
-      <circle cx="256" cy="256" r="8" fill="#10b981" opacity="0.25" />
-
-      {/* Áreas */}
-      <rect x="164" y="32" width="184" height="80" rx="4" fill="none" stroke="#10b981" strokeWidth="3" opacity="0.12" />
-      <rect x="164" y="400" width="184" height="80" rx="4" fill="none" stroke="#10b981" strokeWidth="3" opacity="0.12" />
-
-      {/* 90 */}
-      <text
-        x="256"
-        y="290"
-        textAnchor="middle"
-        fill="#10b981"
-        fontFamily="Inter, ui-sans-serif, system-ui, sans-serif"
-        fontSize="200"
-        fontWeight="800"
-        letterSpacing="-12"
-      >
-        90
-      </text>
-
-      {/* MIN */}
-      <text
-        x="256"
-        y="348"
-        textAnchor="middle"
-        fill="#10b981"
-        fontFamily="Inter, ui-sans-serif, system-ui, sans-serif"
-        fontSize="28"
-        fontWeight="600"
-        letterSpacing="6"
-        opacity="0.55"
-      >
-        MIN
-      </text>
+      <path d="M156 362V150h54l92 111V150h54v212h-50l-96-117v117z" fill="url(#n-mark-stroke)" />
+      <path d="M166 386h180" stroke="#10b981" strokeWidth="12" strokeLinecap="round" opacity="0.45" />
+      <circle cx="380" cy="142" r="26" fill="#10b981" opacity="0.16" />
     </svg>
   );
 }

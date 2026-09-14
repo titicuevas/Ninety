@@ -249,7 +249,7 @@ Confirma tu cuenta en Ninety
           <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;">
             <table role="presentation" cellspacing="0" cellpadding="0">
               <tr>
-                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">90</td>
+                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">N</td>
                 <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;">Ninety</td>
               </tr>
             </table>
@@ -310,7 +310,7 @@ Tu enlace para entrar en Ninety
           <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;">
             <table role="presentation" cellspacing="0" cellpadding="0">
               <tr>
-                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">90</td>
+                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">N</td>
                 <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;">Ninety</td>
               </tr>
             </table>
@@ -371,7 +371,7 @@ Te han invitado a Ninety
           <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;">
             <table role="presentation" cellspacing="0" cellpadding="0">
               <tr>
-                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">90</td>
+                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">N</td>
                 <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;">Ninety</td>
               </tr>
             </table>
@@ -432,7 +432,7 @@ Confirma tu nuevo email en Ninety
           <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;">
             <table role="presentation" cellspacing="0" cellpadding="0">
               <tr>
-                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">90</td>
+                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">N</td>
                 <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;">Ninety</td>
               </tr>
             </table>
@@ -490,7 +490,7 @@ Restablece tu contraseña de Ninety
           <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;">
             <table role="presentation" cellspacing="0" cellpadding="0">
               <tr>
-                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">90</td>
+                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">N</td>
                 <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;">Ninety</td>
               </tr>
             </table>
@@ -551,7 +551,7 @@ Restablece tu contraseña de Ninety
           <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;">
             <table role="presentation" cellspacing="0" cellpadding="0">
               <tr>
-                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">90</td>
+                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">N</td>
                 <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;">Ninety</td>
               </tr>
             </table>
@@ -591,7 +591,7 @@ Restablece tu contraseña de Ninety
 5. **SMTP** (recomendado prod): Remitente `noreply@getninety.app` vía Resend; dominio verificado
 6. Railway API: `CLIENT_URL=https://www.getninety.app` (debe coincidir con el origen canónico)
 
-Logo en email: badge tipográfico «90» + wordmark Ninety (inline). Favicon público opcional: `https://www.getninety.app/favicon.svg` — no es necesario para que el HTML funcione.
+Logo en email: badge tipográfico «N» + wordmark Ninety (inline). Favicon público opcional: `https://www.getninety.app/favicon.svg` — no es necesario para que el HTML funcione.
 
 ### Qué debe configurar Henry en Supabase (checklist)
 
@@ -609,14 +609,14 @@ Logo en email: badge tipográfico «90» + wordmark Ninety (inline). Favicon pú
 
 ## Prompt logo / icono PWA (copy-paste)
 
-El favicon SVG del repo ya usa dark `#0a0a0b` + verde `#10b981` con “90”. Para regenerar PNG 192/512 / maskable / apple-touch con otra IA:
+El favicon SVG del repo ya usa dark `#0a0a0b` + verde `#10b981` con la N estilizada. Para regenerar PNG 192/512 / maskable / apple-touch con otra IA:
 
 ```
 App icon for “Ninety”, a football fan diary (match memories). Square app icon, 1024×1024.
-Style: sports newspaper / matchday programme meets modern PWA — bold condensed “90” as the hero mark (not a soccer ball clipart).
-Colors: near-black background #0a0a0b, emerald accent #10b981, subtle pitch-line or centre-circle geometry behind the numerals, thin emerald border, soft corner radius ~22%.
-Mood: night match, editorial, confident. No purple, no glow soup, no photoreal ball, no generic sans wordmark besides “90”.
-Deliver: flat vector-like icon suitable for favicon + PWA 192/512 and maskable (keep safe zone: “90” inside central 80%).
+Style: sports newspaper / matchday programme meets modern PWA — stylized capital “N” as the hero mark (not a soccer ball clipart, not “90”).
+Colors: near-black / deep green background #0a0a0b–#053b2d, emerald accent #10b981 / #34d399, thin emerald border, soft corner radius ~22%, subtle underline under the N.
+Mood: night match, editorial, confident. No purple, no glow soup, no photoreal ball.
+Deliver: flat vector-like icon suitable for favicon + PWA 192/512 and maskable (keep safe zone: “N” inside central 80%).
 ```
 
 Tras generar: sustituye `frontend/public/icon-192.png`, `icon-512.png`, `*-maskable.png`, `apple-touch-icon.png` alineados a esa paleta.

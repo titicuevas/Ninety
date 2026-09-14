@@ -36,7 +36,7 @@ export function NotFoundPage() {
         id="main-content"
         className="motion-auth relative mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center px-4 py-12 text-center"
       >
-        <NinetyLogo size="lg" variant="mark" />
+        <NinetyLogo size="lg" />
         <p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-primary">Tarjeta roja</p>
         <p className="mt-2 font-display text-7xl font-bold text-primary sm:text-8xl">404</p>
         <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Fuera de juego</h1>

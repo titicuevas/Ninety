@@ -201,7 +201,7 @@ export function LandingPage() {
         {/* Header */}
         <header className="landing-header-enter mb-12 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <NinetyLogo size="md" variant="mark" />
+            <NinetyLogo size="md" />
             <span className="text-xl font-semibold tracking-tight sm:text-2xl">Ninety</span>
           </div>
           <Link

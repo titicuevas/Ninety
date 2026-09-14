@@ -110,7 +110,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             to="/home"
             className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <NinetyLogo size="sm" variant="mark" />
+            <NinetyLogo size="sm" />
             <span className="truncate text-base font-semibold tracking-tight sm:text-lg">Ninety</span>
           </Link>
 

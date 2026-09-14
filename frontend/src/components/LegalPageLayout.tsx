@@ -39,7 +39,7 @@ export function LegalPageLayout({
             Volver al inicio
           </Link>
           <div className="flex items-center gap-2.5">
-            <NinetyLogo size="md" variant="mark" />
+            <NinetyLogo size="md" />
             <div>
               <p className="text-xl font-semibold tracking-tight sm:text-2xl">Ninety</p>
               <p className="text-xs text-muted-foreground">getninety.app</p>

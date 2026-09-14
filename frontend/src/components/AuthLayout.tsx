@@ -42,7 +42,6 @@ export function AuthLayout({ title, subtitle, children, className }: Props) {
               >
                 <NinetyLogo
                   size="md"
-                  variant="mark"
                   className="transition-transform duration-300 hover:scale-[1.03]"
                 />
                 <span className="text-2xl font-semibold tracking-tight">Ninety</span>

@@ -28,16 +28,11 @@ indexRouter.get('/', (_req, res) => {
       text-align: center;
     }
     .logo {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
       width: 3rem;
       height: 3rem;
       border-radius: 0.75rem;
-      background: #10b981;
-      color: #052e1f;
-      font-weight: 700;
-      margin-bottom: 1rem;
+      margin: 0 auto 1rem;
+      display: block;
     }
     h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
     p { color: #a1a1aa; line-height: 1.6; margin-bottom: 1.5rem; }
@@ -60,7 +55,23 @@ indexRouter.get('/', (_req, res) => {
 </head>
 <body>
   <main>
-    <div class="logo">90</div>
+    <svg class="logo" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#053b2d"/>
+          <stop offset="100%" stop-color="#0a0a0b"/>
+        </linearGradient>
+        <linearGradient id="stroke" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#34d399"/>
+          <stop offset="100%" stop-color="#10b981"/>
+        </linearGradient>
+      </defs>
+      <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+      <rect x="30" y="30" width="452" height="452" rx="82" fill="none" stroke="url(#stroke)" stroke-width="10" opacity="0.35"/>
+      <path d="M156 362V150h54l92 111V150h54v212h-50l-96-117v117z" fill="url(#stroke)"/>
+      <path d="M166 386h180" stroke="#10b981" stroke-width="12" stroke-linecap="round" opacity="0.45"/>
+      <circle cx="380" cy="142" r="26" fill="#10b981" opacity="0.16"/>
+    </svg>
     <h1>Ninety API</h1>
     <p>Backend del diario futbolero. La app vive en el frontend.</p>
     <a href="${appUrl}">Ir a Ninety</a>
