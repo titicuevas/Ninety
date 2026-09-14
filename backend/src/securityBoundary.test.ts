@@ -87,4 +87,15 @@ describe('frontera HTTP de seguridad', () => {
     assert.equal(res.status, 401);
     assert.doesNotMatch(body, /stack|sb_secret|test-football-key|authorization/i);
   });
+
+  it('exige auth en /api/admin/metrics', async () => {
+    const anon = await request(createApp()).get('/api/admin/metrics');
+    assert.equal(anon.status, 401);
+
+    const invalid = await request(createApp())
+      .get('/api/admin/metrics')
+      .set('Authorization', 'Bearer invalid-token');
+    assert.equal(invalid.status, 401);
+    assert.doesNotMatch(JSON.stringify(invalid.body), /stack|sb_secret/i);
+  });
 });

@@ -170,7 +170,7 @@ profileRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   );
 
   res.json({
-    ...normalizeProfile(data),
+    ...normalizeProfile(data, { includeAdmin: true }),
     featured_collection_id:
       (data as { featured_collection_id?: string | null }).featured_collection_id ?? null,
     featured_collection: featured,
@@ -243,7 +243,7 @@ profileRouter.patch('/me', requireAuth, async (req: AuthRequest, res) => {
       .select()
       .single());
     if (!error && data) {
-      res.json(normalizeProfile({ ...data, bio: null }));
+      res.json(normalizeProfile({ ...data, bio: null }, { includeAdmin: true }));
       return;
     }
   }
@@ -268,7 +268,7 @@ profileRouter.patch('/me', requireAuth, async (req: AuthRequest, res) => {
   );
 
   res.json({
-    ...normalizeProfile(data),
+    ...normalizeProfile(data, { includeAdmin: true }),
     featured_collection_id:
       (data as { featured_collection_id?: string | null }).featured_collection_id ?? null,
     featured_collection: featured,

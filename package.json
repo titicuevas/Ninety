@@ -20,6 +20,7 @@
     "check:secrets:history": "node scripts/check-secrets.mjs --history",
     "vapid:set-railway": "node scripts/set-railway-vapid.mjs",
     "seed:test-user": "node scripts/seed-test-user.mjs",
+    "admin:promote": "node scripts/promote-admin.mjs",
     "seed:demo": "npm run generate:test-photos --prefix backend && npm run seed:demo --prefix backend",
     "seed:fans": "npm run seed:fans --prefix backend",
     "seed:demo-notes": "npm run seed:demo-notes --prefix backend",

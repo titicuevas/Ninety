@@ -31,6 +31,8 @@ export interface Profile {
   muted_by_me?: boolean;
   /** true si el viewer bloqueó a este perfil (no ver Capsules/perfil). */
   blocked_by_me?: boolean;
+  /** Privilegio interno (solo en GET /api/profile/me). */
+  is_admin?: boolean;
   /** Motivo de sugerencia en discover (si aplica). */
   match_reason?: 'favorite_team' | 'city' | 'country' | 'active' | null;
   /** Capsules públicas recientes (página de equipo / heurística ligera). */

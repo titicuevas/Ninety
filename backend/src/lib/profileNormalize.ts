@@ -10,14 +10,22 @@ export type ProfileRow = {
   bio?: string | null;
   created_at: string;
   updated_at?: string;
+  is_admin?: boolean | null;
 };
 
-export function normalizeProfile(row: ProfileRow) {
-  return {
-    ...row,
+export function normalizeProfile(row: ProfileRow, options?: { includeAdmin?: boolean }) {
+  const { is_admin: _isAdmin, ...rest } = row;
+  const base = {
+    ...rest,
     display_name: row.display_name ?? row.full_name ?? null,
     bio: row.bio ?? null,
   };
+
+  if (options?.includeAdmin) {
+    return { ...base, is_admin: Boolean(row.is_admin) };
+  }
+
+  return base;
 }
 
 export function profileUpdatePayload(input: {

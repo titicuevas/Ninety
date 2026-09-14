@@ -3,7 +3,8 @@ import { useId, useRef, useState, useEffect, type RefObject } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Download, LogOut, Settings, Upload } from 'lucide-react';
+import { Download, LogOut, Settings, Shield, Upload } from 'lucide-react';
+import { useProfile } from '@/hooks/useProfile';
 import { DirtyLeaveDialog } from '@/components/DirtyLeaveDialog';
 import { FormAlert, FormSuccess } from '@/components/FormAlert';
 import { Layout } from '@/components/Layout';
@@ -486,6 +487,7 @@ export function SettingsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
+  const { data: profile } = useProfile();
   const session = useAuthStore((s) => s.session);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordLoading, setPasswordLoading] = useState(false);
@@ -595,6 +597,28 @@ export function SettingsPage() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">Cuenta, seguridad y alertas</p>
         </div>
+
+        {profile?.is_admin ? (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="flex items-center justify-between gap-3 p-4">
+              <div className="flex items-start gap-3">
+                <Shield className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
+                <div>
+                  <p className="font-medium text-foreground">Control interno</p>
+                  <p className="text-sm text-muted-foreground">
+                    Altas, actividad y salud de API / búsqueda
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/admin"
+                className="shrink-0 text-sm font-medium text-primary underline-offset-2 hover:underline"
+              >
+                Abrir
+              </Link>
+            </CardContent>
+          </Card>
+        ) : null}
 
         <SettingsAccountPasswordCard
           userEmail={user?.email}

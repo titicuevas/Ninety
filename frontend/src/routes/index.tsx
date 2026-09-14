@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { ProtectedRoute, GuestRoute } from '@/components/ProtectedRoute';
+import { ProtectedRoute, GuestRoute, AdminRoute } from '@/components/ProtectedRoute';
 import { RootLayout } from '@/components/RootLayout';
 import { RouteErrorFallback } from '@/components/RootErrorFallback';
 
@@ -67,7 +67,16 @@ export const appRouter = createBrowserRouter([
       { path: '/settings', lazy: () => import('@/pages/SettingsPage').then((m) => ({ Component: m.SettingsPage })) },
     ],
   },
-      { path: '*', lazy: () => import('@/pages/NotFoundPage').then((m) => ({ Component: m.NotFoundPage })) },
+  {
+    element: <AdminRoute />,
+    children: [
+      {
+        path: '/admin',
+        lazy: () => import('@/pages/AdminMetricsPage').then((m) => ({ Component: m.AdminMetricsPage })),
+      },
+    ],
+  },
+  { path: '*', lazy: () => import('@/pages/NotFoundPage').then((m) => ({ Component: m.NotFoundPage })) },
     ],
   },
 ]);

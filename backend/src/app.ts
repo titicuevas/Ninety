@@ -19,6 +19,7 @@ import { wantToGoRouter } from './routes/wantToGo.js';
 import { internalRouter } from './routes/internal.js';
 import { emailDigestRouter } from './routes/emailDigest.js';
 import { activityRouter } from './routes/activity.js';
+import { adminRouter } from './routes/admin.js';
 import { requestId } from './middleware/requestId.js';
 import { requestMetrics } from './middleware/requestMetrics.js';
 
@@ -116,6 +117,7 @@ export function createApp() {
   app.use('/api/want-to-go', wantToGoRouter);
   app.use('/api/activity', activityRouter);
   app.use('/api/email-digest', emailDigestRouter);
+  app.use('/api/admin', adminRouter);
 
   app.use(errorHandler);
 
