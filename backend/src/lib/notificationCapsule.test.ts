@@ -36,6 +36,8 @@ describe('pickCapsuleThumbUrl / mapNotificationCapsule', () => {
       id: 'c1',
       home_team_name: 'Betis',
       away_team_name: 'Sevilla',
+      home_team_crest: null,
+      away_team_crest: null,
       competition_name: 'LaLiga',
       thumb_url: 'https://cdn.example/a.jpg',
     });

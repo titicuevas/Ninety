@@ -18,7 +18,6 @@ import { useWantToGoIds } from '@/hooks/useWantToGo';
 import { useTeamCompetitions } from '@/hooks/useTeamCompetitions';
 import { saveDraftMatch } from '@/lib/draftMatch';
 import { registerPath } from '@/lib/authReturn';
-import { groupMatchesByCompetition } from '@/lib/groupMatches';
 import { seasonChipOptions } from '@/lib/seasonChips';
 import { monthChipOptions, monthHintLabel, parseMonthParam } from '@/lib/monthChips';
 import { isFootballMatchWantToGoEligible } from '@/lib/wantToGo';
@@ -206,8 +205,6 @@ function MatchSearchFilters({
 
 type MatchSearchResultsProps = {
   matches: FootballMatch[];
-  matchGroups: ReturnType<typeof groupMatchesByCompetition>;
-  showGrouped: boolean;
   savedByMatchId: Map<number, string>;
   wantToGoIds: Set<number>;
   onSelectMatch: (match: FootballMatch) => void;
@@ -220,10 +217,9 @@ type MatchSearchResultsProps = {
   manualMatchTo: string;
 };
 
+/** Lista plana por fecha (próximos → jugados). La competición va en la card. */
 function MatchSearchResults({
   matches,
-  matchGroups,
-  showGrouped,
   savedByMatchId,
   wantToGoIds,
   onSelectMatch,
@@ -238,50 +234,19 @@ function MatchSearchResults({
   return (
     <div aria-live="polite" aria-atomic="true">
       {matches.length > 0 ? (
-        <div className="space-y-5 sm:space-y-8">
-          {showGrouped
-            ? matchGroups.map((group) => (
-                <section key={group.key} className="space-y-3">
-                  <h2 className="text-sm font-semibold tracking-wide text-primary uppercase">
-                    {group.label}
-                  </h2>
-                  <ul className="space-y-3">
-                    {group.matches.map((match) => (
-                      <li key={match.id} className="space-y-2">
-                        <MatchCard
-                          match={match}
-                          savedCapsuleId={savedByMatchId.get(match.id)}
-                          wantToGo={wantToGoIds.has(match.id)}
-                          onSelect={() => onSelectMatch(match)}
-                        />
-                        <MatchWantToGoAction
-                          match={match}
-                          saved={wantToGoIds.has(match.id)}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))
-            : (
-                <ul className="space-y-3">
-                  {matches.map((match) => (
-                    <li key={match.id} className="space-y-2">
-                      <MatchCard
-                        match={match}
-                        savedCapsuleId={savedByMatchId.get(match.id)}
-                        wantToGo={wantToGoIds.has(match.id)}
-                        onSelect={() => onSelectMatch(match)}
-                      />
-                      <MatchWantToGoAction
-                        match={match}
-                        saved={wantToGoIds.has(match.id)}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              )}
-        </div>
+        <ul className="space-y-3">
+          {matches.map((match) => (
+            <li key={match.id} className="space-y-2">
+              <MatchCard
+                match={match}
+                savedCapsuleId={savedByMatchId.get(match.id)}
+                wantToGo={wantToGoIds.has(match.id)}
+                onSelect={() => onSelectMatch(match)}
+              />
+              <MatchWantToGoAction match={match} saved={wantToGoIds.has(match.id)} />
+            </li>
+          ))}
+        </ul>
       ) : (
         <EmptyState
           title="Sin resultados"
@@ -420,8 +385,6 @@ export function MatchSearchPanel() {
   });
 
   const matches = data?.matches ?? NO_MATCHES;
-  const matchGroups = useMemo(() => groupMatchesByCompetition(matches), [matches]);
-  const showGrouped = !activeCompetition && matchGroups.length > 1;
   const { data: capsulesData } = useCapsules();
   const { data: wantToGoIdsData } = useWantToGoIds();
   const savedByMatchId = useMemo(() => {
@@ -538,8 +501,6 @@ export function MatchSearchPanel() {
       {!isSearching && canSearch && !isError ? (
         <MatchSearchResults
           matches={matches}
-          matchGroups={matchGroups}
-          showGrouped={showGrouped}
           savedByMatchId={savedByMatchId}
           wantToGoIds={wantToGoIds}
           onSelectMatch={selectMatch}

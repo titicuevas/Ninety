@@ -4,6 +4,8 @@ export type CapsuleNotificationRow = {
   id: string;
   home_team_name: string | null;
   away_team_name: string | null;
+  home_team_crest?: string | null;
+  away_team_crest?: string | null;
   competition_name: string | null;
   photo_urls?: string[] | null;
   photo_url?: string | null;
@@ -13,6 +15,8 @@ export type NotificationCapsule = {
   id: string;
   home_team_name: string;
   away_team_name: string;
+  home_team_crest: string | null;
+  away_team_crest: string | null;
   competition_name: string | null;
   thumb_url: string | null;
 };
@@ -45,6 +49,8 @@ export function mapNotificationCapsule(
     id: row.id,
     home_team_name: home,
     away_team_name: away,
+    home_team_crest: row.home_team_crest?.trim() || null,
+    away_team_crest: row.away_team_crest?.trim() || null,
     competition_name: competition,
     thumb_url: pickCapsuleThumbUrl(row),
   };

@@ -8,10 +8,10 @@ import { CollectionAlsoCommented } from '@/components/CollectionAlsoCommented';
 import { CollectionAlsoLiked } from '@/components/CollectionAlsoLiked';
 import { SocialInlineRow } from '@/components/SocialInlineRow';
 import { EmptyState } from '@/components/EmptyState';
-import { capsuleCardListClass } from '@/components/CapsuleListCard';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { Layout } from '@/components/Layout';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
+import { TeamCrest } from '@/components/TeamCrest';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useActivityFilterParams } from '@/hooks/useActivityFilterParams';
@@ -22,20 +22,31 @@ import {
   activityTypeEmptyCopy,
   hasActivityTypeFilter,
 } from '@/lib/activityTypeFilter';
-import { followActivityAlsoCommented, followActivityAlsoLiked, followActivityAlsoWatched, followActivityEngagementMeta } from '@/lib/followActivitySummary';
+import {
+  followActivityAlsoCommented,
+  followActivityAlsoLiked,
+  followActivityAlsoWatched,
+  followActivityEngagementMeta,
+} from '@/lib/followActivitySummary';
 import { formatRelativeTime } from '@/lib/format';
 import { publicProfilePath } from '@/lib/profilePath';
+import { cn } from '@/lib/utils';
 import type { FollowActivityEvent } from '@/types/activity';
 
 function ActivityListSkeleton() {
   return (
     <div role="status" aria-label="Cargando actividad">
-      <ul className={capsuleCardListClass} aria-hidden>
-        {Array.from({ length: 4 }, (_, i) => (
-          <li key={i} className="rounded-xl border border-border p-4">
-            <Skeleton className="h-3 w-28" />
-            <Skeleton className="mt-2 h-5 w-52 max-w-full" />
-            <Skeleton className="mt-2 h-3 w-20" />
+      <ul className="flex flex-col gap-2" aria-hidden>
+        {Array.from({ length: 5 }, (_, i) => (
+          <li key={i} className="rounded-xl border border-border p-3">
+            <div className="flex gap-3">
+              <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <Skeleton className="h-3 w-40" />
+                <Skeleton className="h-5 w-56 max-w-full" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            </div>
           </li>
         ))}
       </ul>
@@ -49,13 +60,96 @@ function ActorLink({ event }: { event: FollowActivityEvent }) {
 
   if (href) {
     return (
-      <Link to={href} className="font-medium text-primary hover:underline">
+      <Link to={href} className="font-medium text-foreground hover:text-primary hover:underline">
         {name}
       </Link>
     );
   }
 
   return <span className="font-medium text-foreground">{name}</span>;
+}
+
+function ActorAvatar({
+  event,
+  badge,
+}: {
+  event: FollowActivityEvent;
+  badge: 'capsule' | 'like' | 'comment' | 'list';
+}) {
+  const name = event.actor.display_name ?? event.actor.username ?? 'Aficionado';
+  const href = publicProfilePath(event.actor.username);
+  const initial = name.trim().slice(0, 1).toUpperCase() || '?';
+  const BadgeIcon =
+    badge === 'comment'
+      ? MessageCircle
+      : badge === 'like'
+        ? Heart
+        : badge === 'list'
+          ? Library
+          : Ticket;
+
+  const avatar = event.actor.avatar_url ? (
+    <img
+      src={event.actor.avatar_url}
+      alt=""
+      className="h-10 w-10 rounded-full border border-border object-cover"
+      loading="lazy"
+    />
+  ) : (
+    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-sm font-semibold text-muted-foreground">
+      {initial}
+    </span>
+  );
+
+  const withBadge = (
+    <span className="relative mt-0.5 shrink-0" aria-hidden>
+      {avatar}
+      <span
+        className={cn(
+          'absolute -right-0.5 -bottom-0.5 flex h-5 w-5 items-center justify-center rounded-full border border-background',
+          badge === 'like' || badge === 'capsule'
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-secondary text-muted-foreground',
+        )}
+      >
+        <BadgeIcon className="h-2.5 w-2.5" />
+      </span>
+    </span>
+  );
+
+  if (!href) return withBadge;
+  return (
+    <Link to={href} className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={name}>
+      {withBadge}
+    </Link>
+  );
+}
+
+function MatchLine({
+  home,
+  away,
+  homeCrest,
+  awayCrest,
+  href,
+}: {
+  home: string;
+  away: string;
+  homeCrest?: string | null;
+  awayCrest?: string | null;
+  href: string;
+}) {
+  return (
+    <Link
+      to={href}
+      className="mt-1.5 flex min-w-0 items-center gap-2 rounded-lg bg-secondary/40 px-2.5 py-2 hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <TeamCrest name={home} crest={homeCrest} size="sm" className="h-7 w-7" />
+      <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+        {home} <span className="font-normal text-muted-foreground">vs</span> {away}
+      </span>
+      <TeamCrest name={away} crest={awayCrest} size="sm" className="h-7 w-7" />
+    </Link>
+  );
 }
 
 function ActivityAlsoFollowedLines({ event }: { event: FollowActivityEvent }) {
@@ -69,7 +163,7 @@ function ActivityAlsoFollowedLines({ event }: { event: FollowActivityEvent }) {
     event.type === 'capsule_comment'
   ) {
     return (
-      <SocialInlineRow className="mt-1">
+      <SocialInlineRow className="mt-1.5">
         {watched.length > 0 ? <CapsuleAlsoWatched people={watched} /> : null}
         <CapsuleAlsoLiked
           capsuleId={event.capsule.id}
@@ -86,7 +180,7 @@ function ActivityAlsoFollowedLines({ event }: { event: FollowActivityEvent }) {
   }
 
   return (
-    <SocialInlineRow className="mt-1">
+    <SocialInlineRow className="mt-1.5">
       <CollectionAlsoLiked collectionId={event.collection.id} people={liked} />
       <CollectionAlsoCommented collectionId={event.collection.id} people={commented} />
     </SocialInlineRow>
@@ -96,7 +190,7 @@ function ActivityAlsoFollowedLines({ event }: { event: FollowActivityEvent }) {
 function ActivityEngagementLine({ event }: { event: FollowActivityEvent }) {
   const label = followActivityEngagementMeta(event);
   if (!label) return null;
-  return <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>;
+  return <p className="mt-1 text-xs text-muted-foreground">{label}</p>;
 }
 
 function CapsuleActivityRow({
@@ -104,7 +198,6 @@ function CapsuleActivityRow({
 }: {
   event: Extract<FollowActivityEvent, { type: 'capsule' | 'capsule_like' | 'capsule_comment' }>;
 }) {
-  const match = `${event.capsule.home_team_name} vs ${event.capsule.away_team_name}`;
   const liked = event.type === 'capsule_like';
   const commented = event.type === 'capsule_comment';
   const href = commented ? `/c/${event.capsule.id}#comments` : `/c/${event.capsule.id}`;
@@ -113,44 +206,35 @@ function CapsuleActivityRow({
     : liked
       ? 'le dio me gusta a una Capsule'
       : 'publicó una Capsule';
+  const badge = commented ? 'comment' : liked ? 'like' : 'capsule';
 
   return (
-    <li className="rounded-xl border border-border bg-card p-4">
+    <li className="rounded-xl border border-border bg-card p-3 sm:p-3.5">
       <article className="flex items-start gap-3">
-        <span
-          className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary"
-          aria-hidden
-        >
-          {commented ? (
-            <MessageCircle className="h-4 w-4" />
-          ) : liked ? (
-            <Heart className="h-4 w-4" />
-          ) : (
-            <Ticket className="h-4 w-4" />
-          )}
-        </span>
+        <ActorAvatar event={event} badge={badge} />
         <div className="min-w-0 flex-1">
           <p className="text-sm text-muted-foreground">
             <ActorLink event={event} /> {action}
           </p>
-          <Link
-            to={href}
-            className="mt-1 block truncate font-medium text-foreground hover:text-primary hover:underline"
-          >
-            {match}
-          </Link>
+          <MatchLine
+            home={event.capsule.home_team_name}
+            away={event.capsule.away_team_name}
+            homeCrest={event.capsule.home_team_crest}
+            awayCrest={event.capsule.away_team_crest}
+            href={href}
+          />
           <ActivityEngagementLine event={event} />
           <ActivityAlsoFollowedLines event={event} />
           {commented ? (
-            <p className="mt-1 line-clamp-2 text-sm text-foreground/90">{event.comment_body}</p>
+            <p className="mt-1.5 line-clamp-2 text-sm text-foreground/90">«{event.comment_body}»</p>
           ) : null}
           {event.capsule.competition_name ? (
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            <p className="mt-1 truncate text-xs text-muted-foreground">
               {event.capsule.competition_name}
             </p>
           ) : null}
           <time
-            className="mt-2 block text-xs text-muted-foreground"
+            className="mt-1.5 block text-xs text-muted-foreground"
             dateTime={event.occurred_at}
           >
             {formatRelativeTime(event.occurred_at)}
@@ -181,22 +265,12 @@ function CollectionActivityRow({
     : liked
       ? 'le dio me gusta a una lista'
       : 'creó una lista';
+  const badge = commented ? 'comment' : liked ? 'like' : 'list';
 
   return (
-    <li className="rounded-xl border border-border bg-card p-4">
+    <li className="rounded-xl border border-border bg-card p-3 sm:p-3.5">
       <article className="flex items-start gap-3">
-        <span
-          className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground"
-          aria-hidden
-        >
-          {commented ? (
-            <MessageCircle className="h-4 w-4" />
-          ) : liked ? (
-            <Heart className="h-4 w-4" />
-          ) : (
-            <Library className="h-4 w-4" />
-          )}
-        </span>
+        <ActorAvatar event={event} badge={badge} />
         <div className="min-w-0 flex-1">
           <p className="text-sm text-muted-foreground">
             <ActorLink event={event} /> {action}
@@ -204,20 +278,22 @@ function CollectionActivityRow({
           {href ? (
             <Link
               to={href}
-              className="mt-1 block truncate font-medium text-foreground hover:text-primary hover:underline"
+              className="mt-1.5 block truncate rounded-lg bg-secondary/40 px-2.5 py-2 text-sm font-medium text-foreground hover:bg-secondary/70 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {event.collection.name}
             </Link>
           ) : (
-            <p className="mt-1 truncate font-medium">{event.collection.name}</p>
+            <p className="mt-1.5 truncate rounded-lg bg-secondary/40 px-2.5 py-2 text-sm font-medium">
+              {event.collection.name}
+            </p>
           )}
           <ActivityEngagementLine event={event} />
           <ActivityAlsoFollowedLines event={event} />
           {commented ? (
-            <p className="mt-1 line-clamp-2 text-sm text-foreground/90">{event.comment_body}</p>
+            <p className="mt-1.5 line-clamp-2 text-sm text-foreground/90">«{event.comment_body}»</p>
           ) : null}
           <time
-            className="mt-2 block text-xs text-muted-foreground"
+            className="mt-1.5 block text-xs text-muted-foreground"
             dateTime={event.occurred_at}
           >
             {formatRelativeTime(event.occurred_at)}
@@ -263,7 +339,7 @@ export function ActivityPage() {
 
   return (
     <Layout>
-      <div className="space-y-5 sm:space-y-8">
+      <div className="mx-auto w-full max-w-xl space-y-5 sm:space-y-6">
         <section className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Actividad</h1>
@@ -331,7 +407,7 @@ export function ActivityPage() {
 
         {!isLoading && !isError && events.length > 0 ? (
           <>
-            <ul className={capsuleCardListClass}>
+            <ul className="flex flex-col gap-2">
               {events.map((event) => (
                 <ActivityRow key={event.id} event={event} />
               ))}

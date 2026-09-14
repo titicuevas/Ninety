@@ -19,6 +19,8 @@ export type FollowActivityCapsulePayload = {
   user_id: string;
   home_team_name: string;
   away_team_name: string;
+  home_team_crest: string | null;
+  away_team_crest: string | null;
   competition_name: string | null;
   rating: number | null;
   photo_urls: string[] | null;
@@ -92,6 +94,8 @@ export type FollowActivityEvent =
 type CapsuleFields = {
   home_team_name: string;
   away_team_name: string;
+  home_team_crest: string | null;
+  away_team_crest: string | null;
   competition_name: string | null;
   rating: number | null;
   photo_urls: string[] | null;
@@ -295,6 +299,8 @@ export function visibleCapsuleLikeCandidates(
       capsule_id: capsule.id,
       home_team_name: capsule.home_team_name,
       away_team_name: capsule.away_team_name,
+      home_team_crest: capsule.home_team_crest ?? null,
+      away_team_crest: capsule.away_team_crest ?? null,
       competition_name: capsule.competition_name,
       rating: capsule.rating,
       photo_urls: capsule.photo_urls,
@@ -381,6 +387,8 @@ export function visibleCapsuleCommentCandidates(
       comment_body: activityCommentSnippet(comment.body),
       home_team_name: capsule.home_team_name,
       away_team_name: capsule.away_team_name,
+      home_team_crest: capsule.home_team_crest ?? null,
+      away_team_crest: capsule.away_team_crest ?? null,
       competition_name: capsule.competition_name,
       rating: capsule.rating,
       photo_urls: capsule.photo_urls,
@@ -464,6 +472,8 @@ function capsulePayload(
         : candidate.user_id,
     home_team_name: candidate.home_team_name,
     away_team_name: candidate.away_team_name,
+    home_team_crest: candidate.home_team_crest ?? null,
+    away_team_crest: candidate.away_team_crest ?? null,
     competition_name: candidate.competition_name,
     rating: candidate.rating,
     photo_urls: candidate.photo_urls,
@@ -649,7 +659,7 @@ async function loadCapsuleLikeCandidates(
   const { data: capsuleRows, error: capsulesError } = await supabase
     .from('capsules')
     .select(
-      'id, user_id, is_public, home_team_name, away_team_name, competition_name, rating, photo_urls, watched_at, match_id',
+      'id, user_id, is_public, home_team_name, away_team_name, home_team_crest, away_team_crest, competition_name, rating, photo_urls, watched_at, match_id',
     )
     .in('id', capsuleIds);
 
@@ -753,7 +763,7 @@ async function loadCapsuleCommentCandidates(
   const { data: capsuleRows, error: capsulesError } = await supabase
     .from('capsules')
     .select(
-      'id, user_id, is_public, home_team_name, away_team_name, competition_name, rating, photo_urls, watched_at, match_id',
+      'id, user_id, is_public, home_team_name, away_team_name, home_team_crest, away_team_crest, competition_name, rating, photo_urls, watched_at, match_id',
     )
     .in('id', capsuleIds);
 
@@ -877,7 +887,7 @@ export async function listFollowActivity(
         ? supabase
             .from('capsules')
             .select(
-              'id, user_id, home_team_name, away_team_name, competition_name, rating, photo_urls, watched_at, match_id, created_at',
+              'id, user_id, home_team_name, away_team_name, home_team_crest, away_team_crest, competition_name, rating, photo_urls, watched_at, match_id, created_at',
               { count: 'exact' },
             )
             .eq('is_public', true)
@@ -934,6 +944,8 @@ export async function listFollowActivity(
     user_id: string;
     home_team_name: string;
     away_team_name: string;
+    home_team_crest: string | null;
+    away_team_crest: string | null;
     competition_name: string | null;
     rating: number | null;
     photo_urls: string[] | null;
@@ -952,6 +964,8 @@ export async function listFollowActivity(
         occurred_at: row.created_at,
         home_team_name: row.home_team_name,
         away_team_name: row.away_team_name,
+        home_team_crest: row.home_team_crest ?? null,
+        away_team_crest: row.away_team_crest ?? null,
         competition_name: row.competition_name,
         rating: row.rating,
         photo_urls: row.photo_urls,

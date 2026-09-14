@@ -10,6 +10,8 @@ type FollowActivityCapsule = {
   user_id?: string;
   home_team_name: string;
   away_team_name: string;
+  home_team_crest?: string | null;
+  away_team_crest?: string | null;
   competition_name: string | null;
   rating: number | null;
   photo_urls: string[] | null;

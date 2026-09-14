@@ -351,7 +351,7 @@ notificationsRouter.get('/', async (req: AuthRequest, res, next) => {
       capsuleIds.length > 0
         ? supabaseAdmin!
             .from('capsules')
-            .select('id, home_team_name, away_team_name, competition_name, photo_urls')
+            .select('id, home_team_name, away_team_name, home_team_crest, away_team_crest, competition_name, photo_urls')
             .in('id', capsuleIds)
         : Promise.resolve({ data: null }),
       collectionIds.length > 0

@@ -10,6 +10,7 @@ import { MuteUserButton } from '@/components/MuteUserButton';
 import { NotificationListSkeleton } from '@/components/ListSkeletons';
 import { NotificationTypeFiltersBar } from '@/components/NotificationTypeFiltersBar';
 import { PushAlertsPanel } from '@/components/PushAlertsPanel';
+import { TeamCrest } from '@/components/TeamCrest';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
@@ -182,7 +183,30 @@ function DigestNotificationItem({
         <p className="text-sm">
           <span className="font-medium">{actorNames}</span> {actionText}
         </p>
-        {matchLine ? (
+        {matchLine && group.capsule ? (
+          <div
+            className="mt-1.5 flex min-w-0 items-center gap-2 rounded-lg bg-secondary/40 px-2 py-1.5"
+            data-testid="notification-match"
+          >
+            <TeamCrest
+              name={group.capsule.home_team_name}
+              crest={group.capsule.home_team_crest}
+              size="sm"
+              className="h-6 w-6"
+            />
+            <p className="min-w-0 flex-1 truncate text-sm font-medium text-foreground/90">
+              {group.capsule.home_team_name}{' '}
+              <span className="font-normal text-muted-foreground">vs</span>{' '}
+              {group.capsule.away_team_name}
+            </p>
+            <TeamCrest
+              name={group.capsule.away_team_name}
+              crest={group.capsule.away_team_crest}
+              size="sm"
+              className="h-6 w-6"
+            />
+          </div>
+        ) : matchLine ? (
           <p
             className="mt-0.5 truncate text-sm font-medium text-foreground/80"
             data-testid="notification-match"

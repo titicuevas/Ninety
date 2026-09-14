@@ -30,6 +30,8 @@ export interface DigestNotificationInput {
     id: string;
     home_team_name: string;
     away_team_name: string;
+    home_team_crest?: string | null;
+    away_team_crest?: string | null;
     competition_name: string | null;
     thumb_url: string | null;
   } | null;
