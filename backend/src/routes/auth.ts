@@ -32,8 +32,10 @@ function createPkceClient(sessionId: string) {
     auth: {
       storage: createPkceStorage(sessionId),
       flowType: 'pkce',
+      // persistSession debe ser true: si no, GoTrue ignora `storage` y usa un Map interno
+      // que muere al acabar la request → "No se pudo preparar el login con Google".
+      persistSession: true,
       autoRefreshToken: false,
-      persistSession: false,
     },
   });
 }
