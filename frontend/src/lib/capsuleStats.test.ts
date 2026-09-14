@@ -42,7 +42,13 @@ describe('computeCapsuleStats', () => {
 
   it('devuelve top 3 equipos por apariciones', () => {
     const stats: CapsuleStats = computeCapsuleStats([
-      capsule({ id: '1', watched_at: '2025-01-01', home_team_name: 'Betis', away_team_name: 'Sevilla' }),
+      capsule({
+        id: '1',
+        watched_at: '2025-01-01',
+        home_team_name: 'Betis',
+        away_team_name: 'Sevilla',
+        home_team_crest: 'https://example.com/betis.png',
+      }),
       capsule({ id: '2', watched_at: '2025-01-02', home_team_name: 'Betis', away_team_name: 'Madrid' }),
       capsule({ id: '3', watched_at: '2025-01-03', home_team_name: 'Betis', away_team_name: 'Barça' }),
       capsule({ id: '4', watched_at: '2025-01-04', home_team_name: 'Sevilla', away_team_name: 'Valencia' }),
@@ -50,6 +56,7 @@ describe('computeCapsuleStats', () => {
 
     assert.equal(stats.topTeams[0]?.name, 'Betis');
     assert.equal(stats.topTeams[0]?.count, 3);
+    assert.equal(stats.topTeams[0]?.crest, 'https://example.com/betis.png');
     assert.equal(stats.topTeams[1]?.name, 'Sevilla');
     assert.equal(stats.topTeams.length, 3);
   });

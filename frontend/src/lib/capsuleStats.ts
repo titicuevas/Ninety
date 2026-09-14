@@ -3,6 +3,8 @@ import { getCapsulePhotoUrls } from '@/lib/capsulePhotos';
 import { WATCH_CONTEXT_LABELS, isWatchContext } from '@/lib/watchContext';
 import { siteUrl } from '@/lib/siteUrl';
 
+export type TeamStatEntry = { name: string; count: number; crest: string | null };
+
 export interface CapsuleStats {
   totalMatches: number;
   averageRating: number | null;
@@ -14,7 +16,7 @@ export interface CapsuleStats {
   /** Hasta 6 fotos del periodo (mejor valoradas / recientes) */
   photoCollageUrls: string[];
   topCompetition: { name: string; count: number } | null;
-  topTeam: { name: string; count: number } | null;
+  topTeam: TeamStatEntry | null;
   lastWatched: Capsule | null;
   bestRated: Capsule | null;
   recentCapsules: Capsule[];
@@ -23,7 +25,7 @@ export interface CapsuleStats {
   /** Racha más larga de días consecutivos con partido */
   longestStreak: number;
   /** Top 3 equipos más vistos */
-  topTeams: Array<{ name: string; count: number }>;
+  topTeams: TeamStatEntry[];
   /** Top 3 competiciones */
   topCompetitions: Array<{ name: string; count: number }>;
   /** Partidos por mes (índice 0 = enero, 11 = diciembre) */
@@ -53,16 +55,41 @@ function topEntry(counts: Map<string, number>): { name: string; count: number } 
   return best;
 }
 
-function teamCounts(capsules: Capsule[]) {
-  const counts = new Map<string, number>();
+function topTeamEntry(
+  stats: Map<string, { count: number; crest: string | null }>,
+): TeamStatEntry | null {
+  let best: TeamStatEntry | null = null;
+  for (const [name, value] of stats) {
+    if (!name.trim()) continue;
+    if (!best || value.count > best.count) {
+      best = { name, count: value.count, crest: value.crest };
+    }
+  }
+  return best;
+}
+
+function teamStats(capsules: Capsule[]) {
+  const map = new Map<string, { count: number; crest: string | null }>();
 
   for (const capsule of capsules) {
-    for (const team of [capsule.home_team_name, capsule.away_team_name]) {
-      counts.set(team, (counts.get(team) ?? 0) + 1);
+    const pairs: Array<[string, string | null]> = [
+      [capsule.home_team_name, capsule.home_team_crest],
+      [capsule.away_team_name, capsule.away_team_crest],
+    ];
+    for (const [name, crest] of pairs) {
+      const prev = map.get(name);
+      if (!prev) {
+        map.set(name, { count: 1, crest: crest ?? null });
+      } else {
+        map.set(name, {
+          count: prev.count + 1,
+          crest: prev.crest ?? crest ?? null,
+        });
+      }
     }
   }
 
-  return counts;
+  return map;
 }
 
 function competitionCounts(capsules: Capsule[]) {
@@ -100,6 +127,17 @@ function topNEntries(counts: Map<string, number>, n: number): Array<{ name: stri
     .sort((a, b) => b[1] - a[1])
     .slice(0, n)
     .map(([name, count]) => ({ name, count }));
+}
+
+function topNTeamEntries(
+  stats: Map<string, { count: number; crest: string | null }>,
+  n: number,
+): TeamStatEntry[] {
+  return [...stats.entries()]
+    .filter(([name]) => name.trim())
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, n)
+    .map(([name, value]) => ({ name, count: value.count, crest: value.crest }));
 }
 
 function computeMatchesByMonth(capsules: Capsule[]): number[] {
@@ -247,14 +285,14 @@ export function computeCapsuleStats(capsules: Capsule[]): CapsuleStats {
     stadiumVisits,
     photoCollageUrls,
     topCompetition: topEntry(competitions),
-    topTeam: topEntry(teamCounts(capsules)),
+    topTeam: topTeamEntry(teamStats(capsules)),
     lastWatched: sortedByWatched[0] ?? null,
     firstWatched: sortedByWatched[sortedByWatched.length - 1] ?? null,
     bestRated,
     recentCapsules: sortedByWatched.slice(0, 3),
     activeMonths: months.size,
     longestStreak: computeLongestStreak(capsules),
-    topTeams: topNEntries(teamCounts(capsules), 3),
+    topTeams: topNTeamEntries(teamStats(capsules), 3),
     topCompetitions: topNEntries(competitions, 3),
     matchesByMonth,
     peakMonth: computePeakMonth(matchesByMonth),

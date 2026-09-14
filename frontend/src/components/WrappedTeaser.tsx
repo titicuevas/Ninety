@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
-import { Sparkles, Trophy } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TeamCrest } from '@/components/TeamCrest';
 import { formatRating, type CapsuleStats, type WrappedScope } from '@/lib/capsuleStats';
 
 type WrappedTeaserProps = {
@@ -15,7 +16,7 @@ type WrappedTeaserProps = {
 /** Resumen compacto del Wrapped para Home — el detalle vive detrás de “Ver Wrapped”. */
 export function WrappedTeaser({ name, stats, scope, href, onDismiss }: WrappedTeaserProps) {
   const periodLabel = scope === 'all' ? 'Todo tu diario' : `Año ${scope}`;
-  const topTeam = stats.topTeam?.name;
+  const topTeam = stats.topTeam;
 
   return (
     <section
@@ -57,8 +58,13 @@ export function WrappedTeaser({ name, stats, scope, href, onDismiss }: WrappedTe
           {topTeam ? (
             <div className="min-w-0 max-w-[12rem]">
               <p className="flex items-center gap-1.5 truncate text-sm font-medium">
-                <Trophy className="h-3.5 w-3.5 shrink-0 text-emerald-200" aria-hidden />
-                <span className="truncate">{topTeam}</span>
+                <TeamCrest
+                  name={topTeam.name}
+                  crest={topTeam.crest}
+                  size="sm"
+                  className="h-5 w-5"
+                />
+                <span className="truncate">{topTeam.name}</span>
               </p>
               <p className="text-xs text-white/70">equipo más visto</p>
             </div>

@@ -1,14 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { sortMatchesForSearch, takeSearchResults, type FootballMatch } from './footballSearch.js';
+import { sortMatchesForSearch, takeSearchResults, type RankableMatch } from './footballSearchRank.js';
 
-function match(id: number, utcDate: string, status = 'SCHEDULED'): FootballMatch {
+function match(id: number, utcDate: string, status = 'SCHEDULED'): RankableMatch {
   return {
     id,
     utcDate,
     status,
-    homeTeam: { name: 'Home' },
-    awayTeam: { name: 'Away' },
   };
 }
 
@@ -34,7 +32,7 @@ describe('sortMatchesForSearch', () => {
 describe('takeSearchResults', () => {
   it('mezcla próximos y jugados sin llenar solo con futuros', () => {
     const now = new Date('2026-09-14T12:00:00.000Z');
-    const pool: FootballMatch[] = [];
+    const pool: RankableMatch[] = [];
     for (let i = 0; i < 20; i++) {
       const day = 15 + (i % 10);
       pool.push(match(100 + i, `2026-09-${String(day).padStart(2, '0')}T18:00:00.000Z`, 'TIMED'));

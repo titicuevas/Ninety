@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BarChart3, Camera, Clock3, Search, Star, Trophy, Users } from 'lucide-react';
+import { BarChart3, Camera, Clock3, Search, Star, Trophy } from 'lucide-react';
 import { NinetyLogo } from '@/components/NinetyLogo';
 import { TeamCrest } from '@/components/TeamCrest';
 import { SkipLink } from '@/components/SkipLink';
@@ -186,6 +186,12 @@ export function LandingPage() {
   const showcase = data ?? LANDING_SHOWCASE_FALLBACK;
   const stats = showcase.stats;
   const capsules = showcase.capsules.slice(0, 3);
+  const topTeamCrest =
+    stats?.topTeam == null
+      ? null
+      : showcase.capsules.find((c) => c.home_team_name === stats.topTeam!.name)?.home_team_crest ??
+        showcase.capsules.find((c) => c.away_team_name === stats.topTeam!.name)?.away_team_crest ??
+        null;
 
   return (
     <div className="landing-page min-h-dvh text-foreground">
@@ -312,8 +318,13 @@ export function LandingPage() {
                     </span>
                   )}
                   {stats.topTeam && (
-                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                      <Users className="h-3 w-3 text-primary" />
+                    <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <TeamCrest
+                        name={stats.topTeam.name}
+                        crest={topTeamCrest}
+                        size="sm"
+                        className="h-4 w-4"
+                      />
                       {stats.topTeam.name} ({stats.topTeam.count})
                     </span>
                   )}

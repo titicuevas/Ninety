@@ -5,6 +5,7 @@ import { CapsulePhotoGallery } from '@/components/CapsulePhotoGallery';
 import { EmptyState } from '@/components/EmptyState';
 import { MatchesByMonthChart } from '@/components/MatchesByMonthChart';
 import { StarRating } from '@/components/StarRating';
+import { TeamCrest } from '@/components/TeamCrest';
 import { WrappedPhotoCollage } from '@/components/WrappedPhotoCollage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -79,7 +80,7 @@ function RecentCapsuleRow({ capsule }: { capsule: Capsule }) {
   );
 }
 
-function TopTeamsCard({ teams }: { teams: Array<{ name: string; count: number }> }) {
+function TopTeamsCard({ teams }: { teams: Array<{ name: string; count: number; crest: string | null }> }) {
   if (teams.length <= 1) return null;
 
   return (
@@ -93,6 +94,7 @@ function TopTeamsCard({ teams }: { teams: Array<{ name: string; count: number }>
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
                   {i + 1}
                 </span>
+                <TeamCrest name={team.name} crest={team.crest} size="sm" className="h-6 w-6" />
                 <span className="truncate text-sm font-medium">{team.name}</span>
               </div>
               <span className="shrink-0 text-sm tabular-nums text-muted-foreground">

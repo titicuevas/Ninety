@@ -12,6 +12,9 @@ import {
   normalizeTeamText,
   type ScoredTeam,
 } from './teamMatching.js';
+import { sortMatchesForSearch, takeSearchResults } from './footballSearchRank.js';
+
+export { sortMatchesForSearch, takeSearchResults } from './footballSearchRank.js';
 
 interface FootballTeam {
   id?: number;
@@ -45,12 +48,6 @@ const MAX_RESULTS = 30;
 /** Estados que devolvemos en búsqueda: próximos + jugados (no solo FINISHED). */
 const SEARCH_MATCH_STATUSES = 'SCHEDULED,TIMED,IN_PLAY,PAUSED,FINISHED,POSTPONED';
 
-function matchKickoffMs(match: FootballMatch): number | null {
-  if (!match.utcDate) return null;
-  const ms = Date.parse(match.utcDate);
-  return Number.isNaN(ms) ? null : ms;
-}
-
 function matchIncludesQuery(match: FootballMatch, query: string): boolean {
   const normalizedNeedle = normalizeTeamText(query);
   const home = normalizeTeamText(match.homeTeam.name);
@@ -70,52 +67,6 @@ function matchIncludesQuery(match: FootballMatch, query: string): boolean {
 
 function matchInCompetition(match: FootballMatch, code: string): boolean {
   return match.competition?.code === code;
-}
-
-/** Próximos primero (antes → después), luego jugados (más reciente primero). */
-export function sortMatchesForSearch(
-  matches: FootballMatch[],
-  now: Date = new Date(),
-): FootballMatch[] {
-  const nowMs = now.getTime();
-  const upcoming: FootballMatch[] = [];
-  const past: FootballMatch[] = [];
-
-  for (const match of matches) {
-    const kickoff = matchKickoffMs(match);
-    if (kickoff != null && kickoff >= nowMs) upcoming.push(match);
-    else past.push(match);
-  }
-
-  upcoming.sort((a, b) => (matchKickoffMs(a) ?? 0) - (matchKickoffMs(b) ?? 0));
-  past.sort((a, b) => (matchKickoffMs(b) ?? 0) - (matchKickoffMs(a) ?? 0));
-  return [...upcoming, ...past];
-}
-
-/**
- * Reserva hueco para próximos y para jugados (Capsules + Quiero ir).
- * Sin esto, 30 próximos llenarían el tope y desaparecerían los recientes.
- */
-export function takeSearchResults(
-  matches: FootballMatch[],
-  limit: number = MAX_RESULTS,
-  now: Date = new Date(),
-): FootballMatch[] {
-  const sorted = sortMatchesForSearch(matches, now);
-  const nowMs = now.getTime();
-  const upcoming = sorted.filter((m) => {
-    const kickoff = matchKickoffMs(m);
-    return kickoff != null && kickoff >= nowMs;
-  });
-  const past = sorted.filter((m) => {
-    const kickoff = matchKickoffMs(m);
-    return !(kickoff != null && kickoff >= nowMs);
-  });
-
-  const upcomingCap = Math.min(upcoming.length, Math.max(10, Math.floor(limit / 2)));
-  const selectedUpcoming = upcoming.slice(0, upcomingCap);
-  const selectedPast = past.slice(0, Math.max(0, limit - selectedUpcoming.length));
-  return [...selectedUpcoming, ...selectedPast];
 }
 
 function dedupeMatches(matches: FootballMatch[]): FootballMatch[] {
