@@ -91,7 +91,7 @@ export function DiaryCalendarPage() {
 
   return (
     <Layout>
-      <div className="mx-auto max-w-3xl space-y-5 sm:space-y-8">
+      <div className="space-y-5 sm:space-y-8">
         <section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Calendario</h1>

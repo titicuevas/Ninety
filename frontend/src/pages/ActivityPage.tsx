@@ -343,7 +343,7 @@ export function ActivityPage() {
 
   return (
     <Layout>
-      <div className="mx-auto w-full max-w-3xl space-y-5 sm:space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         <section className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Actividad</h1>

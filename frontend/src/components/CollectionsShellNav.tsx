@@ -28,7 +28,7 @@ export function CollectionsShellNav() {
   return (
     <div className="border-t border-border/60">
       <nav
-        className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-4 py-1.5 sm:px-6 lg:max-w-6xl"
+        className="mx-auto flex max-w-3xl gap-1 overflow-x-auto px-4 py-1.5 sm:px-6"
         aria-label="Colecciones"
       >
         <NavLink

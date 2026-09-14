@@ -197,7 +197,7 @@ export function HomePage() {
 
   return (
     <Layout>
-      <div className="mx-auto w-full max-w-3xl space-y-5 sm:space-y-7">
+      <div className="space-y-5 sm:space-y-7">
         {!showWrappedDetail ? (
           <HomeHero
             name={name}

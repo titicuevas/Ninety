@@ -17,7 +17,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
     <div className="app-shell min-h-dvh">
       <SkipLink />
       <header className="chrome-blur sticky top-0 z-50 border-b border-border/80 bg-background/85 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6 lg:max-w-6xl">
+        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
           <Link
             to={homeHref}
             className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -73,7 +73,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
 
       <main
         id="main-content"
-        className="mx-auto w-full max-w-5xl px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-8 lg:max-w-6xl"
+        className="mx-auto w-full max-w-3xl px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-8"
       >
         {children}
       </main>
