@@ -85,8 +85,10 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+  # Corre contra QA_* si existen; si no, usa el fallback de prod del env global.
+  # Se activa cuando hay secret TEST_USER_PASSWORD (no hace falta staging aparte).
   e2e-auth:
-    if: ${{ vars.QA_BASE_URL != '' && vars.QA_API_URL != '' }}
+    if: ${{ secrets.TEST_USER_PASSWORD != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 55
     env:
@@ -99,6 +101,7 @@ jobs:
             echo "::error::Falta el secret TEST_USER_PASSWORD para beta@ninety.app."
             exit 1
           fi
+          echo "E2E auth contra ${E2E_BASE_URL} / ${E2E_API_URL}"
 
       - uses: actions/checkout@v5
 
