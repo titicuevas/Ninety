@@ -10,6 +10,7 @@ import { CapsuleCardSocialFooter } from '@/components/CapsuleCardSocialFooter';
 import { CollectionCardSocialFooter } from '@/components/CollectionCardSocialFooter';
 import { SocialInlineRow } from '@/components/SocialInlineRow';
 import { PeopleResultRow } from '@/components/PeopleSearchPanel';
+import { TeamCrest } from '@/components/TeamCrest';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuthInit';
@@ -28,6 +29,37 @@ import type { DiscoverCollection } from '@/types/collection';
 
 const PREVIEW_COUNT = 3;
 
+function MatchPreview({
+  home,
+  away,
+  homeCrest,
+  awayCrest,
+  href,
+}: {
+  home: string;
+  away: string;
+  homeCrest?: string | null;
+  awayCrest?: string | null;
+  href: string;
+}) {
+  return (
+    <Link
+      to={href}
+      className="mt-1.5 flex min-w-0 items-center gap-1.5 rounded-lg bg-secondary/40 px-2.5 py-2 hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <span className="flex min-w-0 max-w-[45%] items-center gap-1.5">
+        <TeamCrest name={home} crest={homeCrest} size="sm" className="h-6 w-6" />
+        <span className="truncate text-sm font-medium text-foreground">{home}</span>
+      </span>
+      <span className="shrink-0 text-xs text-muted-foreground">vs</span>
+      <span className="flex min-w-0 max-w-[45%] items-center gap-1.5">
+        <TeamCrest name={away} crest={awayCrest} size="sm" className="h-6 w-6" />
+        <span className="truncate text-sm font-medium text-foreground">{away}</span>
+      </span>
+    </Link>
+  );
+}
+
 function FeedPreviewRow({
   capsule,
   currentUserId,
@@ -40,29 +72,25 @@ function FeedPreviewRow({
 
   return (
     <li className="rounded-xl border border-border bg-card p-3 sm:p-3.5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          {href ? (
-            <Link to={href} className="block truncate text-xs text-primary hover:underline">
-              {author}
-            </Link>
-          ) : (
-            <p className="truncate text-xs text-muted-foreground">{author}</p>
-          )}
-          <Link
-            to={`/c/${capsule.id}`}
-            className="mt-0.5 block truncate font-medium hover:text-primary hover:underline"
-          >
-            {capsule.home_team_name} vs {capsule.away_team_name}
+      <div className="flex items-baseline justify-between gap-2">
+        {href ? (
+          <Link to={href} className="min-w-0 truncate text-xs text-primary hover:underline">
+            {author}
           </Link>
-        </div>
-        <time
-          className="shrink-0 text-xs text-muted-foreground"
-          dateTime={capsule.created_at}
-        >
+        ) : (
+          <p className="min-w-0 truncate text-xs text-muted-foreground">{author}</p>
+        )}
+        <time className="shrink-0 text-xs text-muted-foreground" dateTime={capsule.created_at}>
           {formatRelativeTime(capsule.created_at)}
         </time>
       </div>
+      <MatchPreview
+        home={capsule.home_team_name}
+        away={capsule.away_team_name}
+        homeCrest={capsule.home_team_crest}
+        awayCrest={capsule.away_team_crest}
+        href={`/c/${capsule.id}`}
+      />
       <CapsuleCardSocialFooter
         className="mt-2"
         capsuleId={capsule.id}
@@ -148,24 +176,25 @@ function ActivityPreviewRow({ event }: { event: FollowActivityEvent }) {
   const alsoWatched = followActivityAlsoWatched(event);
   const alsoLiked = followActivityAlsoLiked(event);
   const alsoCommented = followActivityAlsoCommented(event);
-  const socialLines =
-    event.type === 'capsule' || event.type === 'capsule_like' || event.type === 'capsule_comment' ? (
-      <SocialInlineRow className="mt-1">
-        {alsoWatched.length > 0 ? <CapsuleAlsoWatched people={alsoWatched} /> : null}
-        <CapsuleAlsoLiked capsuleId={event.capsule.id} people={alsoLiked} />
-        <CapsuleAlsoCommented capsuleId={event.capsule.id} people={alsoCommented} />
-      </SocialInlineRow>
-    ) : (
-      <SocialInlineRow className="mt-1">
-        <CollectionAlsoLiked collectionId={event.collection.id} people={alsoLiked} />
-        <CollectionAlsoCommented collectionId={event.collection.id} people={alsoCommented} />
-      </SocialInlineRow>
-    );
+  const isCapsule =
+    event.type === 'capsule' || event.type === 'capsule_like' || event.type === 'capsule_comment';
+  const socialLines = isCapsule ? (
+    <SocialInlineRow className="mt-1">
+      {alsoWatched.length > 0 ? <CapsuleAlsoWatched people={alsoWatched} /> : null}
+      <CapsuleAlsoLiked capsuleId={event.capsule.id} people={alsoLiked} />
+      <CapsuleAlsoCommented capsuleId={event.capsule.id} people={alsoCommented} />
+    </SocialInlineRow>
+  ) : (
+    <SocialInlineRow className="mt-1">
+      <CollectionAlsoLiked collectionId={event.collection.id} people={alsoLiked} />
+      <CollectionAlsoCommented collectionId={event.collection.id} people={alsoCommented} />
+    </SocialInlineRow>
+  );
 
   return (
-    <li className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card p-3 sm:p-3.5">
-      <div className="min-w-0">
-        <p className="text-sm text-muted-foreground">
+    <li className="rounded-xl border border-border bg-card p-3 sm:p-3.5">
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="min-w-0 truncate text-sm text-muted-foreground">
           {actorHref ? (
             <Link to={actorHref} className="font-medium text-primary hover:underline">
               {actor}
@@ -173,22 +202,30 @@ function ActivityPreviewRow({ event }: { event: FollowActivityEvent }) {
           ) : (
             <span className="font-medium text-foreground">{actor}</span>
           )}{' '}
-          {summary.action}{' '}
-          <Link to={summary.href} className="font-medium text-foreground hover:text-primary hover:underline">
-            {summary.label}
-          </Link>
+          {summary.action}
         </p>
-        {engagement ? (
-          <p className="mt-0.5 text-xs text-muted-foreground">{engagement}</p>
-        ) : null}
-        {socialLines}
+        <time className="shrink-0 text-xs text-muted-foreground" dateTime={event.occurred_at}>
+          {formatRelativeTime(event.occurred_at)}
+        </time>
       </div>
-      <time
-        className="shrink-0 text-xs text-muted-foreground"
-        dateTime={event.occurred_at}
-      >
-        {formatRelativeTime(event.occurred_at)}
-      </time>
+      {isCapsule ? (
+        <MatchPreview
+          home={event.capsule.home_team_name}
+          away={event.capsule.away_team_name}
+          homeCrest={event.capsule.home_team_crest}
+          awayCrest={event.capsule.away_team_crest}
+          href={summary.href}
+        />
+      ) : (
+        <Link
+          to={summary.href}
+          className="mt-1.5 block truncate rounded-lg bg-secondary/40 px-2.5 py-2 text-sm font-medium hover:bg-secondary/70 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {summary.label}
+        </Link>
+      )}
+      {engagement ? <p className="mt-1 text-xs text-muted-foreground">{engagement}</p> : null}
+      {socialLines}
     </li>
   );
 }

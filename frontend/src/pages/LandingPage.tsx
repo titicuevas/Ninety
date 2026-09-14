@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BarChart3, Camera, Clock3, Search, Star, Trophy } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { NinetyLogo } from '@/components/NinetyLogo';
 import { TeamCrest } from '@/components/TeamCrest';
 import { SkipLink } from '@/components/SkipLink';
@@ -13,28 +13,11 @@ import { LANDING_SHOWCASE_FALLBACK } from '@/lib/landingShowcaseFallback';
 import { usePageMetadata } from '@/hooks/usePageMetadata';
 import { cn } from '@/lib/utils';
 
-const features = [
-  {
-    icon: Search,
-    title: 'Buscar partidos',
-    desc: 'Ligas, copas y Champions: encuentra el partido que viviste.',
-  },
-  {
-    icon: Camera,
-    title: 'Capsules',
-    desc: 'Valoración, nota y fotos. La entrada de tu diario futbolero.',
-  },
-  {
-    icon: BarChart3,
-    title: 'Tu Wrapped',
-    desc: 'Resumen anual, feed social y aficionados a los que seguir.',
-  },
-] as const;
-
 const faqs = [
   {
     question: '¿Qué es una Capsule?',
-    answer: 'Es la entrada de un partido en tu diario: resultado, valoración, nota, fotos y cómo o dónde lo viste.',
+    answer:
+      'Es la entrada de un partido en tu diario: resultado, valoración, nota, fotos y cómo o dónde lo viste.',
   },
   {
     question: '¿Ninety es gratis?',
@@ -42,11 +25,13 @@ const faqs = [
   },
   {
     question: '¿Puedo hacer privado mi diario?',
-    answer: 'Cada Capsule y cada colección puede ser pública o privada. Tú eliges su visibilidad al crearla o editarla.',
+    answer:
+      'Cada Capsule y cada colección puede ser pública o privada. Tú eliges su visibilidad al crearla o editarla.',
   },
   {
     question: '¿Puedo llevarme mis datos?',
-    answer: 'Sí. Desde Ajustes puedes exportar tu diario y tus colecciones en formatos reutilizables, además de eliminar tu cuenta.',
+    answer:
+      'Sí. Desde Ajustes puedes exportar tu diario y tus colecciones en formatos reutilizables, además de eliminar tu cuenta.',
   },
 ] as const;
 
@@ -59,7 +44,8 @@ const landingStructuredData = JSON.stringify({
       url: 'https://www.getninety.app/',
       applicationCategory: 'LifestyleApplication',
       operatingSystem: 'Web',
-      description: 'Diario social para guardar, valorar y revivir los partidos de fútbol que has visto.',
+      description:
+        'Diario social para guardar, valorar y revivir los partidos de fútbol que has visto.',
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
     },
     {
@@ -73,56 +59,7 @@ const landingStructuredData = JSON.stringify({
   ],
 });
 
-function StarRating({ rating }: { rating: number | null }) {
-  if (!rating) return null;
-  return (
-    <span className="flex shrink-0 items-center gap-0.5">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          className={cn(
-            'h-3 w-3',
-            i < rating ? 'fill-primary text-primary' : 'fill-muted text-muted',
-          )}
-          aria-hidden
-        />
-      ))}
-    </span>
-  );
-}
-
-function ShowcaseStats({
-  total,
-  avg,
-  topComp,
-}: {
-  total: number;
-  avg: number | null;
-  topComp: string | null;
-}) {
-  return (
-    <div className="grid grid-cols-3 gap-2 text-center sm:gap-3">
-      <div className="rounded-xl border border-border/40 bg-background/55 px-2 py-3.5 transition-colors sm:p-4">
-        <p className="font-display text-2xl font-bold tabular-nums text-primary">{total}</p>
-        <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs">Partidos</p>
-      </div>
-      <div className="rounded-xl border border-border/40 bg-background/55 px-2 py-3.5 transition-colors sm:p-4">
-        <p className="font-display text-2xl font-bold tabular-nums text-primary">
-          {avg != null ? avg.toFixed(1) : '—'}
-        </p>
-        <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs">Media</p>
-      </div>
-      <div className="rounded-xl border border-border/40 bg-background/55 px-2 py-3.5 transition-colors sm:p-4">
-        <p className="truncate text-sm font-bold text-primary">
-          {topComp ?? '—'}
-        </p>
-        <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs">Liga top</p>
-      </div>
-    </div>
-  );
-}
-
-function CapsuleRow({
+function HeroCapsule({
   home,
   away,
   homeCrest,
@@ -132,6 +69,7 @@ function CapsuleRow({
   competition,
   watchedAt,
   rating,
+  note,
 }: {
   home: string;
   away: string;
@@ -142,36 +80,75 @@ function CapsuleRow({
   competition: string | null;
   watchedAt: string;
   rating: number | null;
+  note: string | null;
 }) {
   const score = formatCapsuleScore(homeScore, awayScore);
+  const matchLabel = score ? `${home} ${score} ${away}` : `${home} vs ${away}`;
+
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-background/35 px-3 py-2.5">
-      <div className="flex min-w-0 flex-1 items-center gap-2">
-        <TeamCrest name={home} crest={homeCrest} size="sm" />
-        <div className="min-w-0">
-          <p className="truncate text-xs font-semibold leading-tight text-foreground">
-            {home}
-          {score ? (
-            <span className="mx-1.5 font-display font-bold tabular-nums text-primary">{score}</span>
-          ) : (
-            <span className="mx-1.5 text-muted-foreground">vs</span>
-          )}
-            {away}
-          </p>
-          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-            {competition ? `${competition} · ` : ''}{formatWatchedDate(watchedAt)}
-          </p>
+    <div className="landing-hero-capsule relative w-full max-w-lg overflow-hidden">
+      <div
+        className="pointer-events-none absolute -inset-x-8 -top-10 h-40 bg-[radial-gradient(ellipse_at_center,_rgba(52,211,153,0.22),_transparent_70%)]"
+        aria-hidden
+      />
+      <div className="relative border-y border-primary/20 bg-zinc-950/90 px-4 py-6 sm:px-6 sm:py-7">
+        <p className="mb-4 text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-primary/90">
+          {competition ?? 'Capsule'}
+          <span className="text-zinc-500"> · </span>
+          {formatWatchedDate(watchedAt)}
+        </p>
+
+        <p className="sr-only">{matchLabel}</p>
+        <div className="flex items-center gap-3 sm:gap-5" aria-hidden>
+          <div className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center">
+            <TeamCrest name={home} crest={homeCrest} size="lg" />
+            <span className="w-full truncate text-sm font-semibold leading-tight sm:text-base">
+              {home}
+            </span>
+          </div>
+          <span className="shrink-0 font-display text-4xl font-extrabold tabular-nums tracking-tight text-foreground sm:text-5xl">
+            {score ?? 'vs'}
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center">
+            <TeamCrest name={away} crest={awayCrest} size="lg" />
+            <span className="w-full truncate text-sm font-semibold leading-tight sm:text-base">
+              {away}
+            </span>
+          </div>
         </div>
+
+        {rating != null || note ? (
+          <div className="mt-5 border-t border-white/10 pt-4 text-center">
+            {rating != null ? (
+              <span className="mb-2 inline-flex items-center justify-center gap-0.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={cn(
+                      'h-3.5 w-3.5',
+                      i < rating ? 'fill-primary text-primary' : 'fill-zinc-700 text-zinc-700',
+                    )}
+                    aria-hidden
+                  />
+                ))}
+              </span>
+            ) : null}
+            {note ? (
+              <p className="mx-auto max-w-sm text-pretty text-sm leading-relaxed text-zinc-300">
+                “{note.length > 140 ? `${note.slice(0, 137)}…` : note}”
+              </p>
+            ) : null}
+          </div>
+        ) : null}
       </div>
-      <TeamCrest name={away} crest={awayCrest} size="sm" />
-      <StarRating rating={rating} />
     </div>
   );
 }
 
 export function LandingPage() {
   usePageMetadata({
-    description: 'Guarda, valora y revive cada partido que ves. Crea gratis tu diario futbolero con fotos, estadísticas, colecciones y Wrapped.',
+    description:
+      'Guarda, valora y revive cada partido que ves. Crea gratis tu diario futbolero con fotos, estadísticas, colecciones y Wrapped.',
   });
   const navigate = useNavigate();
   const { data } = useLandingShowcase();
@@ -182,19 +159,12 @@ export function LandingPage() {
     navigate(`/auth/callback${search}${hash}`, { replace: true });
   }, [navigate]);
 
-  // Portada: siempre hay vitrina (initialData + fallback en el hook)
   const showcase = data ?? LANDING_SHOWCASE_FALLBACK;
+  const featured = showcase.capsules[0] ?? null;
   const stats = showcase.stats;
-  const capsules = showcase.capsules.slice(0, 3);
-  const topTeamCrest =
-    stats?.topTeam == null
-      ? null
-      : showcase.capsules.find((c) => c.home_team_name === stats.topTeam!.name)?.home_team_crest ??
-        showcase.capsules.find((c) => c.away_team_name === stats.topTeam!.name)?.away_team_crest ??
-        null;
 
   return (
-    <div className="landing-page min-h-dvh text-foreground">
+    <div className="landing-page relative min-h-dvh overflow-x-hidden text-foreground">
       <script
         type="application/ld+json"
         nonce={document.querySelector('meta[name="csp-nonce"]')?.getAttribute('content') ?? undefined}
@@ -202,203 +172,169 @@ export function LandingPage() {
         {landingStructuredData}
       </script>
       <SkipLink />
-      <div className="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(7rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-12">
 
-        {/* Header */}
-        <header className="landing-header-enter mb-12 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <NinetyLogo size="md" />
-            <span className="text-xl font-semibold tracking-tight sm:text-2xl">Ninety</span>
-          </div>
+      <div className="landing-pitch pointer-events-none absolute inset-0" aria-hidden />
+      <div className="landing-floodlight motion-glow pointer-events-none absolute inset-x-0 top-0 h-[55vh]" aria-hidden />
+      <div className="landing-grain pointer-events-none absolute inset-0 opacity-[0.35]" aria-hidden />
+
+      <div className="relative z-10 mx-auto flex min-h-dvh max-w-3xl flex-col px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(7rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-10">
+        <header className="landing-header-enter mb-10 flex items-center justify-between gap-3 sm:mb-14">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <NinetyLogo size="md" className="transition-transform duration-300 hover:scale-[1.03]" />
+            <span className="sr-only">Ninety</span>
+          </Link>
           <Link
             to="/login"
-            className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-zinc-400 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Iniciar sesión
           </Link>
         </header>
 
         <main id="main-content" className="landing-stagger flex flex-1 flex-col items-center text-center">
+          {/* Primer viewport: marca + claim + CTA + Capsule */}
+          <div className="mb-3 flex flex-col items-center">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-primary/90">
+              Diario futbolero
+            </p>
+            <h1 className="font-display text-[clamp(4.25rem,18vw,7.5rem)] font-extrabold leading-[0.85] tracking-[-0.02em] text-foreground">
+              Ninety
+            </h1>
+          </div>
 
-          {/* Hero */}
-          <h1 className="mb-5 max-w-xl text-balance text-4xl font-bold tracking-tight sm:text-5xl md:text-[3.25rem] md:leading-[1.1]">
-            Ninety
-            <span className="mt-2.5 block text-[0.85em] font-bold text-primary sm:mt-3">
-              Tu diario de partidos vistos
-            </span>
-          </h1>
-
-          <p className="mb-10 max-w-lg text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Guarda cada partido que has visto como una{' '}
-            <span className="font-semibold text-foreground">Capsule</span> — valoración, nota y
-            fotos — y revive la temporada con tu Wrapped.{' '}
-            <span className="font-semibold text-foreground">Letterboxd, pero para el fútbol.</span>
+          <p className="mb-4 max-w-md text-balance text-lg font-medium text-zinc-100 sm:text-xl">
+            Cada partido que ves, guardado para siempre.
+          </p>
+          <p className="mb-9 max-w-md text-pretty text-sm leading-relaxed text-zinc-400 sm:text-base">
+            Capsules con valoración, nota y fotos. Letterboxd, pero para el fútbol.
           </p>
 
-          {/* Conversión principal visible antes del primer scroll */}
-          <div className="mb-10 flex w-full max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
+          <div className="mb-12 flex w-full max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
             <Link
               to="/register"
               className={cn(
                 buttonVariants({ size: 'lg' }),
-                'min-h-12 w-full text-center shadow-[0_10px_28px_-18px_rgba(16,185,129,0.65)] transition-transform duration-150 hover:scale-[1.015] active:scale-[0.99] sm:w-auto sm:min-w-44',
+                'min-h-12 w-full text-center shadow-[0_12px_40px_-16px_rgba(52,211,153,0.55)] transition-transform duration-150 hover:scale-[1.015] active:scale-[0.99] sm:w-auto sm:min-w-48',
               )}
             >
               Crear mi diario gratis
             </Link>
             <Link
-              to="/search"
-              className={cn(buttonVariants({ variant: 'secondary', size: 'lg' }), 'min-h-12 w-full text-center sm:w-auto sm:min-w-44')}
+              to="/u/beta_ninety"
+              className={cn(
+                buttonVariants({ variant: 'secondary', size: 'lg' }),
+                'min-h-12 w-full text-center sm:w-auto sm:min-w-48',
+              )}
             >
-              Explorar partidos
+              Ver un diario real
             </Link>
           </div>
 
-          {/* Caso de uso verificable: diario público de la cuenta beta */}
-          <div
-            className="mb-10 w-full max-w-lg overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-br from-zinc-900 via-zinc-900/95 to-emerald-950/50 p-5 shadow-[0_20px_50px_-28px_rgba(16,185,129,0.45)] sm:p-6"
-            aria-hidden
+          {featured ? (
+            <HeroCapsule
+              home={featured.home_team_name}
+              away={featured.away_team_name}
+              homeCrest={featured.home_team_crest}
+              awayCrest={featured.away_team_crest}
+              homeScore={featured.home_score}
+              awayScore={featured.away_score}
+              competition={featured.competition_name}
+              watchedAt={featured.watched_at}
+              rating={featured.rating}
+              note={featured.note}
+            />
+          ) : null}
+
+          {/* Debajo del pliegue */}
+          <section
+            id="como-funciona"
+            className="mt-16 w-full max-w-lg scroll-mt-8 text-left sm:mt-20"
+            aria-labelledby="landing-how"
           >
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <p className="text-left text-[11px] font-bold uppercase tracking-[0.14em] text-primary sm:text-xs">
-                Caso de uso · diario público de @beta_ninety
-              </p>
-              <Link
-                to="/u/beta_ninety"
-                className="shrink-0 text-[11px] font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-primary hover:underline"
-                tabIndex={-1}
-                aria-hidden
-              >
-                Ver diario →
-              </Link>
-            </div>
-
-            <>
-              {stats ? (
-                <ShowcaseStats
-                  total={stats.totalMatches}
-                  avg={stats.averageRating}
-                  topComp={stats.topCompetition?.name ?? null}
-                />
-              ) : (
-                <ShowcaseStats total={showcase.total} avg={null} topComp={null} />
-              )}
-
-              {capsules.length > 0 && (
-                <div className="mt-3 space-y-1.5">
-                  {capsules.map((c) => (
-                    <CapsuleRow
-                      key={c.id}
-                      home={c.home_team_name}
-                      away={c.away_team_name}
-                      homeCrest={c.home_team_crest}
-                      awayCrest={c.away_team_crest}
-                      homeScore={c.home_score}
-                      awayScore={c.away_score}
-                      competition={c.competition_name}
-                      watchedAt={c.watched_at}
-                      rating={c.rating}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {stats && (
-                <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 border-t border-border/30 pt-3">
-                  {stats.stadiumVisits > 0 && (
-                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                      <Trophy className="h-3 w-3 text-primary" />
-                      {stats.stadiumVisits} estadios
-                    </span>
-                  )}
-                  {stats.fiveStarCount > 0 && (
-                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                      <Star className="h-3 w-3 fill-primary text-primary" />
-                      {stats.fiveStarCount} valoración perfecta
-                    </span>
-                  )}
-                  {stats.topTeam && (
-                    <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                      <TeamCrest
-                        name={stats.topTeam.name}
-                        crest={topTeamCrest}
-                        size="sm"
-                        className="h-4 w-4"
-                      />
-                      {stats.topTeam.name} ({stats.topTeam.count})
-                    </span>
-                  )}
-                </div>
-              )}
-            </>
-          </div>
-
-          {/* Features */}
-          <section id="como-funciona" className="mb-10 w-full max-w-lg scroll-mt-6" aria-labelledby="landing-features">
             <h2
-              id="landing-features"
-              className="mb-4 text-xs font-bold uppercase tracking-wider text-primary"
+              id="landing-how"
+              className="mb-6 text-center font-display text-3xl font-bold tracking-tight sm:text-4xl"
             >
-              Ya disponible en la beta
+              Tres gestos. Toda la temporada.
             </h2>
-            <ul className="grid gap-3 sm:grid-cols-3 sm:gap-3.5">
-              {features.map((item) => (
-                <li
-                  key={item.title}
-                  className="motion-card rounded-2xl border border-border/80 bg-card/70 p-4 text-left sm:px-3.5 sm:text-center"
-                >
-                  <item.icon className="mb-2.5 h-5 w-5 text-primary sm:mx-auto" aria-hidden />
-                  <p className="text-sm font-semibold text-foreground">{item.title}</p>
-                  <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{item.desc}</p>
-                </li>
-              ))}
-            </ul>
+            <ol className="space-y-5 border-l border-primary/30 pl-5">
+              <li>
+                <p className="font-display text-xl font-bold text-primary">01 · Busca el partido</p>
+                <p className="mt-1 text-sm leading-relaxed text-zinc-400">
+                  Ligas, copas y Champions. Encuentra lo que acabas de vivir.
+                </p>
+              </li>
+              <li>
+                <p className="font-display text-xl font-bold text-primary">02 · Crea la Capsule</p>
+                <p className="mt-1 text-sm leading-relaxed text-zinc-400">
+                  Valoración, nota, fotos y contexto: estadio, bar o sofá.
+                </p>
+              </li>
+              <li>
+                <p className="font-display text-xl font-bold text-primary">03 · Revive el año</p>
+                <p className="mt-1 text-sm leading-relaxed text-zinc-400">
+                  Wrapped, colecciones y un feed de aficionados como tú.
+                </p>
+              </li>
+            </ol>
+            {stats ? (
+              <p className="mt-8 text-center text-sm text-zinc-500">
+                @beta_ninety ya lleva{' '}
+                <span className="font-display text-lg font-bold tabular-nums text-primary">
+                  {stats.totalMatches}
+                </span>{' '}
+                partidos en el diario.
+              </p>
+            ) : null}
           </section>
 
-          <section className="mb-10 w-full max-w-lg text-left" aria-labelledby="faq-heading">
-            <h2 id="faq-heading" className="mb-4 text-center text-2xl font-bold tracking-tight">Preguntas frecuentes</h2>
+          <section className="mt-16 w-full max-w-lg text-left sm:mt-20" aria-labelledby="faq-heading">
+            <h2
+              id="faq-heading"
+              className="mb-5 text-center font-display text-3xl font-bold tracking-tight"
+            >
+              Preguntas frecuentes
+            </h2>
             <div className="space-y-2">
               {faqs.map((faq) => (
-                <details key={faq.question} className="group rounded-xl border border-border/80 bg-card/70 p-4">
+                <details
+                  key={faq.question}
+                  className="group border-b border-border/60 py-3 open:pb-4"
+                >
                   <summary className="cursor-pointer list-none pr-6 text-sm font-semibold marker:content-none">
                     {faq.question}
                   </summary>
-                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{faq.answer}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-zinc-400">{faq.answer}</p>
                 </details>
               ))}
             </div>
           </section>
 
-          <aside className="mb-10 flex w-full max-w-lg gap-3 rounded-2xl border border-primary/25 bg-primary/5 p-4 text-left">
-            <Clock3 className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
-            <div>
-              <h2 className="text-sm font-semibold">Soporte humano durante la beta</h2>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                Escríbenos a <a className="text-primary hover:underline" href="mailto:hello@getninety.app">hello@getninety.app</a>. Nuestro objetivo es responder antes de 2 días laborables.
-              </p>
-            </div>
-          </aside>
-
-          <Link to="/register" className={cn(buttonVariants({ size: 'lg' }), 'min-h-12 min-w-52')}>
-            Empezar gratis
-          </Link>
-
-          <p className="mt-6 max-w-md text-xs leading-relaxed text-muted-foreground">
-            Al registrarte aceptas los{' '}
-            <Link to="/terminos" className="text-primary underline-offset-2 hover:underline">
-              Términos
-            </Link>{' '}
-            y la{' '}
-            <Link to="/privacidad" className="text-primary underline-offset-2 hover:underline">
-              Política de privacidad
+          <div className="mt-14 flex w-full max-w-lg flex-col items-center gap-4 sm:mt-16">
+            <Link to="/register" className={cn(buttonVariants({ size: 'lg' }), 'min-h-12 min-w-52')}>
+              Empezar gratis
             </Link>
-            .
-          </p>
+            <p className="max-w-md text-xs leading-relaxed text-zinc-500">
+              Al registrarte aceptas los{' '}
+              <Link to="/terminos" className="text-primary underline-offset-2 hover:underline">
+                Términos
+              </Link>{' '}
+              y la{' '}
+              <Link to="/privacidad" className="text-primary underline-offset-2 hover:underline">
+                Política de privacidad
+              </Link>
+              . Soporte: <a className="text-primary hover:underline" href="mailto:hello@getninety.app">hello@getninety.app</a>.
+            </p>
+          </div>
         </main>
 
-        <LegalFooter className="mt-12 border-t border-border/80 pt-8" />
+        <LegalFooter className="mt-14 border-t border-border/60 pt-8" />
       </div>
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] sm:hidden">
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-zinc-950/95 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] sm:hidden">
         <Link to="/register" className={cn(buttonVariants({ size: 'lg' }), 'min-h-12 w-full')}>
           Crear mi diario gratis
         </Link>

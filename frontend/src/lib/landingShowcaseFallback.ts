@@ -45,7 +45,7 @@ export const LANDING_SHOWCASE_FALLBACK: {
       away_score: 1,
       watched_at: '2024-07-14',
       rating: 5,
-      note: null,
+      note: 'Noche eterna. Oyarzabal y la Euro en el bolsillo.',
       photo_urls: [],
       is_public: true,
       watch_context: 'pub',

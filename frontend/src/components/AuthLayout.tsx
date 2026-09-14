@@ -11,49 +11,44 @@ type Props = {
   className?: string;
 };
 
-/** Shell compartido para login / registro — atmósfera + panel centrado. */
+/** Shell compartido para login / registro — atmósfera noche de partido + marca. */
 export function AuthLayout({ title, subtitle, children, className }: Props) {
   return (
     <div className="relative flex min-h-screen min-h-dvh flex-col bg-background text-foreground">
-      {/* Skip link fuera de overflow:hidden — si no, Chrome lo saca del tab order */}
       <SkipLink />
       <div className="relative flex min-h-screen min-h-dvh flex-1 flex-col overflow-hidden">
+        <div className="landing-pitch pointer-events-none absolute inset-0 opacity-90" aria-hidden />
         <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(16,185,129,0.14),_transparent_55%),radial-gradient(ellipse_at_bottom,_rgba(16,185,129,0.06),_transparent_50%)]"
+          className="landing-floodlight motion-glow pointer-events-none absolute inset-x-0 top-0 h-[45vh] opacity-80"
           aria-hidden
         />
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 opacity-[0.07]"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)',
-            backgroundSize: '48px 48px',
-            maskImage: 'linear-gradient(to top, black, transparent)',
-          }}
-          aria-hidden
-        />
+        <div className="landing-grain pointer-events-none absolute inset-0 opacity-[0.28]" aria-hidden />
 
         <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pt-[max(2.5rem,env(safe-area-inset-top,0px))] pb-[max(2.5rem,env(safe-area-inset-bottom,0px))] sm:px-6">
           <div className={cn('motion-auth w-full max-w-md', className)}>
             <div className="mb-8 text-center">
               <Link
                 to="/"
-                className="inline-flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex flex-col items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <NinetyLogo
                   size="md"
                   className="transition-transform duration-300 hover:scale-[1.03]"
                 />
-                <span className="text-2xl font-semibold tracking-tight">Ninety</span>
+                <span className="font-display text-5xl font-extrabold leading-none tracking-[-0.02em] sm:text-6xl">
+                  Ninety
+                </span>
               </Link>
-              <h1 className="mt-6 text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
-              <p className="mt-2 text-sm text-zinc-300 sm:text-base">{subtitle}</p>
+              <h1 className="mt-6 text-xl font-semibold tracking-tight text-zinc-100 sm:text-2xl">
+                {title}
+              </h1>
+              <p className="mt-2 text-sm text-zinc-400 sm:text-base">{subtitle}</p>
             </div>
 
             <main
               id="main-content"
               tabIndex={-1}
-              className="rounded-2xl border border-border/80 bg-card p-5 shadow-xl shadow-black/20 outline-none sm:p-7"
+              className="rounded-2xl border border-white/10 bg-zinc-950/90 p-5 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.85)] outline-none sm:p-7"
             >
               {children}
             </main>
