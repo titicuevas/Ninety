@@ -43,6 +43,7 @@ export function ShareDiaryMonthButton({
 }: Props) {
   const [copied, setCopied] = useState(false);
   const [manualText, setManualText] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const iconBtn = compact ? 'h-9 w-9 px-0 sm:w-auto sm:px-3' : undefined;
   const iconMargin = compact ? 'sm:mr-1.5' : 'mr-1.5';
   const labelClass = compact ? 'sr-only sm:not-sr-only' : undefined;
@@ -64,12 +65,16 @@ export function ShareDiaryMonthButton({
         variant={variant}
         size={size}
         className={cn(iconBtn, className)}
-        disabled
-        title="Solo se pueden compartir meses con Capsules públicas"
-        aria-label="Sin Capsules públicas para compartir"
+        onClick={() =>
+          toast.error(
+            'Para compartir el mes, marca al menos una Capsule de este mes como pública.',
+          )
+        }
+        aria-label="Compartir mes: necesitas Capsules públicas"
+        title="Necesitas Capsules públicas este mes"
       >
         <Share2 className={cn('h-3.5 w-3.5', iconMargin)} aria-hidden />
-        <span className={labelClass}>Sin Capsules públicas</span>
+        <span className={labelClass}>Compartir</span>
       </Button>
     );
   }
@@ -105,27 +110,34 @@ export function ShareDiaryMonthButton({
 
   const share = async () => {
     setManualText(null);
-    const result = await shareOrCopyLink({
-      url,
-      title,
-      text: shareText,
-      clipboardText: shareText,
-    });
+    setBusy(true);
+    try {
+      // Solo texto (ya incluye la URL) — evita link duplicado en WhatsApp/Telegram.
+      const result = await shareOrCopyLink({
+        title,
+        text: shareText,
+        clipboardText: shareText,
+      });
 
-    if (result === 'copied') {
-      markCopied();
-      toast.success('Resumen del mes copiado');
-      return;
-    }
+      if (result === 'copied') {
+        markCopied();
+        toast.success('Resumen del mes copiado');
+        return;
+      }
 
-    if (result === 'shared') {
-      toast.success('Mes compartido');
-      return;
-    }
+      if (result === 'shared') {
+        toast.success('Mes compartido');
+        return;
+      }
 
-    if (result === 'manual_needed') {
-      setManualText(shareText);
-      toast.error('No se pudo copiar — selecciona el texto');
+      if (result === 'aborted') return;
+
+      if (result === 'manual_needed') {
+        setManualText(shareText);
+        toast.error('No se pudo copiar — selecciona el texto');
+      }
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -153,11 +165,13 @@ export function ShareDiaryMonthButton({
           variant="outline"
           size={size}
           className={iconBtn}
+          disabled={busy}
           onClick={() => void share()}
           aria-label="Compartir mes del diario"
+          aria-busy={busy || undefined}
         >
           <Share2 className={cn('h-3.5 w-3.5', iconMargin)} aria-hidden />
-          <span className={labelClass}>Compartir</span>
+          <span className={labelClass}>{busy ? 'Compartiendo…' : 'Compartir'}</span>
         </Button>
       </div>
       {manualText ? (

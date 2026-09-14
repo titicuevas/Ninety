@@ -47,7 +47,13 @@ export async function shareOrCopyLink({
       return 'shared';
     }
   } catch (err) {
-    if (err instanceof DOMException && err.name === 'AbortError') return 'aborted';
+    const name =
+      err instanceof DOMException
+        ? err.name
+        : err && typeof err === 'object' && 'name' in err
+          ? String((err as { name: unknown }).name)
+          : '';
+    if (name === 'AbortError') return 'aborted';
   }
 
   const copied = await copyTextToClipboard(toCopy);

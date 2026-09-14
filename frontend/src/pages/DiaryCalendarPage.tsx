@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CapsuleCardSocialFooter } from '@/components/CapsuleCardSocialFooter';
 import { CapsuleListCard, capsuleCardListClass } from '@/components/CapsuleListCard';
+import { DiaryMonthCalendar } from '@/components/DiaryMonthCalendar';
 import { EmptyState } from '@/components/EmptyState';
 import { Layout } from '@/components/Layout';
 import { NinetyLoader } from '@/components/NinetyLoader';
@@ -18,13 +19,13 @@ import {
   capsulesForDate,
   countCapsulesByWatchedDate,
   countPublicCapsules,
+  dayCrestPreviews,
   formatCalendarMonthTitle,
+  monthCrestStrip,
   parseCalendarMonthParam,
   shiftCalendarMonth,
-  weekdayLabels,
 } from '@/lib/diaryCalendar';
 import { formatWatchedDate } from '@/lib/format';
-import { cn } from '@/lib/utils';
 
 export function DiaryCalendarPage() {
   useDocumentTitle('Calendario del diario');
@@ -52,6 +53,14 @@ export function DiaryCalendarPage() {
     typeof data?.public_total === 'number'
       ? data.public_total
       : countPublicCapsules(data?.capsules ?? []);
+  const dayPreviews = useMemo(
+    () => dayCrestPreviews(data?.capsules ?? []),
+    [data?.capsules],
+  );
+  const crestStrip = useMemo(
+    () => monthCrestStrip(data?.capsules ?? []),
+    [data?.capsules],
+  );
 
   const goMonth = (delta: number) => {
     const next = shiftCalendarMonth({ year, month }, delta);
@@ -101,7 +110,6 @@ export function DiaryCalendarPage() {
               publicTotal={publicTotal}
               capsules={data?.capsules ?? []}
               displayName={profile.display_name}
-              compact
             />
           ) : null}
         </section>
@@ -140,57 +148,15 @@ export function DiaryCalendarPage() {
 
         {!isLoading && !isError ? (
           <>
-            <div
-              className="rounded-xl border border-border/60 bg-card/40 p-3 sm:p-4"
-              role="group"
-              aria-label={`Calendario ${title}`}
-            >
-              <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                {weekdayLabels().map((label) => (
-                  <div key={label}>{label}</div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-1">
-                {grid.map((cell, idx) => {
-                  if (cell.kind === 'pad') {
-                    return <div key={`pad-${idx}`} className="aspect-square" aria-hidden />;
-                  }
-                  const has = cell.count > 0;
-                  const selected = selectedDate === cell.date;
-                  const isToday = cell.date === todayKey;
-                  return (
-                    <button
-                      key={cell.date}
-                      type="button"
-                      disabled={!has}
-                      aria-label={
-                        has
-                          ? `${cell.day}: ${cell.count} ${cell.count === 1 ? 'Capsule' : 'Capsules'}`
-                          : `${cell.day}: sin Capsules`
-                      }
-                      aria-pressed={has ? selected : undefined}
-                      onClick={() => selectDay(cell.date, cell.count)}
-                      className={cn(
-                        'relative flex aspect-square flex-col items-center justify-center rounded-lg text-sm transition-colors',
-                        has
-                          ? 'bg-primary/15 font-semibold text-foreground hover:bg-primary/25'
-                          : 'text-muted-foreground/70',
-                        selected && 'ring-2 ring-primary ring-offset-2 ring-offset-background',
-                        isToday && !selected && 'outline outline-1 outline-primary/40',
-                      )}
-                    >
-                      <span className="tabular-nums">{cell.day}</span>
-                      {has ? (
-                        <span
-                          className="mt-0.5 h-1 w-1 rounded-full bg-primary"
-                          aria-hidden
-                        />
-                      ) : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <DiaryMonthCalendar
+              title={title}
+              grid={grid}
+              selectedDate={selectedDate}
+              todayKey={todayKey}
+              dayPreviews={dayPreviews}
+              crestStrip={crestStrip}
+              onSelectDay={selectDay}
+            />
 
             {total === 0 ? (
               <EmptyState

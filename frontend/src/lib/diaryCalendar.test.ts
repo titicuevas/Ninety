@@ -2,10 +2,13 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   buildMonthGrid,
+  calendarDayHeatClass,
   capsulesForDate,
   countCapsulesByWatchedDate,
   countPublicCapsules,
+  dayCrestPreviews,
   formatCalendarMonthTitle,
+  monthCrestStrip,
   parseCalendarMonthParam,
   shiftCalendarMonth,
   toIsoDate,
@@ -95,5 +98,27 @@ describe('diaryCalendar frontend', () => {
       ]),
       3,
     );
+  });
+
+  it('dayCrestPreviews y heatmap', () => {
+    const capsules = [
+      stubCapsule({
+        id: '1',
+        watched_at: '2026-08-03',
+        home_team_name: 'Betis',
+        home_team_crest: 'https://example.com/b.png',
+      }),
+      stubCapsule({
+        id: '2',
+        watched_at: '2026-08-03',
+        home_team_name: 'Sevilla',
+        home_team_crest: 'https://example.com/s.png',
+      }),
+    ];
+    const previews = dayCrestPreviews(capsules);
+    assert.equal(previews.get('2026-08-03')?.name, 'Betis');
+    assert.match(calendarDayHeatClass(0), /muted/);
+    assert.match(calendarDayHeatClass(3), /emerald/);
+    assert.equal(monthCrestStrip(capsules).length, 2);
   });
 });

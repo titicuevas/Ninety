@@ -109,6 +109,66 @@ export function capsulesForDate(capsules: Capsule[], date: string): Capsule[] {
     });
 }
 
+/** Preview de escudo por día (primera Capsule del día). */
+export type DayCrestPreview = {
+  name: string;
+  crest: string | null;
+};
+
+export function dayCrestPreviews(
+  capsules: Array<{
+    watched_at: string;
+    home_team_name: string;
+    home_team_crest?: string | null;
+  }>,
+): Map<string, DayCrestPreview> {
+  const map = new Map<string, DayCrestPreview>();
+  for (const capsule of capsules) {
+    const key = String(capsule.watched_at).slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(key) || map.has(key)) continue;
+    map.set(key, {
+      name: capsule.home_team_name,
+      crest: capsule.home_team_crest ?? null,
+    });
+  }
+  return map;
+}
+
+/** Intensidad visual del día según nº de Capsules. */
+export function calendarDayHeatClass(count: number): string {
+  if (count <= 0) return 'bg-muted/20 text-muted-foreground/80';
+  if (count === 1) return 'bg-emerald-500/18 text-foreground hover:bg-emerald-500/28';
+  if (count === 2) return 'bg-emerald-500/28 text-foreground hover:bg-emerald-500/38';
+  return 'bg-emerald-500/42 text-foreground hover:bg-emerald-500/55 shadow-[0_0_14px_-4px_rgba(52,211,153,0.55)]';
+}
+
+/** Escudos únicos del mes para la franja superior (máx. `limit`). */
+export function monthCrestStrip(
+  capsules: Array<{
+    home_team_name: string;
+    home_team_crest?: string | null;
+    away_team_name: string;
+    away_team_crest?: string | null;
+  }>,
+  limit = 6,
+): DayCrestPreview[] {
+  const seen = new Set<string>();
+  const out: DayCrestPreview[] = [];
+  for (const capsule of capsules) {
+    for (const team of [
+      { name: capsule.home_team_name, crest: capsule.home_team_crest ?? null },
+      { name: capsule.away_team_name, crest: capsule.away_team_crest ?? null },
+    ]) {
+      const key = team.name.trim().toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(team);
+      if (out.length >= limit) return out;
+    }
+  }
+  return out;
+}
+
 /** Cuántas Capsules del mes son públicas (shareable). */
 export function countPublicCapsules(capsules: { is_public?: boolean | null }[]): number {
   return capsules.filter((c) => c.is_public !== false).length;
