@@ -50,15 +50,15 @@ body {
   --card-foreground: #fafafa;
   --popover: #141416;
   --popover-foreground: #fafafa;
-  --primary: #10b981;
-  --primary-foreground: #042f1e;
+  --primary: #047857;
+  --primary-foreground: #ffffff;
   --secondary: #1c1c1f;
   --secondary-foreground: #fafafa;
   --muted: #1c1c1f;
   /* Contraste AA sobre fondo oscuro (antes #71717a era justo/bajo) */
   --muted-foreground: #a1a1aa;
-  --accent: #10b981;
-  --accent-foreground: #042f1e;
+  --accent: #047857;
+  --accent-foreground: #ffffff;
   --destructive: #f87171;
   --border: #2e2e33;
   --input: #2e2e33;
