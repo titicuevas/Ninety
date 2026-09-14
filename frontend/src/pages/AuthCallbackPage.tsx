@@ -102,7 +102,7 @@ export function AuthCallbackPage() {
         if (!active) return;
         const message = err instanceof Error ? err.message : 'No se pudo completar el inicio de sesión.';
         // PKCE perdido (otro origen / pestaña): volver al login con mensaje claro, no "email confirmado"
-        if (parsed.kind === 'code' && /OAuth expiró|pkce/i.test(message)) {
+        if (parsed.kind === 'code' && /OAuth expiró|pkce|code.?verifier|verifier/i.test(message)) {
           navigate(loginPath(), {
             replace: true,
             state: { oauthRetry: true },

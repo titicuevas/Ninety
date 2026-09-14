@@ -3,7 +3,12 @@ import { Router } from 'express';
 import { env } from '../config/loadEnv.js';
 import { getBearerToken } from '../lib/httpRequest.js';
 import { deleteUserAccount, isAccountDeleteEmailConfirmed } from '../lib/deleteAccount.js';
-import { createPkceStorage, removePkceStorage } from '../lib/pkceStorage.js';
+import {
+  createPkceStorage,
+  readPkceStorageSnapshot,
+  removePkceStorage,
+  seedPkceStorageItem,
+} from '../lib/pkceStorage.js';
 import { syncUserProfile } from '../lib/syncUserProfile.js';
 import { claimInviteAttribution, normalizeInviteCode } from '../lib/invites.js';
 import { createServiceClient, createUserClient, supabaseAnon } from '../lib/supabase.js';
@@ -221,7 +226,18 @@ authRouter.post('/oauth/google', async (_req, res) => {
     return;
   }
 
-  res.json({ url: data.url, pkceId });
+  const snapshot = readPkceStorageSnapshot(pkceId);
+  const verifierEntry = Object.entries(snapshot).find(([key]) => key.endsWith('-code-verifier'));
+  // El verifier viaja al cliente: el Map en memoria no sobrevive entre instancias Railway.
+  removePkceStorage(pkceId);
+
+  if (!verifierEntry) {
+    res.status(500).json({ error: 'No se pudo preparar el login con Google. Inténtalo de nuevo.' });
+    return;
+  }
+
+  const [codeVerifierKey, codeVerifier] = verifierEntry;
+  res.json({ url: data.url, pkceId, codeVerifierKey, codeVerifier });
 });
 
 authRouter.post('/oauth/exchange', async (req, res) => {
@@ -231,6 +247,7 @@ authRouter.post('/oauth/exchange', async (req, res) => {
     return;
   }
 
+  seedPkceStorageItem(parsed.data.pkceId, parsed.data.codeVerifierKey, parsed.data.codeVerifier);
   const client = createPkceClient(parsed.data.pkceId);
   const { data, error } = await client.auth.exchangeCodeForSession(parsed.data.code);
   removePkceStorage(parsed.data.pkceId);

@@ -5,8 +5,10 @@ import {
   createPkceStorage,
   PKCE_TTL_MS,
   pkceStoreSize,
+  readPkceStorageSnapshot,
   removePkceStorage,
   resetPkceNowForTests,
+  seedPkceStorageItem,
   setPkceNowForTests,
 } from './pkceStorage.js';
 
@@ -36,5 +38,21 @@ describe('pkceStorage', () => {
       resetPkceNowForTests();
       clearAllPkceStorage();
     }
+  });
+
+  it('snapshot y seed restauran el verifier', () => {
+    clearAllPkceStorage();
+    const store = createPkceStorage('sess-seed');
+    store.setItem('sb-x-auth-token-code-verifier', 'verifier-value');
+    assert.deepEqual(readPkceStorageSnapshot('sess-seed'), {
+      'sb-x-auth-token-code-verifier': 'verifier-value',
+    });
+    removePkceStorage('sess-seed');
+    seedPkceStorageItem('sess-seed', 'sb-x-auth-token-code-verifier', 'verifier-value');
+    assert.equal(
+      createPkceStorage('sess-seed').getItem('sb-x-auth-token-code-verifier'),
+      'verifier-value',
+    );
+    clearAllPkceStorage();
   });
 });

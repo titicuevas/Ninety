@@ -13,7 +13,13 @@ export const registerSchema = z.object({
   display_name: z.string().min(2).max(100),
   invite_code: z.string().trim().min(3).max(40).optional(),
 });
-export const oauthExchangeSchema = z.object({ code: z.string().min(1), pkceId: z.string().uuid() });
+export const oauthExchangeSchema = z.object({
+  code: z.string().min(1),
+  pkceId: z.string().uuid(),
+  /** Clave + valor del verifier PKCE (sobrevive multi-instancia en Railway). */
+  codeVerifierKey: z.string().min(8).max(200),
+  codeVerifier: z.string().min(16).max(512),
+});
 export const refreshSchema = z.object({ refresh_token: z.string().min(1) });
 export const emailSchema = z.object({ email: z.string().email() });
 export const passwordSchema = z.object({ password: z.string().min(10).max(72) });

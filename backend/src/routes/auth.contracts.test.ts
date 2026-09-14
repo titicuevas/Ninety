@@ -31,6 +31,15 @@ describe('auth contracts', () => {
   it('rechaza contraseñas cortas en reset/cambio y PKCE inválidos', () => {
     assert.equal(passwordSchema.safeParse({ password: '123456789' }).success, false);
     assert.equal(passwordSchema.safeParse({ password: '1234567890' }).success, true);
+    assert.equal(
+      oauthExchangeSchema.safeParse({
+        code: 'code',
+        pkceId: '00000000-0000-4000-8000-000000000001',
+        codeVerifierKey: 'sb-x-auth-token-code-verifier',
+        codeVerifier: 'a'.repeat(20),
+      }).success,
+      true,
+    );
     assert.equal(oauthExchangeSchema.safeParse({ code: 'code', pkceId: 'bad' }).success, false);
   });
   it('limita los tipos admitidos al verificar email', () => {

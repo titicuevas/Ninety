@@ -65,6 +65,20 @@ export function removePkceStorage(sessionId: string) {
   stores.delete(sessionId);
 }
 
+/** Snapshot de claves PKCE (p. ej. `…-code-verifier`) para devolverlas al cliente. */
+export function readPkceStorageSnapshot(sessionId: string): Record<string, string> {
+  purgeExpired();
+  const entry = stores.get(sessionId);
+  if (!entry) return {};
+  return Object.fromEntries(entry.values);
+}
+
+/** Restaura una entrada PKCE concreta (exchange en otra instancia Railway). */
+export function seedPkceStorageItem(sessionId: string, key: string, value: string) {
+  const store = createPkceStorage(sessionId);
+  store.setItem(key, value);
+}
+
 /** Solo tests. */
 export function clearAllPkceStorage() {
   stores.clear();

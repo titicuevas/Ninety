@@ -1,5 +1,5 @@
 import { apiFetch } from '@/lib/api';
-import { clearSession, consumePkceId, savePkceId, saveSession } from '@/lib/session';
+import { clearSession, consumePkceBundle, savePkceBundle, saveSession } from '@/lib/session';
 import type { AuthSession } from '@/types/auth';
 
 interface AuthResponse {
@@ -9,6 +9,8 @@ interface AuthResponse {
 interface OAuthStartResponse {
   url: string;
   pkceId: string;
+  codeVerifierKey: string;
+  codeVerifier: string;
 }
 
 export async function loginWithPassword(email: string, password: string) {
@@ -45,22 +47,28 @@ export async function registerWithPassword(
 }
 
 export async function loginWithGoogle() {
-  const { url, pkceId } = await apiFetch<OAuthStartResponse>('/api/auth/oauth/google', {
-    method: 'POST',
-  });
-  savePkceId(pkceId);
+  const { url, pkceId, codeVerifierKey, codeVerifier } = await apiFetch<OAuthStartResponse>(
+    '/api/auth/oauth/google',
+    { method: 'POST' },
+  );
+  savePkceBundle({ pkceId, codeVerifierKey, codeVerifier });
   window.location.assign(url);
 }
 
 export async function completeOAuthCallback(code: string) {
-  const pkceId = consumePkceId();
-  if (!pkceId) {
+  const bundle = consumePkceBundle();
+  if (!bundle) {
     throw new Error('La sesión OAuth expiró. Inténtalo de nuevo.');
   }
 
   const { session } = await apiFetch<AuthResponse>('/api/auth/oauth/exchange', {
     method: 'POST',
-    body: JSON.stringify({ code, pkceId }),
+    body: JSON.stringify({
+      code,
+      pkceId: bundle.pkceId,
+      codeVerifierKey: bundle.codeVerifierKey,
+      codeVerifier: bundle.codeVerifier,
+    }),
   });
   saveSession(session);
   return session;
