@@ -35,6 +35,13 @@ export const appRouter = createBrowserRouter([
   { path: '/u/:username', lazy: () => import('@/pages/PublicProfilePage').then((m) => ({ Component: m.PublicProfilePage })) },
   { path: '/c/:id', lazy: () => import('@/pages/PublicCapsulePage').then((m) => ({ Component: m.PublicCapsulePage })) },
   { path: '/invite/:code', lazy: () => import('@/pages/InvitePage').then((m) => ({ Component: m.InvitePage })) },
+  /** Browse guest: buscar / explorar sin cuenta; mutaciones se gatean a registro. */
+  { path: '/search', lazy: () => import('@/pages/SearchMatchPage').then((m) => ({ Component: m.SearchMatchPage })) },
+  {
+    path: '/collections/explore',
+    lazy: () => import('@/pages/ExploreCollectionsPage').then((m) => ({ Component: m.ExploreCollectionsPage })),
+  },
+  { path: '/teams/:slug', lazy: () => import('@/pages/TeamPage').then((m) => ({ Component: m.TeamPage })) },
   {
     element: <GuestRoute />,
     children: [
@@ -49,7 +56,6 @@ export const appRouter = createBrowserRouter([
       { path: '/home', lazy: () => import('@/pages/HomePage').then((m) => ({ Component: m.HomePage })) },
       { path: '/feed', lazy: () => import('@/pages/FeedPage').then((m) => ({ Component: m.FeedPage })) },
       { path: '/activity', lazy: () => import('@/pages/ActivityPage').then((m) => ({ Component: m.ActivityPage })) },
-      { path: '/search', lazy: () => import('@/pages/SearchMatchPage').then((m) => ({ Component: m.SearchMatchPage })) },
       { path: '/search/manual', lazy: () => import('@/pages/ManualMatchPage').then((m) => ({ Component: m.ManualMatchPage })) },
       { path: '/capsules', lazy: () => import('@/pages/CapsulesPage').then((m) => ({ Component: m.CapsulesPage })) },
       { path: '/capsules/new', lazy: () => import('@/pages/CreateCapsulePage').then((m) => ({ Component: m.CreateCapsulePage })) },
@@ -57,11 +63,9 @@ export const appRouter = createBrowserRouter([
       { path: '/likes', lazy: () => import('@/pages/LikesPage').then((m) => ({ Component: m.LikesPage })) },
       { path: '/diary/calendar', lazy: () => import('@/pages/DiaryCalendarPage').then((m) => ({ Component: m.DiaryCalendarPage })) },
       { path: '/collections', lazy: () => import('@/pages/CollectionsPage').then((m) => ({ Component: m.CollectionsPage })) },
-      { path: '/collections/explore', lazy: () => import('@/pages/ExploreCollectionsPage').then((m) => ({ Component: m.ExploreCollectionsPage })) },
       { path: '/collections/likes', lazy: () => import('@/pages/LikedCollectionsPage').then((m) => ({ Component: m.LikedCollectionsPage })) },
       { path: '/collections/:id', lazy: () => import('@/pages/CollectionDetailPage').then((m) => ({ Component: m.CollectionDetailPage })) },
       { path: '/want-to-go', lazy: () => import('@/pages/WantToGoPage').then((m) => ({ Component: m.WantToGoPage })) },
-      { path: '/teams/:slug', lazy: () => import('@/pages/TeamPage').then((m) => ({ Component: m.TeamPage })) },
       { path: '/notifications', lazy: () => import('@/pages/NotificationsPage').then((m) => ({ Component: m.NotificationsPage })) },
       { path: '/profile', lazy: () => import('@/pages/ProfilePage').then((m) => ({ Component: m.ProfilePage })) },
       { path: '/settings', lazy: () => import('@/pages/SettingsPage').then((m) => ({ Component: m.SettingsPage })) },

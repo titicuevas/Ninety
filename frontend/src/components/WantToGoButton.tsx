@@ -1,6 +1,7 @@
 import type { MouseEvent } from 'react';
 import { Bookmark, BookmarkCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useAddWantToGo, useRemoveWantToGo, useWantToGoIds } from '@/hooks/useWantToGo';
 import { footballMatchToWantToGoInput, isFootballMatchWantToGoEligible, wantToGoButtonLabel } from '@/lib/wantToGo';
 import { cn } from '@/lib/utils';
@@ -22,6 +23,7 @@ export function WantToGoButton({
   className,
   saved: savedProp,
 }: WantToGoButtonProps) {
+  const requireAuth = useRequireAuth();
   const idsQuery = useWantToGoIds();
   const add = useAddWantToGo();
   const remove = useRemoveWantToGo();
@@ -40,6 +42,7 @@ export function WantToGoButton({
     event.preventDefault();
     event.stopPropagation();
     if (busy) return;
+    if (!requireAuth()) return;
     if (saved) {
       remove.mutate(match.id);
       return;

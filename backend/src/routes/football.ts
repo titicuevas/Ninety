@@ -20,6 +20,8 @@ function requireFootballApiKey(_req: Request, res: Response, next: NextFunction)
 
 footballRouter.use(requireFootballApiKey);
 
+/** Lecturas de búsqueda abiertas a invitados (rate-limited en app). Mutaciones no aplican aquí. */
+
 function serializeMatch(match: FootballMatch) {
   return {
     id: match.id,
@@ -54,11 +56,11 @@ function parseSeason(value: unknown): number | undefined {
   return Number.isInteger(season) && season >= 1900 ? season : undefined;
 }
 
-footballRouter.get('/competitions/curated', requireAuth, (_req, res) => {
+footballRouter.get('/competitions/curated', (_req, res) => {
   res.json({ competitions: getCuratedCompetitions() });
 });
 
-footballRouter.get('/matches/search', requireAuth, async (req, res, next) => {
+footballRouter.get('/matches/search', async (req, res, next) => {
   try {
     const query = String(req.query.q ?? '').trim();
     const competition = String(req.query.competition ?? '').trim() || undefined;
@@ -94,7 +96,7 @@ footballRouter.get('/competitions', requireAuth, async (_req, res, next) => {
   }
 });
 
-footballRouter.get('/teams/competitions', requireAuth, async (req, res, next) => {
+footballRouter.get('/teams/competitions', async (req, res, next) => {
   try {
     const query = String(req.query.q ?? '').trim();
     const result = await getTeamCompetitionsForQuery(query);
@@ -108,7 +110,7 @@ footballRouter.get('/teams/competitions', requireAuth, async (req, res, next) =>
   }
 });
 
-footballRouter.get('/teams', requireAuth, async (req, res, next) => {
+footballRouter.get('/teams', async (req, res, next) => {
   try {
     const query = String(req.query.q ?? '').trim();
     if (!query) {

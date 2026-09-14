@@ -1,6 +1,7 @@
 import { useState, type MouseEvent } from 'react';
 import { UserMinus, UserPlus } from 'lucide-react';
 import { useToggleFollow } from '@/hooks/useFollowUser';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { followButtonLabel } from '@/lib/followButton';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +25,7 @@ export function FollowButton({
   size = 'default',
   followBack = false,
 }: FollowButtonProps) {
+  const requireAuth = useRequireAuth();
   const toggle = useToggleFollow(username);
   const propKey = `${username}:${followedByMe ? 1 : 0}`;
   const [optimistic, setOptimistic] = useState<{ key: string; value: boolean } | null>(null);
@@ -44,6 +46,7 @@ export function FollowButton({
   const handleClick = (event: MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
+    if (!requireAuth()) return;
     const wasFollowed = followed;
     setOptimistic({ key: propKey, value: !wasFollowed });
     toggle.mutate(

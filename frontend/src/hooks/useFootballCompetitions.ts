@@ -10,7 +10,6 @@ export function useFootballCompetitions() {
     queryKey: ['football', 'competitions', 'curated'],
     queryFn: () =>
       apiFetch<CuratedCompetitionsResponse>('/api/football/competitions/curated', {}, session?.access_token),
-    enabled: !!session,
     staleTime: 24 * 60 * 60 * 1000,
   });
 }

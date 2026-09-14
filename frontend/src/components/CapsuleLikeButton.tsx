@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Heart } from 'lucide-react';
 import { CapsuleLikersDialog } from '@/components/CapsuleLikersDialog';
 import { useToggleCapsuleLike } from '@/hooks/useCapsules';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { formatLikesCountLabel } from '@/lib/capsuleLikes';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +22,7 @@ export function CapsuleLikeButton({
   className,
   allowOpenLikers = true,
 }: CapsuleLikeButtonProps) {
+  const requireAuth = useRequireAuth();
   const toggle = useToggleCapsuleLike();
   const [pop, setPop] = useState(false);
   const [announce, setAnnounce] = useState('');
@@ -29,6 +31,7 @@ export function CapsuleLikeButton({
   const countLabel = formatLikesCountLabel(likesCount);
 
   const handleToggle = () => {
+    if (!requireAuth()) return;
     const nextLiked = !likedByMe;
     const nextCount = Math.max(0, likesCount + (nextLiked ? 1 : -1));
     if (nextLiked) {

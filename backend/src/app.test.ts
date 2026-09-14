@@ -52,19 +52,20 @@ describe('API', () => {
     assert.match(res.body.error, /Token/);
   });
 
-  it('GET /api/football/teams/competitions requiere auth', async () => {
+  it('GET /api/football/teams/competitions es público (guest browse)', async () => {
     const res = await request(createApp()).get('/api/football/teams/competitions?q=betis');
-    assert.equal(res.status, 401);
+    assert.notEqual(res.status, 401);
   });
 
-  it('GET /api/football/competitions/curated requiere auth', async () => {
+  it('GET /api/football/competitions/curated es público (guest browse)', async () => {
     const res = await request(createApp()).get('/api/football/competitions/curated');
-    assert.equal(res.status, 401);
+    assert.equal(res.status, 200);
+    assert.ok(Array.isArray(res.body.competitions));
   });
 
-  it('GET /api/football/matches/search valida parámetros', async () => {
+  it('GET /api/football/matches/search valida parámetros sin auth', async () => {
     const res = await request(createApp()).get('/api/football/matches/search');
-    assert.equal(res.status, 401);
+    assert.equal(res.status, 400);
   });
 
   it('GET /api/profile/me requiere auth', async () => {
@@ -277,9 +278,9 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
-  it('GET /api/collections/discover requiere auth', async () => {
+  it('GET /api/collections/discover es público (guest browse)', async () => {
     const res = await request(createApp()).get('/api/collections/discover');
-    assert.equal(res.status, 401);
+    assert.notEqual(res.status, 401);
   });
 
   it('GET /api/collections/user/:username no requiere auth', async () => {
@@ -370,14 +371,14 @@ describe('API', () => {
     assert.equal(res.status, 401);
   });
 
-  it('GET /api/profile/search requiere auth', async () => {
+  it('GET /api/profile/search es público (guest browse)', async () => {
     const res = await request(createApp()).get('/api/profile/search?q=beta');
-    assert.equal(res.status, 401);
+    assert.notEqual(res.status, 401);
   });
 
-  it('GET /api/profile/by-team requiere auth', async () => {
+  it('GET /api/profile/by-team es público (guest browse)', async () => {
     const res = await request(createApp()).get('/api/profile/by-team?slug=betis');
-    assert.equal(res.status, 401);
+    assert.notEqual(res.status, 401);
   });
 
   it('GET /api/profile/:username/followers no requiere auth', async () => {

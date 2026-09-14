@@ -17,12 +17,14 @@ import { useProfile } from '@/hooks/useProfile';
 import { useWantToGoIds } from '@/hooks/useWantToGo';
 import { useTeamCompetitions } from '@/hooks/useTeamCompetitions';
 import { saveDraftMatch } from '@/lib/draftMatch';
+import { registerPath } from '@/lib/authReturn';
 import { groupMatchesByCompetition } from '@/lib/groupMatches';
 import { seasonChipOptions } from '@/lib/seasonChips';
 import { monthChipOptions, monthHintLabel, parseMonthParam } from '@/lib/monthChips';
 import { isFootballMatchWantToGoEligible } from '@/lib/wantToGo';
 import type { CuratedCompetition, FootballMatch } from '@/types/football';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuthInit';
 
 function MatchWantToGoAction({
   match,
@@ -38,10 +40,10 @@ function MatchWantToGoAction({
     </div>
   );
 }
-function ManualMatchCta() {
+function ManualMatchCta({ href }: { href: string }) {
   return (
     <Button asChild type="button" variant="secondary">
-      <Link to="/search/manual">Añadir partido manual</Link>
+      <Link to={href}>Añadir partido manual</Link>
     </Button>
   );
 }
@@ -215,6 +217,7 @@ type MatchSearchResultsProps = {
   selectedCompetition: CuratedCompetition | undefined;
   activeSeason: number | undefined;
   activeMonth: number | undefined;
+  manualMatchTo: string;
 };
 
 function MatchSearchResults({
@@ -230,6 +233,7 @@ function MatchSearchResults({
   selectedCompetition,
   activeSeason,
   activeMonth,
+  manualMatchTo,
 }: MatchSearchResultsProps) {
   return (
     <div aria-live="polite" aria-atomic="true">
@@ -289,7 +293,7 @@ function MatchSearchResults({
               : `No encontramos partidos para «${debouncedQuery}»${activeSeason != null ? ` en ${activeSeason}` : ''}${activeMonth != null ? ` · ${monthHintLabel(activeMonth, activeSeason, selectedCompetition)}` : ''}. Prueba otra temporada, mes, equipo o competición — o añádelo a mano.`
           }
         >
-          <ManualMatchCta />
+          <ManualMatchCta href={manualMatchTo} />
         </EmptyState>
       )}
     </div>
@@ -298,9 +302,12 @@ function MatchSearchResults({
 
 export function MatchSearchPanel() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [params, setParams] = useSearchParams();
   const { data: profile } = useProfile();
   const favoriteTeam = profile?.favorite_team?.trim() || null;
+  const manualMatchTo = user ? '/search/manual' : registerPath('/search/manual');
+  const createCapsuleTo = user ? '/capsules/new' : registerPath('/capsules/new');
 
   const [query, setQuery] = useState(() => params.get('q') ?? '');
   const [debouncedQuery, setDebouncedQuery] = useState(() => (params.get('q') ?? '').trim());
@@ -453,7 +460,11 @@ export function MatchSearchPanel() {
       return;
     }
     saveDraftMatch(match);
-    window.location.assign('/capsules/new');
+    if (user) {
+      window.location.assign('/capsules/new');
+      return;
+    }
+    navigate(createCapsuleTo);
   };
 
   const searchFavoriteTeam = () => {
@@ -517,7 +528,7 @@ export function MatchSearchPanel() {
           />
           <p className="text-center text-sm text-muted-foreground">
             ¿El partido no está en el catálogo?{' '}
-            <Link to="/search/manual" className="font-medium text-primary underline-offset-4 hover:underline">
+            <Link to={manualMatchTo} className="font-medium text-primary underline-offset-4 hover:underline">
               Añádelo a mano
             </Link>
           </p>
@@ -538,6 +549,7 @@ export function MatchSearchPanel() {
           selectedCompetition={selectedCompetition}
           activeSeason={activeSeason}
           activeMonth={activeMonth}
+          manualMatchTo={manualMatchTo}
         />
       ) : null}
 
@@ -555,12 +567,12 @@ export function MatchSearchPanel() {
             <Button type="button" onClick={searchFavoriteTeam}>
               Buscar {favoriteTeam}
             </Button>
-          ) : (
+          ) : user ? (
             <Button asChild variant="secondary">
               <Link to="/profile">Añadir equipo favorito</Link>
             </Button>
-          )}
-          <ManualMatchCta />
+          ) : null}
+          <ManualMatchCta href={manualMatchTo} />
         </EmptyState>
       ) : null}
     </div>

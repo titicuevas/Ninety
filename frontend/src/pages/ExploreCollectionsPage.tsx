@@ -1,13 +1,17 @@
 import { Compass } from 'lucide-react';
 import { CollectionsSearchPanel } from '@/components/CollectionsSearchPanel';
 import { Layout } from '@/components/Layout';
+import { PublicLayout } from '@/components/PublicLayout';
+import { useAuth } from '@/hooks/useAuthInit';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export function ExploreCollectionsPage() {
+  const { user } = useAuth();
+  const Shell = user ? Layout : PublicLayout;
   useDocumentTitle('Explorar colecciones');
 
   return (
-    <Layout>
+    <Shell>
       <div className="space-y-5 sm:space-y-8">
         <section aria-labelledby="explore-collections-heading" className="space-y-4">
           <h1
@@ -20,6 +24,6 @@ export function ExploreCollectionsPage() {
         </section>
         <CollectionsSearchPanel />
       </div>
-    </Layout>
+    </Shell>
   );
 }

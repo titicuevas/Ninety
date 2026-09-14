@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { NinetyLogo } from '@/components/NinetyLogo';
 import { SkipLink } from '@/components/SkipLink';
 import { useAuthInit, useAuth } from '@/hooks/useAuthInit';
 import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
@@ -21,9 +22,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
             to={homeHref}
             className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-sm shadow-primary/30">
-              90
-            </span>
+            <NinetyLogo size="sm" variant="mark" />
             <span className="truncate text-base font-semibold tracking-tight sm:text-lg">Ninety</span>
           </Link>
 
@@ -45,6 +44,12 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
               </>
             ) : (
               <>
+                <Link
+                  to="/search"
+                  className="inline-flex min-h-10 items-center rounded-lg px-2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  Explorar
+                </Link>
                 <Link
                   to={loginTo}
                   className="inline-flex min-h-10 items-center rounded-lg px-2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

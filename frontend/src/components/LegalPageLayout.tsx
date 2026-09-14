@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { LegalFooter } from '@/components/LegalFooter';
+import { NinetyLogo } from '@/components/NinetyLogo';
 import { SkipLink } from '@/components/SkipLink';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 
@@ -38,9 +39,7 @@ export function LegalPageLayout({
             Volver al inicio
           </Link>
           <div className="flex items-center gap-2.5">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-lg shadow-primary/25">
-              90
-            </span>
+            <NinetyLogo size="md" variant="mark" />
             <div>
               <p className="text-xl font-semibold tracking-tight sm:text-2xl">Ninety</p>
               <p className="text-xs text-muted-foreground">getninety.app</p>

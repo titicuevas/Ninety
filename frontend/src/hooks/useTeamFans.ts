@@ -17,7 +17,7 @@ export function useTeamFansInfinite(slug: string | undefined) {
 
   return useInfiniteQuery({
     queryKey: ['profile', 'by-team', slug, session?.user?.id ?? 'guest'],
-    enabled: !!slug && !!session?.access_token,
+    enabled: !!slug,
     queryFn: ({ pageParam }) =>
       apiFetch<TeamFansResponse>(
         `/api/profile/by-team?slug=${encodeURIComponent(slug!)}&limit=${TEAM_FANS_PAGE_SIZE}&offset=${pageParam}`,

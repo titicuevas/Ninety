@@ -14,6 +14,7 @@ import {
   useMyCollections,
   useRemoveCapsuleFromCollection,
 } from '@/hooks/useCollections';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { ApiError } from '@/lib/api';
 import { slugifyCollectionName } from '@/lib/collectionSlug';
 import { dismissModal } from '@/lib/modalDismiss';
@@ -35,6 +36,7 @@ export function AddToCollectionButton({
   className,
   compact = false,
 }: AddToCollectionButtonProps) {
+  const requireAuth = useRequireAuth();
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
@@ -113,7 +115,10 @@ export function AddToCollectionButton({
         variant={variant}
         size={size}
         className={cn(compact && 'h-9 w-9 px-0 sm:w-auto sm:px-3', className)}
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          if (!requireAuth()) return;
+          setOpen(true);
+        }}
         aria-label="Añadir a colección"
       >
         <Library className={cn('h-3.5 w-3.5', compact ? 'sm:mr-1.5' : 'mr-1.5')} aria-hidden />

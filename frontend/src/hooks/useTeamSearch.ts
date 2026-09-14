@@ -26,7 +26,7 @@ export function useTeamSearch(query: string) {
         {},
         session?.access_token,
       ),
-    enabled: !!session && trimmed.length >= MIN_QUERY_LENGTH,
+    enabled: trimmed.length >= MIN_QUERY_LENGTH,
     staleTime: 5 * 60_000,
     placeholderData: keepPreviousData,
   });

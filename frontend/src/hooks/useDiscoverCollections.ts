@@ -36,6 +36,6 @@ export function useDiscoverCollections(
         session?.access_token,
       );
     },
-    enabled: !!session && enabled,
+    enabled,
   });
 }

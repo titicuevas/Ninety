@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Heart } from 'lucide-react';
 import { CollectionLikersDialog } from '@/components/CollectionLikersDialog';
 import { useToggleCollectionLike } from '@/hooks/useCollections';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { formatLikesCountLabel } from '@/lib/collectionLikes';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +21,7 @@ export function CollectionLikeButton({
   className,
   allowOpenLikers = true,
 }: CollectionLikeButtonProps) {
+  const requireAuth = useRequireAuth();
   const toggle = useToggleCollectionLike();
   const [pop, setPop] = useState(false);
   const [announce, setAnnounce] = useState('');
@@ -28,6 +30,7 @@ export function CollectionLikeButton({
   const countLabel = formatLikesCountLabel(likesCount);
 
   const handleToggle = () => {
+    if (!requireAuth()) return;
     const nextLiked = !likedByMe;
     const nextCount = Math.max(0, likesCount + (nextLiked ? 1 : -1));
     if (nextLiked) {

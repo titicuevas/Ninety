@@ -240,12 +240,12 @@ export function LandingPage() {
             >
               Crear mi diario gratis
             </Link>
-            <a
-              href="#como-funciona"
+            <Link
+              to="/search"
               className={cn(buttonVariants({ variant: 'secondary', size: 'lg' }), 'min-h-12 w-full text-center sm:w-auto sm:min-w-44')}
             >
-              Ver cómo funciona
-            </a>
+              Explorar partidos
+            </Link>
           </div>
 
           {/* Caso de uso verificable: diario público de la cuenta beta */}

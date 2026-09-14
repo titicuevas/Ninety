@@ -403,10 +403,11 @@ profileRouter.delete('/avatar', requireAuth, async (req: AuthRequest, res) => {
   res.json(normalizeProfile(data));
 });
 
-profileRouter.get('/search', requireAuth, async (req: AuthRequest, res) => {
+profileRouter.get('/search', optionalAuth, async (req: AuthRequest, res) => {
   const token = getBearerToken(req);
-  if (!token) {
-    res.status(401).json({ error: 'Token requerido' });
+  const supabase = token ? createUserClient(token) : (supabaseAdmin ?? supabaseAnon);
+  if (!supabase) {
+    res.status(503).json({ error: 'Servicio no disponible' });
     return;
   }
 
@@ -423,23 +424,26 @@ profileRouter.get('/search', requireAuth, async (req: AuthRequest, res) => {
   }
 
   const pattern = `%${safe}%`;
-  const supabase = createUserClient(token);
-
-  const { data, error } = await supabase
+  let query = supabase
     .from('profiles')
     .select('id, username, full_name, avatar_url, favorite_team, country, city, created_at')
     .not('username', 'is', null)
     .or(`username.ilike."${pattern}",full_name.ilike."${pattern}"`)
-    .neq('id', req.userId!)
     .order('username', { ascending: true })
     .limit(parsed.data.limit);
+
+  if (req.userId) {
+    query = query.neq('id', req.userId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     res.status(400).json({ error: error.message });
     return;
   }
 
-  const blockedIds = new Set(await listBlockedEitherWayIds(req.userId!));
+  const blockedIds = req.userId ? new Set(await listBlockedEitherWayIds(req.userId)) : new Set<string>();
   const profiles = (data ?? [])
     .filter((row) => row.username && !blockedIds.has(row.id))
     .map((row) => normalizeProfile(row));
@@ -447,9 +451,9 @@ profileRouter.get('/search', requireAuth, async (req: AuthRequest, res) => {
   const ids = profiles.map((profile) => profile.id);
   let followedSet = new Set<string>();
   let followerSet = new Set<string>();
-  if (ids.length > 0) {
+  if (req.userId && ids.length > 0) {
     try {
-      const relations = await loadFollowRelationSets(supabase, req.userId!, ids);
+      const relations = await loadFollowRelationSets(supabase, req.userId, ids);
       followedSet = relations.followedSet;
       followerSet = relations.followerSet;
     } catch (err) {
@@ -464,16 +468,19 @@ profileRouter.get('/search', requireAuth, async (req: AuthRequest, res) => {
   res.json({
     profiles: profiles.map((profile) => ({
       ...profile,
-      ...followRelationFlags(profile.id, req.userId!, followedSet, followerSet),
+      ...(req.userId
+        ? followRelationFlags(profile.id, req.userId, followedSet, followerSet)
+        : { followed_by_me: false, follows_me: false }),
     })),
     query: parsed.data.q,
   });
 });
 
-profileRouter.get('/by-team', requireAuth, async (req: AuthRequest, res) => {
+profileRouter.get('/by-team', optionalAuth, async (req: AuthRequest, res) => {
   const token = getBearerToken(req);
-  if (!token) {
-    res.status(401).json({ error: 'Token requerido' });
+  const supabase = token ? createUserClient(token) : (supabaseAdmin ?? supabaseAnon);
+  if (!supabase) {
+    res.status(503).json({ error: 'Servicio no disponible' });
     return;
   }
 
@@ -495,27 +502,28 @@ profileRouter.get('/by-team', requireAuth, async (req: AuthRequest, res) => {
     return;
   }
 
-  const supabase = createUserClient(token);
   const profileSelect =
     'id, username, full_name, avatar_url, favorite_team, country, city, created_at';
+  const viewerId = req.userId ?? null;
 
-  const [{ data: followingRows }, blockedIdsList, teamResult, activeCapsulesResult] =
-    await Promise.all([
-      supabase.from('user_follows').select('following_id').eq('follower_id', req.userId!),
-      listBlockedEitherWayIds(req.userId!),
-      supabase
-        .from('profiles')
-        .select(profileSelect)
-        .not('username', 'is', null)
-        .ilike('favorite_team', pattern)
-        .limit(200),
-      supabase
-        .from('capsules')
-        .select('user_id')
-        .eq('is_public', true)
-        .order('created_at', { ascending: false })
-        .limit(120),
-    ]);
+  const [followingResult, blockedIdsList, teamResult, activeCapsulesResult] = await Promise.all([
+    viewerId
+      ? supabase.from('user_follows').select('following_id').eq('follower_id', viewerId)
+      : Promise.resolve({ data: [] as Array<{ following_id: string }>, error: null }),
+    viewerId ? listBlockedEitherWayIds(viewerId) : Promise.resolve([] as string[]),
+    supabase
+      .from('profiles')
+      .select(profileSelect)
+      .not('username', 'is', null)
+      .ilike('favorite_team', pattern)
+      .limit(200),
+    supabase
+      .from('capsules')
+      .select('user_id')
+      .eq('is_public', true)
+      .order('created_at', { ascending: false })
+      .limit(120),
+  ]);
 
   if (teamResult.error) {
     res.status(400).json({ error: teamResult.error.message });
@@ -527,7 +535,7 @@ profileRouter.get('/by-team', requireAuth, async (req: AuthRequest, res) => {
   }
 
   const blockedIds = new Set(blockedIdsList);
-  const followingIds = new Set((followingRows ?? []).map((row) => row.following_id));
+  const followingIds = new Set((followingResult.data ?? []).map((row) => row.following_id));
   const activityByUser = tallyPublicCapsuleActivity(
     (activeCapsulesResult.data ?? []) as Array<{ user_id: string }>,
     undefined,
@@ -553,7 +561,7 @@ profileRouter.get('/by-team', requireAuth, async (req: AuthRequest, res) => {
     }));
 
   const { profiles: pageRows, total } = rankTeamFans(candidates, slug, {
-    viewerId: req.userId!,
+    viewerId: viewerId ?? '',
     blockedIds,
     followingIds,
     limit: parsed.data.limit,
@@ -570,9 +578,9 @@ profileRouter.get('/by-team', requireAuth, async (req: AuthRequest, res) => {
   const ids = pageRows.map((row) => row.id);
   let followedSet = new Set<string>();
   let followerSet = new Set<string>();
-  if (ids.length > 0) {
+  if (viewerId && ids.length > 0) {
     try {
-      const relations = await loadFollowRelationSets(supabase, req.userId!, ids);
+      const relations = await loadFollowRelationSets(supabase, viewerId, ids);
       followedSet = relations.followedSet;
       followerSet = relations.followerSet;
     } catch (err) {
@@ -591,7 +599,9 @@ profileRouter.get('/by-team', requireAuth, async (req: AuthRequest, res) => {
     profiles: pageRows.map(({ public_capsules_count, ...row }) => ({
       ...normalizeProfile(row),
       public_capsules_count,
-      ...followRelationFlags(row.id, req.userId!, followedSet, followerSet),
+      ...(viewerId
+        ? followRelationFlags(row.id, viewerId, followedSet, followerSet)
+        : { followed_by_me: false, follows_me: false }),
     })),
   });
 });

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { LegalFooter } from '@/components/LegalFooter';
+import { NinetyLogo } from '@/components/NinetyLogo';
 import { SkipLink } from '@/components/SkipLink';
 import { cn } from '@/lib/utils';
 
@@ -39,9 +40,11 @@ export function AuthLayout({ title, subtitle, children, className }: Props) {
                 to="/"
                 className="inline-flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-lg shadow-primary/25 transition-transform duration-300 hover:scale-[1.03]">
-                  90
-                </span>
+                <NinetyLogo
+                  size="md"
+                  variant="mark"
+                  className="transition-transform duration-300 hover:scale-[1.03]"
+                />
                 <span className="text-2xl font-semibold tracking-tight">Ninety</span>
               </Link>
               <h1 className="mt-6 text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>

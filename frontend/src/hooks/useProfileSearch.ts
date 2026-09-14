@@ -22,6 +22,6 @@ export function useProfileSearch(query: string) {
         {},
         session?.access_token,
       ),
-    enabled: !!session?.access_token && q.length >= MIN_PEOPLE_QUERY,
+    enabled: q.length >= MIN_PEOPLE_QUERY,
   });
 }

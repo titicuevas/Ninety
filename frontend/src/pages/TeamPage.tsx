@@ -7,6 +7,7 @@ import { FollowsYouBadge } from '@/components/FollowsYouBadge';
 import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel';
 import { Layout } from '@/components/Layout';
 import { PeopleListSkeleton } from '@/components/ListSkeletons';
+import { PublicLayout } from '@/components/PublicLayout';
 import { QueryErrorCard } from '@/components/QueryErrorCard';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -91,6 +92,7 @@ function TeamFanRow({
 export function TeamPage() {
   const { slug } = useParams<{ slug: string }>();
   const { user } = useAuth();
+  const Shell = user ? Layout : PublicLayout;
   const {
     data,
     isLoading,
@@ -114,18 +116,18 @@ export function TeamPage() {
 
   if (isLoading) {
     return (
-      <Layout>
+      <Shell>
         <div className="mx-auto max-w-xl space-y-6 py-2">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-4 w-64" />
           <PeopleListSkeleton count={6} />
         </div>
-      </Layout>
+      </Shell>
     );
   }
 
   return (
-    <Layout>
+    <Shell>
       <div className="mx-auto max-w-xl space-y-5 py-2 sm:space-y-6">
         <div className="space-y-3">
           <Button
@@ -190,6 +192,6 @@ export function TeamPage() {
           </>
         ) : null}
       </div>
-    </Layout>
+    </Shell>
   );
 }

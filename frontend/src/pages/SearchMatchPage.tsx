@@ -3,6 +3,8 @@ import { Layout } from '@/components/Layout';
 import { CollectionsSearchPanel } from '@/components/CollectionsSearchPanel';
 import { MatchSearchPanel } from '@/components/MatchSearchPanel';
 import { PeopleSearchPanel } from '@/components/PeopleSearchPanel';
+import { PublicLayout } from '@/components/PublicLayout';
+import { useAuth } from '@/hooks/useAuthInit';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   SEARCH_TABS,
@@ -14,6 +16,8 @@ import {
 import { cn } from '@/lib/utils';
 
 export function SearchMatchPage() {
+  const { user } = useAuth();
+  const Shell = user ? Layout : PublicLayout;
   const [params, setParams] = useSearchParams();
   const tab = parseSearchTab(params.get('tab'));
   useDocumentTitle(searchTabDocumentTitle(tab));
@@ -23,10 +27,16 @@ export function SearchMatchPage() {
   };
 
   return (
-    <Layout>
+    <Shell>
       <div className="space-y-5 sm:space-y-8">
         <section>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Buscar</h1>
+          {!user ? (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Explora partidos, aficionados y listas. Para guardar una Capsule o marcar Quiero ir,
+              crea una cuenta.
+            </p>
+          ) : null}
           <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Tipo de búsqueda">
             {SEARCH_TABS.map((item) => (
               <button
@@ -56,6 +66,6 @@ export function SearchMatchPage() {
           <MatchSearchPanel />
         )}
       </div>
-    </Layout>
+    </Shell>
   );
 }

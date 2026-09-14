@@ -267,7 +267,7 @@ export function CapsuleComments({
   const addComment = useAddCapsuleComment(capsuleId);
   const deleteComment = useDeleteCapsuleComment(capsuleId);
   const updateComment = useUpdateCapsuleComment(capsuleId);
-  const { loginTo } = useAuthReturnLinks();
+  const { registerTo } = useAuthReturnLinks();
 
   const comments = data?.comments ?? NO_COMMENTS;
   const threads = useMemo(() => buildCommentThreads(comments), [comments]);
@@ -382,8 +382,8 @@ export function CapsuleComments({
             </form>
           ) : (
             <p className="text-sm text-muted-foreground">
-              <Link to={loginTo} className="text-primary hover:underline">
-                Inicia sesión
+              <Link to={registerTo} className="text-primary hover:underline">
+                Crea una cuenta
               </Link>{' '}
               para comentar.
             </p>

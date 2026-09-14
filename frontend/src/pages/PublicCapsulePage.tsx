@@ -37,7 +37,7 @@ export function PublicCapsulePage() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const { user } = useAuth();
-  const { loginTo } = useAuthReturnLinks();
+  const { registerTo } = useAuthReturnLinks();
   const { data: capsule, isLoading, isError, error } = usePublicCapsule(id);
   useDocumentTitle(
     capsule
@@ -137,7 +137,7 @@ export function PublicCapsulePage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {canFollow && user && username ? (
+            {canFollow && username ? (
               <FollowButton
                 username={username}
                 followedByMe={capsule.profiles?.followed_by_me}
@@ -147,8 +147,8 @@ export function PublicCapsulePage() {
             ) : null}
             {canFollow && user && capsule.profiles?.follows_me ? <FollowsYouBadge /> : null}
             {canFollow && !user ? (
-              <Button asChild size="sm" variant="secondary">
-                <Link to={loginTo}>Inicia sesión para seguir</Link>
+              <Button asChild size="sm" variant="ghost">
+                <Link to={registerTo}>Crear cuenta</Link>
               </Button>
             ) : null}
             {user && !isOwn ? (

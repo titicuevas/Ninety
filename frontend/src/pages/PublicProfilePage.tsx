@@ -28,7 +28,6 @@ import { Button } from '@/components/ui/button';
 import { usePublicProfile } from '@/hooks/usePublicProfile';
 import { usePublicCollections } from '@/hooks/useCollections';
 import { useAuth } from '@/hooks/useAuthInit';
-import { useAuthReturnLinks } from '@/hooks/useAuthReturnLinks';
 import { useDiaryFilterParams } from '@/hooks/useDiaryFilterParams';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
@@ -91,7 +90,6 @@ function PublicProfileHeader({
   isOwnProfile,
   isBlockedByMe,
   user,
-  loginTo,
 }: {
   profile: NonNullable<ReturnType<typeof usePublicProfile>['data']>['pages'][0]['profile'];
   displayName: string;
@@ -102,7 +100,6 @@ function PublicProfileHeader({
   isOwnProfile: boolean;
   isBlockedByMe: boolean;
   user: ReturnType<typeof useAuth>['user'];
-  loginTo: string;
 }) {
   return (
     <section className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
@@ -221,9 +218,12 @@ function PublicProfileHeader({
             </>
           )
         ) : profile.username ? (
-          <Button asChild size="sm">
-            <Link to={loginTo}>Inicia sesión para seguir</Link>
-          </Button>
+          <FollowButton
+            username={profile.username}
+            followedByMe={false}
+            followsMe={false}
+            size="compact"
+          />
         ) : null}
         {!isOwnProfile && !isBlockedByMe && profile.username && !isAutoUsername(profile.username) ? (
           <Button asChild variant="outline" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
@@ -531,7 +531,6 @@ export function PublicProfilePage() {
   const { username } = useParams<{ username: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
-  const { loginTo } = useAuthReturnLinks();
   const {
     q,
     qDraft,
@@ -700,7 +699,6 @@ export function PublicProfilePage() {
           isOwnProfile={isOwnProfile}
           isBlockedByMe={isBlockedByMe}
           user={user}
-          loginTo={loginTo}
         />
 
         {fromFallback ? (

@@ -914,10 +914,11 @@ collectionsRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
 });
 
 /** GET /api/collections/discover — listas públicas ajenas (descubrimiento V8). */
-collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) => {
+collectionsRouter.get('/discover', optionalAuth, async (req: AuthRequest, res) => {
   const token = getBearerToken(req);
-  if (!token) {
-    res.status(401).json({ error: 'Token requerido' });
+  const supabase = getReaderClient(token);
+  if (!supabase) {
+    res.status(503).json({ error: collectionsMigrationHint() });
     return;
   }
 
@@ -925,28 +926,38 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
   const q =
     typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 80) : '';
   const sort = parseDiscoverCollectionsSort(req.query.sort);
-  const supabase = createUserClient(token);
+  const viewerId = req.userId ?? null;
 
-  const [{ data: me }, { data: followingRows }] = await Promise.all([
-    supabase
-      .from('profiles')
-      .select('favorite_team')
-      .eq('id', req.userId!)
-      .maybeSingle(),
-    supabase.from('user_follows').select('following_id').eq('follower_id', req.userId!),
-  ]);
+  let me: { favorite_team: string | null } | null = null;
+  let followingIds = new Set<string>();
+  let blockedIds = new Set<string>();
 
-  const followingIds = new Set((followingRows ?? []).map((row) => row.following_id as string));
-  const blockedIds = new Set(await listBlockedEitherWayIds(req.userId!));
+  if (viewerId) {
+    const [{ data: meRow }, { data: followingRows }] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('favorite_team')
+        .eq('id', viewerId)
+        .maybeSingle(),
+      supabase.from('user_follows').select('following_id').eq('follower_id', viewerId),
+    ]);
+    me = meRow;
+    followingIds = new Set((followingRows ?? []).map((row) => row.following_id as string));
+    blockedIds = new Set(await listBlockedEitherWayIds(viewerId));
+  }
+
   const followedAuthorIds = [...followingIds].filter((id) => !blockedIds.has(id));
 
-  const recentQuery = supabase
+  let recentQuery = supabase
     .from('collections')
     .select('*')
     .eq('is_public', true)
-    .neq('user_id', req.userId!)
     .order('updated_at', { ascending: false })
     .limit(Math.max(limit * 8, 40));
+
+  if (viewerId) {
+    recentQuery = recentQuery.neq('user_id', viewerId);
+  }
 
   const followedQuery =
     followedAuthorIds.length > 0
@@ -1043,7 +1054,7 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
   try {
     const withLikes = await attachCollectionLikeStats(
       supabase,
-      req.userId!,
+      viewerId ?? '',
       candidates.map((row) => ({ id: row.id })),
     );
     likeById = new Map(withLikes.map((row) => [row.id, row]));
@@ -1058,7 +1069,7 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
 
   const ranked = selectDiscoverCollections(
     candidates,
-    { id: req.userId!, favorite_team: me?.favorite_team },
+    { id: viewerId ?? 'guest', favorite_team: me?.favorite_team ?? null },
     followingIds,
     { limit, q, sort, likesCountById },
   );
@@ -1066,9 +1077,9 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
   const authorIdsRanked = [...new Set(ranked.map((row) => row.author.id))];
   let followedSet = new Set<string>();
   let followerSet = new Set<string>();
-  if (authorIdsRanked.length > 0) {
+  if (viewerId && authorIdsRanked.length > 0) {
     try {
-      const relations = await loadFollowRelationSets(supabase, req.userId!, authorIdsRanked);
+      const relations = await loadFollowRelationSets(supabase, viewerId, authorIdsRanked);
       followedSet = relations.followedSet;
       followerSet = relations.followerSet;
     } catch (err) {
@@ -1095,7 +1106,9 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
     }
   }
 
-  const withFollowed = await attachCollectionAlsoFollowed(req.userId!, ranked);
+  const withFollowed = viewerId
+    ? await attachCollectionAlsoFollowed(viewerId, ranked)
+    : ranked.map((row) => ({ ...row, also_liked: [], also_commented: [] }));
   const followedById = new Map(withFollowed.map((row) => [row.id, row]));
 
   res.json({
@@ -1107,16 +1120,18 @@ collectionsRouter.get('/discover', requireAuth, async (req: AuthRequest, res) =>
           items_count: collection.items_count,
           cover_url: collection.cover_url ?? null,
           likes_count: likes?.likes_count ?? 0,
-          liked_by_me: likes?.liked_by_me ?? false,
+          liked_by_me: viewerId ? (likes?.liked_by_me ?? false) : false,
           comments_count: commentsCountById.get(collection.id) ?? 0,
           also_liked: followed?.also_liked ?? [],
           also_commented: followed?.also_commented ?? [],
         }),
+        match_reason,
         author: {
           ...author,
-          ...followRelationFlags(author.id, req.userId!, followedSet, followerSet),
+          ...(viewerId
+            ? followRelationFlags(author.id, viewerId, followedSet, followerSet)
+            : { followed_by_me: false, follows_me: false }),
         },
-        match_reason,
       };
     }),
     q: q || null,

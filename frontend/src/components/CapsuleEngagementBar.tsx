@@ -28,7 +28,7 @@ type CapsuleEngagementBarProps = {
   showShare?: boolean;
 };
 
-/** Like + comentarios + compartir, con CTA de login coherente para invitados. */
+/** Like + comentarios + compartir, con CTA de registro coherente para invitados. */
 export function CapsuleEngagementBar({
   capsuleId,
   shareTitle,
@@ -45,7 +45,7 @@ export function CapsuleEngagementBar({
   showShare = true,
 }: CapsuleEngagementBarProps) {
   const [guestLikersOpen, setGuestLikersOpen] = useState(false);
-  const { loginTo } = useAuthReturnLinks();
+  const { registerTo } = useAuthReturnLinks();
 
   return (
     <div
@@ -55,13 +55,11 @@ export function CapsuleEngagementBar({
         className,
       )}
     >
-      {currentUserId ? (
-        <CapsuleLikeButton
-          capsuleId={capsuleId}
-          likesCount={likesCount}
-          likedByMe={likedByMe}
-        />
-      ) : null}
+      <CapsuleLikeButton
+        capsuleId={capsuleId}
+        likesCount={likesCount}
+        likedByMe={likedByMe}
+      />
 
       <CapsuleComments
         key={defaultOpenComments ? `comments-open-${capsuleId}` : `comments-${capsuleId}`}
@@ -86,8 +84,8 @@ export function CapsuleEngagementBar({
           {likesCount > 0 && commentsCount > 0 ? ' · ' : null}
           {commentsCount > 0 ? formatCommentsCountLabel(commentsCount) : null}
           {(likesCount > 0 || commentsCount > 0) && ' · '}
-          <Link to={loginTo} className="text-primary hover:underline">
-            Inicia sesión para interactuar
+          <Link to={registerTo} className="text-primary hover:underline">
+            Crea una cuenta para interactuar
           </Link>
         </p>
       ) : null}
