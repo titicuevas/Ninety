@@ -107,12 +107,16 @@ describe('diaryCalendar frontend', () => {
         watched_at: '2026-08-03',
         home_team_name: 'Betis',
         home_team_crest: 'https://example.com/b.png',
+        away_team_name: 'Sevilla',
+        away_team_crest: 'https://example.com/s.png',
       }),
       stubCapsule({
         id: '2',
         watched_at: '2026-08-03',
         home_team_name: 'Sevilla',
         home_team_crest: 'https://example.com/s.png',
+        away_team_name: 'Betis',
+        away_team_crest: 'https://example.com/b.png',
       }),
     ];
     const previews = dayCrestPreviews(capsules);
