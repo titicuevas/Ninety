@@ -105,7 +105,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <SkipLink />
 
       <header className="chrome-blur sticky top-0 z-50 border-b border-border/80 bg-background/85 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-4 sm:h-16 sm:px-6 lg:max-w-6xl">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 px-4 sm:h-16 sm:px-6 lg:max-w-7xl">
           <Link
             to="/home"
             className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -181,7 +181,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <main
         id="main-content"
         className={cn(
-          'motion-page mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 sm:py-8 lg:max-w-6xl',
+          'motion-page mx-auto w-full max-w-6xl px-4 py-5 sm:px-6 sm:py-8 lg:max-w-7xl',
           // Tab bar hasta lg (móvil + tablet); desktop sin padding extra
           'pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))] lg:pb-8',
         )}

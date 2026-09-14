@@ -42,6 +42,24 @@ const admin = url && secretKey
     })
   : null;
 
+/** Fotos de ejemplo (Unsplash) para que el feed no quede vacío de imágenes. */
+const FAN_DEMO_PHOTOS = [
+  'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=960&q=80',
+  'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=960&q=80',
+  'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?auto=format&fit=crop&w=960&q=80',
+  'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=960&q=80',
+  'https://images.unsplash.com/photo-1489944446610-1f3a8e9e8d3e?auto=format&fit=crop&w=960&q=80',
+  'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=960&q=80',
+] as const;
+
+/** ~1 de cada 2 capsules lleva 1–2 fotos de ejemplo. */
+function fanCapsulePhotoUrls(fanIndex: number, capsuleIndex: number): string[] {
+  if ((fanIndex + capsuleIndex) % 2 !== 0) return [];
+  const a = FAN_DEMO_PHOTOS[(fanIndex + capsuleIndex) % FAN_DEMO_PHOTOS.length]!;
+  const b = FAN_DEMO_PHOTOS[(fanIndex + capsuleIndex + 2) % FAN_DEMO_PHOTOS.length]!;
+  return capsuleIndex % 3 === 0 ? [a, b] : [a];
+}
+
 type FanSeed = {
   username: string;
   display_name: string;
@@ -486,7 +504,7 @@ async function seedFanCapsules(userId: string, fanIndex: number, fan: FanSeed) {
         watched_at: template.watched_at,
         rating: template.rating,
         note: template.note,
-        photo_urls: [],
+        photo_urls: fanCapsulePhotoUrls(fanIndex, i),
         is_public: true,
       },
       { onConflict: 'user_id,match_id' },
@@ -947,7 +965,7 @@ async function seedDemoAlsoWatched(demoUserId: string | null, fanIds: string[]) 
           watched_at: template.watched_at,
           rating: template.rating,
           note: 'Vi el mismo partido.',
-          photo_urls: [],
+          photo_urls: fanCapsulePhotoUrls(i, 0),
           is_public: true,
         },
         { onConflict: 'user_id,match_id' },
