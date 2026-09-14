@@ -20,19 +20,19 @@ export function ThankYouPage() {
     <AuthLayout title="Gracias por registrarte" subtitle="Tu diario futbolero está a un paso">
       <div className="text-center">
         <CheckCircle2 className="mx-auto h-12 w-12 text-primary" aria-hidden />
-        <h2 className="mt-5 text-xl font-semibold">Revisa tu bandeja de entrada</h2>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+        <h2 className="mt-5 text-xl font-semibold text-foreground">Revisa tu bandeja de entrada</h2>
+        <p className="mt-3 text-sm leading-relaxed text-zinc-300">
           Hemos enviado un enlace de confirmación{email ? <> a <strong className="text-foreground">{email}</strong></> : ' a tu email'}.
           Ábrelo para activar la cuenta.
         </p>
       </div>
-      <ul className="mt-6 space-y-2 rounded-xl border border-border bg-card/60 p-4 text-sm text-muted-foreground">
+      <ul className="mt-6 space-y-2 rounded-xl border border-border bg-card p-4 text-sm text-zinc-300">
         <li className="flex gap-2"><Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />Revisa también spam y promociones.</li>
         <li>El remitente es noreply@getninety.app.</li>
         <li>Si no llega en unos minutos, vuelve a registrarte o escribe a hello@getninety.app.</li>
       </ul>
       <Link to="/login" className={cn(buttonVariants({ size: 'lg' }), 'mt-6 w-full')}>Ir a iniciar sesión</Link>
-      <p className="mt-5 text-center text-xs text-muted-foreground">
+      <p className="mt-5 text-center text-sm text-zinc-300">
         Objetivo de respuesta de soporte: antes de 2 días laborables.
       </p>
     </AuthLayout>

@@ -45,7 +45,7 @@ export function AuthLayout({ title, subtitle, children, className }: Props) {
                 <span className="text-2xl font-semibold tracking-tight">Ninety</span>
               </Link>
               <h1 className="mt-6 text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
-              <p className="mt-2 text-sm text-muted-foreground sm:text-base">{subtitle}</p>
+              <p className="mt-2 text-sm text-zinc-300 sm:text-base">{subtitle}</p>
             </div>
 
             <main

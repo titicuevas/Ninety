@@ -136,16 +136,10 @@ export async function obtainApiSession(request: APIRequestContext): Promise<Auth
   return session;
 }
 
-const homeHeading = (page: Page) =>
-  page
-    .getByTestId('home-hero')
-    .or(
-      page.getByRole('heading', {
-        name: /esto es tu fútbol|tu wrapped empieza|buenos días|buenas tardes|buenas noches/i,
-      }),
-    );
+const homeHeading = (page: Page) => page.getByTestId('home-hero');
 const loginHeading = (page: Page) =>
   page.getByRole('heading', { name: /bienvenido de vuelta/i });
+const authLanding = (page: Page) => homeHeading(page).or(loginHeading(page));
 
 async function persistAuthState(page: Page) {
   mkdirSync(path.dirname(AUTH_FILE), { recursive: true });
@@ -196,7 +190,7 @@ export async function establishAuthenticatedSession(page: Page) {
   await seedSessionIntoContext(page, session);
 
   await page.goto('/home');
-  await expect(homeHeading(page).or(loginHeading(page))).toBeVisible({ timeout: 25_000 });
+  await expect(authLanding(page)).toBeVisible({ timeout: 25_000 });
 
   if (page.url().includes('/login') || (await loginHeading(page).isVisible().catch(() => false))) {
     // Re-login API (evita UI: dispara rate-limit) + rehydrate + reload
@@ -204,7 +198,7 @@ export async function establishAuthenticatedSession(page: Page) {
     const fresh = await obtainApiSession(page.request);
     await writeSessionToPage(page, fresh);
     await page.goto('/home');
-    await expect(homeHeading(page).or(loginHeading(page))).toBeVisible({ timeout: 25_000 });
+    await expect(authLanding(page)).toBeVisible({ timeout: 25_000 });
   }
 
   if (page.url().includes('/login') || (await loginHeading(page).isVisible().catch(() => false))) {
@@ -238,7 +232,7 @@ export async function openAuthenticatedHome(page: Page) {
   await seedSessionIntoContext(page, session);
 
   await page.goto('/home');
-  await expect(homeHeading(page).or(loginHeading(page))).toBeVisible({ timeout: 25_000 });
+  await expect(authLanding(page)).toBeVisible({ timeout: 25_000 });
 
   const needsReauth =
     page.url().includes('/login') || (await loginHeading(page).isVisible().catch(() => false));

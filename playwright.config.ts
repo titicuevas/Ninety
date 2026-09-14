@@ -110,7 +110,7 @@ export default defineConfig({
     },
     {
       name: 'chromium',
-      testMatch: /smoke\/(authenticated|collections|notifications|onboarding|value-onboarding|diary-anniversary|diary-milestone|want-to-go-nudge|feed-discover|push-activation|social-engagement|watch-context|demo-showcase)\.spec\.ts|critical\/(people-search|follow-lists|capsule-create-photos|capsule-privacy)\.spec\.ts/,
+      testMatch: /smoke\/(authenticated|collections|notifications|onboarding|value-onboarding|diary-anniversary|diary-milestone|want-to-go-nudge|feed-discover|push-activation|social-engagement|watch-context|demo-showcase)\.spec\.ts|critical\/(people-search|follow-lists|capsule-create-photos|capsule-privacy|access-control-idor)\.spec\.ts/,
       grepInvert: /@demo-public/,
       dependencies: ['setup'],
       use: {
