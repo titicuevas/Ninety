@@ -11,7 +11,7 @@ export function TermsPage() {
     <LegalPageLayout title="Términos de uso">
       <p className="text-sm leading-relaxed text-muted-foreground sm:text-[0.9375rem]">
         Al registrarte o usar Ninety (
-        <a href={SITE} className="text-primary underline-offset-2 hover:underline">
+        <a href={SITE} className="text-primary underline underline-offset-2">
           getninety.app
         </a>
         ) aceptas estos términos. Si no estás de acuerdo, no uses el servicio. Ninety es un proyecto
@@ -61,7 +61,7 @@ export function TermsPage() {
           Las Capsules y colecciones pueden ser <strong className="text-foreground">públicas</strong>{' '}
           o <strong className="text-foreground">privadas</strong>. Lo privado no se ofrece como
           enlace público; lo público puede verse sin cuenta. Detalles en la{' '}
-          <Link to="/privacidad" className="text-primary underline-offset-2 hover:underline">
+          <Link to="/privacidad" className="text-primary underline underline-offset-2">
             Política de privacidad
           </Link>
           .
@@ -71,14 +71,14 @@ export function TermsPage() {
       <LegalSection title="5. Exportación y baja">
         <p>
           Puedes exportar tus Capsules (JSON/CSV) e importar un export JSON desde{' '}
-          <Link to="/settings" className="text-primary underline-offset-2 hover:underline">
+          <Link to="/settings" className="text-primary underline underline-offset-2">
             Ajustes
           </Link>
           , y también exportar e importar colecciones. Puedes{' '}
           <strong className="text-foreground">eliminar tu cuenta</strong> desde Ajustes confirmando
           tu email; el borrado es inmediato e irreversible. Si no puedes iniciar sesión o necesitas
           ayuda con la baja, escribe a{' '}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary underline-offset-2 hover:underline">
+          <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary underline underline-offset-2">
             {CONTACT_EMAIL}
           </a>{' '}
           como vía secundaria.
@@ -113,7 +113,7 @@ export function TermsPage() {
         <p>
           Podemos modificar estos términos. El uso continuado tras publicar cambios en esta página
           implica su aceptación. Dudas:{' '}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary underline-offset-2 hover:underline">
+          <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary underline underline-offset-2">
             {CONTACT_EMAIL}
           </a>
           .

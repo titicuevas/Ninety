@@ -86,7 +86,7 @@ export function CookieNoticeBanner({ className }: { className?: string }) {
             dispositivo.{' '}
             <Link
               to="/privacidad"
-              className="font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="font-medium text-primary underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Privacidad
             </Link>

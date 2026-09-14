@@ -319,14 +319,18 @@ export function LandingPage() {
             </Link>
             <p className="max-w-md text-xs leading-relaxed text-zinc-500">
               Al registrarte aceptas los{' '}
-              <Link to="/terminos" className="text-primary underline-offset-2 hover:underline">
+              <Link to="/terminos" className="text-primary underline underline-offset-2">
                 Términos
               </Link>{' '}
               y la{' '}
-              <Link to="/privacidad" className="text-primary underline-offset-2 hover:underline">
+              <Link to="/privacidad" className="text-primary underline underline-offset-2">
                 Política de privacidad
               </Link>
-              . Soporte: <a className="text-primary hover:underline" href="mailto:hello@getninety.app">hello@getninety.app</a>.
+              . Soporte:{' '}
+              <a className="text-primary underline underline-offset-2" href="mailto:hello@getninety.app">
+                hello@getninety.app
+              </a>
+              .
             </p>
           </div>
         </main>

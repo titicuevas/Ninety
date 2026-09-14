@@ -11,7 +11,7 @@ export function PrivacyPage() {
     <LegalPageLayout title="Política de privacidad">
       <p className="text-sm leading-relaxed text-muted-foreground sm:text-[0.9375rem]">
         Esta política describe cómo Ninety (
-        <a href={SITE} className="text-primary underline-offset-2 hover:underline">
+        <a href={SITE} className="text-primary underline underline-offset-2">
           getninety.app
         </a>
         ) trata datos personales en la beta. Es un texto claro sobre el producto real, no un aviso
@@ -24,7 +24,7 @@ export function PrivacyPage() {
           El servicio se llama <strong className="text-foreground">Ninety</strong> y está disponible
           en <strong className="text-foreground">getninety.app</strong> (y el fallback de
           despliegue en Railway). Para consultas de privacidad o solicitudes sobre tus datos:{' '}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary underline-offset-2 hover:underline">
+          <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary underline underline-offset-2">
             {CONTACT_EMAIL}
           </a>
           .
@@ -118,18 +118,18 @@ export function PrivacyPage() {
           CSV) e <strong className="text-foreground">importarlo</strong> desde un export JSON, y
           también <strong className="text-foreground">exportar e importar tus colecciones</strong>{' '}
           (listas curadas) en{' '}
-          <Link to="/settings" className="text-primary underline-offset-2 hover:underline">Ajustes</Link>
+          <Link to="/settings" className="text-primary underline underline-offset-2">Ajustes</Link>
           . El export no incluye contraseñas ni tokens; diario y colecciones van en archivos
           separados.
         </p>
         <p>
           Puedes <strong className="text-foreground">eliminar tu cuenta</strong> tú mismo desde{' '}
-          <Link to="/settings" className="text-primary underline-offset-2 hover:underline">
+          <Link to="/settings" className="text-primary underline underline-offset-2">
             Ajustes
           </Link>
           : confirmas el email de la cuenta y el borrado es inmediato e irreversible (perfil, diario,
           colecciones, alertas y fotos subidas). Si no puedes acceder a la cuenta, escribe a{' '}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary underline-offset-2 hover:underline">
+          <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary underline underline-offset-2">
             {CONTACT_EMAIL}
           </a>{' '}
           como vía de ayuda secundaria. Conservamos los datos mientras la cuenta exista; al borrarla
@@ -142,7 +142,7 @@ export function PrivacyPage() {
         <p>
           Puedes acceder y corregir datos de perfil en la app, exportar el diario y las colecciones, y
           eliminar la cuenta desde{' '}
-          <Link to="/settings" className="text-primary underline-offset-2 hover:underline">
+          <Link to="/settings" className="text-primary underline underline-offset-2">
             Ajustes
           </Link>
           . Si la normativa aplicable te otorga más derechos (oposición, limitación, etc.),
@@ -155,7 +155,7 @@ export function PrivacyPage() {
         <p>
           Podemos actualizar esta política. La versión vigente estará en esta página con la fecha de
           revisión. Los{' '}
-          <Link to="/terminos" className="text-primary underline-offset-2 hover:underline">
+          <Link to="/terminos" className="text-primary underline underline-offset-2">
             Términos de uso
           </Link>{' '}
           son un documento aparte.
