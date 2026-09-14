@@ -85,10 +85,10 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-  # Corre contra QA_* si existen; si no, usa el fallback de prod del env global.
-  # Se activa cuando hay secret TEST_USER_PASSWORD (no hace falta staging aparte).
+  # Siempre corre (un if con secrets.* a nivel job puede dejar el workflow
+  # en "No jobs were run"). Si falta el secret, falla en el primer step.
+  # Usa QA_* si existen; si no, fallback de prod del env global.
   e2e-auth:
-    if: ${{ secrets.TEST_USER_PASSWORD != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 55
     env:
@@ -98,7 +98,7 @@ jobs:
       - name: Exigir credenciales QA
         run: |
           if [ -z "$TEST_USER_PASSWORD" ]; then
-            echo "::error::Falta el secret TEST_USER_PASSWORD para beta@ninety.app."
+            echo "::error::Falta el secret TEST_USER_PASSWORD para beta@ninety.app. Añádelo en Settings → Secrets and variables → Actions."
             exit 1
           fi
           echo "E2E auth contra ${E2E_BASE_URL} / ${E2E_API_URL}"
