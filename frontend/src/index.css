@@ -40,7 +40,8 @@ body {
   --color-surface: var(--background);
   --color-surface-raised: var(--card);
   --color-surface-overlay: var(--secondary);
-  --color-accent-hover: #059669;
+  /* Hover de botones primary: sigue AA con primary-foreground oscuro */
+  --color-accent-hover: #10b981;
 }
 
 :root {
@@ -50,15 +51,16 @@ body {
   --card-foreground: #fafafa;
   --popover: #141416;
   --popover-foreground: #fafafa;
-  --primary: #047857;
-  --primary-foreground: #ffffff;
+  /* Emerald claro: text-primary AA en cards; botones con texto oscuro (margen vs capas) */
+  --primary: #34d399;
+  --primary-foreground: #022c22;
   --secondary: #1c1c1f;
   --secondary-foreground: #fafafa;
   --muted: #1c1c1f;
   /* Contraste AA sobre fondo oscuro (antes #71717a era justo/bajo) */
   --muted-foreground: #a1a1aa;
-  --accent: #047857;
-  --accent-foreground: #ffffff;
+  --accent: #34d399;
+  --accent-foreground: #022c22;
   --destructive: #f87171;
   --border: #2e2e33;
   --input: #2e2e33;
