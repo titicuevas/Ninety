@@ -32,16 +32,21 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  type LoginLocationState = { passwordReset?: boolean; emailConfirmed?: boolean };
+  type LoginLocationState = {
+    passwordReset?: boolean;
+    emailConfirmed?: boolean;
+    oauthRetry?: boolean;
+  };
   const loginState = location.state as LoginLocationState | null;
   const [passwordResetOk] = useState(() => loginState?.passwordReset === true);
   const [emailConfirmedOk] = useState(() => loginState?.emailConfirmed === true);
+  const [oauthRetryOk] = useState(() => loginState?.oauthRetry === true);
 
   useEffect(() => {
-    if (loginState?.passwordReset || loginState?.emailConfirmed) {
+    if (loginState?.passwordReset || loginState?.emailConfirmed || loginState?.oauthRetry) {
       navigate('.', { replace: true, state: {} });
     }
-  }, [loginState?.passwordReset, loginState?.emailConfirmed, navigate]);
+  }, [loginState?.passwordReset, loginState?.emailConfirmed, loginState?.oauthRetry, navigate]);
 
   const handleGoogleSignIn = async () => {
     setError(null);
@@ -113,6 +118,12 @@ export function LoginPage() {
         {emailConfirmedOk ? (
           <p className="text-sm text-primary" role="status">
             Email confirmado. Ya puedes iniciar sesión con tu contraseña.
+          </p>
+        ) : null}
+        {oauthRetryOk ? (
+          <p className="text-sm text-primary" role="status">
+            No se pudo completar Google. Pulsa otra vez «Continuar con Google» (usa siempre
+            www.getninety.app).
           </p>
         ) : null}
         {error ? <FormAlert>{error}</FormAlert> : null}

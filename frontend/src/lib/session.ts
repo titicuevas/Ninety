@@ -32,12 +32,19 @@ export function clearSession() {
   localStorage.removeItem(LEGACY_SESSION_KEY);
 }
 
+/** Guarda PKCE en session + local: el redirect de Google a veces pierde solo sessionStorage. */
 export function savePkceId(pkceId: string) {
   sessionStorage.setItem(PKCE_KEY, pkceId);
+  try {
+    localStorage.setItem(PKCE_KEY, pkceId);
+  } catch {
+    /* private mode / quota */
+  }
 }
 
 export function consumePkceId(): string | null {
-  const pkceId = sessionStorage.getItem(PKCE_KEY);
+  const pkceId = sessionStorage.getItem(PKCE_KEY) ?? localStorage.getItem(PKCE_KEY);
   sessionStorage.removeItem(PKCE_KEY);
+  localStorage.removeItem(PKCE_KEY);
   return pkceId;
 }

@@ -101,11 +101,11 @@ export function AuthCallbackPage() {
       } catch (err) {
         if (!active) return;
         const message = err instanceof Error ? err.message : 'No se pudo completar el inicio de sesión.';
-        // Confirmación sin PKCE local: pedir login en vez de parecer un fallo opaco
+        // PKCE perdido (otro origen / pestaña): volver al login con mensaje claro, no "email confirmado"
         if (parsed.kind === 'code' && /OAuth expiró|pkce/i.test(message)) {
           navigate(loginPath(), {
             replace: true,
-            state: { emailConfirmed: true },
+            state: { oauthRetry: true },
           });
           return;
         }
