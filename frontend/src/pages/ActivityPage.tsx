@@ -141,13 +141,17 @@ function MatchLine({
   return (
     <Link
       to={href}
-      className="mt-1.5 flex min-w-0 items-center gap-2 rounded-lg bg-secondary/40 px-2.5 py-2 hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="mt-1.5 flex min-w-0 items-center gap-1.5 rounded-lg bg-secondary/40 px-2.5 py-2 hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <TeamCrest name={home} crest={homeCrest} size="sm" className="h-7 w-7" />
-      <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
-        {home} <span className="font-normal text-muted-foreground">vs</span> {away}
+      <span className="flex min-w-0 max-w-[45%] items-center gap-1.5">
+        <TeamCrest name={home} crest={homeCrest} size="sm" className="h-6 w-6" />
+        <span className="truncate text-sm font-medium text-foreground">{home}</span>
       </span>
-      <TeamCrest name={away} crest={awayCrest} size="sm" className="h-7 w-7" />
+      <span className="shrink-0 text-xs font-normal text-muted-foreground">vs</span>
+      <span className="flex min-w-0 max-w-[45%] items-center gap-1.5">
+        <TeamCrest name={away} crest={awayCrest} size="sm" className="h-6 w-6" />
+        <span className="truncate text-sm font-medium text-foreground">{away}</span>
+      </span>
     </Link>
   );
 }

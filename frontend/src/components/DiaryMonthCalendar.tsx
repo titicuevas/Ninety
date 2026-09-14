@@ -81,7 +81,7 @@ export function DiaryMonthCalendar({
               aria-pressed={has ? selected : undefined}
               onClick={() => onSelectDay(cell.date, cell.count)}
               className={cn(
-                'relative flex aspect-square flex-col items-center justify-center gap-0.5 rounded-xl text-sm transition-colors',
+                'relative flex aspect-square flex-col items-center justify-center rounded-xl text-sm transition-colors',
                 calendarDayHeatClass(cell.count),
                 has && 'cursor-pointer',
                 !has && 'cursor-default',
@@ -89,27 +89,34 @@ export function DiaryMonthCalendar({
                 isToday && !selected && 'outline outline-1 outline-primary/50',
               )}
             >
-              <span className="text-[11px] font-medium tabular-nums leading-none sm:text-xs">
-                {cell.day}
-              </span>
               {has && preview ? (
-                <span className="relative">
-                  <TeamCrest
-                    name={preview.name}
-                    crest={preview.crest}
-                    size="sm"
-                    className="h-5 w-5 sm:h-6 sm:w-6"
-                  />
-                  {cell.count > 1 ? (
-                    <span className="absolute -right-1.5 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary px-0.5 text-[8px] font-bold text-primary-foreground">
-                      {cell.count}
-                    </span>
-                  ) : null}
+                <span className="flex flex-col items-center gap-0.5">
+                  <span className="text-[10px] font-medium tabular-nums leading-none sm:text-[11px]">
+                    {cell.day}
+                  </span>
+                  <span className="relative">
+                    <TeamCrest
+                      name={preview.name}
+                      crest={preview.crest}
+                      size="sm"
+                      className="h-5 w-5 sm:h-6 sm:w-6"
+                    />
+                    {cell.count > 1 ? (
+                      <span className="absolute -right-1.5 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary px-0.5 text-[8px] font-bold text-primary-foreground">
+                        {cell.count}
+                      </span>
+                    ) : null}
+                  </span>
                 </span>
-              ) : has ? (
-                <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
               ) : (
-                <span className="h-1.5 w-1.5 rounded-full bg-transparent" aria-hidden />
+                <>
+                  <span className="text-[11px] font-medium tabular-nums leading-none sm:text-xs">
+                    {cell.day}
+                  </span>
+                  {has ? (
+                    <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
+                  ) : null}
+                </>
               )}
             </button>
           );

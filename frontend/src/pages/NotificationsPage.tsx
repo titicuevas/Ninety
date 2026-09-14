@@ -185,26 +185,32 @@ function DigestNotificationItem({
         </p>
         {matchLine && group.capsule ? (
           <div
-            className="mt-1.5 flex min-w-0 items-center gap-2 rounded-lg bg-secondary/40 px-2 py-1.5"
+            className="mt-1.5 flex min-w-0 items-center gap-1.5 rounded-lg bg-secondary/40 px-2 py-1.5"
             data-testid="notification-match"
           >
-            <TeamCrest
-              name={group.capsule.home_team_name}
-              crest={group.capsule.home_team_crest}
-              size="sm"
-              className="h-6 w-6"
-            />
-            <p className="min-w-0 flex-1 truncate text-sm font-medium text-foreground/90">
-              {group.capsule.home_team_name}{' '}
-              <span className="font-normal text-muted-foreground">vs</span>{' '}
-              {group.capsule.away_team_name}
-            </p>
-            <TeamCrest
-              name={group.capsule.away_team_name}
-              crest={group.capsule.away_team_crest}
-              size="sm"
-              className="h-6 w-6"
-            />
+            <span className="flex min-w-0 max-w-[45%] items-center gap-1.5">
+              <TeamCrest
+                name={group.capsule.home_team_name}
+                crest={group.capsule.home_team_crest}
+                size="sm"
+                className="h-6 w-6"
+              />
+              <span className="truncate text-sm font-medium text-foreground/90">
+                {group.capsule.home_team_name}
+              </span>
+            </span>
+            <span className="shrink-0 text-xs font-normal text-muted-foreground">vs</span>
+            <span className="flex min-w-0 max-w-[45%] items-center gap-1.5">
+              <TeamCrest
+                name={group.capsule.away_team_name}
+                crest={group.capsule.away_team_crest}
+                size="sm"
+                className="h-6 w-6"
+              />
+              <span className="truncate text-sm font-medium text-foreground/90">
+                {group.capsule.away_team_name}
+              </span>
+            </span>
           </div>
         ) : matchLine ? (
           <p
