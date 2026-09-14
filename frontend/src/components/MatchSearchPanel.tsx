@@ -20,9 +20,24 @@ import { saveDraftMatch } from '@/lib/draftMatch';
 import { groupMatchesByCompetition } from '@/lib/groupMatches';
 import { seasonChipOptions } from '@/lib/seasonChips';
 import { monthChipOptions, monthHintLabel, parseMonthParam } from '@/lib/monthChips';
+import { isFootballMatchWantToGoEligible } from '@/lib/wantToGo';
 import type { CuratedCompetition, FootballMatch } from '@/types/football';
 import { cn } from '@/lib/utils';
 
+function MatchWantToGoAction({
+  match,
+  saved,
+}: {
+  match: FootballMatch;
+  saved: boolean;
+}) {
+  if (!saved && !isFootballMatchWantToGoEligible(match)) return null;
+  return (
+    <div className="pl-1">
+      <WantToGoButton match={match} saved={saved} />
+    </div>
+  );
+}
 function ManualMatchCta() {
   return (
     <Button asChild type="button" variant="secondary">
@@ -235,9 +250,10 @@ function MatchSearchResults({
                           wantToGo={wantToGoIds.has(match.id)}
                           onSelect={() => onSelectMatch(match)}
                         />
-                        <div className="pl-1">
-                          <WantToGoButton match={match} saved={wantToGoIds.has(match.id)} />
-                        </div>
+                        <MatchWantToGoAction
+                          match={match}
+                          saved={wantToGoIds.has(match.id)}
+                        />
                       </li>
                     ))}
                   </ul>
@@ -253,9 +269,10 @@ function MatchSearchResults({
                         wantToGo={wantToGoIds.has(match.id)}
                         onSelect={() => onSelectMatch(match)}
                       />
-                      <div className="pl-1">
-                        <WantToGoButton match={match} saved={wantToGoIds.has(match.id)} />
-                      </div>
+                      <MatchWantToGoAction
+                        match={match}
+                        saved={wantToGoIds.has(match.id)}
+                      />
                     </li>
                   ))}
                 </ul>

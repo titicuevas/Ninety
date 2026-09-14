@@ -2,7 +2,7 @@ import type { MouseEvent } from 'react';
 import { Bookmark, BookmarkCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAddWantToGo, useRemoveWantToGo, useWantToGoIds } from '@/hooks/useWantToGo';
-import { footballMatchToWantToGoInput, wantToGoButtonLabel } from '@/lib/wantToGo';
+import { footballMatchToWantToGoInput, isFootballMatchWantToGoEligible, wantToGoButtonLabel } from '@/lib/wantToGo';
 import { cn } from '@/lib/utils';
 import type { FootballMatch } from '@/types/football';
 
@@ -28,6 +28,10 @@ export function WantToGoButton({
 
   const ids = new Set(idsQuery.data?.match_ids ?? []);
   const saved = savedProp ?? ids.has(match.id);
+  const eligible = isFootballMatchWantToGoEligible(match);
+  // Partidos pasados: no ofrecer alta. Si ya estaba guardado, permitir quitarlo.
+  if (!eligible && !saved) return null;
+
   const busy =
     (add.isPending && add.variables?.match_id === match.id) ||
     (remove.isPending && remove.variables === match.id);
@@ -40,6 +44,7 @@ export function WantToGoButton({
       remove.mutate(match.id);
       return;
     }
+    if (!eligible) return;
     add.mutate(footballMatchToWantToGoInput(match));
   };
 

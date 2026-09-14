@@ -27,7 +27,7 @@ export function wantToGoDocumentTitle(when: WantToGoWhenFilter): string {
 }
 
 /** Kickoff en el pasado. Sin fecha → se queda en próximos. */
-function isWantToGoMatchPlayed(
+export function isWantToGoMatchPlayed(
   matchPlayedAt: string | null | undefined,
   now: Date = new Date(),
 ): boolean {
@@ -35,6 +35,38 @@ function isWantToGoMatchPlayed(
   const kickoffMs = Date.parse(matchPlayedAt);
   if (Number.isNaN(kickoffMs)) return false;
   return kickoffMs < now.getTime();
+}
+
+const WANT_TO_GO_BLOCKED_STATUS = new Set([
+  'FINISHED',
+  'AWARDED',
+  'CANCELLED',
+]);
+
+const WANT_TO_GO_LIVE_STATUS = new Set(['IN_PLAY', 'PAUSED', 'LIVE', 'SUSPENDED']);
+
+/**
+ * «Quiero ir» solo tiene sentido para partidos aún no jugados.
+ * Oculta FINISHED / marcador final / kickoff pasado.
+ */
+export function isFootballMatchWantToGoEligible(
+  match: Pick<FootballMatch, 'utcDate' | 'status' | 'score'>,
+  now: Date = new Date(),
+): boolean {
+  const status = (match.status ?? '').trim().toUpperCase();
+  if (WANT_TO_GO_BLOCKED_STATUS.has(status)) return false;
+
+  if (isWantToGoMatchPlayed(match.utcDate, now)) return false;
+
+  const home = match.score?.fullTime?.home;
+  const away = match.score?.fullTime?.away;
+  const hasFinalScore = typeof home === 'number' && typeof away === 'number';
+  if (hasFinalScore && !WANT_TO_GO_LIVE_STATUS.has(status)) {
+    // Marcador completo sin estar en directo → partido ya jugado (p. ej. status vacío).
+    return false;
+  }
+
+  return true;
 }
 
 function kickoffMs(playedAt: string | null): number | null {

@@ -78,7 +78,10 @@ function NotificationBell({ className }: { className?: string }) {
       <span className="relative inline-flex">
         <Bell className="h-5 w-5" aria-hidden />
         {unread > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+          <span
+            className="pointer-events-none absolute -right-2 -top-2 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold tabular-nums leading-none text-primary-foreground shadow-sm ring-2 ring-background"
+            aria-hidden
+          >
             {unread > 9 ? '9+' : unread}
           </span>
         )}

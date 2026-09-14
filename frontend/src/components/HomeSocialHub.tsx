@@ -243,7 +243,7 @@ export function HomeSocialHub({ username }: HomeSocialHubProps) {
       </h2>
 
       <nav aria-label="Atajos sociales" className="flex flex-wrap gap-2">
-        <Button asChild size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
+        <Button asChild variant="secondary" size="sm" className="h-9 w-9 px-0 sm:w-auto sm:px-3">
           <Link to="/search?tab=people">
             <Users className="h-3.5 w-3.5 sm:mr-1.5" aria-hidden />
             <span className="sr-only sm:not-sr-only">Aficionados</span>

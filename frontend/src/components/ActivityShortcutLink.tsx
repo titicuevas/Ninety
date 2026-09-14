@@ -31,7 +31,10 @@ export function ActivityShortcutLink({
         <span className="relative inline-flex">
           <Icon className={cn('h-3.5 w-3.5', showLabel && 'sm:mr-1.5')} aria-hidden />
           {badge ? (
-            <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-primary-foreground">
+            <span
+              className="pointer-events-none absolute -right-2 -top-2 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold tabular-nums leading-none text-primary-foreground shadow-sm ring-2 ring-background"
+              aria-hidden
+            >
               {badge}
             </span>
           ) : null}

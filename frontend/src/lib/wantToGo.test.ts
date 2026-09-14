@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   footballMatchToWantToGoInput,
+  isFootballMatchWantToGoEligible,
   parseWantToGoWhenParam,
   partitionWantToGoMatches,
   playedWantToGoWithoutCapsule,
@@ -25,6 +26,54 @@ describe('wantToGo helpers', () => {
     assert.equal(input.away_team_name, 'Sevilla');
     assert.equal(input.competition_name, 'La Liga');
     assert.equal(input.home_team_crest, 'https://example.com/b.png');
+  });
+
+  it('elige Quiero ir solo en partidos futuros', () => {
+    const now = new Date('2026-09-14T12:00:00.000Z');
+    assert.equal(
+      isFootballMatchWantToGoEligible(
+        {
+          utcDate: '2026-09-20T18:00:00.000Z',
+          status: 'SCHEDULED',
+          score: { fullTime: { home: null, away: null } },
+        },
+        now,
+      ),
+      true,
+    );
+    assert.equal(
+      isFootballMatchWantToGoEligible(
+        {
+          utcDate: '2026-09-08T18:00:00.000Z',
+          status: 'FINISHED',
+          score: { fullTime: { home: 2, away: 3 } },
+        },
+        now,
+      ),
+      false,
+    );
+    assert.equal(
+      isFootballMatchWantToGoEligible(
+        {
+          utcDate: '2026-09-20T18:00:00.000Z',
+          status: 'TIMED',
+          score: { fullTime: { home: null, away: null } },
+        },
+        now,
+      ),
+      true,
+    );
+    assert.equal(
+      isFootballMatchWantToGoEligible(
+        {
+          utcDate: undefined,
+          status: undefined,
+          score: { fullTime: { home: 1, away: 0 } },
+        },
+        now,
+      ),
+      false,
+    );
   });
 
   it('mapea fila a FootballMatch', () => {

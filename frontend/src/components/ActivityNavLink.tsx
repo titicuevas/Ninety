@@ -13,6 +13,17 @@ type ActivityNavLinkProps = {
   inactiveClassName?: string;
 };
 
+function ActivityCountBadge({ label }: { label: string }) {
+  return (
+    <span
+      className="pointer-events-none absolute -right-2 -top-2 z-[1] flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold tabular-nums leading-none text-primary-foreground shadow-sm ring-2 ring-background"
+      aria-hidden
+    >
+      {label}
+    </span>
+  );
+}
+
 export function ActivityNavLink({
   className,
   compact = false,
@@ -28,21 +39,18 @@ export function ActivityNavLink({
       end
       className={({ isActive }) =>
         cn(
+          !compact && 'gap-1.5',
           className,
           isActive ? activeClassName : inactiveClassName,
         )
       }
       aria-label={activityShortcutAriaLabel(total)}
     >
-      <span className={cn('relative inline-flex', !compact && 'gap-1.5')}>
-        <Activity className={cn('shrink-0', compact ? 'h-5 w-5' : 'h-4 w-4')} aria-hidden />
-        {badge ? (
-          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-primary-foreground">
-            {badge}
-          </span>
-        ) : null}
-        {!compact ? <span>Actividad</span> : null}
+      <span className="relative inline-flex shrink-0">
+        <Activity className={cn(compact ? 'h-5 w-5' : 'h-4 w-4')} aria-hidden />
+        {badge ? <ActivityCountBadge label={badge} /> : null}
       </span>
+      {!compact ? <span>Actividad</span> : null}
     </NavLink>
   );
 }

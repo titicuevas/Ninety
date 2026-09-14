@@ -42,6 +42,15 @@ interface MatchesResponse {
 
 const MAX_RESULTS = 30;
 
+/** Estados que devolvemos en búsqueda: próximos + jugados (no solo FINISHED). */
+const SEARCH_MATCH_STATUSES = 'SCHEDULED,TIMED,IN_PLAY,PAUSED,FINISHED,POSTPONED';
+
+function matchKickoffMs(match: FootballMatch): number | null {
+  if (!match.utcDate) return null;
+  const ms = Date.parse(match.utcDate);
+  return Number.isNaN(ms) ? null : ms;
+}
+
 function matchIncludesQuery(match: FootballMatch, query: string): boolean {
   const normalizedNeedle = normalizeTeamText(query);
   const home = normalizeTeamText(match.homeTeam.name);
@@ -63,12 +72,50 @@ function matchInCompetition(match: FootballMatch, code: string): boolean {
   return match.competition?.code === code;
 }
 
-function sortMatchesByDateDesc(matches: FootballMatch[]): FootballMatch[] {
-  return [...matches].sort((a, b) => {
-    const da = a.utcDate ? new Date(a.utcDate).getTime() : 0;
-    const db = b.utcDate ? new Date(b.utcDate).getTime() : 0;
-    return db - da;
+/** Próximos primero (antes → después), luego jugados (más reciente primero). */
+export function sortMatchesForSearch(
+  matches: FootballMatch[],
+  now: Date = new Date(),
+): FootballMatch[] {
+  const nowMs = now.getTime();
+  const upcoming: FootballMatch[] = [];
+  const past: FootballMatch[] = [];
+
+  for (const match of matches) {
+    const kickoff = matchKickoffMs(match);
+    if (kickoff != null && kickoff >= nowMs) upcoming.push(match);
+    else past.push(match);
+  }
+
+  upcoming.sort((a, b) => (matchKickoffMs(a) ?? 0) - (matchKickoffMs(b) ?? 0));
+  past.sort((a, b) => (matchKickoffMs(b) ?? 0) - (matchKickoffMs(a) ?? 0));
+  return [...upcoming, ...past];
+}
+
+/**
+ * Reserva hueco para próximos y para jugados (Capsules + Quiero ir).
+ * Sin esto, 30 próximos llenarían el tope y desaparecerían los recientes.
+ */
+export function takeSearchResults(
+  matches: FootballMatch[],
+  limit: number = MAX_RESULTS,
+  now: Date = new Date(),
+): FootballMatch[] {
+  const sorted = sortMatchesForSearch(matches, now);
+  const nowMs = now.getTime();
+  const upcoming = sorted.filter((m) => {
+    const kickoff = matchKickoffMs(m);
+    return kickoff != null && kickoff >= nowMs;
   });
+  const past = sorted.filter((m) => {
+    const kickoff = matchKickoffMs(m);
+    return !(kickoff != null && kickoff >= nowMs);
+  });
+
+  const upcomingCap = Math.min(upcoming.length, Math.max(10, Math.floor(limit / 2)));
+  const selectedUpcoming = upcoming.slice(0, upcomingCap);
+  const selectedPast = past.slice(0, Math.max(0, limit - selectedUpcoming.length));
+  return [...selectedUpcoming, ...selectedPast];
 }
 
 function dedupeMatches(matches: FootballMatch[]): FootballMatch[] {
@@ -85,7 +132,7 @@ function applyDateRange(matches: FootballMatch[], dateRange?: MatchDateRange): F
 }
 
 function competitionMatchesPath(code: string, season?: number, dateRange?: MatchDateRange): string {
-  const params = new URLSearchParams({ status: 'FINISHED' });
+  const params = new URLSearchParams({ status: SEARCH_MATCH_STATUSES });
   if (season) params.set('season', String(season));
   if (dateRange) {
     params.set('dateFrom', dateRange.dateFrom);
@@ -100,7 +147,7 @@ function teamMatchesPath(
   season?: number,
   dateRange?: MatchDateRange,
 ): string {
-  const params = new URLSearchParams({ status: 'FINISHED' });
+  const params = new URLSearchParams({ status: SEARCH_MATCH_STATUSES });
   if (competitionId) params.set('competitions', String(competitionId));
   if (season) params.set('season', String(season));
   if (dateRange) {
@@ -194,10 +241,11 @@ async function searchTeamMatchesInCompetition(
     collected.push(...(await fetchTeamMatches(team, curated, season, dateRange)));
   }
 
-  return sortMatchesByDateDesc(
-    dedupeMatches(collected)
-      .filter((match) => (!code || matchInCompetition(match, code)) && matchInvolvesTeam(match, teamIds, teamNames))
-      .slice(0, MAX_RESULTS),
+  return takeSearchResults(
+    dedupeMatches(collected).filter(
+      (match) =>
+        (!code || matchInCompetition(match, code)) && matchInvolvesTeam(match, teamIds, teamNames),
+    ),
   );
 }
 
@@ -219,16 +267,13 @@ export async function searchMatchesInCompetition(
     if (curated?.teamSearchOnly) return [];
 
     const matches = await fetchCompetitionMatches(code, season, dateRange);
-    return sortMatchesByDateDesc(matches.filter((match) => matchIncludesQuery(match, trimmed))).slice(
-      0,
-      MAX_RESULTS,
-    );
+    return takeSearchResults(matches.filter((match) => matchIncludesQuery(match, trimmed)));
   }
 
   if (curated?.teamSearchOnly) return [];
 
   const matches = await fetchCompetitionMatches(code, season, dateRange);
-  return sortMatchesByDateDesc(matches).slice(0, MAX_RESULTS);
+  return takeSearchResults(matches);
 }
 
 async function findTeamsByQuery(query: string, competitionCode?: string, season?: number): Promise<ScoredTeam[]> {
@@ -251,10 +296,8 @@ export async function searchMatchesByTeam(
     collected.push(...(await fetchTeamMatches(team, undefined, season, dateRange)));
   }
 
-  return sortMatchesByDateDesc(
-    dedupeMatches(collected)
-      .filter((match) => matchInvolvesTeam(match, teamIds, teamNames))
-      .slice(0, MAX_RESULTS),
+  return takeSearchResults(
+    dedupeMatches(collected).filter((match) => matchInvolvesTeam(match, teamIds, teamNames)),
   );
 }
 
