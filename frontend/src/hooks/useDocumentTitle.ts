@@ -9,6 +9,7 @@ function isIndexablePath(pathname: string): boolean {
     pathname === '/' ||
     pathname === '/privacidad' ||
     pathname === '/terminos' ||
+    pathname === '/aviso-legal' ||
     pathname.startsWith('/u/') ||
     pathname.startsWith('/c/')
   );

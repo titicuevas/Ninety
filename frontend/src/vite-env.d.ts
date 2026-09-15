@@ -7,6 +7,8 @@ interface ImportMetaEnv {
   readonly VITE_API_URL: string;
   /** Origen canónico del frontend en prod (sin barra final). Preferir sobre el fallback Railway. */
   readonly VITE_SITE_URL?: string;
+  /** Dominio Plausible (sin https). Vacío = sin analítica. */
+  readonly VITE_PLAUSIBLE_DOMAIN?: string;
 }
 
 interface ImportMeta {

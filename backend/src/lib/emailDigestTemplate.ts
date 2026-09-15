@@ -89,7 +89,16 @@ export function renderEmailDigestMail(
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#111827;border:1px solid #1f2937;border-radius:12px;overflow:hidden;">
           <tr>
             <td style="padding:28px 28px 8px;">
-              <p style="margin:0;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:#10b981;font-weight:600;">Ninety</p>
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 4px;">
+                <tr>
+                  <td style="vertical-align:middle;">
+                    <img src="${escapeHtml(absoluteUrl(options.clientUrl, '/email-logo.png'))}" width="40" height="40" alt="Ninety" style="display:block;border-radius:10px;border:0;" />
+                  </td>
+                  <td style="padding-left:12px;vertical-align:middle;">
+                    <p style="margin:0;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:#10b981;font-weight:600;">Ninety</p>
+                  </td>
+                </tr>
+              </table>
               <h1 style="margin:12px 0 0;font-size:22px;line-height:1.3;color:#f9fafb;font-weight:600;">${escapeHtml(content.title)}</h1>
               <p style="margin:14px 0 0;font-size:15px;line-height:1.55;color:#d1d5db;">${escapeHtml(content.intro)}</p>
               ${matchHtml}

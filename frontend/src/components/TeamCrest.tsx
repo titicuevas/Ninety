@@ -44,11 +44,12 @@ export function TeamCrest({
   return (
     <img
       src={crest}
-      alt=""
+      alt={`Escudo de ${name}`}
       width={SIZE_PX[size]}
       height={SIZE_PX[size]}
       className={cn(box, 'object-contain')}
       loading="lazy"
+      decoding="async"
     />
   );
 }

@@ -215,7 +215,7 @@ test.describe('Smoke — público @smoke', () => {
     expect(body.status).toBe('ok');
   });
 
-  test('privacidad y términos cargan con marca Ninety', async ({ page }) => {
+  test('privacidad, términos y aviso legal cargan con marca Ninety', async ({ page }) => {
     await page.goto('/privacidad');
     await expect(page.getByRole('heading', { name: /política de privacidad/i })).toBeVisible();
     await expect(page.getByText(/getninety\.app/i).first()).toBeVisible();
@@ -230,6 +230,11 @@ test.describe('Smoke — público @smoke', () => {
     await expect(page.getByRole('link', { name: /ajustes/i })).toBeVisible();
     await expect(page.getByText(/eliminar tu cuenta/i).first()).toBeVisible();
     await expect(page.getByText(/vía secundaria/i)).toBeVisible();
+
+    await page.goto('/aviso-legal');
+    await expect(page.getByRole('heading', { name: /aviso legal/i })).toBeVisible();
+    await expect(page.getByText(/proyecto independiente/i).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /hello@getninety\.app/i }).first()).toBeVisible();
   });
 
   test('redirects EN de legales a rutas ES canónicas', async ({ page }) => {
@@ -240,5 +245,9 @@ test.describe('Smoke — público @smoke', () => {
     await page.goto('/terms');
     await expect(page).toHaveURL(/\/terminos\/?$/);
     await expect(page.getByRole('heading', { name: /términos de uso/i })).toBeVisible();
+
+    await page.goto('/legal');
+    await expect(page).toHaveURL(/\/aviso-legal\/?$/);
+    await expect(page.getByRole('heading', { name: /aviso legal/i })).toBeVisible();
   });
 });

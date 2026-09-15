@@ -77,6 +77,7 @@ export function RegisterPage() {
         data.password,
         data.display_name,
         inviteCode,
+        data.website,
       );
       if (result.session) {
         setSession(result.session);
@@ -106,7 +107,18 @@ export function RegisterPage() {
         <Separator className="flex-1" />
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="relative space-y-4">
+        {/* Honeypot anti-bots: oculto a usuarios; si se rellena, el API ignora el alta. */}
+        <div className="absolute -left-[9999px] top-auto h-px w-px overflow-hidden" aria-hidden>
+          <label htmlFor="register-website">Sitio web</label>
+          <input
+            id="register-website"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            {...register('website')}
+          />
+        </div>
         <FormField label="Nombre" error={errors.display_name?.message}>
           <Input autoComplete="name" placeholder="Cómo te llaman" {...register('display_name')} />
         </FormField>
@@ -132,12 +144,16 @@ export function RegisterPage() {
 
         <p className="text-xs leading-relaxed text-muted-foreground">
           Al crear tu cuenta aceptas los{' '}
-          <Link to="/terminos" className="text-primary hover:underline">
+          <Link to="/terminos" className="text-primary underline underline-offset-2">
             Términos de uso
-          </Link>{' '}
-          y la{' '}
-          <Link to="/privacidad" className="text-primary hover:underline">
+          </Link>
+          , la{' '}
+          <Link to="/privacidad" className="text-primary underline underline-offset-2">
             Política de privacidad
+          </Link>{' '}
+          y el{' '}
+          <Link to="/aviso-legal" className="text-primary underline underline-offset-2">
+            Aviso legal
           </Link>
           .
         </p>

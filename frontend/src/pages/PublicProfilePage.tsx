@@ -106,7 +106,7 @@ function PublicProfileHeader({
       {profile.avatar_url ? (
         <img
           src={profile.avatar_url}
-          alt=""
+          alt={`Avatar de ${displayName}`}
           className="h-20 w-20 shrink-0 rounded-full border border-border bg-secondary object-contain p-1.5"
         />
       ) : (

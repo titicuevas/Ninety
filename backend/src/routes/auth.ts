@@ -89,6 +89,16 @@ authRouter.post('/register', async (req, res) => {
     return;
   }
 
+  // Honeypot: bots rellenan "website"; respuesta falsa sin crear cuenta.
+  if (parsed.data.website?.trim()) {
+    res.json({
+      session: null,
+      message:
+        'Cuenta creada. Revisa tu email y confirma el enlace para activar la cuenta. Después podrás iniciar sesión.',
+    });
+    return;
+  }
+
   const { data, error } = await supabaseAnon.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,

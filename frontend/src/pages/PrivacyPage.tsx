@@ -46,9 +46,11 @@ export function PrivacyPage() {
             <strong className="text-foreground">Técnicos:</strong> logs básicos de uso, IP aproximada
             y datos de sesión para autenticarte. La sesión vive en{' '}
             <code className="rounded bg-secondary px-1 py-0.5 text-foreground">localStorage</code> del
-            navegador, no en cookies de marketing. No usamos analítica de terceros ni cookies de
-            publicidad. Al entrar verás un aviso (“Jugada limpia…”) que puedes cerrar; solo
-            recuerda que ya lo viste.
+            navegador, no en cookies de marketing. No usamos cookies de publicidad. Podemos usar{' '}
+            <strong className="text-foreground">analítica agregada sin cookies</strong> (p. ej.
+            Plausible) solo con métricas de visitas, sin perfiles publicitarios ni identificadores
+            de seguimiento entre sitios. Al entrar verás un aviso (“Jugada limpia…”) que puedes
+            cerrar; solo recuerda que ya lo viste.
           </li>
         </ul>
       </LegalSection>
@@ -106,6 +108,10 @@ export function PrivacyPage() {
             <strong className="text-foreground">Railway</strong> — alojamiento de la app.
           </li>
           <li>
+            <strong className="text-foreground">Plausible</strong> (opcional) — estadísticas de uso
+            agregadas, sin cookies de seguimiento.
+          </li>
+          <li>
             <strong className="text-foreground">football-data.org</strong> — datos públicos de
             partidos (no son datos personales tuyos).
           </li>
@@ -154,11 +160,15 @@ export function PrivacyPage() {
       <LegalSection title="8. Cambios">
         <p>
           Podemos actualizar esta política. La versión vigente estará en esta página con la fecha de
-          revisión. Los{' '}
+          revisión. El{' '}
+          <Link to="/aviso-legal" className="text-primary underline underline-offset-2">
+            Aviso legal
+          </Link>{' '}
+          y los{' '}
           <Link to="/terminos" className="text-primary underline underline-offset-2">
             Términos de uso
           </Link>{' '}
-          son un documento aparte.
+          son documentos aparte.
         </p>
       </LegalSection>
     </LegalPageLayout>

@@ -89,7 +89,7 @@ function ProfileAvatarSection({
       {avatarUrl ? (
         <img
           src={avatarUrl}
-          alt=""
+          alt={profile?.display_name ? `Avatar de ${profile.display_name}` : 'Avatar'}
           className="h-20 w-20 shrink-0 rounded-full border border-border object-cover"
         />
       ) : (

@@ -82,8 +82,8 @@ export function CookieNoticeBanner({ className }: { className?: string }) {
             Jugada limpia con tus datos
           </p>
           <p id="cookie-notice-desc" className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
-            Sin cookies de publicidad ni analítica de terceros. Solo lo esencial para tu sesión en este
-            dispositivo.{' '}
+            Sin cookies de publicidad. Solo lo esencial para tu sesión en este dispositivo. Si hay
+            analítica, es agregada y sin cookies de seguimiento.{' '}
             <Link
               to="/privacidad"
               className="font-medium text-primary underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

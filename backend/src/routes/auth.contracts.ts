@@ -12,6 +12,8 @@ export const registerSchema = z.object({
   password: z.string().min(10).max(72),
   display_name: z.string().min(2).max(100),
   invite_code: z.string().trim().min(3).max(40).optional(),
+  /** Honeypot anti-bots: si viene relleno, el alta se ignora en silencio. */
+  website: z.string().max(200).optional(),
 });
 export const oauthExchangeSchema = z.object({
   code: z.string().min(1),

@@ -24,6 +24,7 @@ describe('renderEmailDigestMail', () => {
     });
     assert.match(mail.subject, /Ninety/);
     assert.match(mail.html, /#10b981/);
+    assert.match(mail.html, /email-logo\.png/);
     assert.match(mail.html, /Ninety/);
     assert.match(mail.html, /Ver calendario/);
     assert.match(mail.html, /Darme de baja/);

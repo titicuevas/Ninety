@@ -27,9 +27,11 @@ export async function registerWithPassword(
   password: string,
   display_name: string,
   invite_code?: string | null,
+  website?: string | null,
 ) {
   const body: Record<string, string> = { email, password, display_name };
   if (invite_code) body.invite_code = invite_code;
+  if (website) body.website = website;
 
   const data = await apiFetch<AuthResponse & { message?: string; session: AuthSession | null }>(
     '/api/auth/register',

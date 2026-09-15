@@ -249,8 +249,8 @@ Confirma tu cuenta en Ninety
           <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;">
             <table role="presentation" cellspacing="0" cellpadding="0">
               <tr>
-                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">N</td>
-                <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;">Ninety</td>
+                <td style="vertical-align:middle;"><img src="https://www.getninety.app/email-logo.png" width="40" height="40" alt="Ninety" style="display:block;border-radius:10px;border:0;" /></td>
+                <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;vertical-align:middle;">Ninety</td>
               </tr>
             </table>
             <p style="margin:20px 0 0;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#34d399;">Diario futbolero</p>
@@ -310,8 +310,8 @@ Tu enlace para entrar en Ninety
           <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;">
             <table role="presentation" cellspacing="0" cellpadding="0">
               <tr>
-                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">N</td>
-                <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;">Ninety</td>
+                <td style="vertical-align:middle;"><img src="https://www.getninety.app/email-logo.png" width="40" height="40" alt="Ninety" style="display:block;border-radius:10px;border:0;" /></td>
+                <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;vertical-align:middle;">Ninety</td>
               </tr>
             </table>
             <p style="margin:20px 0 0;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#34d399;">Acceso</p>
@@ -371,8 +371,8 @@ Te han invitado a Ninety
           <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;">
             <table role="presentation" cellspacing="0" cellpadding="0">
               <tr>
-                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">N</td>
-                <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;">Ninety</td>
+                <td style="vertical-align:middle;"><img src="https://www.getninety.app/email-logo.png" width="40" height="40" alt="Ninety" style="display:block;border-radius:10px;border:0;" /></td>
+                <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;vertical-align:middle;">Ninety</td>
               </tr>
             </table>
             <p style="margin:20px 0 0;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#34d399;">Invitación</p>
@@ -432,8 +432,8 @@ Confirma tu nuevo email en Ninety
           <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;">
             <table role="presentation" cellspacing="0" cellpadding="0">
               <tr>
-                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">N</td>
-                <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;">Ninety</td>
+                <td style="vertical-align:middle;"><img src="https://www.getninety.app/email-logo.png" width="40" height="40" alt="Ninety" style="display:block;border-radius:10px;border:0;" /></td>
+                <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;vertical-align:middle;">Ninety</td>
               </tr>
             </table>
             <p style="margin:20px 0 0;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#34d399;">Cuenta</p>
@@ -490,8 +490,8 @@ Restablece tu contraseña de Ninety
           <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;">
             <table role="presentation" cellspacing="0" cellpadding="0">
               <tr>
-                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">N</td>
-                <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;">Ninety</td>
+                <td style="vertical-align:middle;"><img src="https://www.getninety.app/email-logo.png" width="40" height="40" alt="Ninety" style="display:block;border-radius:10px;border:0;" /></td>
+                <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;vertical-align:middle;">Ninety</td>
               </tr>
             </table>
             <p style="margin:20px 0 0;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#34d399;">Seguridad de cuenta</p>
@@ -551,8 +551,8 @@ Restablece tu contraseña de Ninety
           <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;">
             <table role="presentation" cellspacing="0" cellpadding="0">
               <tr>
-                <td style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#042f1e;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;line-height:40px;">N</td>
-                <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;">Ninety</td>
+                <td style="vertical-align:middle;"><img src="https://www.getninety.app/email-logo.png" width="40" height="40" alt="Ninety" style="display:block;border-radius:10px;border:0;" /></td>
+                <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;vertical-align:middle;">Ninety</td>
               </tr>
             </table>
             <p style="margin:20px 0 0;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#34d399;">Verificación</p>
@@ -591,7 +591,7 @@ Restablece tu contraseña de Ninety
 5. **SMTP** (recomendado prod): Remitente `noreply@getninety.app` vía Resend; dominio verificado
 6. Railway API: `CLIENT_URL=https://www.getninety.app` (debe coincidir con el origen canónico)
 
-Logo en email: badge tipográfico «N» + wordmark Ninety (inline). Favicon público opcional: `https://www.getninety.app/favicon.svg` — no es necesario para que el HTML funcione.
+Logo en email: `<img src="https://www.getninety.app/email-logo.png" …>` (PNG en `frontend/public/email-logo.png`). Tras desplegar, pega de nuevo las plantillas Auth en el Dashboard de Supabase.
 
 ### Qué debe configurar Henry en Supabase (checklist)
 

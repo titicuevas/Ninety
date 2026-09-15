@@ -112,7 +112,11 @@ export function TermsPage() {
       <LegalSection title="9. Cambios y contacto">
         <p>
           Podemos modificar estos términos. El uso continuado tras publicar cambios en esta página
-          implica su aceptación. Dudas:{' '}
+          implica su aceptación. Ver también el{' '}
+          <Link to="/aviso-legal" className="text-primary underline underline-offset-2">
+            Aviso legal
+          </Link>
+          . Dudas:{' '}
           <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary underline underline-offset-2">
             {CONTACT_EMAIL}
           </a>

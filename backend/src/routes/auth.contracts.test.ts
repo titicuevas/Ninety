@@ -22,6 +22,15 @@ describe('auth contracts', () => {
     assert.equal(
       registerSchema.safeParse({
         email: 'user@example.com',
+        password: '1234567890',
+        display_name: 'Ninety',
+        website: 'https://spam.example',
+      }).success,
+      true,
+    );
+    assert.equal(
+      registerSchema.safeParse({
+        email: 'user@example.com',
         password: '123456',
         display_name: 'Ninety',
       }).success,

@@ -40,6 +40,7 @@ test.describe('A11y — páginas públicas @a11y', () => {
     { path: '/auth/reset-password', heading: /nueva contraseña/i, label: 'reset-password' },
     { path: '/privacidad', heading: /política de privacidad/i, label: 'privacy' },
     { path: '/terminos', heading: /términos de uso/i, label: 'terms' },
+    { path: '/aviso-legal', heading: /aviso legal/i, label: 'legal-notice' },
   ]) {
     test(`${view.label} cumple WCAG A/AA`, async ({ page }) => {
       await page.goto(view.path);

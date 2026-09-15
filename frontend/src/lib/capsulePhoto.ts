@@ -2,8 +2,8 @@ import { apiFetch, apiUpload } from '@/lib/api';
 import { MAX_CAPSULE_PHOTOS } from '@/lib/capsulePhotos';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
-const MAX_EDGE_PX = 1600;
-const JPEG_QUALITY = 0.82;
+const MAX_EDGE_PX = 1400;
+const JPEG_QUALITY = 0.78;
 
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const HEIC_TYPES = new Set(['image/heic', 'image/heif']);

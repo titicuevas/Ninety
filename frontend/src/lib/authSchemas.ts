@@ -32,6 +32,8 @@ export const registerSchema = z
     email: z.string().email('Email inválido'),
     password: passwordFieldSchema,
     confirmPassword: z.string(),
+    /** Honeypot: debe quedar vacío (anti-bots). */
+    website: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Las contraseñas no coinciden',

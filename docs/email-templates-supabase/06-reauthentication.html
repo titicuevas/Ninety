@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#050506;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#050506;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#0a0a0b;border:1px solid #1f2937;border-radius:16px;overflow:hidden;">
+        <tr>
+          <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;">
+            <table role="presentation" cellspacing="0" cellpadding="0">
+              <tr>
+                <td style="vertical-align:middle;"><img src="https://www.getninety.app/email-logo.png" width="40" height="40" alt="Ninety" style="display:block;border-radius:10px;border:0;" /></td>
+                <td style="padding-left:12px;font-size:20px;font-weight:700;letter-spacing:-0.02em;color:#fafafa;vertical-align:middle;">Ninety</td>
+              </tr>
+            </table>
+            <p style="margin:20px 0 0;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#34d399;">Verificación</p>
+            <h1 style="margin:8px 0 16px;font-size:24px;line-height:1.25;color:#fafafa;font-weight:700;">Tu código de verificación</h1>
+            <p style="margin:0 0 24px;font-size:15px;line-height:1.55;color:#a1a1aa;">
+              Usa este código para confirmar tu identidad en Ninety. Caduca en pocos minutos.
+            </p>
+            <p style="margin:0 0 28px;font-size:32px;letter-spacing:0.2em;font-weight:700;color:#fafafa;text-align:center;">{{ .Token }}</p>
+            <p style="margin:0;font-size:12px;line-height:1.5;color:#52525b;">Si no pediste este código, ignora el correo.</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:16px 28px 24px;border-top:1px solid #1f2937;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;color:#52525b;">
+            <a href="https://www.getninety.app" style="color:#10b981;text-decoration:none;font-weight:600;">www.getninety.app</a>
+            · Site: {{ .SiteURL }}
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
