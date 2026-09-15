@@ -14,7 +14,7 @@ import {
 import { useAuth } from '@/hooks/useAuthInit';
 import { apiFetch } from '@/lib/api';
 import { friendlyApiError } from '@/lib/friendlyErrors';
-import { isAutoUsername, suggestUsername } from '@/lib/profileHelpers';
+import { isAutoUsername, nextSuggestedUsername, suggestUsername } from '@/lib/profileHelpers';
 import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/stores/authStore';
 import type { Profile, UpdateProfileInput } from '@/types/profile';
@@ -86,7 +86,7 @@ export function ClaimProfileCard({ profile, welcome = false, onWelcomeDismiss }:
   });
 
   const applySuggestedUsername = () => {
-    const suggestion = suggestUsername(displayName);
+    const suggestion = nextSuggestedUsername(displayName, username);
     if (suggestion) {
       setUsername(suggestion);
       setUsernameError(null);

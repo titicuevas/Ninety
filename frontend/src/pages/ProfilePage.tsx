@@ -29,7 +29,7 @@ import { apiFetch } from '@/lib/api';
 import { friendlyApiError } from '@/lib/friendlyErrors';
 import { toast } from '@/lib/toast';
 import { AVATAR_ACCEPT, removeProfileAvatar, uploadProfileAvatar } from '@/lib/profileAvatar';
-import { isAutoUsername, suggestUsername } from '@/lib/profileHelpers';
+import { isAutoUsername, nextSuggestedUsername, suggestUsername } from '@/lib/profileHelpers';
 import { profilePath } from '@/lib/profilePath';
 import type { Profile, UpdateProfileInput } from '@/types/profile';
 import { cn } from '@/lib/utils';
@@ -413,7 +413,7 @@ export function ProfilePage() {
   }, [profile, reset, metadataName, isDirty]);
 
   const applySuggestedUsername = () => {
-    const suggestion = suggestUsername(displayName);
+    const suggestion = nextSuggestedUsername(displayName, usernameValue);
     if (suggestion) setValue('username', suggestion, { shouldValidate: true, shouldDirty: true });
   };
 

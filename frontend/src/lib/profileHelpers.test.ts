@@ -1,6 +1,11 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { isAutoUsername, isProfileIncomplete, suggestUsername } from './profileHelpers.ts';
+import {
+  isAutoUsername,
+  isProfileIncomplete,
+  nextSuggestedUsername,
+  suggestUsername,
+} from './profileHelpers.ts';
 
 describe('isAutoUsername', () => {
   it('detecta usernames placeholder user_xxxxxxxx', () => {
@@ -31,6 +36,18 @@ describe('suggestUsername', () => {
     assert.equal(suggestUsername(null), '');
     assert.equal(suggestUsername('ab'), '');
     assert.equal(suggestUsername('!!!'), '');
+  });
+});
+
+describe('nextSuggestedUsername', () => {
+  it('parte del slug y luego incrementa sufijo', () => {
+    assert.equal(nextSuggestedUsername('Enrique Cuevas', ''), 'enrique_cuevas');
+    assert.equal(nextSuggestedUsername('Enrique Cuevas', 'enrique_cuevas'), 'enrique_cuevas_2');
+    assert.equal(nextSuggestedUsername('Enrique Cuevas', 'enrique_cuevas_2'), 'enrique_cuevas_3');
+  });
+
+  it('vuelve al slug si el actual no viene de la sugerencia', () => {
+    assert.equal(nextSuggestedUsername('Enrique Cuevas', 'otro_nick'), 'enrique_cuevas');
   });
 });
 

@@ -45,8 +45,8 @@ export function TeamCrest({
     <img
       src={crest}
       alt={`Escudo de ${name}`}
-      width={SIZE_PX[size]}
-      height={SIZE_PX[size]}
+      width={SIZE_PX[size] * 2}
+      height={SIZE_PX[size] * 2}
       className={cn(box, 'object-contain')}
       loading="lazy"
       decoding="async"

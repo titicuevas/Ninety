@@ -105,13 +105,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <SkipLink />
 
       <header className="chrome-blur sticky top-0 z-50 border-b border-border/80 bg-background/85 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
-        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-2 px-4 sm:h-16 sm:px-6">
+        <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
           <Link
             to="/home"
-            className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex shrink-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <NinetyLogo size="sm" />
-            <span className="truncate text-base font-semibold tracking-tight sm:text-lg">Ninety</span>
+            <span className="text-base font-semibold tracking-tight sm:text-lg">Ninety</span>
           </Link>
 
           <nav className="hidden min-w-0 items-center gap-0.5 lg:flex" aria-label="Navegación principal">
@@ -120,30 +120,35 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 key={item.to}
                 to={item.to}
                 end={item.end}
+                aria-label={item.label}
+                title={item.label}
                 className={({ isActive }) =>
                   desktopNavClass(navItemActive(pathname, item, isActive))
                 }
               >
                 <item.icon className="h-4 w-4 shrink-0" aria-hidden />
-                <span>{item.label}</span>
+                <span className="hidden xl:inline">{item.label}</span>
               </NavLink>
             ))}
             <ActivityNavLink
               className="inline-flex min-h-10 items-center rounded-lg px-2 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               activeClassName="bg-primary/15 text-primary"
               inactiveClassName="text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
+              labelClassName="hidden xl:inline"
             />
             {DESKTOP_NAV_ITEMS.slice(2).map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.end}
+                aria-label={item.label}
+                title={item.label}
                 className={({ isActive }) =>
                   desktopNavClass(navItemActive(pathname, item, isActive))
                 }
               >
                 <item.icon className="h-4 w-4 shrink-0" aria-hidden />
-                <span>{item.label}</span>
+                <span className="hidden xl:inline">{item.label}</span>
               </NavLink>
             ))}
             <NotificationBell className="ml-1 inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
