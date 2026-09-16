@@ -173,9 +173,11 @@ export function LandingPage() {
       </script>
       <SkipLink />
 
-      <div className="landing-pitch pointer-events-none absolute inset-0" aria-hidden />
-      <div className="landing-floodlight motion-glow pointer-events-none absolute inset-x-0 top-0 h-[55vh]" aria-hidden />
-      <div className="landing-grain pointer-events-none absolute inset-0 opacity-[0.35]" aria-hidden />
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <div className="landing-pitch absolute inset-0" />
+        <div className="landing-floodlight motion-glow absolute inset-x-0 top-0 h-[55vh]" />
+        <div className="landing-grain absolute inset-0 opacity-[0.22]" />
+      </div>
 
       <div className="relative z-10 mx-auto flex min-h-dvh max-w-3xl flex-col px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(7rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-10">
         <header className="landing-header-enter mb-10 flex items-center justify-between gap-3 sm:mb-14">

@@ -13,6 +13,17 @@ export async function expectFocusInsideOpenDialog(page: Page) {
 
 /** Auditoría WCAG 2.0/2.1 A/AA con Axe. No oculta impactos moderados. */
 export async function expectNoA11yViolations(page: Page, label: string) {
+  // Espera animaciones finitas (ignora loops tipo motion-glow).
+  await page.evaluate(async () => {
+    const animations = (document.getAnimations?.() ?? []).filter(
+      (a) => a.effect && a.playState !== 'idle' && Number.isFinite(a.effect.getTiming().iterations ?? 1),
+    );
+    await Promise.race([
+      Promise.all(animations.map((a) => a.finished.catch(() => undefined))),
+      new Promise((r) => setTimeout(r, 1000)),
+    ]);
+  });
+
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();

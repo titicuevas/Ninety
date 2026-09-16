@@ -79,7 +79,11 @@ export default defineConfig({
     {
       name: 'a11y',
       testMatch: /a11y\/public\.spec\.ts/,
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        // Evita falsos color-contrast mientras corren slide-up / cookie enter.
+        reducedMotion: 'reduce',
+      },
     },
     {
       name: 'a11y-auth',
@@ -88,6 +92,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         storageState: authFile,
+        reducedMotion: 'reduce',
       },
     },
     {
@@ -97,6 +102,7 @@ export default defineConfig({
       use: {
         ...devices['iPhone 13'],
         storageState: authFile,
+        reducedMotion: 'reduce',
       },
     },
     {
@@ -106,6 +112,7 @@ export default defineConfig({
       use: {
         ...devices['iPad Mini'],
         storageState: authFile,
+        reducedMotion: 'reduce',
       },
     },
     {

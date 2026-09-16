@@ -17,12 +17,11 @@ export function AuthLayout({ title, subtitle, children, className }: Props) {
     <div className="relative flex min-h-screen min-h-dvh flex-col bg-background text-foreground">
       <SkipLink />
       <div className="relative flex min-h-screen min-h-dvh flex-1 flex-col overflow-hidden">
-        <div className="landing-pitch pointer-events-none absolute inset-0 opacity-90" aria-hidden />
-        <div
-          className="landing-floodlight motion-glow pointer-events-none absolute inset-x-0 top-0 h-[45vh] opacity-80"
-          aria-hidden
-        />
-        <div className="landing-grain pointer-events-none absolute inset-0 opacity-[0.28]" aria-hidden />
+        <div className="pointer-events-none absolute inset-0" aria-hidden>
+          <div className="landing-pitch absolute inset-0 opacity-90" />
+          <div className="landing-floodlight motion-glow absolute inset-x-0 top-0 h-[45vh] opacity-80" />
+          <div className="landing-grain absolute inset-0 opacity-[0.18]" />
+        </div>
 
         <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pt-[max(2.5rem,env(safe-area-inset-top,0px))] pb-[max(2.5rem,env(safe-area-inset-bottom,0px))] sm:px-6">
           <div className={cn('motion-auth w-full max-w-md', className)}>
