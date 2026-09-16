@@ -5,7 +5,7 @@ import { DEFAULT_SITE_URL, inviteShareUrl, publicCollectionUrl, publicDiaryMonth
 
 describe('siteUrl', () => {
   it('expone fallback Railway legacy sin barra final', () => {
-    assert.equal(DEFAULT_SITE_URL, 'https://ninety.up.railway.app');
+    assert.equal(DEFAULT_SITE_URL, 'https://www.getninety.app');
     assert.equal(siteUrl(), DEFAULT_SITE_URL);
   });
 

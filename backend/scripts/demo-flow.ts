@@ -5,7 +5,7 @@
  *   npm run demo:flow --prefix backend
  *   API_URL=https://ninety-api.up.railway.app npm run demo:flow --prefix backend
  *
- * Requiere TEST_USER_PASSWORD en backend/.env (cuenta demo@ninety.app).
+ * Requiere TEST_USER_PASSWORD en backend/.env (cuenta beta@ninety.app).
  * Si no hay partidos: npm run seed:demo (con API en marcha).
  */
 import { config } from 'dotenv';

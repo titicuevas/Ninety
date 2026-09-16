@@ -2,7 +2,7 @@
  * Credenciales del usuario de prueba — solo desde backend/.env (nunca hardcodeadas).
  */
 export function requireTestCredentials(): { email: string; password: string } {
-  const email = process.env.TEST_USER_EMAIL ?? 'demo@ninety.app';
+  const email = process.env.TEST_USER_EMAIL ?? 'beta@ninety.app';
   const password = process.env.TEST_USER_PASSWORD;
 
   if (!password) {

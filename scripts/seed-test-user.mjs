@@ -26,7 +26,7 @@ const clientOptions = {
 
 const url = process.env.SUPABASE_URL;
 const secretKey = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
-const email = process.env.TEST_USER_EMAIL ?? 'demo@ninety.app';
+const email = process.env.TEST_USER_EMAIL ?? 'beta@ninety.app';
 const password = process.env.TEST_USER_PASSWORD;
 
 if (!url || !secretKey) {

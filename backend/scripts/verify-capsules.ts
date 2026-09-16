@@ -94,7 +94,7 @@ async function verifyMatchIdType(): Promise<boolean> {
     return true;
   }
 
-  const demo = users.users.find((u) => u.email === 'demo@ninety.app');
+  const demo = users.users.find((u) => u.email === 'beta@ninety.app');
   if (!demo) {
     console.warn('⚠️  Usuario demo no encontrado; omitiendo prueba de match_id');
     return true;

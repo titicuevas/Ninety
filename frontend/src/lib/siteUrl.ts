@@ -1,5 +1,5 @@
-/** Fallback de producción legacy (Railway). Preferir VITE_SITE_URL / window.location. */
-export const DEFAULT_SITE_URL = 'https://ninety.up.railway.app';
+/** Fallback de producción si falta VITE_SITE_URL / window. */
+export const DEFAULT_SITE_URL = 'https://www.getninety.app';
 
 /** URL base del sitio (sin barra final). */
 export function siteUrl(): string {

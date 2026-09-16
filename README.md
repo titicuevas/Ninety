@@ -10,8 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://getninety.app" target="_blank">🌐 getninety.app</a> •
-  <a href="https://ninety.up.railway.app" target="_blank">Demo Railway</a> •
+  <a href="https://www.getninety.app" target="_blank">🌐 www.getninety.app</a> •
   <a href="https://ninety-api.up.railway.app/api/health" target="_blank">API</a> •
   <a href="#concepto">Concepto</a> •
   <a href="#stack">Stack</a> •
@@ -137,7 +136,7 @@ npm run dev
 | **Frontend (apex)** | [getninety.app](https://getninety.app) | Solo si hay ALIAS/A de Railway (Namecheap: quitar URL Redirect) |
 | **Frontend (legacy)** | [ninety.up.railway.app](https://ninety.up.railway.app) | Mantener durante transición |
 | **API** | [ninety-api.up.railway.app](https://ninety-api.up.railway.app) | Express; migrar a `api.getninety.app` |
-| **Health front** | [/health](https://ninety.up.railway.app/health) | `{"status":"ok"}` |
+| **Health front** | [/health](https://www.getninety.app/health) | `{"status":"ok"}` |
 | **Health API** | [/api/health](https://ninety-api.up.railway.app/api/health) | ✅ Online |
 
 > Checklist ops A→E (puerto, Namecheap, vars, Supabase, email): [docs/auth-setup.md](docs/auth-setup.md#ops-ahora-orden-fijo).
@@ -187,21 +186,23 @@ Guía completa de auth + dominio: [docs/auth-setup.md](docs/auth-setup.md)
 
 ## 🧪 Probar v1 con la cuenta demo
 
-Cuenta de prueba (seed en Supabase):
+Cuenta de prueba (showcase público + QA):
 
 | Campo | Valor |
 |-------|-------|
-| Email | `demo@ninety.app` |
-| Username | `@beta_ninety` (showcase vivo) / `@aficionado_demo` (seed:demo) |
-| Perfil público | [/u/beta_ninety](https://getninety.app/u/beta_ninety) (o [Railway](https://ninety.up.railway.app/u/beta_ninety)) |
+| Email | `beta@ninety.app` |
+| Username | `@beta_ninety` |
+| Perfil público | [/u/beta_ninety](https://www.getninety.app/u/beta_ninety) |
+
+La contraseña **no** va en el repo: está en `backend/.env` como `TEST_USER_PASSWORD` (y en el secret de GitHub Actions si usas E2E auth).
 
 ### 1. Credenciales locales
 
 En `backend/.env` (no subir a Git):
 
 ```env
-TEST_USER_EMAIL=demo@ninety.app
-TEST_USER_PASSWORD=tu-contraseña-demo
+TEST_USER_EMAIL=beta@ninety.app
+# TEST_USER_PASSWORD=your-test-password   # solo en backend/.env — nunca en git
 ```
 
 ### 2. Sembrar partidos de ejemplo
@@ -212,7 +213,7 @@ Con la API en marcha (`npm run dev`):
 npm run seed:demo
 ```
 
-Crea 5 capsules con fotos de prueba para el usuario demo.
+Crea 5 capsules con fotos de prueba (flujo `aficionado_demo` / seed local).
 
 ### 2b. Aficionados de prueba (descubrir / seguir)
 

@@ -11,12 +11,18 @@ build/
 !.env.example
 **/.env
 !**/.env.example
+frontend/.env.production
+backend/.env.local
+frontend/.env.local
 
 # Secrets
 *.pem
 *.key
+*.p12
+*.pfx
 credentials.json
 secrets.json
+service-account*.json
 
 # Logs
 logs/
@@ -27,20 +33,23 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
-# IDE
+# IDE / local agent
 .vscode/
 .idea/
 *.swp
 *.swo
+.cursor/
+!.cursor/rules/
+!.cursor/rules/**
 
 # Internal audit and deployment runbooks — may contain infrastructure details
 INFORME_AUDITORIA.md
 docs/production-readiness.md
 
-# Vite
-*.local
-
-# TypeScript
+# Coverage / caches
+coverage/
+.nyc_output/
+.turbo/
 *.tsbuildinfo
 
 # Supabase
@@ -53,3 +62,6 @@ supabase/.temp
 /blob-report/
 /playwright/.cache/
 e2e/.auth/
+
+# Vite
+*.local
