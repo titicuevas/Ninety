@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { LanguageToggle } from '@/components/LanguageToggle';
 import { LegalFooter } from '@/components/LegalFooter';
 import { NinetyLogo } from '@/components/NinetyLogo';
 import { SkipLink } from '@/components/SkipLink';
@@ -24,6 +25,9 @@ export function AuthLayout({ title, subtitle, children, className }: Props) {
         </div>
 
         <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pt-[max(2.5rem,env(safe-area-inset-top,0px))] pb-[max(2.5rem,env(safe-area-inset-bottom,0px))] sm:px-6">
+          <div className="absolute right-4 top-[max(1rem,env(safe-area-inset-top,0px))] sm:right-6">
+            <LanguageToggle size="sm" />
+          </div>
           <div className={cn('motion-auth w-full max-w-md', className)}>
             <div className="mb-8 text-center">
               <Link

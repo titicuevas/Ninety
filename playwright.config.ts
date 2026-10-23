@@ -31,6 +31,8 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   use: {
     baseURL,
+    // La UI pública detecta navigator.language; CI/Playwright suele ser en-US.
+    locale: 'es-ES',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'off',

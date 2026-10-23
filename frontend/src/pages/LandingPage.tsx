@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Star } from 'lucide-react';
+import { LanguageToggle } from '@/components/LanguageToggle';
 import { NinetyLogo } from '@/components/NinetyLogo';
 import { TeamCrest } from '@/components/TeamCrest';
 import { SkipLink } from '@/components/SkipLink';
@@ -10,54 +11,9 @@ import { useLandingShowcase } from '@/hooks/useLandingShowcase';
 import { looksLikeAuthCallback } from '@/lib/authEmailCallback';
 import { formatCapsuleScore, formatWatchedDate } from '@/lib/format';
 import { LANDING_SHOWCASE_FALLBACK } from '@/lib/landingShowcaseFallback';
+import { useI18n } from '@/lib/i18n/LocaleProvider';
 import { usePageMetadata } from '@/hooks/usePageMetadata';
 import { cn } from '@/lib/utils';
-
-const faqs = [
-  {
-    question: '¿Qué es una Capsule?',
-    answer:
-      'Es la entrada de un partido en tu diario: resultado, valoración, nota, fotos y cómo o dónde lo viste.',
-  },
-  {
-    question: '¿Ninety es gratis?',
-    answer: 'Sí. Crear una cuenta y usar las funciones disponibles durante la beta no tiene coste.',
-  },
-  {
-    question: '¿Puedo hacer privado mi diario?',
-    answer:
-      'Cada Capsule y cada colección puede ser pública o privada. Tú eliges su visibilidad al crearla o editarla.',
-  },
-  {
-    question: '¿Puedo llevarme mis datos?',
-    answer:
-      'Sí. Desde Ajustes puedes exportar tu diario y tus colecciones en formatos reutilizables, además de eliminar tu cuenta.',
-  },
-] as const;
-
-const landingStructuredData = JSON.stringify({
-  '@context': 'https://schema.org',
-  '@graph': [
-    {
-      '@type': 'WebApplication',
-      name: 'Ninety',
-      url: 'https://www.getninety.app/',
-      applicationCategory: 'LifestyleApplication',
-      operatingSystem: 'Web',
-      description:
-        'Diario social para guardar, valorar y revivir los partidos de fútbol que has visto.',
-      offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
-    },
-    {
-      '@type': 'FAQPage',
-      mainEntity: faqs.map((faq) => ({
-        '@type': 'Question',
-        name: faq.question,
-        acceptedAnswer: { '@type': 'Answer', text: faq.answer },
-      })),
-    },
-  ],
-});
 
 function HeroCapsule({
   home,
@@ -146,9 +102,9 @@ function HeroCapsule({
 }
 
 export function LandingPage() {
+  const { t, locale } = useI18n();
   usePageMetadata({
-    description:
-      'Guarda, valora y revive cada partido que ves. Crea gratis tu diario futbolero con fotos, estadísticas, colecciones y Wrapped.',
+    description: t.landingMetaDescription,
   });
   const navigate = useNavigate();
   const { data } = useLandingShowcase();
@@ -158,6 +114,44 @@ export function LandingPage() {
     if (!looksLikeAuthCallback(search, hash)) return;
     navigate(`/auth/callback${search}${hash}`, { replace: true });
   }, [navigate]);
+
+  const faqs = useMemo(
+    () => [
+      { question: t.landingFaq1Q, answer: t.landingFaq1A },
+      { question: t.landingFaq2Q, answer: t.landingFaq2A },
+      { question: t.landingFaq3Q, answer: t.landingFaq3A },
+      { question: t.landingFaq4Q, answer: t.landingFaq4A },
+    ],
+    [t],
+  );
+
+  const landingStructuredData = useMemo(
+    () =>
+      JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'WebApplication',
+            name: 'Ninety',
+            url: 'https://www.getninety.app/',
+            applicationCategory: 'LifestyleApplication',
+            operatingSystem: 'Web',
+            inLanguage: locale === 'en' ? 'en' : 'es',
+            description: t.landingSchemaDescription,
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+          },
+          {
+            '@type': 'FAQPage',
+            mainEntity: faqs.map((faq) => ({
+              '@type': 'Question',
+              name: faq.question,
+              acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+            })),
+          },
+        ],
+      }),
+    [faqs, locale, t.landingSchemaDescription],
+  );
 
   const showcase = data ?? LANDING_SHOWCASE_FALLBACK;
   const featured = showcase.capsules[0] ?? null;
@@ -180,7 +174,7 @@ export function LandingPage() {
       </div>
 
       <div className="relative z-10 mx-auto flex min-h-dvh max-w-3xl flex-col px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(7rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-10">
-        <header className="landing-header-enter mb-10 flex items-center justify-between gap-3 sm:mb-14">
+        <header className="landing-header-enter mb-10 flex items-center justify-between gap-2 sm:mb-14 sm:gap-3">
           <Link
             to="/"
             className="inline-flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -188,19 +182,21 @@ export function LandingPage() {
             <NinetyLogo size="md" className="transition-transform duration-300 hover:scale-[1.03]" />
             <span className="sr-only">Ninety</span>
           </Link>
-          <Link
-            to="/login"
-            className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-zinc-400 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            Iniciar sesión
-          </Link>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <LanguageToggle size="sm" />
+            <Link
+              to="/login"
+              className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-zinc-400 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {t.landingLogin}
+            </Link>
+          </div>
         </header>
 
         <main id="main-content" className="landing-stagger flex flex-1 flex-col items-center text-center">
-          {/* Primer viewport: marca + claim + CTA + Capsule */}
           <div className="mb-3 flex flex-col items-center">
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-primary/90">
-              Diario futbolero
+              {t.landingEyebrow}
             </p>
             <h1 className="font-display text-[clamp(4.25rem,18vw,7.5rem)] font-extrabold leading-[0.85] tracking-[-0.02em] text-foreground">
               Ninety
@@ -208,10 +204,10 @@ export function LandingPage() {
           </div>
 
           <p className="mb-4 max-w-md text-balance text-lg font-medium text-zinc-100 sm:text-xl">
-            Cada partido que ves, guardado para siempre.
+            {t.landingClaim}
           </p>
           <p className="mb-9 max-w-md text-pretty text-sm leading-relaxed text-zinc-400 sm:text-base">
-            Capsules con valoración, nota y fotos. Letterboxd, pero para el fútbol.
+            {t.landingSupport}
           </p>
 
           <div className="mb-12 flex w-full max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
@@ -222,7 +218,7 @@ export function LandingPage() {
                 'min-h-12 w-full text-center shadow-[0_12px_40px_-16px_rgba(52,211,153,0.55)] transition-transform duration-150 hover:scale-[1.015] active:scale-[0.99] sm:w-auto sm:min-w-48',
               )}
             >
-              Crear mi diario gratis
+              {t.landingCtaPrimary}
             </Link>
             <Link
               to="/u/beta_ninety"
@@ -231,7 +227,7 @@ export function LandingPage() {
                 'min-h-12 w-full text-center sm:w-auto sm:min-w-48',
               )}
             >
-              Ver un diario real
+              {t.landingCtaSecondary}
             </Link>
           </div>
 
@@ -250,7 +246,6 @@ export function LandingPage() {
             />
           ) : null}
 
-          {/* Debajo del pliegue */}
           <section
             id="como-funciona"
             className="mt-16 w-full max-w-lg scroll-mt-8 text-left sm:mt-20"
@@ -260,35 +255,29 @@ export function LandingPage() {
               id="landing-how"
               className="mb-6 text-center font-display text-3xl font-bold tracking-tight sm:text-4xl"
             >
-              Tres gestos. Toda la temporada.
+              {t.landingHowTitle}
             </h2>
             <ol className="space-y-5 border-l border-primary/30 pl-5">
               <li>
-                <p className="font-display text-xl font-bold text-primary">01 · Busca el partido</p>
-                <p className="mt-1 text-sm leading-relaxed text-zinc-400">
-                  Ligas, copas y Champions. Encuentra lo que acabas de vivir.
-                </p>
+                <p className="font-display text-xl font-bold text-primary">{t.landingHow1Title}</p>
+                <p className="mt-1 text-sm leading-relaxed text-zinc-400">{t.landingHow1Body}</p>
               </li>
               <li>
-                <p className="font-display text-xl font-bold text-primary">02 · Crea la Capsule</p>
-                <p className="mt-1 text-sm leading-relaxed text-zinc-400">
-                  Valoración, nota, fotos y contexto: estadio, bar o sofá.
-                </p>
+                <p className="font-display text-xl font-bold text-primary">{t.landingHow2Title}</p>
+                <p className="mt-1 text-sm leading-relaxed text-zinc-400">{t.landingHow2Body}</p>
               </li>
               <li>
-                <p className="font-display text-xl font-bold text-primary">03 · Revive el año</p>
-                <p className="mt-1 text-sm leading-relaxed text-zinc-400">
-                  Wrapped, colecciones y un feed de aficionados como tú.
-                </p>
+                <p className="font-display text-xl font-bold text-primary">{t.landingHow3Title}</p>
+                <p className="mt-1 text-sm leading-relaxed text-zinc-400">{t.landingHow3Body}</p>
               </li>
             </ol>
             {stats ? (
               <p className="mt-8 text-center text-sm text-zinc-500">
-                @beta_ninety ya lleva{' '}
+                {t.landingStatsBefore}{' '}
                 <span className="font-display text-lg font-bold tabular-nums text-primary">
                   {stats.totalMatches}
                 </span>{' '}
-                partidos en el diario.
+                {t.landingStatsAfter}
               </p>
             ) : null}
           </section>
@@ -298,7 +287,7 @@ export function LandingPage() {
               id="faq-heading"
               className="mb-5 text-center font-display text-3xl font-bold tracking-tight"
             >
-              Preguntas frecuentes
+              {t.landingFaqTitle}
             </h2>
             <div className="space-y-2">
               {faqs.map((faq) => (
@@ -317,18 +306,18 @@ export function LandingPage() {
 
           <div className="mt-14 flex w-full max-w-lg flex-col items-center gap-4 sm:mt-16">
             <Link to="/register" className={cn(buttonVariants({ size: 'lg' }), 'min-h-12 min-w-52')}>
-              Empezar gratis
+              {t.landingCtaBottom}
             </Link>
             <p className="max-w-md text-xs leading-relaxed text-zinc-500">
-              Al registrarte aceptas los{' '}
+              {t.landingLegalPrefix}{' '}
               <Link to="/terminos" className="text-primary underline underline-offset-2">
-                Términos
+                {t.landingLegalTerms}
               </Link>{' '}
-              y la{' '}
+              {t.landingLegalAnd}{' '}
               <Link to="/privacidad" className="text-primary underline underline-offset-2">
-                Política de privacidad
+                {t.landingLegalPrivacy}
               </Link>
-              . Soporte:{' '}
+              . {t.landingLegalSupport}{' '}
               <a className="text-primary underline underline-offset-2" href="mailto:hello@getninety.app">
                 hello@getninety.app
               </a>
@@ -342,7 +331,7 @@ export function LandingPage() {
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-zinc-950/95 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] sm:hidden">
         <Link to="/register" className={cn(buttonVariants({ size: 'lg' }), 'min-h-12 w-full')}>
-          Crear mi diario gratis
+          {t.landingCtaPrimary}
         </Link>
       </div>
     </div>

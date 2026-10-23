@@ -1,43 +1,88 @@
 import { z } from 'zod';
+import type { Messages } from '@/lib/i18n/types';
+
+type ValidationCopy = Pick<
+  Messages,
+  | 'validationEmailInvalid'
+  | 'validationPasswordRequired'
+  | 'validationPasswordMin'
+  | 'validationPasswordMax'
+  | 'validationPasswordMismatch'
+  | 'validationNameMin'
+>;
+
+const defaultCopy: ValidationCopy = {
+  validationEmailInvalid: 'Email inválido',
+  validationPasswordRequired: 'Introduce tu contraseña',
+  validationPasswordMin: 'Mínimo 10 caracteres',
+  validationPasswordMax: 'Máximo 72 caracteres',
+  validationPasswordMismatch: 'Las contraseñas no coinciden',
+  validationNameMin: 'Mínimo 2 caracteres',
+};
 
 /** Registro / reset / cambio en Ajustes. */
-const passwordFieldSchema = z.string().min(10, 'Mínimo 10 caracteres').max(72, 'Máximo 72 caracteres');
+function passwordFieldSchema(copy: ValidationCopy) {
+  return z
+    .string()
+    .min(10, copy.validationPasswordMin)
+    .max(72, copy.validationPasswordMax);
+}
 
 /** Login: no bloquear cuentas antiguas con contraseñas cortas. */
-const loginPasswordSchema = z.string().min(1, 'Introduce tu contraseña').max(72);
+function loginPasswordSchema(copy: ValidationCopy) {
+  return z.string().min(1, copy.validationPasswordRequired).max(72);
+}
 
 /** Cambio / reset de contraseña (password + confirm). */
-export const passwordConfirmSchema = z
-  .object({
-    password: passwordFieldSchema,
-    confirm: passwordFieldSchema,
-  })
-  .refine((v) => v.password === v.confirm, {
-    message: 'Las contraseñas no coinciden',
-    path: ['confirm'],
-  });
+export function createPasswordConfirmSchema(copy: ValidationCopy = defaultCopy) {
+  return z
+    .object({
+      password: passwordFieldSchema(copy),
+      confirm: passwordFieldSchema(copy),
+    })
+    .refine((v) => v.password === v.confirm, {
+      message: copy.validationPasswordMismatch,
+      path: ['confirm'],
+    });
+}
+
+export const passwordConfirmSchema = createPasswordConfirmSchema();
 
 export type PasswordConfirmForm = z.infer<typeof passwordConfirmSchema>;
 
-export const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
-  password: loginPasswordSchema,
-});
+export function createLoginSchema(copy: ValidationCopy = defaultCopy) {
+  return z.object({
+    email: z.string().email(copy.validationEmailInvalid),
+    password: loginPasswordSchema(copy),
+  });
+}
+
+export const loginSchema = createLoginSchema();
 
 export type LoginForm = z.infer<typeof loginSchema>;
 
-export const registerSchema = z
-  .object({
-    display_name: z.string().min(2, 'Mínimo 2 caracteres'),
-    email: z.string().email('Email inválido'),
-    password: passwordFieldSchema,
-    confirmPassword: z.string(),
-    /** Honeypot: debe quedar vacío (anti-bots). */
-    website: z.string().optional(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Las contraseñas no coinciden',
-    path: ['confirmPassword'],
-  });
+export function createRegisterSchema(copy: ValidationCopy = defaultCopy) {
+  return z
+    .object({
+      display_name: z.string().min(2, copy.validationNameMin),
+      email: z.string().email(copy.validationEmailInvalid),
+      password: passwordFieldSchema(copy),
+      confirmPassword: z.string(),
+      /** Honeypot: debe quedar vacío (anti-bots). */
+      website: z.string().optional(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: copy.validationPasswordMismatch,
+      path: ['confirmPassword'],
+    });
+}
+
+export const registerSchema = createRegisterSchema();
 
 export type RegisterForm = z.infer<typeof registerSchema>;
+
+export function createForgotPasswordSchema(copy: ValidationCopy = defaultCopy) {
+  return z.object({
+    email: z.string().email(copy.validationEmailInvalid),
+  });
+}

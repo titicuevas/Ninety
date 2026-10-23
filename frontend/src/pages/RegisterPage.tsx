@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,13 +18,14 @@ import {
   safeReturnPath,
   saveAuthReturnPath,
 } from '@/lib/authReturn';
-import { registerSchema, type RegisterForm } from '@/lib/authSchemas';
+import { createRegisterSchema, type RegisterForm } from '@/lib/authSchemas';
 import {
   claimPendingInvite,
   parseRefParam,
   peekInviteCode,
   saveInviteCode,
 } from '@/lib/inviteReferral';
+import { useI18n } from '@/lib/i18n/LocaleProvider';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -33,7 +34,8 @@ function isHomePath(path: string): boolean {
 }
 
 export function RegisterPage() {
-  useDocumentTitle('Crear cuenta');
+  const { t } = useI18n();
+  useDocumentTitle(t.registerDocTitle);
   const navigate = useNavigate();
   const location = useLocation();
   const setSession = useAuthStore((s) => s.setSession);
@@ -55,16 +57,17 @@ export function RegisterPage() {
       saveAuthReturnPath(nextPath);
       await loginWithGoogle();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión con Google');
+      setError(err instanceof Error ? err.message : t.registerErrorGoogle);
       setGoogleLoading(false);
     }
   };
 
+  const schema = useMemo(() => createRegisterSchema(t), [t]);
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<RegisterForm>({ resolver: zodResolver(registerSchema) });
+  } = useForm<RegisterForm>({ resolver: zodResolver(schema) });
 
   const onSubmit = async (data: RegisterForm) => {
     setError(null);
@@ -81,7 +84,6 @@ export function RegisterPage() {
       );
       if (result.session) {
         setSession(result.session);
-        // Servidor ya atribuyó si había sesión; consume el código pendiente.
         await claimPendingInvite(result.session.access_token);
         navigate(postAuthPath, {
           replace: true,
@@ -91,24 +93,28 @@ export function RegisterPage() {
         navigate('/gracias', { replace: true, state: { email: data.email } });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo crear la cuenta');
+      setError(err instanceof Error ? err.message : t.registerErrorGeneric);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <AuthLayout title="Crea tu cuenta" subtitle="Empieza a construir tu historia futbolera">
-      <GoogleSignInButton loading={googleLoading} onClick={() => void handleGoogleSignIn()} className="mb-5" />
+    <AuthLayout title={t.registerTitle} subtitle={t.registerSubtitle}>
+      <GoogleSignInButton
+        loading={googleLoading}
+        label={t.googleContinue}
+        onClick={() => void handleGoogleSignIn()}
+        className="mb-5"
+      />
 
       <div className="mb-5 flex items-center gap-3">
         <Separator className="flex-1" />
-        <span className="text-xs uppercase tracking-wide text-muted-foreground">o con email</span>
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">{t.authOrEmail}</span>
         <Separator className="flex-1" />
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="relative space-y-4">
-        {/* Honeypot anti-bots: oculto a usuarios; si se rellena, el API ignora el alta. */}
         <div className="absolute -left-[9999px] top-auto h-px w-px overflow-hidden" aria-hidden>
           <label htmlFor="register-website">Sitio web</label>
           <input
@@ -119,23 +125,28 @@ export function RegisterPage() {
             {...register('website')}
           />
         </div>
-        <FormField label="Nombre" error={errors.display_name?.message}>
-          <Input autoComplete="name" placeholder="Cómo te llaman" {...register('display_name')} />
+        <FormField label={t.authName} error={errors.display_name?.message}>
+          <Input autoComplete="name" placeholder={t.authNamePlaceholder} {...register('display_name')} />
         </FormField>
-        <FormField label="Email" error={errors.email?.message}>
-          <Input type="email" autoComplete="email" placeholder="tu@email.com" {...register('email')} />
+        <FormField label={t.authEmail} error={errors.email?.message}>
+          <Input
+            type="email"
+            autoComplete="email"
+            placeholder={t.authEmailPlaceholder}
+            {...register('email')}
+          />
         </FormField>
-        <FormField label="Contraseña" error={errors.password?.message}>
+        <FormField label={t.authPassword} error={errors.password?.message}>
           <PasswordField
             autoComplete="new-password"
-            placeholder="Mínimo 10 caracteres"
+            placeholder={t.authPasswordMinPlaceholder}
             {...register('password')}
           />
         </FormField>
-        <FormField label="Confirmar contraseña" error={errors.confirmPassword?.message}>
+        <FormField label={t.authConfirmPassword} error={errors.confirmPassword?.message}>
           <PasswordField
             autoComplete="new-password"
-            placeholder="Repite la contraseña"
+            placeholder={t.authConfirmPlaceholder}
             {...register('confirmPassword')}
           />
         </FormField>
@@ -143,30 +154,30 @@ export function RegisterPage() {
         {error ? <FormAlert>{error}</FormAlert> : null}
 
         <p className="text-xs leading-relaxed text-muted-foreground">
-          Al crear tu cuenta aceptas los{' '}
+          {t.registerAcceptPrefix}{' '}
           <Link to="/terminos" className="text-primary underline underline-offset-2">
-            Términos de uso
+            {t.registerAcceptTerms}
           </Link>
-          , la{' '}
+          ,{' '}
           <Link to="/privacidad" className="text-primary underline underline-offset-2">
-            Política de privacidad
+            {t.registerAcceptPrivacy}
           </Link>{' '}
-          y el{' '}
+          {t.registerAcceptAnd}{' '}
           <Link to="/aviso-legal" className="text-primary underline underline-offset-2">
-            Aviso legal
+            {t.registerAcceptNotice}
           </Link>
           .
         </p>
 
         <Button type="submit" loading={loading} className="w-full">
-          Crear cuenta
+          {t.registerSubmit}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        ¿Ya tienes cuenta?{' '}
+        {t.registerHasAccount}{' '}
         <Link to={loginPath(nextPath)} className="font-medium text-primary hover:underline">
-          Inicia sesión
+          {t.registerLogin}
         </Link>
       </p>
     </AuthLayout>

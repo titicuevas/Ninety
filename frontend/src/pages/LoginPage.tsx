@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,12 +18,14 @@ import {
   saveAuthReturnPath,
 } from '@/lib/authReturn';
 import { claimPendingInvite } from '@/lib/inviteReferral';
-import { loginSchema, type LoginForm } from '@/lib/authSchemas';
+import { createLoginSchema, type LoginForm } from '@/lib/authSchemas';
+import { useI18n } from '@/lib/i18n/LocaleProvider';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/stores/authStore';
 
 export function LoginPage() {
-  useDocumentTitle('Iniciar sesión');
+  const { t } = useI18n();
+  useDocumentTitle(t.loginDocTitle);
   const navigate = useNavigate();
   const location = useLocation();
   const setSession = useAuthStore((s) => s.setSession);
@@ -55,16 +57,17 @@ export function LoginPage() {
       saveAuthReturnPath(nextPath);
       await loginWithGoogle();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión con Google');
+      setError(err instanceof Error ? err.message : t.loginErrorGoogle);
       setGoogleLoading(false);
     }
   };
 
+  const schema = useMemo(() => createLoginSchema(t), [t]);
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginForm>({ resolver: zodResolver(loginSchema) });
+  } = useForm<LoginForm>({ resolver: zodResolver(schema) });
 
   const onSubmit = async (data: LoginForm) => {
     setError(null);
@@ -76,67 +79,76 @@ export function LoginPage() {
       await claimPendingInvite(session.access_token);
       navigate(postAuthPath);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión');
+      setError(err instanceof Error ? err.message : t.loginErrorGeneric);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <AuthLayout title="Bienvenido de vuelta" subtitle="Inicia sesión en tu diario futbolero">
-      <GoogleSignInButton loading={googleLoading} onClick={() => void handleGoogleSignIn()} className="mb-5" />
+    <AuthLayout title={t.loginTitle} subtitle={t.loginSubtitle}>
+      <GoogleSignInButton
+        loading={googleLoading}
+        label={t.googleContinue}
+        onClick={() => void handleGoogleSignIn()}
+        className="mb-5"
+      />
 
       <div className="mb-5 flex items-center gap-3">
         <Separator className="flex-1" />
-        <span className="text-xs uppercase tracking-wide text-muted-foreground">o con email</span>
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">{t.authOrEmail}</span>
         <Separator className="flex-1" />
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <FormField label="Email" error={errors.email?.message}>
-          <Input type="email" autoComplete="email" placeholder="tu@email.com" {...register('email')} />
+        <FormField label={t.authEmail} error={errors.email?.message}>
+          <Input
+            type="email"
+            autoComplete="email"
+            placeholder={t.authEmailPlaceholder}
+            {...register('email')}
+          />
         </FormField>
-        <FormField label="Contraseña" error={errors.password?.message}>
+        <FormField label={t.authPassword} error={errors.password?.message}>
           <PasswordField
             autoComplete="current-password"
-            placeholder="••••••••"
+            placeholder={t.authPasswordPlaceholder}
             {...register('password')}
           />
         </FormField>
 
         <p className="-mt-2 text-right text-sm">
           <Link to="/forgot-password" className="text-primary hover:underline">
-            ¿Olvidaste tu contraseña?
+            {t.loginForgot}
           </Link>
         </p>
 
         {passwordResetOk ? (
           <p className="text-sm text-primary" role="status">
-            Contraseña actualizada. Ya puedes iniciar sesión.
+            {t.loginPasswordResetOk}
           </p>
         ) : null}
         {emailConfirmedOk ? (
           <p className="text-sm text-primary" role="status">
-            Email confirmado. Ya puedes iniciar sesión con tu contraseña.
+            {t.loginEmailConfirmedOk}
           </p>
         ) : null}
         {oauthRetryOk ? (
           <p className="text-sm text-primary" role="status">
-            No se pudo completar Google. Pulsa otra vez «Continuar con Google» (usa siempre
-            www.getninety.app).
+            {t.loginOauthRetryOk}
           </p>
         ) : null}
         {error ? <FormAlert>{error}</FormAlert> : null}
 
         <Button type="submit" loading={loading} className="w-full">
-          Iniciar sesión
+          {t.loginSubmit}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        ¿No tienes cuenta?{' '}
+        {t.loginNoAccount}{' '}
         <Link to={registerPath(nextPath)} className="font-medium text-primary hover:underline">
-          Regístrate
+          {t.loginRegister}
         </Link>
       </p>
     </AuthLayout>

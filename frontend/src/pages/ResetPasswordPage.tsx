@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,14 +9,16 @@ import { PasswordField } from '@/components/PasswordField';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { exchangeRecoveryTokenHash, resetPasswordWithToken } from '@/lib/auth';
-import { passwordConfirmSchema, type PasswordConfirmForm } from '@/lib/authSchemas';
+import { createPasswordConfirmSchema, type PasswordConfirmForm } from '@/lib/authSchemas';
 import { clearRecoveryUrl, parseRecoveryParams } from '@/lib/recoveryToken';
 import { clearSession } from '@/lib/session';
+import { useI18n } from '@/lib/i18n/LocaleProvider';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/stores/authStore';
 
 export function ResetPasswordPage() {
-  useDocumentTitle('Nueva contraseña');
+  const { t } = useI18n();
+  useDocumentTitle(t.resetDocTitle);
   const navigate = useNavigate();
   const setSession = useAuthStore((s) => s.setSession);
   const [recovery] = useState(() => parseRecoveryParams(window.location.search, window.location.hash));
@@ -48,11 +50,7 @@ export function ResetPasswordPage() {
         setResolving(false);
       } catch (err) {
         if (!active) return;
-        setLinkError(
-          err instanceof Error
-            ? err.message
-            : 'Enlace inválido o caducado. Solicita uno nuevo.',
-        );
+        setLinkError(err instanceof Error ? err.message : t.resetInvalidLink);
         setResolving(false);
       }
     })();
@@ -60,13 +58,14 @@ export function ResetPasswordPage() {
     return () => {
       active = false;
     };
-  }, [recovery]);
+  }, [recovery, t.resetInvalidLink]);
 
+  const schema = useMemo(() => createPasswordConfirmSchema(t), [t]);
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<PasswordConfirmForm>({ resolver: zodResolver(passwordConfirmSchema) });
+  } = useForm<PasswordConfirmForm>({ resolver: zodResolver(schema) });
 
   const onSubmit = async (data: PasswordConfirmForm) => {
     if (!token) return;
@@ -78,7 +77,7 @@ export function ResetPasswordPage() {
       setSession(null);
       navigate('/login', { replace: true, state: { passwordReset: true } });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo actualizar la contraseña');
+      setError(err instanceof Error ? err.message : t.resetErrorGeneric);
     } finally {
       setLoading(false);
     }
@@ -86,44 +85,44 @@ export function ResetPasswordPage() {
 
   if (resolving) {
     return (
-      <AuthLayout title="Nueva contraseña" subtitle="Validando el enlace…">
+      <AuthLayout title={t.resetTitle} subtitle={t.resetValidating}>
         <div className="flex justify-center py-8" role="status" aria-live="polite">
-          <NinetyLoader label="Validando enlace de recuperación" />
+          <NinetyLoader label={t.resetLoaderLabel} />
         </div>
       </AuthLayout>
     );
   }
 
   return (
-    <AuthLayout title="Nueva contraseña" subtitle="Elige una contraseña segura para tu cuenta">
+    <AuthLayout title={t.resetTitle} subtitle={t.resetSubtitle}>
       {linkError ? (
         <div className="space-y-4">
           <FormAlert>{linkError}</FormAlert>
           <p className="text-center text-sm">
             <Link to="/forgot-password" className="font-medium text-primary hover:underline">
-              Solicitar nuevo enlace
+              {t.resetRequestNew}
             </Link>
           </p>
         </div>
       ) : (
         <form onSubmit={handleSubmit((d) => void onSubmit(d))} className="space-y-4">
-          <FormField label="Nueva contraseña" error={errors.password?.message}>
+          <FormField label={t.resetNewPassword} error={errors.password?.message}>
             <PasswordField
               autoComplete="new-password"
-              placeholder="••••••••"
+              placeholder={t.authPasswordPlaceholder}
               {...register('password')}
             />
           </FormField>
-          <FormField label="Confirmar" error={errors.confirm?.message}>
+          <FormField label={t.resetConfirm} error={errors.confirm?.message}>
             <PasswordField
               autoComplete="new-password"
-              placeholder="••••••••"
+              placeholder={t.authPasswordPlaceholder}
               {...register('confirm')}
             />
           </FormField>
           {error ? <FormAlert>{error}</FormAlert> : null}
           <Button type="submit" loading={loading} className="w-full" disabled={!token}>
-            Guardar contraseña
+            {t.resetSubmit}
           </Button>
         </form>
       )}

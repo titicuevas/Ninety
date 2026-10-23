@@ -6,6 +6,7 @@ import {
   acceptCookieNotice,
   readCookieNoticeAccepted,
 } from '@/lib/cookieNoticeMemory';
+import { useI18n } from '@/lib/i18n/LocaleProvider';
 import { cn } from '@/lib/utils';
 
 type Phase = 'enter' | 'exit' | 'gone';
@@ -17,14 +18,15 @@ function prefersReducedMotion(): boolean {
 
 /** Aviso de almacenamiento esencial (sin cookies de marketing/analytics). */
 export function CookieNoticeBanner({ className }: { className?: string }) {
+  const { t } = useI18n();
   const [phase, setPhase] = useState<Phase>(() =>
     readCookieNoticeAccepted() ? 'gone' : 'enter',
   );
 
   useEffect(() => {
     if (phase !== 'exit') return;
-    const t = window.setTimeout(() => setPhase('gone'), 280);
-    return () => window.clearTimeout(t);
+    const tmr = window.setTimeout(() => setPhase('gone'), 280);
+    return () => window.clearTimeout(tmr);
   }, [phase]);
 
   if (phase === 'gone') return null;
@@ -79,16 +81,15 @@ export function CookieNoticeBanner({ className }: { className?: string }) {
 
         <div className="relative min-w-0 flex-1 text-left">
           <p id="cookie-notice-title" className="text-sm font-semibold tracking-tight text-foreground">
-            Jugada limpia con tus datos
+            {t.cookieTitle}
           </p>
           <p id="cookie-notice-desc" className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
-            Sin cookies de publicidad. Solo lo esencial para tu sesión en este dispositivo. Si hay
-            analítica, es agregada y sin cookies de seguimiento.{' '}
+            {t.cookieBody}{' '}
             <Link
               to="/privacidad"
               className="font-medium text-primary underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              Privacidad
+              {t.cookiePrivacy}
             </Link>
           </p>
         </div>
@@ -99,7 +100,7 @@ export function CookieNoticeBanner({ className }: { className?: string }) {
           onClick={dismiss}
           data-testid="cookie-notice-accept"
         >
-          Entendido
+          {t.cookieAccept}
         </Button>
       </div>
     </div>
