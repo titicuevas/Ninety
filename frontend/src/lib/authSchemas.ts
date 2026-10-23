@@ -57,9 +57,7 @@ export function createLoginSchema(copy: ValidationCopy = defaultCopy) {
   });
 }
 
-export const loginSchema = createLoginSchema();
-
-export type LoginForm = z.infer<typeof loginSchema>;
+export type LoginForm = z.infer<ReturnType<typeof createLoginSchema>>;
 
 export function createRegisterSchema(copy: ValidationCopy = defaultCopy) {
   return z
@@ -77,9 +75,7 @@ export function createRegisterSchema(copy: ValidationCopy = defaultCopy) {
     });
 }
 
-export const registerSchema = createRegisterSchema();
-
-export type RegisterForm = z.infer<typeof registerSchema>;
+export type RegisterForm = z.infer<ReturnType<typeof createRegisterSchema>>;
 
 export function createForgotPasswordSchema(copy: ValidationCopy = defaultCopy) {
   return z.object({

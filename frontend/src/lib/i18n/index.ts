@@ -4,9 +4,7 @@ import type { Locale, Messages } from '@/lib/i18n/types';
 
 export type { Locale, Messages };
 
-export const locales: Locale[] = ['es', 'en'];
-
-export const messagesByLocale: Record<Locale, Messages> = {
+const messagesByLocale: Record<Locale, Messages> = {
   es,
   en,
 };

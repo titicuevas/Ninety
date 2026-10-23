@@ -2,7 +2,7 @@ import type { Locale } from '@/lib/i18n/types';
 
 const STORAGE_KEY = 'ninety.locale.v1';
 
-export function readStoredLocale(): Locale | null {
+function readStoredLocale(): Locale | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
